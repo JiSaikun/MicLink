@@ -1,4 +1,4 @@
-class Config{
+class CommonConstants_Login{
   public  readonly login_dafault_text_font_weight:number=400
   public  readonly login_dafault_text_font_size:number=12
   public  readonly login_dafault_text_font_color:string='#bbbdbf'
@@ -6,4 +6,4 @@ class Config{
 
 
 }
-export  const  config:Config= new Config()
+export  const  config:CommonConstants_Login= new CommonConstants_Login()

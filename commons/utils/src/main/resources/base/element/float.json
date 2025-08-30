@@ -1,0 +1,20 @@
+{
+  "float": [
+    {
+      "name": "page_text_font_size",
+      "value": "50fp"
+    },{
+      "name": "pop_launch_column_width",
+      "value": "622vp"
+    },{
+      "name": "pop_launch_column_height",
+      "value": "194vp"
+    },{
+      "name": "pop_launch_column_defaultRadius",
+      "value": "8vp"
+    },{
+      "name": "pop_launch_column_default_padd",
+      "value": "23vp"
+    }
+  ]
+}

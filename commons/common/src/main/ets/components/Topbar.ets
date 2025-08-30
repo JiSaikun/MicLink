@@ -1,9 +1,16 @@
+import {PopViewUtils,LaunchLogin_pop}from 'utils'
 @Component
 export struct  Topbar {
   @State isDown:boolean=false
   @Consume('pageInfo') pageInfo:NavPathStack
   @Styles textStyle(){
   .height(40)
+  }
+  down(){
+    PopViewUtils.closePopView()
+  }
+  confirm(){
+
   }
   build() {
       Row(){
@@ -47,6 +54,7 @@ export struct  Topbar {
             Text('退出登录')
               .textStyle()
               .onClick(()=>{
+                PopViewUtils.showPopView<Object>(wrapBuilder(LaunchLogin_pop('确定要退出登录吗',this.down,this.confirm)), new Object(), { alignment: DialogAlignment.Center });
                 AppStorage.setOrCreate("login",false)
                 this.pageInfo.pushPath({"name":'login'})
               })

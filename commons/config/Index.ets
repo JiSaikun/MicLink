@@ -1,2 +1,3 @@
 // export { MainPage } from './src/main/ets/components/MainPage';
-export {config} from './src/main/ets/components/Config'
+export {config} from './src/main/ets/components/CommonConstants_login'
+export {CommonConstants_pop} from './src/main/ets/components/CommonConstants_pop'

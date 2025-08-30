@@ -67,6 +67,10 @@
     {
       "name": "config",
       "srcPath": "./commons/config",
+    },
+    {
+      "name": "utils",
+      "srcPath": "./commons/utils",
     }
   ]
 }
