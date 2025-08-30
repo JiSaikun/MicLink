@@ -1,0 +1,72 @@
+{
+  "app": {
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "storeFile": "E:/jisaikun/Projects/miclink.p12",
+          "storePassword": "0000001B67E24AFA17A663CF91CBDBB0BCA890AF057DE95874F1135E12147696DBA77D27E336ECD03B6BF9",
+          "keyAlias": "MicLink",
+          "keyPassword": "0000001B4315FADBB46F20A01132E3A0C424D7C16782DAEB17218DA9417A23035001321BC4FDAD72592366",
+          "signAlg": "SHA256withECDSA",
+          "profile": "E:/jisaikun/Projects/MicLinkDebug.p7b",
+          "certpath": "E:/jisaikun/Projects/MicLink.cer"
+        }
+      }
+    ],
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+        "targetSdkVersion": "5.0.1(13)",
+        "compatibleSdkVersion": "5.0.1(13)",
+        "runtimeOS": "HarmonyOS",
+        "buildOption": {
+          "strictMode": {
+            "caseSensitiveCheck": true,
+            "useNormalizedOHMUrl": true
+          }
+        }
+      }
+    ],
+    "buildModeSet": [
+      {
+        "name": "debug",
+      },
+      {
+        "name": "release"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "default",
+      "srcPath": "./products/default",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "api",
+      "srcPath": "./commons/api",
+    },
+    {
+      "name": "common",
+      "srcPath": "./commons/common",
+    },
+    {
+      "name": "login",
+      "srcPath": "./features/login"
+    },
+    {
+      "name": "config",
+      "srcPath": "./commons/config",
+    }
+  ]
+}

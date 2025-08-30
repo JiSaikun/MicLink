@@ -1,0 +1,12 @@
+{
+  "routerMap": [
+    {
+      "name": "login",
+      "pageSourceFile": "src/main/ets/page/Login.ets",
+      "buildFunction": "LoginBuilder",
+      "data": {
+        "description": "登录"
+      }
+    }
+  ]
+}

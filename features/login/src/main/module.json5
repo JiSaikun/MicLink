@@ -1,0 +1,12 @@
+{
+  "module": {
+    "name": "login",
+    "type": "har",
+    "requestPermissions": [{"name":"ohos.permission.INTERNET"}],
+    "routerMap": "$profile:route_map",
+    "deviceTypes": [
+      "tablet",
+      "2in1"
+    ]
+  }
+}
