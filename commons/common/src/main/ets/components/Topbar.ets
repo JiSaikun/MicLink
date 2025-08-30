@@ -30,6 +30,11 @@ export struct  Topbar {
           })
           .onClick(()=>{
             this.isDown=!this.isDown
+            if (this.isDown) {
+              setTimeout(()=>{
+                this.isDown=false
+              },5000)
+            }
           })
           Column(){
             Text('个人中心')
