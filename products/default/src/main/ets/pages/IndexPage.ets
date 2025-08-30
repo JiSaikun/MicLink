@@ -16,14 +16,14 @@ struct IndexPage {
     if (!this.login) {
       this.pageInfo.pushPath({'name':'login'})
     }
-    console.log('=================================进入测试机')
-    console.log('+',JSON.stringify(this.pageInfo.getParamByName("indexPage")))
+    // console.log('=================================进入测试机')
+    // console.log('+',JSON.stringify(this.pageInfo.getParamByName("indexPage")))
     this.web=(this.pageInfo.getParamByName("indexPage")[0] as paramModel).web
     this.currentIndex=(this.pageInfo.getParamByName("indexPage")[0] as paramModel).currentIndex
     this.bottomCurrIndex=(this.pageInfo.getParamByName("indexPage")[0] as paramModel).bottomCurrIndex
     this.extend=(this.pageInfo.getParamByName("indexPage")[0] as paramModel).extend
     this.width_length=(this.pageInfo.getParamByName("indexPage")[0] as paramModel).width_length
-    console.log(JSON.stringify(this.pageInfo.getParamByName("indexPage")[0]))
+    // console.log(JSON.stringify(this.pageInfo.getParamByName("indexPage")[0]))
   }
   build() {
     Column(){

@@ -1,4 +1,4 @@
-import {PopViewUtils,LaunchLogin_pop}from 'utils'
+import {PopViewUtils,LaunchLogin_pop,PopParams_1}from 'utils'
 @Component
 export struct  Topbar {
   @State isDown:boolean=false
@@ -6,11 +6,17 @@ export struct  Topbar {
   @Styles textStyle(){
   .height(40)
   }
+  aboutToAppear(): void {
+    // this.pageInfo.pushPath({"name":'login'})
+  }
   down(){
     PopViewUtils.closePopView()
   }
-  confirm(){
-
+  // 修改后（使用箭头函数自动绑定 this）
+  confirm = () => {
+    PopViewUtils.closePopView();
+    AppStorage.setOrCreate("login", false);
+    this.pageInfo.pushPath({ "name": 'login' });
   }
   build() {
       Row(){
@@ -54,9 +60,13 @@ export struct  Topbar {
             Text('退出登录')
               .textStyle()
               .onClick(()=>{
-                PopViewUtils.showPopView<Object>(wrapBuilder(LaunchLogin_pop('确定要退出登录吗',this.down,this.confirm)), new Object(), { alignment: DialogAlignment.Center });
-                AppStorage.setOrCreate("login",false)
-                this.pageInfo.pushPath({"name":'login'})
+                console.log('===============================退出登录')
+                const params_1:PopParams_1={
+                  content: '确定要退出登录吗?',
+                  down: this.down,
+                  confirm: this.confirm
+                }
+                PopViewUtils.showPopView<PopParams_1>(wrapBuilder(LaunchLogin_pop), params_1, { alignment: DialogAlignment.Center });
               })
           }
           .visibility(this.isDown?Visibility.Visible:Visibility.None)

@@ -25,6 +25,10 @@ export default class EntryAbility extends UIAbility {
       }
       hilog.info(DOMAIN, 'testTag', 'Succeeded in loading the content.');
     });
+    window.getLastWindow(this.context).then((data: window.Window) => {
+      let uiContext = data.getUIContext(); // 获取 UIContext
+      AppStorage.setOrCreate('uiContext', uiContext); // 存储到应用全局变量
+    });
   }
 
   onWindowStageDestroy(): void {

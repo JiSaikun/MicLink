@@ -23,7 +23,7 @@ export struct LeftBar {
   }
   @Watch('WebLinkChange') @Link web: string
   WebLinkChange(){
-    console.log('===============',this.web)
+    // console.log('===============',this.web)
     const param:paramModel={
       web:this.web,
       currentIndex:this.currentIndex,
@@ -34,7 +34,7 @@ export struct LeftBar {
     this.pageInfo.clear()
     this.pageInfo.pushPath({"name":'indexPage',param})
   }aboutToAppear(): void {
-  console.log('=========================0',this.extend)
+  // console.log('=========================0',this.extend)
 }
 
   build() {

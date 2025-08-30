@@ -2,10 +2,7 @@ import { webview } from '@kit.ArkWeb';
 @Component
 export struct Content {
   webviewController: webview.WebviewController = new webview.WebviewController();
-   @Watch('Waf') @Link web: string
-  Waf(){
-    console.log(this.web)
-  }
+  @Link web: string
   build() {
     Flex(){
       Web({ src: this.web, controller: this.webviewController })

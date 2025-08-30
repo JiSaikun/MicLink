@@ -40,19 +40,24 @@ export class PopViewUtils {
     options?: promptAction.BaseDialogOptions):void {
     let uiContext = AppStorage.get<UIContext>('uiContext');
     if (uiContext) {
-      // The promptAction object was obtained.
+      // 获取提示操作对象
       let prompt = uiContext.getPromptAction();
+      // 创建组件内容对象
       let componentContent = new ComponentContent(uiContext, contentView, args);
+      // 设置对话框的对齐方式，使用传入的alignment或默认底部对齐
       let customOptions: promptAction.BaseDialogOptions = {
         alignment: options?.alignment || DialogAlignment.Bottom
       };
-      // Open pop-ups using openCustomDialog
+      // 使用openCustomDialog方法打开自定义对话框
       prompt.openCustomDialog(componentContent, customOptions);
+      // 获取弹窗工具类的信息列表实例
       let infoList = PopViewUtils.shareInstance().infoList;
+      // 创建一个新的弹窗数据模型
       let info: PopViewModel = {
         com: componentContent,
         popType: type
       };
+      // 将新的弹窗数据模型添加到信息列表的第一个位置
       infoList[0] = info;
     }
   }

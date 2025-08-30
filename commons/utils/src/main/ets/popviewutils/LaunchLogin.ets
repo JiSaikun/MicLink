@@ -1,7 +1,18 @@
 import{PopViewUtils}from'../model/PopViewUtils'
-import {CommonConstants_pop,config}from "config"
+import {CommonConstants_pop}from "config"
+// 步骤1：定义参数对象类型
+export interface PopParams_1 {
+  content: string;
+  down: () => void;
+  confirm: () => void;
+}
+const params_1:PopParams_1={
+  content: '确定要退出登录吗',
+  down: ()=>{},
+  confirm:()=>{}
+}
 @Builder
-export function LaunchLogin_pop(content:string,down:()=>void,confirm:()=>void) {
+export function LaunchLogin_pop(params: PopParams_1) {
   Flex({direction:FlexDirection.Column}) {
     Row(){
       Text($r('app.string.prompt'))
@@ -12,13 +23,13 @@ export function LaunchLogin_pop(content:string,down:()=>void,confirm:()=>void) {
       Image($r('app.media.pop_down'))
         .height(44)
         .width(44)
-        .onClick(down)
+        .onClick(params.down)
     }
       .width($r('app.float.pop_launch_column_width'))
       .padding($r('app.float.pop_launch_column_default_padd'))
       .height(1)
       .flexGrow(1)
-    Text(content)
+    Text(params.content)
       .width($r('app.float.pop_launch_column_width'))
       .fontWeight(CommonConstants_pop.login_dafault_text_font_weight)
       .fontSize(CommonConstants_pop.login_dafault_text_font_size)
@@ -33,7 +44,7 @@ export function LaunchLogin_pop(content:string,down:()=>void,confirm:()=>void) {
         .fontColor('#00aecc')
         .borderRadius(4)
         .padding({top:9,right:24,bottom:9,left:24})
-        .onClick(confirm)
+        .onClick(params.confirm)
     }
       .justifyContent(FlexAlign.End)
       .height(1)
