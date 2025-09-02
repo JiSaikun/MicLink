@@ -1,40 +1,62 @@
-import {LeftBar,Topbar,Content,paramModel} from 'common'
+import { LeftBar, Topbar, Content, paramModel } from 'common'
+import Content_Ai from '../components/Command_Ai'
 PersistentStorage.persistProp("login", false)
-@Builder function IndexPageBuilder(){
+
+@Builder
+function IndexPageBuilder() {
   IndexPage()
 }
+
 @Component
 struct IndexPage {
   @StorageLink("login") login: boolean = true
-  @Consume('pageInfo') pageInfo:NavPathStack
+  @Consume('pageInfo') pageInfo: NavPathStack
   @State web: string = 'https://asrai.miclink.net/'
   @State currentIndex: number = 0
   @State bottomCurrIndex: number = 10000
-  @State extend:boolean=true //状态栏延申
-  @State width_length:number=248
+  @State extend: boolean = true //状态栏延申
+  @State width_length: number = 248
+
   aboutToAppear(): void {
     if (!this.login) {
-      this.pageInfo.pushPath({'name':'login'})
+      this.pageInfo.pushPath({ 'name': 'login' })
     }
     // console.log('=================================进入测试机')
     // console.log('+',JSON.stringify(this.pageInfo.getParamByName("indexPage")))
-    this.web=(this.pageInfo.getParamByName("indexPage")[0] as paramModel).web
-    this.currentIndex=(this.pageInfo.getParamByName("indexPage")[0] as paramModel).currentIndex
-    this.bottomCurrIndex=(this.pageInfo.getParamByName("indexPage")[0] as paramModel).bottomCurrIndex
-    this.extend=(this.pageInfo.getParamByName("indexPage")[0] as paramModel).extend
-    this.width_length=(this.pageInfo.getParamByName("indexPage")[0] as paramModel).width_length
+    this.web = (this.pageInfo.getParamByName("indexPage")[0] as paramModel).web
+    this.currentIndex = (this.pageInfo.getParamByName("indexPage")[0] as paramModel).currentIndex
+    this.bottomCurrIndex = (this.pageInfo.getParamByName("indexPage")[0] as paramModel).bottomCurrIndex
+    this.extend = (this.pageInfo.getParamByName("indexPage")[0] as paramModel).extend
+    this.width_length = (this.pageInfo.getParamByName("indexPage")[0] as paramModel).width_length
     // console.log(JSON.stringify(this.pageInfo.getParamByName("indexPage")[0]))
   }
+
   build() {
-    Column(){
-        NavDestination(){
-        Row(){
-          LeftBar({currentIndex:this.currentIndex,web:this.web,bottomCurrIndex:this.bottomCurrIndex,extend:this.extend
-          ,width_length:this.width_length})
-          Stack(){
+    Column() {
+      NavDestination() {
+        Row() {
+          LeftBar({
+            currentIndex: this.currentIndex,
+            web: this.web,
+            bottomCurrIndex: this.bottomCurrIndex,
+            extend: this.extend
+          ,
+            width_length: this.width_length
+          })
+          Stack() {
             Topbar()
               .zIndex(100)
-            Content({web:this.web})
+            if (this.web) {
+              if (this.web === 'Command_Ai') {
+                Content_Ai() //AI--指令
+              } else if (this.web === '') {
+                /*
+                  设备设置
+                 */
+              } else {
+                Content({ web: this.web })
+              }
+            }
           }
           // .border({width:1})
           .align(Alignment.TopStart)
@@ -49,9 +71,6 @@ struct IndexPage {
       .hideTitleBar(true)
 
     }
-
-
-
 
   }
 }

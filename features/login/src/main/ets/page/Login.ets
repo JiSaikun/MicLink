@@ -1,4 +1,3 @@
-import { LoginPage } from '../components/LoginPage'
 import { Contentbottom } from '../components/Contentbottom'
 import {InputBox}from '../common/InputBox'
 import {Captcha}from '../common/Captcha'

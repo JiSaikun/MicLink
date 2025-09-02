@@ -1,4 +1,3 @@
-import{PopViewUtils}from'../model/PopViewUtils'
 import {CommonConstants_pop}from "config"
 // 步骤1：定义参数对象类型
 export interface PopParams_1 {

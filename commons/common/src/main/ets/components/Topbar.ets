@@ -60,7 +60,7 @@ export struct  Topbar {
             Text('退出登录')
               .textStyle()
               .onClick(()=>{
-                console.log('===============================退出登录')
+                // console.log('===============================退出登录')
                 const params_1:PopParams_1={
                   content: '确定要退出登录吗?',
                   down: this.down,

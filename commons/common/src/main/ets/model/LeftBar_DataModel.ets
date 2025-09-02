@@ -17,7 +17,7 @@ export const AiModel_data:Ai_Model[]=[
     web:'https://asrai.miclink.net/?sno=123&productCode=999999&config=configMiclink_B_1755079145452#/aiAgent'
   },{
     img:'command',title:'AI-指令',select:'select_command',
-    web:''
+    web:'Command_Ai'
   },{
     img:'navigation',title:'导航库',select:'select_navigation',
     web:'https://asrai.miclink.net?sno=123123123&productCode=999999&config=configMiclink_B_1755079145452#/navLibrary'

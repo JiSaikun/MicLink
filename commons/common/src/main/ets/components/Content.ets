@@ -6,11 +6,13 @@ export struct Content {
   build() {
     Flex(){
       Web({ src: this.web, controller: this.webviewController })
+        .flexGrow(1)
+        .height('100%')
         .flexShrink(1)
-        .key(this.web) // 添加key属性，确保值变化时重新创建组件
+        // .key(this.web) // 添加key属性，确保值变化时重新创建组件
     }
     .width('100%')
     .height('100%')
-    .padding(66)
+    .padding({top:66})
   }
 }
