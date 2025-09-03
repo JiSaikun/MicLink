@@ -8,7 +8,8 @@
   "dependencies": {
     "api": 'file:../../commons/api',
     "utils": 'file:../../commons/utils',
+    "config": 'file:../../commons/config',
     "common": 'file:../../commons/common',
-    "login": "file:../../features/login"
+    "login": "file:../../features/login",
   }
 }

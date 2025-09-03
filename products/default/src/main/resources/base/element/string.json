@@ -11,6 +11,18 @@
     {
       "name": "EntryAbility_label",
       "value": "label"
+    },
+    {
+      "name": "INTERNET",
+      "value": "网络权限"
+    },
+    {
+      "name": "ACCESS_EXTENSIONAL_DEVICE_DRIVER",
+      "value": "获取接入主设备的外部设备列表"
+    },
+    {
+      "name": "INPUT_KEYBOARD_CONTROLLER",
+      "value": "设置功能键（如：CapsLock键）使能状态。使用Promise异步回调"
     }
   ]
 }

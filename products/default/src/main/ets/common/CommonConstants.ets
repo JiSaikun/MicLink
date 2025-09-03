@@ -26,9 +26,11 @@ export default  class CommonConstants {
   static readonly COMMAND_ICON_DEFAULT_HEIGHT: number = 16;
 
   /**
-   * Button width.
+   * 创建新的指令弹窗.
    */
-  static readonly BUTTON_WIDTH: string = '42%';
+  static readonly CreateNewInstruction_pop_DEFAULT_FONT_SIZE: number = 14;
+  static readonly CreateNewInstruction_pop_DEFAULT_FONT_WEIGHT: number = 400;
+  static readonly CreateNewInstruction_pop_INPUT_FONT_COLOR: string = '#bbbdbf';
 
   /**
    * Button spacing.
