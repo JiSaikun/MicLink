@@ -6,11 +6,11 @@
         "type": "HarmonyOS",
         "material": {
           "storeFile": "E:/jisaikun/Projects/miclink.p12",
-          "storePassword": "0000001B67E24AFA17A663CF91CBDBB0BCA890AF057DE95874F1135E12147696DBA77D27E336ECD03B6BF9",
+          "storePassword": "0000001BBE489C37A74693F7D044A735D4286C6014AFF620F08E8160942658AAC8FF0C24F3419F9FF9FD75",
           "keyAlias": "MicLink",
-          "keyPassword": "0000001B4315FADBB46F20A01132E3A0C424D7C16782DAEB17218DA9417A23035001321BC4FDAD72592366",
+          "keyPassword": "0000001B0771C9FAF8ACCDB130F12893E0A1E59CB73C82019C3805D745A935200FEBC23D75175393AB5BCD",
           "signAlg": "SHA256withECDSA",
-          "profile": "E:/jisaikun/Projects/MicLinkDebug.p7b",
+          "profile": "E:/jisaikun/Projects/add_HIdDebug.p7b",
           "certpath": "E:/jisaikun/Projects/MicLink.cer"
         }
       }
@@ -19,8 +19,8 @@
       {
         "name": "default",
         "signingConfig": "default",
-        "targetSdkVersion": "5.0.1(13)",
-        "compatibleSdkVersion": "5.0.1(13)",
+        "targetSdkVersion": "5.0.5(17)",
+        "compatibleSdkVersion": "5.0.5(17)",
         "runtimeOS": "HarmonyOS",
         "buildOption": {
           "strictMode": {
@@ -71,6 +71,26 @@
     {
       "name": "utils",
       "srcPath": "./commons/utils",
+    },
+    {
+      "name": "hid_usb",
+      "srcPath": "./features/hid_usb",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "bluetooth",
+      "srcPath": "./commons/bluetooth",
+    },
+    {
+      "name": "usb_hid",
+      "srcPath": "./commons/usb_hid",
     }
   ]
 }

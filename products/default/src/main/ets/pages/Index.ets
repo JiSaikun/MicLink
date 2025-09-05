@@ -1,4 +1,5 @@
 import { LeftBar, Topbar, Content } from 'common'
+import {Hid}from 'usb_hid'
 PersistentStorage.persistProp("login", false)
 
 @Entry
@@ -9,6 +10,7 @@ struct Index {
   @State web: string = 'https://asrai.miclink.net?sno=123&productCode=999999&config=configMiclink_B_1755079145452'
 
   aboutToAppear(): void {
+    // Hid.Hid_add()
     this.pageInfo.disableAnimation(true)
     // console.log(JSON.stringify(this.login))
     if (!this.login) {

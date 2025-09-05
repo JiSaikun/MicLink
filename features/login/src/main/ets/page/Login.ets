@@ -1,7 +1,6 @@
 import { Contentbottom } from '../components/Contentbottom'
 import {InputBox}from '../common/InputBox'
 import {Captcha}from '../common/Captcha'
-
 @Builder
 export function LoginBuilder() {
   Login()

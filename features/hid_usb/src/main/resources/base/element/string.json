@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "module description"
+    },
+    {
+      "name": "Hid_usbAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "Hid_usbAbility_label",
+      "value": "label"
+    }
+  ]
+}

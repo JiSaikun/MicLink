@@ -1,0 +1,5 @@
+{
+  "libhid_usb.so": {
+    "source": "src/mock/Libhid_usb.mock.ets"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "module": {
+    "name": "hid_usb_test",
+    "type": "feature",
+    "deviceTypes": [
+      "tablet",
+      "2in1"
+    ],
+    "deliveryWithInstall": true,
+    "installationFree": false
+  }
+}

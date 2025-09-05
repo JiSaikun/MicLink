@@ -6,6 +6,7 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
-    'config': 'file:../../commons/config'
+    'config': 'file:../../commons/config',
+    'hid_usb': "file:../../features/hid_usb"
   }
 }
