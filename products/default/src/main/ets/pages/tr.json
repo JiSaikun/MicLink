@@ -1,0 +1,98 @@
+[
+  {
+    "name": "2-2",
+    "serial": "",
+    "manufacturerName": "MicLink",
+    "productName": "AiMouse",
+    "version": "0110",
+    "vendorId": 9354,
+    "productId": 24747,
+    "clazz": 0,
+    "subClass": 0,
+    "protocol": 0,
+    "devAddress": 2,
+    "busNum": 2,
+    "configs": [
+      {
+        "id": 1,
+        "attributes": 160,
+        "isRemoteWakeup": true,
+        "isSelfPowered": true,
+        "maxPower": 200,
+        "name": " ",
+        "interfaces": [
+          {
+            "id": 0,
+            "protocol": 2,
+            "clazz": 3,
+            "subClass": 1,
+            "alternateSetting": 0,
+            "name": " ",
+            "endpoints": [
+              {
+                "address": 130,
+                "attributes": 3,
+                "interval": 1,
+                "maxPacketSize": 8,
+                "direction": 128,
+                "number": 2,
+                "type": 3,
+                "interfaceId": 0
+              }
+            ]
+          },
+          {
+            "id": 1,
+            "protocol": 1,
+            "clazz": 3,
+            "subClass": 1,
+            "alternateSetting": 0,
+            "name": " ",
+            "endpoints": [
+              {
+                "address": 129,
+                "attributes": 3,
+                "interval": 1,
+                "maxPacketSize": 8,
+                "direction": 128,
+                "number": 1,
+                "type": 3,
+                "interfaceId": 1
+              }
+            ]
+          },
+          {
+            "id": 2,
+            "protocol": 0,
+            "clazz": 3,
+            "subClass": 0,
+            "alternateSetting": 0,
+            "name": " ",
+            "endpoints": [
+              {
+                "address": 132,
+                "attributes": 3,
+                "interval": 1,
+                "maxPacketSize": 64,
+                "direction": 128,
+                "number": 4,
+                "type": 3,
+                "interfaceId": 2
+              },
+              {
+                "address": 5,
+                "attributes": 3,
+                "interval": 1,
+                "maxPacketSize": 64,
+                "direction": 0,
+                "number": 5,
+                "type": 3,
+                "interfaceId": 2
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

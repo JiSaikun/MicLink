@@ -5,6 +5,12 @@
     "deviceTypes": [
       "tablet",
       "2in1"
+    ],
+    "requestPermissions": [
+      {
+        "name": "ohos.permission.ACCESS_BLUETOOTH",
+        "reason": "$string:ACCESS_BLUETOOTH"
+      }
     ]
   }
 }

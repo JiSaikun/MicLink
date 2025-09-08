@@ -3,6 +3,9 @@
     {
       "name": "page_show",
       "value": "page from package"
+    },{
+      "name": "ACCESS_BLUETOOTH",
+      "value": "申请蓝牙权限"
     }
   ]
 }

@@ -10,7 +10,8 @@
     "utils": 'file:../../commons/utils',
     "config": 'file:../../commons/config',
     "common": 'file:../../commons/common',
-    "usb_hid": 'file:../../commons/usb_hid',
     "login": "file:../../features/login",
+    "usb_hid": 'file:../../commons/usb_hid',
+    "bluetooth": 'file:../../commons/bluetooth',
   }
 }

@@ -21,7 +21,11 @@
       {
         "name": 'ohos.permission.INPUT_KEYBOARD_CONTROLLER',
         'reason': '$string:INPUT_KEYBOARD_CONTROLLER'
-      }
+      },
+      {
+        "name": 'ohos.permission.ACCESS_DDK_HID',
+        'reason': '$string:ACCESS_DDK_HID'
+      },
     ],
     "deliveryWithInstall": true,
     "installationFree": false,
