@@ -1,0 +1,518 @@
+import { usbManager } from '@kit.BasicServicesKit';
+import { hilog } from '@kit.PerformanceAnalysisKit';
+// 按键类型枚举
+export enum KeyPressType {
+  VOICE_CLICK = 11,//语音键-单击
+  VOICE_DOUBLE_CLICK = 12,//语音键-双击
+  VOICE_LONG_PRESS_DOWN = 13,//语音键-长按按下
+  VOICE_LONG_PRESS_UP = 14,//语音键-长按抬起
+  SEARCH_CLICK = 21,//搜索键-单击
+  SEARCH_DOUBLE_CLICK = 22,//搜索键-双击
+  SEARCH_LONG_PRESS_DOWN = 23,//搜索键-长按按下
+  SEARCH_LONG_PRESS_UP = 24,//搜索键-长按抬起
+  TRANSLATE_CLICK = 31,//翻译键-单击
+  TRANSLATE_DOUBLE_CLICK = 32,//翻译键-双击
+  TRANSLATE_LONG_PRESS_DOWN = 33,//翻译键-长按按下
+  TRANSLATE_LONG_PRESS_UP = 34,//翻译键-长按抬起
+  CUSTOM_CLICK = 41,//自定义键-单击
+  CUSTOM_DOUBLE_CLICK = 42,//自定义键-双击
+  CUSTOM_LONG_PRESS_DOWN = 43,//自定义键-长按按下
+  CUSTOM_LONG_PRESS_UP = 44,//自定义键-长按抬起
+  AI_CLICK = 51,//AI键-单击
+  AI_DOUBLE_CLICK = 52,//AI键-双击
+  AI_LONG_PRESS_DOWN = 53,//AI键-长按按下
+  AI_LONG_PRESS_UP = 54,//AI键-长按抬起
+  // LEFT = 6,//左键
+  // MIDDLE = 7,//中键
+  // RIGHT = 8//右键
+}
+// USB设备类型枚举————鼠标光电类型
+export enum MouseICType {
+  Error = 0,
+  PAW3212 = 1,
+  PAW3205 = 2,
+  S201 = 3,
+  FCT3065 = 4,
+  FCT3065XY = 5,
+  LS8650 = 6,
+  S201Height = 7, //S201B接地高档位
+  KA8G2 = 8, //KA8G2
+  KA8 = 9, //KA8
+  FCT3065_X = 15, //3065带插值
+  LS8650_X = 16, //8650带插值
+  PAW3205_X = 17, //3205带插值
+  FCT3065XY_X = 18, //3065XY带插值
+  PAW3212_X = 19, //3212带插值
+  FCT3065XY_X2 = 0x18, //3065XY带插值
+  PAW3220 = 20, //3220
+  PAW3220_X = 21, //3220带插值
+  KA8G2_inphic = 22, //KA8G2
+  PAW3212_X_A4Tech = 25, //3212带插值 双飞燕
+  PAW3325 = 26, //3325
+  PAW3104 = 27, //3104
+  PAW3212_G7 = 28, //G7
+  FCT3065XY_M3S = 29, //铭键M3S
+}
+
+// 设备信息接口
+export interface DeviceInfo {
+  sn: string;
+  micStatus: boolean;
+  ledStatus: boolean;
+  sampleRate: boolean;
+  icType: MouseICType;
+  dpiLevel: number;
+  productType: number;
+  batteryLevel: number;
+  firmwareVersion: string;
+  isConnected: boolean;
+  reportRate: number;
+  atmosphereLight: boolean;
+}
+
+export class Communication {
+  static devicePipe: usbManager.USBDevicePipe | null = null;
+  static deviceInfo: DeviceInfo = {
+    sn: '', //SN
+    micStatus: false, //麦克风状态
+    ledStatus: false, //LED状态
+    sampleRate: false, //采样率
+    icType: MouseICType.PAW3212, //鼠标光电类型
+    dpiLevel: 1, //DPI挡位
+    productType: 0, //产品型号
+    batteryLevel: 0, //电量
+    firmwareVersion: '', //固件版本
+    isConnected: false,
+    reportRate: 125,
+    atmosphereLight: false
+  };
+  static isPhysicalKeyboardExist:boolean=true
+  static currentDPI: number[] = []
+  // 查找输入端点（方向=128）用于接收数据
+  static inputEndpoint: usbManager.USBEndpoint | null = null;
+  static inputInterface: usbManager.USBInterface | null = null;
+
+  // 构建0x61命令帧：0c4d04614c00000000000000000000000000000000
+  static buildGetInfoCommand(length: number = 33): Uint8Array {
+    const frame = new Uint8Array(length); // 固定33字节长度
+    // 帧头
+    frame[0] = 0x0C; // 帧头高位
+    frame[1] = 0x4D; // 帧头低位
+    frame[2] = 0x04; // 数据长度
+    frame[3] = 0x61; // 命令字 (获取设备信息)
+    frame[4] = 0x4C; // 结束标志
+
+    // 剩余字节填充0
+    for (let i = 5; i < length; i++) {
+      frame[i] = 0x00;
+    }
+
+    return frame;
+  }
+
+  // 构建其他命令帧的通用方法
+  static buildCommandFrame(cmd: number, length: number = 33): Uint8Array {
+    const frame = new Uint8Array(length);
+    frame[0] = 0x0C; // 帧头高位
+    frame[1] = 0x4D; // 帧头低位
+    frame[2] = 0x04; // 数据长度固定为4
+    frame[3] = cmd; // 命令字
+    frame[4] = 0x4C; // 结束标志
+
+    // 剩余字节填充0
+    for (let i = 5; i < 33; i++) {
+      frame[i] = 0x00;
+    }
+    return frame;
+  }
+
+  // 扫描并连接设备
+  static async connectDevice() {
+    console.log('========================扫描并连接设备');
+    try {
+      const devices = usbManager.getDevices();
+      console.log('设备列表长度:', devices?.length || 0);
+      if (!devices || devices.length === 0) {
+        hilog.error(0x0000, 'USB', 'No USB devices found=================没有找到设备');
+        Communication.connectDevice()
+        return;
+      }
+      // 显示所有设备信息————遍历
+      devices.forEach((device, index) => {
+        console.log(`设备 ${index}: VID=0x${device.vendorId.toString(16)}, PID=0x${device.productId.toString(16)}, 名称=${device.name}`);
+      });
+
+      // 查找匹配的设备 (VID: 0x248A)————鼠标
+      const targetDevice = devices.find(device => device.vendorId === 0x248A);
+
+      if (!targetDevice) {
+        hilog.error(0x0000, 'USB', '没找到鼠标设备');
+        console.log('未找到VID为0x248A的设备');
+        return;
+      }
+
+      console.log('找到目标设备:', targetDevice.name);
+
+      const hasRight = await usbManager.hasRight(targetDevice.name)
+      console.log('权限检查：——————', hasRight)
+      if (!hasRight) {
+        hilog.error(0x0000, 'USB', '没有权限访问当前USB设备');
+        usbManager.requestRight(targetDevice.name).then((seacon)=>{
+          // 请求权限
+          console.log('请求权限结果:', seacon);
+          if (seacon) {
+            Communication.connectDevice()
+              .then(()=>{
+                Communication.getDeviceInfo()
+              })
+          }else {
+            hilog.warn(0x0000, 'USB', '用户拒绝了权限请求');
+          }
+        })
+        return;
+      }
+
+      /**
+       * 与鼠标建立连接
+       */
+      Communication.devicePipe = usbManager.connectDevice(targetDevice);
+      console.log('设备连接成功');
+      hilog.info(0x0000, 'USB', 'Device connected successfully');
+
+    } catch (error) {
+      hilog.error(0x0000, 'USB', `Connection failed: ${error.message}`);
+      console.error('连接失败:', error);
+    }
+  }
+
+  // 使用批量传输获取设备信息
+  static async getDeviceInfo(command: number = 0x61) {
+    if (!Communication.devicePipe) {
+      console.log('设备未连接');
+      return;
+    }
+
+    console.log('开始获取设备信息');
+    try {
+      const devices = usbManager.getDevices();
+      const targetDevice = devices.find(device => device.vendorId === 0x248A);
+
+      if (!targetDevice?.configs?.[0]?.interfaces) {
+        console.log('无法获取设备接口信息');
+        return;
+      }
+
+      // 查找输出端点（方向=0）用于发送命令
+      let outputEndpoint: usbManager.USBEndpoint | null = null;
+      let outputInterface: usbManager.USBInterface | null = null;
+
+      // 查找输入端点（方向=128）用于接收数据
+      let inputEndpoint: usbManager.USBEndpoint | null = null;
+      let inputInterface: usbManager.USBInterface | null = null;
+
+      for (const iface of targetDevice.configs[0].interfaces) {
+        if (iface.endpoints) {
+          for (const endpoint of iface.endpoints) {
+            console.log(`端点 ${endpoint.address.toString(16)}: 类型=${endpoint.type}, 方向=${endpoint.direction}`);
+
+            if (endpoint.direction === 0) { // 输出端点
+              outputEndpoint = endpoint;
+              outputInterface = iface;
+            } else if (endpoint.direction === 128) { // 输入端点
+              inputEndpoint = endpoint;
+              Communication.inputEndpoint = inputEndpoint
+              inputInterface = iface;
+              Communication.inputInterface = inputInterface
+            }
+          }
+        }
+      }
+
+      if (outputEndpoint && outputInterface && inputEndpoint && inputInterface) {
+        console.log('找到合适的端点，开始通信');
+        // 1. 首先发送0x61命令
+        await Communication.sendCommand(outputInterface, outputEndpoint, command);
+
+        // // 2. 然后读取响应数据
+        await Communication.readResponse(inputInterface, inputEndpoint);
+        console.log('+++++++++++++++++++++++++++++++++++++++++++=========================================')
+        while (Communication.isPhysicalKeyboardExist) {
+          await Communication.readResponse(Communication.inputInterface as usbManager.USBInterface,
+            Communication.inputEndpoint as usbManager.USBEndpoint);
+        }
+      } else {
+        console.log('未找到合适的端点');
+      }
+
+    } catch (error) {
+      console.error('获取设备信息失败:', error);
+    }
+  }
+
+  // 发送命令到输出端点
+  static async sendCommand(iface: usbManager.USBInterface, endpoint: usbManager.USBEndpoint, command: number) {
+    if (!Communication.devicePipe) {
+      return;
+    }
+
+    try {
+      const claimResult = usbManager.claimInterface(Communication.devicePipe, iface, true);
+      console.log('声明接口结果:', claimResult);
+      if (claimResult === 0) {
+        // 构建命令帧
+        const cmdData = Communication.buildCommandFrame(command);
+        const hexString = Array.from(cmdData).map(b => b.toString(16).padStart(2, '0')).join(' ');
+        console.log(`发送命令 0x${command.toString(16)}:`, hexString);
+
+        // 发送命令
+        const result = await usbManager.bulkTransfer(
+          Communication.devicePipe,
+          endpoint,
+          cmdData,
+          1000
+        );
+
+        console.log('发送命令成功————结果:', result);
+        usbManager.releaseInterface(Communication.devicePipe, iface);
+
+        return result;
+      }
+    } catch (error) {
+      console.error('发送命令失败:', error);
+    }
+    return -1;
+  }
+
+  // 从输入端点读取响应数据
+  static async readResponse(iface: usbManager.USBInterface, endpoint: usbManager.USBEndpoint) {
+    if (!Communication.devicePipe) {
+      return;
+    }
+
+    try {
+      const claimResult = usbManager.claimInterface(Communication.devicePipe, iface, true);
+      console.log('声明接口结果:', claimResult);
+
+      if (claimResult === 0) {
+        // 读取数据 - 使用足够大的缓冲区
+        const buffer = new Uint8Array(64);
+        const result = await usbManager.bulkTransfer(
+          Communication.devicePipe,
+          endpoint,
+          buffer,
+          5000
+        );
+
+        console.log('读取数据结果:', result);
+
+        if (result > 0) {
+          const hexData = Array.from(buffer.slice(0, result)).map(b => b.toString(16).padStart(2, '0')).join(' ');
+          console.log('接收到的数据:', hexData);
+
+          // 解析设备信息
+          Communication.parseDeviceInfo(buffer.slice(0, result));
+        } else {
+          console.log('未接收到数据');
+        }
+
+        usbManager.releaseInterface(Communication.devicePipe, iface);
+
+        return result;
+      }
+      else {
+        Communication.changPhysicalKeyboardExistState(false)
+        usbManager.releaseInterface(Communication.devicePipe, iface);
+
+      }
+    } catch (error) {
+      console.error('读取数据失败:', error);
+    }
+    return -1;
+  }
+  // 设备拔出变化
+  static changPhysicalKeyboardExistState(state:boolean){
+    Communication.isPhysicalKeyboardExist=state
+  }
+  // 解析设备信息
+  static parseDeviceInfo(data: Uint8Array) {
+    if (data.length < 21) {
+      console.log('数据长度不足，期望至少21字节，实际:', data.length);
+      return;
+    }
+
+    const hexData = Array.from(data).map(b => b.toString(16).padStart(2, '0')).join(' ');
+    console.log('解析设备数据:', hexData);
+
+    try {
+      // 检查帧头F
+      if (data[0] === 0x0C && data[1] === 0x4D) {
+        // console.log(data.toString())
+        const dataLength = data[2];
+        const command = data[3];
+
+        console.log(`响应帧: 长度=${dataLength}, 命令=0x${command.toString(16)}`);
+        // console.log(command.toString(),'=========================',command.toString(16))
+        if (command === 0x61) { // 设备信息响应
+          // 1. SN解析（协议：bytes4-5=前缀，bytes6-13=后缀）
+          const snPrefix = String.fromCharCode(data[4], data[5]);
+          const snSuffixBytes = data.slice(6, 14); // 6到13（含13）共8字节
+          const snSuffix = String.fromCharCode(...snSuffixBytes.filter(b => b !== 0));
+          Communication.deviceInfo.sn = snPrefix + snSuffix;
+
+          // 2. 状态字节（协议：byte14）
+          const statusByte = data[14];
+          Communication.deviceInfo.micStatus = !!(statusByte & 0x01);   // bit0=mic
+          Communication.deviceInfo.ledStatus = !!(statusByte & 0x02);    // bit1=LED
+          Communication.deviceInfo.sampleRate = !!(statusByte & 0x04);   // bit2=采样率
+
+          // 3. 光电类型（协议：byte15）
+          Communication.deviceInfo.icType = data[15];
+
+          // 4. DPI档位（协议：byte16）
+          Communication.deviceInfo.dpiLevel = data[16];
+
+          // 5. 产品型号（协议：byte17=低八位，byte20=高八位）
+          const productTypeLow = data[17];   // 低八位
+          const productTypeHigh = data[20];  // 高八位
+          Communication.deviceInfo.productType = (productTypeHigh << 8) | productTypeLow; // 高八位左移8位+低八位
+
+          // 6. 电量（协议：byte18）—— 核心修复点
+          Communication.deviceInfo.batteryLevel = data[18];
+
+          // 7. 固件版本（协议：byte19）—— 核心修复点
+          Communication.deviceInfo.firmwareVersion = data[19].toString(); // 若为字符串，也可直接String.fromCharCode(data[19])
+
+          console.log('设备信息解析成功:');
+          console.log('SN:', Communication.deviceInfo.sn);
+          console.log('麦克风状态:', Communication.deviceInfo.micStatus);
+          console.log('LED状态:', Communication.deviceInfo.ledStatus);
+          console.log('采样率:', Communication.deviceInfo.sampleRate);
+          console.log('光电类型:', Communication.deviceInfo.icType);
+          console.log('DPI档位:', Communication.deviceInfo.dpiLevel);
+          console.log('产品型号:', Communication.deviceInfo.productType);
+          console.log('电量:', Communication.deviceInfo.batteryLevel); // 现在对应协议的byte18
+          console.log('固件版本:', Communication.deviceInfo.firmwareVersion);
+
+          AppStorage.setOrCreate("mouseconfig", Communication.deviceInfo);
+        }
+        if (command === 0x69) {
+          // byte[19]: 电量
+          Communication.deviceInfo.batteryLevel = data[5];
+          if (data[7]) {
+            Communication.deviceInfo.atmosphereLight = true;
+          } else {
+            Communication.deviceInfo.ledStatus = false;
+          }
+          AppStorage.setOrCreate("mouseconfig", Communication.deviceInfo)
+          console.log('设备信息解析成功:');
+          console.log('SN:', Communication.deviceInfo.sn);
+          console.log('麦克风状态:', Communication.deviceInfo.micStatus);
+          console.log('LED状态:', Communication.deviceInfo.ledStatus);
+          console.log('采样率:', Communication.deviceInfo.sampleRate);
+          console.log('光电类型:', Communication.deviceInfo.icType);
+          console.log('DPI档位:', Communication.deviceInfo.dpiLevel);
+          console.log('产品型号:', Communication.deviceInfo.productType);
+          console.log('电量:', Communication.deviceInfo.batteryLevel);
+          console.log('固件版本:', Communication.deviceInfo.firmwareVersion);
+          AppStorage.setOrCreate("mouseconfig", Communication.deviceInfo)
+          // console.log(JSON.stringify(AppStorage.get('mouseconfig')),'===================================================================')
+        }
+        if (command===0x11) {
+
+        }
+        if (data[3] === 0x33) {
+          console.log('****************************语音键单击按下****************************')
+          AppStorage.setOrCreate('mouse_KeyPressType',KeyPressType.VOICE_CLICK)
+        }
+        if (data[3] === 0x40) {
+          console.log('****************************语音键双击按下****************************')
+          AppStorage.setOrCreate('mouse_KeyPressType',KeyPressType.VOICE_DOUBLE_CLICK)
+        }
+        if (data[3] === 0x37) {
+          console.log('****************************语音键长按按下****************************')
+          AppStorage.setOrCreate('mouse_KeyPressType',KeyPressType.VOICE_LONG_PRESS_DOWN)
+        }
+        if (data[3] === 0x38) {
+          console.log('****************************语音键长按抬起****************************')
+          AppStorage.setOrCreate('mouse_KeyPressType',KeyPressType.VOICE_LONG_PRESS_UP)
+        }
+
+        if (data[3] === 0x35) {
+          console.log('****************************搜索键单击按下****************************')
+          AppStorage.setOrCreate('mouse_KeyPressType',KeyPressType.SEARCH_CLICK)
+        }
+        if (data[3] === 0x41) {
+          console.log('****************************搜索键双击按下****************************')
+          AppStorage.setOrCreate('mouse_KeyPressType',KeyPressType.SEARCH_DOUBLE_CLICK)
+        }
+        if (data[3] === 0x31) {
+          console.log('****************************搜索键长按按下****************************')
+          AppStorage.setOrCreate('mouse_KeyPressType',KeyPressType.SEARCH_LONG_PRESS_DOWN)
+        }
+        if (data[3] === 0x32) {
+          console.log('****************************搜索键长按抬起****************************')
+          AppStorage.setOrCreate('mouse_KeyPressType',KeyPressType.SEARCH_LONG_PRESS_UP)
+        }
+
+        if (data[3] === 0x42) {
+          console.log('****************************翻译键单击按下****************************')
+          AppStorage.setOrCreate('mouse_KeyPressType',KeyPressType.CUSTOM_CLICK)
+        }
+        if (data[3] === 0x43) {
+          console.log('****************************翻译键双击按下****************************')
+          AppStorage.setOrCreate('mouse_KeyPressType',KeyPressType.CUSTOM_DOUBLE_CLICK)
+        }
+        if (data[3] === 0x44) {
+          console.log('****************************翻译键长按按下****************************')
+          AppStorage.setOrCreate('mouse_KeyPressType',KeyPressType.CUSTOM_LONG_PRESS_DOWN)
+        }
+        if (data[3] === 0x45) {
+          console.log('****************************翻译键长按抬起****************************')
+          AppStorage.setOrCreate('mouse_KeyPressType',KeyPressType.CUSTOM_LONG_PRESS_UP)
+        }
+
+        if (data[3] === 0x46) {
+          console.log('****************************自定义键——M键单击按下****************************')
+          AppStorage.setOrCreate('mouse_KeyPressType',KeyPressType.AI_CLICK)
+        }
+        if (data[3] === 0x47) {
+          console.log('****************************自定义键——M键双击按下****************************')
+          AppStorage.setOrCreate('mouse_KeyPressType',KeyPressType.AI_DOUBLE_CLICK)
+
+        }
+        if (data[3] === 0x48) {
+          console.log('****************************自定义键——M键长按按下****************************')
+          AppStorage.setOrCreate('mouse_KeyPressType',KeyPressType.AI_LONG_PRESS_DOWN)
+
+        }
+        if (data[3] === 0x49) {
+          console.log('****************************自定义键——M键长按抬起****************************')
+          AppStorage.setOrCreate('mouse_KeyPressType',KeyPressType.AI_LONG_PRESS_UP)
+        }
+
+        if (data[3] === 0x50) {
+          console.log('****************************AI键单击按下****************************')
+        }
+        if (data[3] === 0x51) {
+          console.log('****************************AI键双击按下****************************')
+        }
+        if (data[3] === 0x52) {
+          console.log('****************************AI键长按按下****************************')
+        }
+        if (data[3] === 0x53) {
+          console.log('****************************AI键长按抬起****************************')
+        }
+
+      } else {
+        console.log('无效的响应帧格式');
+      }
+      if (data[0] === 0x1b) {
+        console.log('****************************语音数据****************************')
+      }
+
+
+    } catch (error) {
+      console.error('解析设备信息错误:', error);
+    }
+  }
+}

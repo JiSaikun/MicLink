@@ -1,6 +1,6 @@
 {
   "module": {
-    "name": "hid_usb_test",
+    "name": "mouse_test",
     "type": "feature",
     "deviceTypes": [
       "tablet",

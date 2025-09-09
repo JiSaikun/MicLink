@@ -13,5 +13,6 @@
     "login": "file:../../features/login",
     "usb_hid": 'file:../../commons/usb_hid',
     "bluetooth": 'file:../../commons/bluetooth',
+    "mouse": 'file:../../commons/mouse',
   }
 }

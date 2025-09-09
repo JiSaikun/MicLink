@@ -73,24 +73,16 @@
       "srcPath": "./commons/utils",
     },
     {
-      "name": "hid_usb",
-      "srcPath": "./features/hid_usb",
-      "targets": [
-        {
-          "name": "default",
-          "applyToProducts": [
-            "default"
-          ]
-        }
-      ]
-    },
-    {
       "name": "bluetooth",
       "srcPath": "./commons/bluetooth",
     },
     {
       "name": "usb_hid",
       "srcPath": "./commons/usb_hid",
+    },
+    {
+      "name": "mouse",
+      "srcPath": "./commons/mouse",
     }
   ]
 }
