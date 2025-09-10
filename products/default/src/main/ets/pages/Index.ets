@@ -4,7 +4,6 @@ import { LeftBar, Topbar, Content } from 'common'
 import { inputDevice } from '@kit.InputKit';
 import { Communication, DeviceInfo, MouseICType } from 'mouse'
 
-
 PersistentStorage.persistProp("login", false)
 PersistentStorage.persistProp("mouseconfig", null)
 
@@ -16,6 +15,7 @@ struct Index {
   @Provide('pageInfo') pageInfo: NavPathStack = new NavPathStack() //页面跳转路由栈
   @State web: string =
     'https://asrai.miclink.net?sno=123&productCode=999999&config=configMiclink_B_1755079145452' //web组件链接
+
 
   aboutToAppear(): void {
     /*
@@ -64,38 +64,39 @@ struct Index {
      * 检查鼠标设备，并建立连接
      */
     Communication.connectDevice().then(() => {
-      Communication.getDeviceInfo()//获取鼠标初始信息
+      Communication.getDeviceInfo() //获取鼠标初始信息
     })
 
 
   }
 
   build() {
-    Column() {
-      Navigation(this.pageInfo) {
-        Row() {
-          LeftBar({ web: this.web })
-          Stack() {
-            Topbar()
-              .zIndex(100)
-            Content({ web: this.web })
+      Column() {
+        Navigation(this.pageInfo) {
+          Row() {
+            LeftBar({ web: this.web })
+            Stack() {
+              Topbar()
+                .zIndex(100)
+              Content({ web: this.web })
+            }
+            // .border({width:1})
+            .align(Alignment.TopStart)
+            .height('100%')
+            .layoutWeight(1)
           }
-          // .border({width:1})
-          .align(Alignment.TopStart)
+          // .backgroundColor(Color.Blue)
+          .width('100%')
           .height('100%')
-          .layoutWeight(1)
+          .onClick(() => {
+            // type Action = 'home'
+          })
         }
-        // .backgroundColor(Color.Blue)
-        .width('100%')
-        .height('100%')
-        .onClick(() => {
-          // type Action = 'home'
-        })
+        .hideToolBar(true)
+        .hideTitleBar(true)
+        .mode(NavigationMode.Stack)
       }
-      .hideToolBar(true)
-      .hideTitleBar(true)
-      .mode(NavigationMode.Stack)
-    }
+
 
   }
 }

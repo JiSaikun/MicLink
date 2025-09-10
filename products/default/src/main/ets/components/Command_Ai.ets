@@ -1,5 +1,11 @@
-import {PopViewUtils,LaunchLogin_pop,PopParams_1}from 'utils'
+import { PopViewUtils, LaunchLogin_pop, PopParams_1 } from 'utils'
 import CommonConstants from '../common/CommonConstants'
+import { CommonConstants_pop } from "config"
+import { App, SymbolGlyphModifier } from '@kit.ArkUI';
+/**
+ * AI指令本地存储
+ */
+PersistentStorage.persistProp("table_data", [])
 
 @Styles
 function flexGS() {
@@ -21,7 +27,7 @@ interface videoModel {
   title: string
 }
 
-interface tableDataModel {
+export interface tableDataModel {
   category: string, //指令类别
   voice: string, //语音指令
   execute: string, //执行目标
@@ -29,9 +35,10 @@ interface tableDataModel {
 
 @Component
 export default struct Command_Ai {
-  @State video_data: videoModel[] = [{
-    image: 'video_Command_Ai', title: '创建某某视频教学'
-  }, {
+  @State video_data: videoModel[] = [
+    {
+      image: 'video_Command_Ai', title: '创建某某视频教学'
+    }, {
     image: 'video_Command_Ai', title: '创建某某视频教学1'
   }, {
     image: 'video_Command_Ai', title: '创建某某视频教学2'
@@ -51,7 +58,7 @@ export default struct Command_Ai {
     image: 'video_Command_Ai', title: '创建某某视频教学'
   }
   ] //模拟数据
-  @State table_data: tableDataModel[] = [
+  @StorageLink('table_data') table_data: tableDataModel[] = [
     {
       category: '文件',
       voice: '自定义触发文字',
@@ -86,17 +93,21 @@ export default struct Command_Ai {
     execute: '目标路径',
   },
   ] //模拟数据
+  @Link isShow_CreateNewInstruction_pop: boolean
+  @Link isShow_EditInstruction_pop: boolean
+  @Link EditInstruction_pop_currIndex: number
 
-  aboutToAppear(): void {
-  }
   //弹窗函数
-  down(){
+  down() {
     PopViewUtils.closePopView()
   }
+
   // 修改后（使用箭头函数自动绑定 this）
   confirm = () => {
     // 确定回调
     PopViewUtils.closePopView();
+    this.table_data.splice(this.EditInstruction_pop_currIndex, 1)
+
   }
 
   build() {
@@ -126,6 +137,9 @@ export default struct Command_Ai {
         .borderRadius(8)
         .padding(12)
         .flexGS()
+        .onClick(() => {
+          this.isShow_CreateNewInstruction_pop = true
+        })
       }
       .width('100%')
       .height(40)
@@ -179,8 +193,8 @@ export default struct Command_Ai {
       .flexGS()
 
       List() {
-        ForEach(this.table_data, (item: tableDataModel) => {
-          ListItem(){
+        ForEach(this.table_data, (item: tableDataModel, index: number) => {
+          ListItem() {
             Flex({ alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center }) {
               Text(item.category)
                 .style1()
@@ -194,18 +208,25 @@ export default struct Command_Ai {
               Row() {
                 Text('编辑')
                   .fontColor(CommonConstants.COMMAND_SECOND_FONT_COLOR)
-                  .margin({right:10})
+                  .margin({ right: 10 })
                   .fontWeight(CommonConstants.COMMAND_ICON_DEFAULT_WEIGHT)
+                  .onClick(() => {
+                    // console.log('=================================::::', index)
+                    this.EditInstruction_pop_currIndex = index
+                    this.isShow_EditInstruction_pop = true
+                  })
                 Text('删除')
                   .fontWeight(CommonConstants.COMMAND_ICON_DEFAULT_WEIGHT)
                   .fontColor(CommonConstants.COMMAND_SECOND_FONT_COLOR)
-                  .onClick(()=>{
-                    const params_1:PopParams_1={
+                  .onClick(() => {
+                    this.EditInstruction_pop_currIndex = index
+                    const params_1: PopParams_1 = {
                       content: '确定要删除吗?',
                       down: this.down,
                       confirm: this.confirm
                     }
-                    PopViewUtils.showPopView<PopParams_1>(wrapBuilder(LaunchLogin_pop), params_1, { alignment: DialogAlignment.Center });
+                    PopViewUtils.showPopView<PopParams_1>(wrapBuilder(LaunchLogin_pop), params_1,
+                      { alignment: DialogAlignment.Center });
                   })
               }
               .height(40)
@@ -243,3 +264,4 @@ export default struct Command_Ai {
     .height('100%')
   }
 }
+
