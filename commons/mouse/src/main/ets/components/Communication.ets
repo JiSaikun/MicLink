@@ -282,7 +282,7 @@ export class Communication {
 
           await Communication.connectDevice()
           console.log('****************************************************************发送命令失败：重新发送0x61，获取设备信息')
-          await Communication.getDeviceInfo()
+          // await Communication.getDeviceInfo()
           console.log(`****************************************************************设备连接完成：重新发送断掉的命令:`,command)
           await Communication.getDeviceInfo(command)
         }
@@ -301,14 +301,14 @@ export class Communication {
         }, 1000)
         console.log('+++++++++++++++++++++++++++++++++++++++++++=========================================命令发送成功，并成功读取一次数据，开始执行循环读取',
           JSON.stringify(Communication.isPhysicalKeyboardExist))
-        if (command[0]===0x61){
+        // if (command[0]===0x61){
           while (Communication.isPhysicalKeyboardExist) {
             console.log('循环读取鼠标数据-----',JSON.stringify(Communication.inputInterface), JSON.stringify(Communication.inputEndpoint))
             usbManager.releaseInterface(Communication.devicePipe,Communication.inputInterface)
             await Communication.readResponse(Communication.inputInterface as usbManager.USBInterface,
               Communication.inputEndpoint as usbManager.USBEndpoint);
           }
-        }
+        // }
 
       } else {
         console.log('未找到合适的端点');
