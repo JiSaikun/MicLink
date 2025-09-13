@@ -32,7 +32,7 @@ export const AiModel_data:Ai_Model[]=[
 export const bottom_data:Ai_Model[]=[
   {
     img:'deviceSettings',title:'设备设置',select:'select_deviceSettings',
-    web:''
+    web:'DeviceSettings'
   },{
     img:'enterpriseCentre',title:'企业中心',select:'select_enterpriseCentre',
     web:'https://www.miclink.info/'

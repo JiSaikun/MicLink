@@ -1,11 +1,13 @@
 import { LeftBar, Topbar, Content } from 'common'
 // import {Hid}from "usb_hid"
 // import { BlueTooth_api } from "bluetooth"
+import { usbManager } from '@kit.BasicServicesKit';
 import { inputDevice } from '@kit.InputKit';
 import { Communication, DeviceInfo, MouseICType } from 'mouse'
 
 PersistentStorage.persistProp("login", false)
-PersistentStorage.persistProp("mouseconfig", null)
+
+// PersistentStorage.persistProp("mouseconfig", null)
 
 @Entry
 @Component
@@ -15,7 +17,6 @@ struct Index {
   @Provide('pageInfo') pageInfo: NavPathStack = new NavPathStack() //页面跳转路由栈
   @State web: string =
     'https://asrai.miclink.net?sno=123&productCode=999999&config=configMiclink_B_1755079145452' //web组件链接
-
 
   aboutToAppear(): void {
     /*
@@ -30,6 +31,7 @@ struct Index {
           if (type == inputDevice.KeyboardType.ALPHABETIC_KEYBOARD && data.type == 'add') {
             // 监听物理键盘已连接。
             isPhysicalKeyboardExist = true;
+            Communication.connectDevice()
             Communication.changPhysicalKeyboardExistState(isPhysicalKeyboardExist)
             /**
              * 检查鼠标设备，并建立连接
@@ -53,50 +55,65 @@ struct Index {
   onPageShow(): void {
     // BlueTooth_api.init_bluetoothState()
     // Hid.Hid_add()
-
+    try {
+      /**
+       * 检查鼠标设备，并建立连接
+       */
+      Communication.connectDevice().then(() => {
+        setTimeout(()=>{
+          Communication.getDeviceInfo() //获取鼠标初始信息
+        },2000)
+      })
+    } catch (e) {
+      console.log(e)
+    }
     this.pageInfo.disableAnimation(true)
     // console.log(JSON.stringify(this.login))
     if (!this.login) {
       this.pageInfo.pushPath({ 'name': 'login' })
     } else {
     }
-    /**
-     * 检查鼠标设备，并建立连接
-     */
-    Communication.connectDevice().then(() => {
-      Communication.getDeviceInfo() //获取鼠标初始信息
-    })
 
 
   }
-
+  aboutToDisappear(): void {
+    console.log('应用关闭======================================')
+    console.log(JSON.stringify(Communication.devicePipe))
+    Communication.changPhysicalKeyboardExistState(false)
+  }
   build() {
-      Column() {
-        Navigation(this.pageInfo) {
-          Row() {
+    Column() {
+      Navigation(this.pageInfo) {
+        Flex() {
+          Column() {
             LeftBar({ web: this.web })
-            Stack() {
-              Topbar()
-                .zIndex(100)
-              Content({ web: this.web })
-            }
-            // .border({width:1})
-            .align(Alignment.TopStart)
-            .height('100%')
-            .layoutWeight(1)
           }
-          // .backgroundColor(Color.Blue)
-          .width('100%')
-          .height('100%')
-          .onClick(() => {
-            // type Action = 'home'
-          })
-        }
-        .hideToolBar(true)
-        .hideTitleBar(true)
-        .mode(NavigationMode.Stack)
-      }
+          .flexGrow(1)
+          .flexShrink(1)
 
+          Stack() {
+            Topbar()
+              .zIndex(100)
+            Content({ web: this.web })
+          }
+          .flexGrow(1)
+          .flexShrink(1)
+          // .border({width:1})
+          .align(Alignment.TopStart)
+          .height('100%')
+          .layoutWeight(1)
+        }
+        // .backgroundColor(Color.Blue)
+        .width('100%')
+        .height('100%')
+        .onClick(() => {
+          // type Action = 'home'
+        })
+      }
+      .hideToolBar(true)
+      .hideTitleBar(true)
+      .mode(NavigationMode.Stack)
+    }
 
   }
 }

@@ -1,7 +1,9 @@
 import { LeftBar, Topbar, Content, paramModel } from 'common'
 import Content_Ai from '../components/Command_Ai'
+import {DeviceSettings} from '../components/DeviceSettings'
 import {CreateNewInstruction_pop}from '../components/CreateNewInstruction_pop'
-PersistentStorage.persistProp("login", false)
+
+// PersistentStorage.persistProp("login", false)
 
 @Builder
 function IndexPageBuilder() {
@@ -53,11 +55,11 @@ struct IndexPage {
                 if (this.web) {
                   if (this.web === 'Command_Ai') {
                     Content_Ai({isShow_CreateNewInstruction_pop:this.isShow_CreateNewInstruction_pop,isShow_EditInstruction_pop:this.isShow_EditInstruction_pop,EditInstruction_pop_currIndex:this.EditInstruction_pop_currIndex}) //AI--指令
-                  } else if (this.web === '') {
+                  } else if (this.web === 'DeviceSettings') {
                     /*
                       设备设置
                      */
-
+                    DeviceSettings()
                   } else {
                     Content({ web: this.web })
                   }
@@ -71,8 +73,9 @@ struct IndexPage {
             // .backgroundColor(Color.Blue)
             .width('100%')
             .height('100%')
-            CreateNewInstruction_pop({isShow_CreateNewInstruction_pop:this.isShow_CreateNewInstruction_pop,isShow_EditInstruction_pop:this.isShow_EditInstruction_pop})
-              .visibility(this.isShow_CreateNewInstruction_pop?Visibility.Visible:Visibility.None)
+            if (this.isShow_CreateNewInstruction_pop){
+              CreateNewInstruction_pop({isShow_CreateNewInstruction_pop:this.isShow_CreateNewInstruction_pop,isShow_EditInstruction_pop:this.isShow_EditInstruction_pop})
+            }
             if (this.isShow_EditInstruction_pop){
               CreateNewInstruction_pop({isShow_CreateNewInstruction_pop:this.isShow_CreateNewInstruction_pop,isShow_EditInstruction_pop:this.isShow_EditInstruction_pop,isParam:true,currIndexParam:this.EditInstruction_pop_currIndex})
             }

@@ -15,8 +15,8 @@ export struct CreateNewInstruction_pop {
   @Link isShow_CreateNewInstruction_pop: boolean //创建指令弹窗
   @Link isShow_EditInstruction_pop:boolean //编辑指令弹窗
   @StorageLink('table_data') table_data:tableDataModel[]=[]
-  @Prop isParam:boolean=false
-  @Prop currIndexParam:number
+  @Prop isParam:boolean=false//判断是否是编辑弹窗
+  @Prop currIndexParam:number//编辑弹窗时，展示编辑前信息元素
   @State currtableDataModel_data:tableDataModel={
     category: '文件', //指令类别
     voice: '', //语音指令
@@ -75,7 +75,7 @@ export struct CreateNewInstruction_pop {
               })
               .fontColor(CommonConstants.COMMAND_DEFAULT_FONT_COLOR)
               .borderRadius(4)
-              .border({ width: 1, color: '#eaeaEa' })
+              .border({ width: 1, color: $r('app.string.DEFAULT_BORDER_COLOR') })
               .backgroundColor(Color.White)
               .onSelect((index, value) => {
                 console.log(index.toString(), value)

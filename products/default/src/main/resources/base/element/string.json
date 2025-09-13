@@ -27,6 +27,14 @@
     {
       "name": "ACCESS_DDK_HID",
       "value": "USB HID DDK"
+    },
+    {
+      "name": "DEFAULT_FONT_COLOR",
+      "value": "#31373d"
+    },
+    {
+      "name": "DEFAULT_BORDER_COLOR",
+      "value": "#eaeaEa"
     }
   ]
 }
