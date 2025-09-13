@@ -5,10 +5,31 @@ import { ConfigPage3 } from './ConfigPage3'
 
 @Component
 export struct DevicesConfig {
-  @Link isShowConfig: boolean
+  @Link isShowConfig: boolean//控制显隐状态
   @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null //鼠标信息
   @State currIndex: number = 0
   @State configsList: string[] = ['智能设置', '按键设置', '设备设置']
+  @State reportRate_currIndex: number = 0
+  @State DPI_currIndex: number = 0
+  @State currLED: boolean = true
+  onDidBuild(): void {
+    switch (this.mouseconfig?.reportRate){
+      case 125:
+        this.reportRate_currIndex=0
+        break
+      case 250:
+        this.reportRate_currIndex=1
+        break
+      case 500:
+        this.reportRate_currIndex=2
+        break
+      case 1000:
+        this.reportRate_currIndex=3
+        break
+    }
+    this.DPI_currIndex=this.mouseconfig?.dpiLevel as number
+    this.currLED=this.mouseconfig?.atmosphereLight as boolean
+  }
 
   build() {
     Flex() {
@@ -129,7 +150,7 @@ export struct DevicesConfig {
             ConfigPage2()
               .visibility(this.currIndex === 1 ? Visibility.Visible : Visibility.None)
             if (this.currIndex === 2)
-            ConfigPage3({currportRate:Communication.deviceInfo.reportRate,currLED:this.mouseconfig?.atmosphereLight})
+            ConfigPage3({currportRate:this.reportRate_currIndex,DPI_currIndex:this.DPI_currIndex,currLED:this.mouseconfig?.atmosphereLight})
           }
           .alignItems(HorizontalAlign.Start)
           .width('100%')
