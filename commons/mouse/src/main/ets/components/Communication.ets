@@ -228,7 +228,11 @@ export class Communication {
       console.log('设备未连接------------------------');
       return;
     }
-
+    // 释放接口
+    if (Communication.devicePipe&&Communication.inputInterface) {
+      let a= usbManager.releaseInterface(Communication.devicePipe, Communication.inputInterface);
+      console.log('hjdashdjiashuuahs',a)
+    }
     console.log('开始获取设备信息');
     try {
       const devices = usbManager.getDevices();
@@ -273,7 +277,6 @@ export class Communication {
         console.log('================================', a)
         // 释放接口
         usbManager.releaseInterface(Communication.devicePipe, outputInterface);
-        usbManager.releaseInterface(Communication.devicePipe, Communication.inputInterface);
         if (a === -1) {
           console.log('****************************************************************发送命令失败：断开设备连接')
           usbManager.closePipe(Communication.devicePipe)
@@ -281,7 +284,7 @@ export class Communication {
           console.log('****************************************************************发送命令失败：重新连接设备')
 
           await Communication.connectDevice()
-          console.log('****************************************************************发送命令失败：重新发送0x61，获取设备信息')
+          // console.log('****************************************************************发送命令失败：重新发送0x61，获取设备信息')
           // await Communication.getDeviceInfo()
           console.log(`****************************************************************设备连接完成：重新发送断掉的命令:`,command)
           await Communication.getDeviceInfo(command)
@@ -384,10 +387,12 @@ export class Communication {
     if (!Communication.devicePipe) {
       return;
     }
-    usbManager.releaseInterface(Communication.devicePipe, iface);
+    let a= usbManager.releaseInterface(Communication.devicePipe, iface);
+    console.log('***************************************************************************确保读取前关闭之前开辟的读取信息端口：',a)
     try {
       const claimResult = usbManager.claimInterface(Communication.devicePipe, iface, true);
       console.log('声明接口结果:', claimResult);
+      console.log('***************************************************************************创建通信接口：',claimResult)
       if (claimResult === 0) {
         // 读取数据 - 使用足够大的缓冲区
         const buffer = new Uint8Array(64);
@@ -398,11 +403,11 @@ export class Communication {
           5000
         );
 
-        console.log('读取数据结果:', result);
+        console.log('读取数据结果,读取到的数据的长度:', result);
 
         if (result > 0) {
           const hexData = Array.from(buffer.slice(0, result)).map(b => b.toString(16).padStart(2, '0')).join(' ');
-          console.log('接收到的数据:', hexData);
+          console.log('接收到的数据展示:', hexData);
 
           // 解析设备信息
           Communication.parseDeviceInfo(buffer.slice(0, result));
@@ -426,6 +431,7 @@ export class Communication {
       } else {
         // Communication.changPhysicalKeyboardExistState(false)
         // usbManager.releaseInterface(Communication.devicePipe, iface);
+        console.log('***************************************************************************创建通信接口失败：',claimResult)
       }
     } catch (error) {
       console.error('读取数据失败:', error);
