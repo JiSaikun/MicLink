@@ -1,9 +1,9 @@
 import { LeftBar, Topbar, Content } from 'common'
 // import {Hid}from "usb_hid"
 // import { BlueTooth_api } from "bluetooth"
-import { usbManager } from '@kit.BasicServicesKit';
 import { inputDevice } from '@kit.InputKit';
-import { Communication, DeviceInfo, MouseICType } from 'mouse'
+import { Communication, DeviceInfo, MouseICType,KeyPressType ,AudioFileManager} from 'mouse'
+import common from '@ohos.app.ability.common';
 
 PersistentStorage.persistProp("login", false)
 
@@ -14,11 +14,25 @@ PersistentStorage.persistProp("login", false)
 struct Index {
   @StorageLink("login") login: boolean = true //登录状态
   @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null //鼠标信息
+  @Watch('a') @StorageLink("mouse_KeyPressType") mouse_KeyPressType: KeyPressType =
+    KeyPressType.VOICE_CLICK //鼠标按键事件监听
   @Provide('pageInfo') pageInfo: NavPathStack = new NavPathStack() //页面跳转路由栈
   @State web: string =
     'https://asrai.miclink.net?sno=123&productCode=999999&config=configMiclink_B_1755079145452' //web组件链接
 
+  a() {
+    console.log('99999999999999999999999999999999999999999',this.mouse_KeyPressType)
+    if (this.mouse_KeyPressType===54) {
+      const context = getContext(this) as common.UIAbilityContext;
+      let a:AudioFileManager=new AudioFileManager(Communication.PCM_RAW,Communication.audioData,context)
+      console.log(Communication.audioData.length.toString(),'999999999999999999999999')
+
+    }
+  }
+
   aboutToAppear(): void {
+    const context = getContext(this) as common.UIAbilityContext;
+
     /*
     热插拔:检测鼠标的插入与拔出
     */
@@ -60,9 +74,9 @@ struct Index {
        * 检查鼠标设备，并建立连接
        */
       Communication.connectDevice().then(() => {
-        setTimeout(()=>{
+        setTimeout(() => {
           Communication.getDeviceInfo() //获取鼠标初始信息
-        },2000)
+        }, 2000)
       })
     } catch (e) {
       console.log(e)
@@ -76,11 +90,13 @@ struct Index {
 
 
   }
+
   aboutToDisappear(): void {
     console.log('应用关闭======================================')
     console.log(JSON.stringify(Communication.devicePipe))
     Communication.changPhysicalKeyboardExistState(false)
   }
+
   build() {
     Column() {
       Navigation(this.pageInfo) {

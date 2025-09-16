@@ -1,7 +1,6 @@
 import { usbManager } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { SmartMouseAudioProcessor } from './SmartMouseAudioProcessor'
-import { fileIo as fs } from '@kit.CoreFileKit';
 
 // 按键类型枚举
 export enum KeyPressType {
@@ -274,6 +273,8 @@ export class Communication {
       if (command !== Communication.sendDataList[0]) {
         Communication.sendDataList = Communication.sendDataList.filter(item => item[0] !== command[0]);
         Communication.sendDataList.push(command);
+        console.log(']]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]',
+          JSON.stringify(Communication.sendDataList))
       }
       setTimeout(() => {
         Communication.getDeviceInfo(command)
@@ -285,6 +286,7 @@ export class Communication {
       console.log('前面消息命令还没发送完：排队------------------------');
       Communication.sendDataList = Communication.sendDataList.filter(item => item[0] !== command[0]);
       Communication.sendDataList.push(command);
+      console.log('[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[', JSON.stringify(Communication.sendDataList))
       command = Communication.sendDataList[0]
     }
     if (Communication.readState && command[0] !== 0x61) {
@@ -756,35 +758,37 @@ export class Communication {
 
         if (data[3] === 0x46) {
           console.log('****************************自定义键——M键单击按下****************************')
-          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_CLICK)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM_CLICK)
         }
         if (data[3] === 0x47) {
           console.log('****************************自定义键——M键双击按下****************************')
-          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_DOUBLE_CLICK)
-
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM_DOUBLE_CLICK)
         }
         if (data[3] === 0x48) {
           console.log('****************************自定义键——M键长按按下****************************')
-          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_LONG_PRESS_DOWN)
-
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM_LONG_PRESS_DOWN)
         }
         if (data[3] === 0x49) {
           console.log('****************************自定义键——M键长按抬起****************************')
-          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_LONG_PRESS_UP)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM_LONG_PRESS_UP)
         }
 
         if (data[3] === 0x50) {
           console.log('****************************AI键单击按下****************************')
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_CLICK)
         }
         if (data[3] === 0x51) {
           console.log('****************************AI键双击按下****************************')
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_DOUBLE_CLICK)
         }
         if (data[3] === 0x52) {
           console.log('****************************AI键长按按下****************************')
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_LONG_PRESS_DOWN)
           Communication.audioData = []
         }
         if (data[3] === 0x53) {
           console.log('****************************AI键长按抬起****************************')
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_LONG_PRESS_UP)
           console.log(Communication.audioData.length.toString(), '0000000000000000000000000000000000000000000000')
         }
 
@@ -799,6 +803,7 @@ export class Communication {
   }
 
   static audioData: Int16Array[] = []
+  static PCM_RAW: Uint8Array[] = []
 
   // 处理音频数据
   static processAudioData(data: Uint8Array) {
@@ -808,7 +813,8 @@ export class Communication {
 
       // 解密音频数据
       const decryptedData = Communication.audioProcessor.miclinkDecrypt(audioFrame);
-
+        // 这里可以添加播放或保存PCM数据的逻辑
+        Communication.PCM_RAW.push(decryptedData)
       // 解码为PCM
       const pcmData = Communication.audioProcessor.processVoiceData(decryptedData);
 

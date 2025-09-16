@@ -1,2 +1,3 @@
-export { Communication,DeviceInfo,MouseICType } from './src/main/ets/components/Communication';
+export { Communication,DeviceInfo,MouseICType,KeyPressType } from './src/main/ets/components/Communication';
 export { SmartMouseAudioProcessor } from './src/main/ets/components/SmartMouseAudioProcessor';
+export { AudioFileManager } from './src/main/ets/components/AudioFileManager';

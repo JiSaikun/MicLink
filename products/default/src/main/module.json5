@@ -3,7 +3,7 @@
     "name": "default",
     "type": "entry",
     "description": "$string:module_desc",
-    'routerMap': '$profile:route_map',
+    "routerMap": "$profile:route_map",
     "mainElement": "EntryAbility",
     "deviceTypes": [
       "tablet",
@@ -11,21 +11,37 @@
     ],
     "requestPermissions": [
       {
-        "name": 'ohos.permission.INTERNET',
-        'reason': '$string:INTERNET'
+        "name": "ohos.permission.INTERNET",
+        "reason": "$string:INTERNET"
       },
       {
-        "name": 'ohos.permission.ACCESS_EXTENSIONAL_DEVICE_DRIVER',
-        'reason': '$string:ACCESS_EXTENSIONAL_DEVICE_DRIVER'
+        "name": "ohos.permission.ACCESS_EXTENSIONAL_DEVICE_DRIVER",
+        "reason": "$string:ACCESS_EXTENSIONAL_DEVICE_DRIVER"
       },
       {
-        "name": 'ohos.permission.INPUT_KEYBOARD_CONTROLLER',
-        'reason': '$string:INPUT_KEYBOARD_CONTROLLER'
+        "name": "ohos.permission.INPUT_KEYBOARD_CONTROLLER",
+        "reason": "$string:INPUT_KEYBOARD_CONTROLLER"
       },
       {
-        "name": 'ohos.permission.ACCESS_DDK_HID',
-        'reason': '$string:ACCESS_DDK_HID'
+        "name": "ohos.permission.ACCESS_DDK_HID",
+        "reason": "$string:ACCESS_DDK_HID"
       },
+      {
+        "name": "ohos.permission.READ_MEDIA",
+        "reason": "$string:read_media_reason",
+        "usedScene": {
+          "abilities": ["EntryAbility"],
+          "when": "inuse"
+        }
+      },
+      {
+        "name": "ohos.permission.WRITE_MEDIA",
+        "reason": "$string:write_media_reason",
+        "usedScene": {
+          "abilities": ["EntryAbility"],
+          "when": "inuse"
+        }
+      }
     ],
     "deliveryWithInstall": true,
     "installationFree": false,
