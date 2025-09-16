@@ -2,6 +2,7 @@ import { usbManager } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { SmartMouseAudioProcessor } from './SmartMouseAudioProcessor'
 import { fileIo as fs } from '@kit.CoreFileKit';
+
 // 按键类型枚举
 export enum KeyPressType {
   VOICE_CLICK = 11, //语音键-单击
@@ -98,9 +99,12 @@ export class Communication {
   // 查找输出端点（方向=128）用于接收数据
   static outputEndpoint: usbManager.USBEndpoint | null = null;
   static outputInterface: usbManager.USBInterface | null = null;
-  static sendState: boolean = true //标记现在是否正在接收消息
+  static readState: boolean = false //标记现在是否正在接收消息
+  static sendState: boolean = false //标记现在是否正在发送消息
+  static sendDataList: number[][] = [] //排队发送的数据
   static audioProcessor: SmartMouseAudioProcessor = new SmartMouseAudioProcessor();
-  static audioDataBuffer: Uint8Array = new Uint8Array(0);
+
+  // static audioDataBuffer: Uint8Array = new Uint8Array(0);
 
   // 构建0x61命令帧：0c4d04614c00000000000000000000000000000000
   static buildGetInfoCommand(length: number = 33): Uint8Array {
@@ -264,14 +268,32 @@ export class Communication {
       console.log('设备未连接------------------------');
       return;
     }
-    Communication.isPhysicalKeyboardExist = false
-    if (!Communication.sendState && command[0] !== 0x61) {
-      console.log('有消息正在发送中------------------------');
+    if (Communication.readState && command[0] !== 0x61) {
+      console.log('有消息正在接收中------------------------');
       setTimeout(() => {
         Communication.getDeviceInfo(command)
       }, 5000)
       return
     }
+    Communication.isPhysicalKeyboardExist = false
+    if (Communication.sendState) {
+      console.log('有消息正在发送中------------------------');
+      Communication.sendDataList = Communication.sendDataList.filter(item => item[0] !== command[0]);
+      Communication.sendDataList.push(command);
+      setTimeout(() => {
+        Communication.getDeviceInfo(command)
+      }, 2000)
+      return
+    }
+
+    if (Communication.sendDataList.length && command !== Communication.sendDataList[0]) {
+      console.log('前面消息命令还没发送完：排队------------------------');
+      Communication.sendDataList = Communication.sendDataList.filter(item => item[0] !== command[0]);
+      Communication.sendDataList.push(command);
+      command = Communication.sendDataList[0]
+    }
+
+
     // 释放接口
     if (Communication.devicePipe && Communication.inputInterface) {
       let a = usbManager.releaseInterface(Communication.devicePipe, Communication.inputInterface);
@@ -305,7 +327,15 @@ export class Communication {
           // await Communication.getDeviceInfo()
           console.log(`****************************************************************设备连接完成：重新发送断掉的命令:0x`,
             command[0].toString(16))
-          await Communication.getDeviceInfo(command)
+          Communication.getDeviceInfo(command)
+          return
+        }
+        Communication.sendDataList.splice(0, 1);
+        if (Communication.sendDataList.length) {
+          setTimeout(() => {
+            Communication.getDeviceInfo(Communication.sendDataList[0])
+          }, 1000)
+          return
         }
         Communication.isPhysicalKeyboardExist = true
         // 2. 然后读取响应数据
@@ -334,7 +364,7 @@ export class Communication {
         //   usbManager.releaseInterface(Communication.devicePipe, Communication.inputInterface)
         //   let a = await Communication.readResponse(Communication.inputInterface as usbManager.USBInterface,
         //     Communication.inputEndpoint as usbManager.USBEndpoint);
-        //   // Communication.sendState = true
+        //   // Communication.readState = false
         //   if (a === -1) {
         //     let a = await Communication.readResponse(Communication.inputInterface as usbManager.USBInterface,
         //       Communication.inputEndpoint as usbManager.USBEndpoint);
@@ -363,6 +393,7 @@ export class Communication {
   // 发送命令到输出端点
   static async sendCommand(iface: usbManager.USBInterface, endpoint: usbManager.USBEndpoint,
     command: number[], length: number = 33) {
+    Communication.sendState = true
     hilog.warn(0x00, 'send',
       '*******************************************************************************向鼠标发送消息')
     if (!Communication.devicePipe) {
@@ -414,6 +445,7 @@ export class Communication {
         console.log('发送命令成功:21-----usbManager.bulkTransfer()返回发送的数据的长度:', result_21);
         let b = usbManager.releaseInterface(Communication.devicePipe, iface);
         console.log('发送命令完毕-----移除通信接口:', b);
+        Communication.sendState = false
         if (result !== -1) {
           return result;
         } else if (result_21 !== -1) {
@@ -438,7 +470,7 @@ export class Communication {
     if (!Communication.devicePipe) {
       return;
     }
-    Communication.sendState = false
+    Communication.readState = true
     let a = usbManager.releaseInterface(Communication.devicePipe, iface);
     console.log('***************************************************************************确保读取前关闭之前开辟的读取信息端口：',
       a)
@@ -471,7 +503,7 @@ export class Communication {
         }
 
         usbManager.releaseInterface(Communication.devicePipe, iface);
-        Communication.sendState = true
+        Communication.readState = false
         return result;
       } else {
         // Communication.changPhysicalKeyboardExistState(false)
@@ -490,7 +522,6 @@ export class Communication {
     if (!Communication.devicePipe || !Communication.inputInterface || !Communication.inputEndpoint) {
       return;
     }
-
     // 使用异步循环持续读取数据
     (async () => {
       let c = 0
@@ -512,7 +543,7 @@ export class Communication {
               await Communication.getDeviceInfo()
               await Communication.readResponse(Communication.inputInterface as usbManager.USBInterface,
                 Communication.inputEndpoint as usbManager.USBEndpoint);
-              break
+              return
             }
           }
         } catch (error) {
@@ -749,11 +780,11 @@ export class Communication {
         }
         if (data[3] === 0x52) {
           console.log('****************************AI键长按按下****************************')
-          Communication.audioData=[]
+          Communication.audioData = []
         }
         if (data[3] === 0x53) {
           console.log('****************************AI键长按抬起****************************')
-          console.log(Communication.audioData.length.toString(),'0000000000000000000000000000000000000000000000')
+          console.log(Communication.audioData.length.toString(), '0000000000000000000000000000000000000000000000')
         }
 
       } else {
