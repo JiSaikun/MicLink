@@ -268,21 +268,16 @@ export class Communication {
       console.log('设备未连接------------------------');
       return;
     }
-    if (Communication.readState && command[0] !== 0x61) {
-      console.log('有消息正在接收中------------------------');
-      setTimeout(() => {
-        Communication.getDeviceInfo(command)
-      }, 5000)
-      return
-    }
     Communication.isPhysicalKeyboardExist = false
     if (Communication.sendState) {
-      console.log('有消息正在发送中------------------------');
-      Communication.sendDataList = Communication.sendDataList.filter(item => item[0] !== command[0]);
-      Communication.sendDataList.push(command);
+      console.log('有消息正在发送------------------------');
+      if (command !== Communication.sendDataList[0]) {
+        Communication.sendDataList = Communication.sendDataList.filter(item => item[0] !== command[0]);
+        Communication.sendDataList.push(command);
+      }
       setTimeout(() => {
         Communication.getDeviceInfo(command)
-      }, 2000)
+      }, 1000)
       return
     }
 
@@ -292,8 +287,13 @@ export class Communication {
       Communication.sendDataList.push(command);
       command = Communication.sendDataList[0]
     }
-
-
+    if (Communication.readState && command[0] !== 0x61) {
+      // console.log('有消息正在接收中------------------------');
+      setTimeout(() => {
+        Communication.getDeviceInfo(command)
+      }, 1000)
+      return
+    }
     // 释放接口
     if (Communication.devicePipe && Communication.inputInterface) {
       let a = usbManager.releaseInterface(Communication.devicePipe, Communication.inputInterface);
@@ -330,6 +330,7 @@ export class Communication {
           Communication.getDeviceInfo(command)
           return
         }
+
         Communication.sendDataList.splice(0, 1);
         if (Communication.sendDataList.length) {
           setTimeout(() => {

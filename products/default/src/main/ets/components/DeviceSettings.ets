@@ -185,19 +185,21 @@ export struct DeviceSettings {
       /**
        * 设备详情配置
        */
-      Row(){
-        DevicesConfig({isShowConfig:this.isShowConfig})
+      if (this.isShowConfig){
+        Row(){
+          DevicesConfig({isShowConfig:this.isShowConfig})
+        }
+        .width('100%')
+        .height('100%')
+        .padding({
+          left: 24,
+          top: 90,
+          right: 24,
+          bottom: 24
+        })
+        .backgroundColor('#fff')
       }
-      .width('100%')
-      .height('100%')
-      .padding({
-        left: 24,
-        top: 90,
-        right: 24,
-        bottom: 24
-      })
-      .backgroundColor('#fff')
-      .visibility(this.isShowConfig?Visibility.Visible:Visibility.None)
+      // .visibility(this.isShowConfig?Visibility.Visible:Visibility.None)
     }
 
 
