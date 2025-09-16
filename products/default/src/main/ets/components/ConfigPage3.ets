@@ -3,6 +3,7 @@ import { LengthMetrics } from '@kit.ArkUI'
 import { config } from 'config'
 
 PersistentStorage.persistProp("lowPowerAlertEnabled", true)
+
 /**
  * 设备设置
  */
@@ -11,107 +12,123 @@ export struct ConfigPage3 {
   @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null //鼠标信息
   @StorageLink("lowPowerAlertEnabled") lowPowerAlertEnabled: boolean = true //是否开启低电量提醒
   @State reportRate: SelectOption[] = [{ value: '125' }, { value: '250' }, { value: '500' }, { value: '1000' }]
-  @State DPI:SelectOption[]=[{ value: '1000' }, { value: '1200' }, { value: '1600' }, { value: '2400' }, { value: '4000' }, { value: '4800' }, { value: '6000' }]
+  @State DPI: SelectOption[] =
+    [{ value: '1000' }, { value: '1200' }, { value: '1600' }, { value: '2400' }, { value: '4000' }, { value: '4800' },
+      { value: '6000' }]
   @Prop currportRate: number
-  @Watch('change_LEDstate')@State currLED: boolean = true
+  @Watch('change_LEDstate') @State currLED: boolean = true
   @Watch('change_reportRate') @State reportRate_currIndex: number = 0
-  @Watch('change_DPI')@State DPI_currIndex: number = 0
+  @Watch('change_DPI') @State DPI_currIndex: number = 0
+
   onDidBuild(): void {
-    switch (this.mouseconfig?.icType){
+    switch (this.mouseconfig?.icType) {
       case MouseICType.MouseICTypeLS8650:
       case MouseICType.MouseICTypePAW3205:
       case MouseICType.MouseICTypeFCT3065:
-      case MouseICType.MouseICTypeFCT3065XY:
-        {
-          this.DPI = [{ value: '800' }, { value: '1000' }, { value: '1300' }, { value: '1600' }];
-        }
+      case MouseICType.MouseICTypeFCT3065XY: {
+        this.DPI = [{ value: '800' }, { value: '1000' }, { value: '1300' }, { value: '1600' }];
+      }
         break;
-      case MouseICType.MouseICTypePAW3212:
-        {
-          this.DPI = [{ value: '1000' }, { value: '1200' }, { value: '1600' }, { value: '2400' }];
-        }
+      case MouseICType.MouseICTypePAW3212: {
+        this.DPI = [{ value: '1000' }, { value: '1200' }, { value: '1600' }, { value: '2400' }];
+      }
         break;
       case MouseICType.MouseICTypeFCT3065_X:
       case MouseICType.MouseICTypeLS8650_X:
       case MouseICType.MouseICTypePAW3205_X:
       case MouseICType.MouseICTypeFCT3065XY_X:
       case MouseICType.MouseICTypePAW3212_X:
-      case MouseICType.MouseICTypeFCT3065XY_X2:
-        {
-          this.DPI = [{ value: '1000' }, { value: '1200' }, { value: '1600' }, { value: '2400' }, { value: '4000' }];
-        }
+      case MouseICType.MouseICTypeFCT3065XY_X2: {
+        this.DPI = [{ value: '1000' }, { value: '1200' }, { value: '1600' }, { value: '2400' }, { value: '4000' }];
+      }
         break;
-      case MouseICType.MouseICTypePAW3212_X_A4Tech:
-        {
-          this.DPI = [{ value: '1200' }, { value: '1600' }, { value: '1800' }, { value: '2000' }, { value: '2400' }, { value: '4000' }];
-        }
+      case MouseICType.MouseICTypePAW3212_X_A4Tech: {
+        this.DPI = [{ value: '1200' }, { value: '1600' }, { value: '1800' }, { value: '2000' }, { value: '2400' },
+          { value: '4000' }];
+      }
         break;
-      case MouseICType.MouseICTypePAW3220:
-        {
-          this.DPI = [{ value: '1000' }, { value: '1200' }, { value: '1600' }, { value: '2400' }, { value: '4000' }, { value: '4800' }];
-        }
+      case MouseICType.MouseICTypePAW3220: {
+        this.DPI = [{ value: '1000' }, { value: '1200' }, { value: '1600' }, { value: '2400' }, { value: '4000' },
+          { value: '4800' }];
+      }
         break;
-      case MouseICType.MouseICTypePAW3220_X:
-        {
-          this.DPI = [{ value: '1000' }, { value: '1200' }, { value: '1600' }, { value: '2400' }, { value: '4000' }, { value: '4800' }, { value: '6000' }];
-        }
+      case MouseICType.MouseICTypePAW3220_X: {
+        this.DPI = [{ value: '1000' }, { value: '1200' }, { value: '1600' }, { value: '2400' }, { value: '4000' },
+          { value: '4800' }, { value: '6000' }];
+      }
         break;
-      case MouseICType.MouseICTypeKA8G2:
-        {
-          this.DPI = [{ value: '1000' }, { value: '2400' }, { value: '4000' }];
-        }
+      case MouseICType.MouseICTypeKA8G2: {
+        this.DPI = [{ value: '1000' }, { value: '2400' }, { value: '4000' }];
+      }
         break;
-      case MouseICType.MouseICTypeKA8G2_inphic:
-        {
-          this.DPI = [{ value: '800' }, { value: '1200' }, { value: '1600' }, { value: '2000' }, { value: '2400' }];
-        }
+      case MouseICType.MouseICTypeKA8G2_inphic: {
+        this.DPI = [{ value: '800' }, { value: '1200' }, { value: '1600' }, { value: '2000' }, { value: '2400' }];
+      }
         break;
-      case MouseICType.MouseICTypePAW3325:
-        {
-          this.DPI = [{ value: '800' }, { value: '1600' }, { value: '2400' }, { value: '4800' }, { value: '6400' }, { value: '10000' }];
-        }
+      case MouseICType.MouseICTypePAW3325: {
+        this.DPI = [{ value: '800' }, { value: '1600' }, { value: '2400' }, { value: '4800' }, { value: '6400' },
+          { value: '10000' }];
+      }
         break;
-      case MouseICType.MouseICTypePAW3104:
-        {
-          this.DPI = [{ value: '800' }, { value: '1600' }, { value: '2400' }, { value: '3200' }, { value: '4000' }, { value: '8000' }];
-        }
+      case MouseICType.MouseICTypePAW3104: {
+        this.DPI = [{ value: '800' }, { value: '1600' }, { value: '2400' }, { value: '3200' }, { value: '4000' },
+          { value: '8000' }];
+      }
         break;
-      case MouseICType.MouseICTypePAW3212_G7:
-        {
-          this.DPI = [{ value: '800' }, { value: '1600' }, { value: '2400' }, { value: '3200' }];
-        }
+      case MouseICType.MouseICTypePAW3212_G7: {
+        this.DPI = [{ value: '800' }, { value: '1600' }, { value: '2400' }, { value: '3200' }];
+      }
         break;
-      case MouseICType.MouseICTypeFCT3065XY_M3S:
-        {
-          this.DPI = [{ value: '800' }, { value: '1200' }, { value: '1600' }];
-        }
+      case MouseICType.MouseICTypeFCT3065XY_M3S: {
+        this.DPI = [{ value: '800' }, { value: '1200' }, { value: '1600' }];
+      }
         break;
     }
+    //防止重设按键设置————再次校验
+    switch (this.mouseconfig?.reportRate) {
+      case 125:
+        this.reportRate_currIndex = 0
+        break
+      case 250:
+        this.reportRate_currIndex = 1
+        break
+      case 500:
+        this.reportRate_currIndex = 2
+        break
+      case 1000:
+        this.reportRate_currIndex = 3
+        break
+    }
+    this.DPI_currIndex = this.mouseconfig?.dpiLevel as number
+    this.currLED = this.mouseconfig?.atmosphereLight as boolean
   }
 
   // @Link pageshow:boolean
   change_reportRate() {
     setTimeout(() => {
-       Communication.getDeviceInfo([0x13, this.reportRate_currIndex])
+      Communication.getDeviceInfo([0x13, this.reportRate_currIndex])
     }, 50)
   }
+
   change_DPI() {
     setTimeout(() => {
-      Communication.getDeviceInfo([0x68, this.DPI_currIndex]).then(()=>{
-        (this.mouseconfig as DeviceInfo).dpiLevel=this.DPI_currIndex
+      Communication.getDeviceInfo([0x68, this.DPI_currIndex]).then(() => {
+        (this.mouseconfig as DeviceInfo).dpiLevel = this.DPI_currIndex
         AppStorage.setOrCreate("mouseconfig", Communication.deviceInfo);
       })
     }, 50)
   }
-  change_LEDstate(){
-    setTimeout(()=>{
-      if (this.currLED){
+
+  change_LEDstate() {
+    setTimeout(() => {
+      if (this.currLED) {
         Communication.getDeviceInfo([0x83])
-      }else {
+      } else {
         Communication.getDeviceInfo([0x84])
       }
-    },50)
+    }, 50)
   }
+
   build() {
     Flex({ space: { main: LengthMetrics.px(15) }, direction: FlexDirection.Column }) {
       Text("DPI")
@@ -164,7 +181,7 @@ export struct ConfigPage3 {
             .onChange((isChecked: boolean) => {
               if (isChecked) {
                 console.log('*****************************打开氛围灯****************************************')
-                  this.currLED=true
+                this.currLED = true
               }
             })
           Text("开启")
@@ -186,7 +203,7 @@ export struct ConfigPage3 {
             .onChange((isChecked: boolean) => {
               if (isChecked) {
                 console.log('*****************************关闭氛围灯****************************************')
-                  this.currLED=false
+                this.currLED = false
 
               }
             })
@@ -225,8 +242,8 @@ export struct ConfigPage3 {
             .fontWeight(400)
             .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
         }
-        .onClick(()=>{
-          this.lowPowerAlertEnabled=true
+        .onClick(() => {
+          this.lowPowerAlertEnabled = true
         })
 
         Row() {
@@ -246,13 +263,12 @@ export struct ConfigPage3 {
             .fontWeight(400)
             .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
         }
-        .onClick(()=>{
-          this.lowPowerAlertEnabled=false
+        .onClick(() => {
+          this.lowPowerAlertEnabled = false
         })
 
       }
       .width('100%')
-
 
     }
     .width('100%')

@@ -1,6 +1,7 @@
 import { usbManager } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
-
+import { SmartMouseAudioProcessor } from './SmartMouseAudioProcessor'
+import { fileIo as fs } from '@kit.CoreFileKit';
 // 按键类型枚举
 export enum KeyPressType {
   VOICE_CLICK = 11, //语音键-单击
@@ -75,6 +76,7 @@ export interface DeviceInfo {
 export class Communication {
   static devicePipe: usbManager.USBDevicePipe | null = null;
   static deviceInfo: DeviceInfo = {
+    //设备信息
     sn: '', //SN
     micStatus: false, //麦克风状态
     ledStatus: false, //LED状态
@@ -88,7 +90,7 @@ export class Communication {
     reportRate: 125, //回报率
     atmosphereLight: false//氛围灯
   };
-  static isPhysicalKeyboardExist: boolean = true
+  static isPhysicalKeyboardExist: boolean = true //热插拔监听
   static currentDPI: number[] = []
   // 查找输入端点（方向=128）用于接收数据
   static inputEndpoint: usbManager.USBEndpoint | null = null;
@@ -96,7 +98,9 @@ export class Communication {
   // 查找输出端点（方向=128）用于接收数据
   static outputEndpoint: usbManager.USBEndpoint | null = null;
   static outputInterface: usbManager.USBInterface | null = null;
-  static sendState: boolean = true
+  static sendState: boolean = true //标记现在是否正在接收消息
+  static audioProcessor: SmartMouseAudioProcessor = new SmartMouseAudioProcessor();
+  static audioDataBuffer: Uint8Array = new Uint8Array(0);
 
   // 构建0x61命令帧：0c4d04614c00000000000000000000000000000000
   static buildGetInfoCommand(length: number = 33): Uint8Array {
@@ -117,7 +121,6 @@ export class Communication {
   }
 
   // 构建其他命令帧的通用方法
-
   // static buildCommandFrame(cmd: number, length: number = 33): Uint8Array {
   //   const frame = new Uint8Array(length);
   //   frame[0] = 0x0C; // 帧头高位
@@ -132,6 +135,7 @@ export class Communication {
   //   }
   //   return frame;
   // }
+
   // 构建命令帧的通用方法
   static buildCommandFrame(cmd: number[], length: number): Uint8Array {
     const frame = new Uint8Array(length);
@@ -144,9 +148,12 @@ export class Communication {
     let cmdData: number[];
     cmdData = cmd;
 
-
     // 设置数据长度（数据域的长度，不包括结束标志）
     frame[2] = cmdData.length + 3;
+
+    if (cmd[0] === 0x6f) {
+      frame[2] = 0x12;
+    }
 
     // 填充命令数据
     for (let i = 0; i < cmdData.length; i++) {
@@ -163,7 +170,7 @@ export class Communication {
     for (let i = endFlagPosition + 1; i < length; i++) {
       frame[i] = 0x00;
     }
-    console.log(JSON.stringify(frame), '*******************************************************************')
+    // console.log(JSON.stringify(frame), '*******************************************************************')
     return frame;
   }
 
@@ -283,14 +290,16 @@ export class Communication {
         // 1. 首先发送0x61命令
         let a = await Communication.sendCommand(Communication.outputInterface, Communication.outputEndpoint, command);
         console.log('================================', a)
-        // 释放接口
+        // 发送命令完成后释放输出接口
         usbManager.releaseInterface(Communication.devicePipe, Communication.outputInterface);
+        /**
+         * 命令发送失败判断
+         */
         if (a === -1) {
           console.log('****************************************************************发送命令失败：断开设备连接', a)
           usbManager.closePipe(Communication.devicePipe)
           Communication.devicePipe = null
           console.log('****************************************************************发送命令失败：重新连接设备')
-
           await Communication.connectDevice()
           // console.log('****************************************************************发送命令失败：重新发送0x61，获取设备信息')
           // await Communication.getDeviceInfo()
@@ -314,31 +323,33 @@ export class Communication {
         console.log('+++++++++++++++++++++++++++++++++++++++++++=========================================命令发送成功，并成功读取一次数据，开始执行循环读取',
           '发送的命令是：', JSON.stringify(command),
           JSON.stringify(Communication.isPhysicalKeyboardExist))
-        let c = 0
-        // if (command[0]===0x61){
-        while (Communication.isPhysicalKeyboardExist) {
-          c++
-          console.log('循环读取鼠标数据-----', c, '---------------------', JSON.stringify(Communication.inputInterface),
-            JSON.stringify(Communication.inputEndpoint))
-          usbManager.releaseInterface(Communication.devicePipe, Communication.inputInterface)
-          let a = await Communication.readResponse(Communication.inputInterface as usbManager.USBInterface,
-            Communication.inputEndpoint as usbManager.USBEndpoint);
-          // Communication.sendState = true
-          if (a === -1) {
-            let a = await Communication.readResponse(Communication.inputInterface as usbManager.USBInterface,
-              Communication.inputEndpoint as usbManager.USBEndpoint);
-            if (a === -1) {
-              usbManager.closePipe(Communication.devicePipe)
-              Communication.devicePipe = null
-              await Communication.connectDevice()
-              await Communication.getDeviceInfo()
-              await Communication.readResponse(Communication.inputInterface as usbManager.USBInterface,
-                Communication.inputEndpoint as usbManager.USBEndpoint);
-              break
-            }
-          }
-        }
+        // 开始持续读取数据
+        Communication.startContinuousReading();
+        // let c = 0
+        // // if (command[0]===0x61){
+        // while (Communication.isPhysicalKeyboardExist) {
+        //   c++
+        //   console.log('循环读取鼠标数据-----', c, '---------------------', JSON.stringify(Communication.inputInterface),
+        //     JSON.stringify(Communication.inputEndpoint))
+        //   usbManager.releaseInterface(Communication.devicePipe, Communication.inputInterface)
+        //   let a = await Communication.readResponse(Communication.inputInterface as usbManager.USBInterface,
+        //     Communication.inputEndpoint as usbManager.USBEndpoint);
+        //   // Communication.sendState = true
+        //   if (a === -1) {
+        //     let a = await Communication.readResponse(Communication.inputInterface as usbManager.USBInterface,
+        //       Communication.inputEndpoint as usbManager.USBEndpoint);
+        //     if (a === -1) {
+        //       usbManager.closePipe(Communication.devicePipe)
+        //       Communication.devicePipe = null
+        //       await Communication.connectDevice()
+        //       await Communication.getDeviceInfo()
+        //       await Communication.readResponse(Communication.inputInterface as usbManager.USBInterface,
+        //         Communication.inputEndpoint as usbManager.USBEndpoint);
+        //       break
+        //     }
+        //   }
         // }
+        // // }
 
       } else {
         console.log('未找到合适的端点');
@@ -382,7 +393,8 @@ export class Communication {
         const cmdData_21 = Communication.buildCommandFrame(command, 21);
         const hexString = Array.from(cmdData).map(b => b.toString(16).padStart(2, '0')).join(' ');
         const hexString_21 = Array.from(cmdData_21).map(b => b.toString(16).padStart(2, '0')).join(' ');
-        console.log(`发送命令 0x${command[0].toString(16)}:`, hexString, '\n', `发送命令 0x${command[0].toString(16)}:`,
+        console.log('\n', `发送命令 0x${command[0].toString(16)}:`, hexString, '\n',
+          `发送命令 0x${command[0].toString(16)}:`,
           hexString_21);
 
         // 发送命令
@@ -390,13 +402,13 @@ export class Communication {
           Communication.devicePipe,
           endpoint,
           cmdData,
-          1000
+          2000
         );
         const result_21 = await usbManager.bulkTransfer(
           Communication.devicePipe,
           endpoint,
           cmdData_21,
-          1000
+          2000
         );
         console.log('发送命令成功:33-----usbManager.bulkTransfer()返回发送的数据的长度:', result);
         console.log('发送命令成功:21-----usbManager.bulkTransfer()返回发送的数据的长度:', result_21);
@@ -473,6 +485,50 @@ export class Communication {
     return -1;
   }
 
+  // 开始持续读取数据
+  static startContinuousReading() {
+    if (!Communication.devicePipe || !Communication.inputInterface || !Communication.inputEndpoint) {
+      return;
+    }
+
+    // 使用异步循环持续读取数据
+    (async () => {
+      let c = 0
+      while (Communication.isPhysicalKeyboardExist && Communication.devicePipe) {
+        try {
+          c++
+          console.log('循环读取鼠标数据-----', c, '---------------------', JSON.stringify(Communication.inputInterface),
+            JSON.stringify(Communication.inputEndpoint))
+          usbManager.releaseInterface(Communication.devicePipe, Communication.inputInterface)
+          let a = await Communication.readResponse(Communication.inputInterface as usbManager.USBInterface,
+            Communication.inputEndpoint as usbManager.USBEndpoint);
+          if (a === -1) {
+            let a = await Communication.readResponse(Communication.inputInterface as usbManager.USBInterface,
+              Communication.inputEndpoint as usbManager.USBEndpoint);
+            if (a === -1) {
+              usbManager.closePipe(Communication.devicePipe)
+              Communication.devicePipe = null
+              await Communication.connectDevice()
+              await Communication.getDeviceInfo()
+              await Communication.readResponse(Communication.inputInterface as usbManager.USBInterface,
+                Communication.inputEndpoint as usbManager.USBEndpoint);
+              break
+            }
+          }
+        } catch (error) {
+          console.error('读取数据失败:', error);
+          // 如果读取失败，尝试重新连接
+          if (Communication.devicePipe) {
+            usbManager.closePipe(Communication.devicePipe);
+            Communication.devicePipe = null;
+          }
+          await Communication.connectDevice();
+          break;
+        }
+      }
+    })();
+  }
+
   // 设备拔出变化
   static changPhysicalKeyboardExistState(state: boolean) {
     if (!state) {
@@ -494,7 +550,14 @@ export class Communication {
 
     try {
       // 检查帧头F
-      if (data[0] === 0x0C && data[1] === 0x4D) {
+      if (data.length > 0 && data[0] === 0x1b) {
+        console.log('****************************语音数据****************************')
+        console.log('接收到音频数据');
+        Communication.processAudioData(data);
+        return
+      }
+
+      if (data.length > 4 && data[0] === 0x0C && data[1] === 0x4D) {
         // console.log(data.toString())
         const dataLength = data[2];
         const command = data[3];
@@ -563,19 +626,24 @@ export class Communication {
           }
           // byte[5]: 电量
           Communication.deviceInfo.batteryLevel = data[5];
-          console.log('***********************************************************', data[6].toString())
+          // console.log('***********************************************************', data[6].toString())
           // byte[6]: 当前回报率
-          if (data[6] === 8) {
-            Communication.deviceInfo.reportRate = 125;
-          }
-          if (data[6] === 4) {
-            Communication.deviceInfo.reportRate = 250;
-          }
-          if (data[6] === 2) {
-            Communication.deviceInfo.reportRate = 500;
-          }
-          if (data[6] === 1) {
-            Communication.deviceInfo.reportRate = 1000;
+          const reportRateCode = data[6];
+          switch (reportRateCode) {
+            case 8:
+              Communication.deviceInfo.reportRate = 125;
+              break;
+            case 4:
+              Communication.deviceInfo.reportRate = 250;
+              break;
+            case 2:
+              Communication.deviceInfo.reportRate = 500;
+              break;
+            case 1:
+              Communication.deviceInfo.reportRate = 1000;
+              break;
+            default:
+              Communication.deviceInfo.reportRate = 125;
           }
 
           // byte[7]: 当前氛围灯状态
@@ -620,7 +688,6 @@ export class Communication {
           console.log('****************************语音键长按抬起****************************')
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.VOICE_LONG_PRESS_UP)
         }
-
         if (data[3] === 0x35) {
           console.log('****************************搜索键单击按下****************************')
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SEARCH_CLICK)
@@ -682,16 +749,15 @@ export class Communication {
         }
         if (data[3] === 0x52) {
           console.log('****************************AI键长按按下****************************')
+          Communication.audioData=[]
         }
         if (data[3] === 0x53) {
           console.log('****************************AI键长按抬起****************************')
+          console.log(Communication.audioData.length.toString(),'0000000000000000000000000000000000000000000000')
         }
 
       } else {
         console.log('无效的响应帧格式');
-      }
-      if (data[0] === 0x1b) {
-        console.log('****************************语音数据****************************')
       }
 
 
@@ -699,170 +765,30 @@ export class Communication {
       console.error('解析设备信息错误:', error);
     }
   }
-}
 
+  static audioData: Int16Array[] = []
 
-/**
- * *****************************************************************************************音频处理器类
- */
-// 音频处理器类
-// 处理单个ADPCM编码，返回预测值和新的索引
-interface model_encoding_ADPC {
-  predict: number,
-  predictIdx: number
-}
-
-class SmartMouseAudioProcessor {
-  private readonly BKEY: Uint8Array = new Uint8Array([
-    0x31, 0xec, 0x06, 0xa2, 0x0c, 0x90, 0x12, 0x9d, 0x20, 0xa3,
-    0x6b, 0x41, 0xbb, 0x40, 0x68, 0x5a, 0x4b, 0x12, 0xf4, 0x11,
-    0x03, 0x9a, 0x4b, 0x12, 0xf6, 0x11, 0x03, 0x76, 0x0a, 0x12,
-    0xd4, 0x48, 0x10, 0x49, 0x20, 0xf2, 0x20, 0x03, 0x54, 0x49,
-    0x24, 0xf4, 0x20, 0x03, 0x92, 0x12, 0xf6, 0x02, 0x03, 0x20,
-    0xa4, 0x91, 0x02, 0xdb, 0xc1, 0xda, 0x49, 0x19, 0x4a, 0x09,
-    0x6e, 0xed, 0x6b, 0x49, 0xf8, 0xab, 0x94, 0xc1, 0x77, 0x48,
-    0x01, 0xaf, 0x28, 0xc0, 0x2a, 0x39, 0x9f, 0x08, 0x90, 0x01,
-    0x9e, 0x01, 0xa0, 0x09, 0x90, 0x74, 0x9a, 0x81, 0x87, 0x2b,
-    0x4d, 0xab, 0x20, 0xc0, 0x75, 0x87, 0xbe, 0xec, 0x30, 0xec
-  ]);
-
-  // 处理原始音频数据并返回解码后的PCM数据
-  processVoiceData(frame: Uint8Array): Int16Array | null {
-    if (frame.length < 32) {
-      return null;
-    }
-
+  // 处理音频数据
+  static processAudioData(data: Uint8Array) {
     try {
-      // 解析预测值和索引
-      const ps = new Int16Array(2);
-      ps[0] = (frame[0] | (frame[1] << 8)); // predict（低字节在前）
-      ps[1] = (frame[2] | (frame[3] << 8)); // predictIdx
+      // 移除帧头(0x1b)
+      const audioFrame = data.subarray(1);
 
-      // 提取ADPCM编码数据（从第5字节开始）
-      const adpcm = frame.subarray(4);
+      // 解密音频数据
+      const decryptedData = Communication.audioProcessor.miclinkDecrypt(audioFrame);
 
-      // 解码为PCM（每字节ADPCM包含2个PCM样本）
-      const pcmData = new Int16Array(adpcm.length * 2);
-      this.adpcmToPcm(ps, pcmData, adpcm);
+      // 解码为PCM
+      const pcmData = Communication.audioProcessor.processVoiceData(decryptedData);
 
-      return pcmData;
-    } catch (e) {
-      console.error('音频处理失败:', e);
-      return null;
-    }
-  }
-
-  // Telink 音频数据解密（逐字节异或）
-  miclinkDecrypt(indata: Uint8Array, len: number = 32): Uint8Array {
-    if (indata.length < len || this.BKEY.length < len) {
-      throw new Error("Data or key length too short");
-    }
-
-    const outdata = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-      outdata[i] = indata[i] ^ this.BKEY[i]; // 异或解密
-    }
-    return outdata;
-  }
-
-  // ADPCM解码为PCM的核心算法
-  private adpcmToPcm(ps: Int16Array, pd: Int16Array, codes: Uint8Array): void {
-    let predict = ps[0];
-    let predictIdx = ps[1] & 0xFF;
-    let i = 0;
-
-    // 遍历每个ADPCM字节（每个字节包含2个4位编码）
-    for (let byteIndex = 0; byteIndex < codes.length && i < pd.length; byteIndex++) {
-      const codeByte = codes[byteIndex];
-
-      // 处理低4位（第一个样本）
-      let code = codeByte & 0x0F;
-      let state = this.processCode(code, predict, predictIdx);
-      predict = state.predict;
-      predictIdx = state.predictIdx;
-      if (i < pd.length) {
-        pd[i++] = predict;
+      if (pcmData) {
+        // 处理PCM数据（播放或保存）
+        console.log(`解码得到PCM数据: ${pcmData.length}个样本`, '\n', '具体数据：', pcmData);
+        // 这里可以添加播放或保存PCM数据的逻辑
+        Communication.audioData.push(pcmData)
       }
-
-      // 处理高4位（第二个样本）
-      if (i < pd.length) {
-        code = (codeByte >> 4) & 0x0F;
-        state = this.processCode(code, predict, predictIdx);
-        predict = state.predict;
-        predictIdx = state.predictIdx;
-        pd[i++] = predict;
-      }
+    } catch (error) {
+      console.error('处理音频数据失败:', error);
     }
-  }
-
-  // 处理单个ADPCM编码，返回预测值和新的索引
-  private processCode(code: number, predict: number, predictIdx: number): model_encoding_ADPC {
-    // ADPCM解码表（固定值）
-    const idxtbl = [
-      -1, -1, -1, -1, 2, 4, 6, 8,
-      -1, -1, -1, -1, 2, 4, 6, 8
-    ];
-
-    const steptbl = [
-      7, 8, 9, 10, 11, 12, 13, 14, 16, 17,
-      19, 21, 23, 25, 28, 31, 34, 37, 41, 45,
-      50, 55, 60, 66, 73, 80, 88, 97, 107, 118,
-      130, 143, 157, 173, 190, 209, 230, 253, 279, 307,
-      337, 371, 408, 449, 494, 544, 598, 658, 724, 796,
-      876, 963, 1060, 1166, 1282, 1411, 1552, 1707, 1878, 2066,
-      2272, 2499, 2749, 3024, 3327, 3660, 4026, 4428, 4871, 5358,
-      5894, 6484, 7132, 7845, 8630, 9493, 10442, 11487, 12635, 13899,
-      15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767
-    ];
-
-    // 计算预测差值
-    const step = steptbl[predictIdx];
-    let diffq = step >> 3;
-
-    if ((code & 4) !== 0) {
-      diffq += step;
-    }
-    if ((code & 2) !== 0) {
-      diffq += step >> 1;
-    }
-    if ((code & 1) !== 0) {
-      diffq += step >> 2;
-    }
-
-    // 应用差值到预测值
-    if ((code & 8) !== 0) {
-      predict -= diffq;
-    } else {
-      predict += diffq;
-    }
-
-    // 限制PCM值范围（-32768 到 32767）
-    if (predict > 32767) {
-      predict = 32767;
-    }
-    if (predict < -32768) {
-      predict = -32768;
-    }
-
-    // 更新索引并限制范围
-    predictIdx += idxtbl[code];
-    if (predictIdx < 0) {
-      predictIdx = 0;
-    }
-    if (predictIdx > 88) {
-      predictIdx = 88;
-    }
-
-    return { predict, predictIdx };
-  }
-
-  // 将解码后的PCM数据（Int16Array）转换为字节流（Uint8Array）
-  int16ArrayToBytes(list: Int16Array): Uint8Array {
-    const byteData = new ArrayBuffer(list.length * 2);
-    const view = new DataView(byteData);
-    for (let i = 0; i < list.length; i++) {
-      view.setInt16(i * 2, list[i], true); // 小端字节序
-    }
-    return new Uint8Array(byteData);
   }
 }
+

@@ -5,30 +5,35 @@ import { ConfigPage3 } from './ConfigPage3'
 
 @Component
 export struct DevicesConfig {
-  @Link isShowConfig: boolean//控制显隐状态
+  @Link isShowConfig: boolean //控制显隐状态
   @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null //鼠标信息
   @State currIndex: number = 0
   @State configsList: string[] = ['智能设置', '按键设置', '设备设置']
   @State reportRate_currIndex: number = 0
   @State DPI_currIndex: number = 0
   @State currLED: boolean = true
+
   onDidBuild(): void {
-    switch (this.mouseconfig?.reportRate){
+    this.data_init()
+  }
+
+  data_init() {
+    switch (this.mouseconfig?.reportRate) {
       case 125:
-        this.reportRate_currIndex=0
+        this.reportRate_currIndex = 0
         break
       case 250:
-        this.reportRate_currIndex=1
+        this.reportRate_currIndex = 1
         break
       case 500:
-        this.reportRate_currIndex=2
+        this.reportRate_currIndex = 2
         break
       case 1000:
-        this.reportRate_currIndex=3
+        this.reportRate_currIndex = 3
         break
     }
-    this.DPI_currIndex=this.mouseconfig?.dpiLevel as number
-    this.currLED=this.mouseconfig?.atmosphereLight as boolean
+    this.DPI_currIndex = this.mouseconfig?.dpiLevel as number
+    this.currLED = this.mouseconfig?.atmosphereLight as boolean
   }
 
   build() {
@@ -66,6 +71,13 @@ export struct DevicesConfig {
           .onClick(() => {
             try {
               Communication.getDeviceInfo([0x6f])
+              if (this.currIndex === 2) {
+                setTimeout(() => {
+                  this.data_init()
+                  this.currIndex = 11111
+                  this.currIndex = 2
+                }, 20000)
+              }
             } catch (e) {
             }
           })
@@ -149,8 +161,13 @@ export struct DevicesConfig {
               .visibility(this.currIndex === 0 ? Visibility.Visible : Visibility.None)
             ConfigPage2()
               .visibility(this.currIndex === 1 ? Visibility.Visible : Visibility.None)
-            if (this.currIndex === 2)
-            ConfigPage3({currportRate:this.reportRate_currIndex,DPI_currIndex:this.DPI_currIndex,currLED:this.mouseconfig?.atmosphereLight})
+            if (this.currIndex === 2) {
+              ConfigPage3({
+                reportRate_currIndex: this.reportRate_currIndex,
+                DPI_currIndex: this.DPI_currIndex,
+                currLED: this.mouseconfig?.atmosphereLight
+              })
+            }
           }
           .alignItems(HorizontalAlign.Start)
           .width('100%')
