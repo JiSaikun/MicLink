@@ -1,34 +1,40 @@
 import { CommonConstants_pop } from "config"
 import CommonConstants from '../common/CommonConstants'
-import {tableDataModel}from './Command_Ai'
-interface response_interface{
-  title:string
-  isShow:boolean
-  response_:string
+import { tableDataModel } from './Command_Ai'
+
+interface response_interface {
+  title: string
+  isShow: boolean
+  response_: string
 }
+
 @Component
 export struct CreateNewInstruction_pop {
   @Consume('pageInfo') pageInfo: NavPathStack
   @State array: SelectOption[] = [{ value: '文件' }, { value: '网址' }, { value: '生成文本' }]
-  @State response_: response_interface[] = [{title:'执行路径',isShow:true,response_:'执行路径'},{title:'网址',isShow:false,response_:'输入网址'},{title:'生成文本',isShow:false,response_:'输入要一键生成的文本'}]
+  @State response_: response_interface[] = [{ title: '执行路径', isShow: true, response_: '执行路径' },
+    { title: '网址', isShow: false, response_: '输入网址' },
+    { title: '生成文本', isShow: false, response_: '输入要一键生成的文本' }]
   @State currentindex: number = 0
   @Link isShow_CreateNewInstruction_pop: boolean //创建指令弹窗
-  @Link isShow_EditInstruction_pop:boolean //编辑指令弹窗
-  @StorageLink('table_data') table_data:tableDataModel[]=[]
-  @Prop isParam:boolean=false//判断是否是编辑弹窗
-  @Prop currIndexParam:number//编辑弹窗时，展示编辑前信息元素
-  @State currtableDataModel_data:tableDataModel={
+  @Link isShow_EditInstruction_pop: boolean //编辑指令弹窗
+  @StorageLink('table_data') table_data: tableDataModel[] = []
+  @Prop isParam: boolean = false //判断是否是编辑弹窗
+  @Prop currIndexParam: number //编辑弹窗时，展示编辑前信息元素
+  @State currtableDataModel_data: tableDataModel = {
     category: '文件', //指令类别
     voice: '', //语音指令
     execute: '', //执行目标
   }
+
   aboutToAppear(): void {
     if (this.isParam) {
       // console.log(this.currIndexParam.toString(),'---------------------------------------------------')
       // console.log(JSON.stringify(this.table_data))
-      this.currtableDataModel_data=this.table_data[this.currIndexParam]
+      this.currtableDataModel_data = this.table_data[this.currIndexParam]
     }
   }
+
   build() {
     Stack() {
       Column() {
@@ -67,7 +73,7 @@ export struct CreateNewInstruction_pop {
             Select(this.array)
               .selected(0)
               .width(410)
-              .value(this.isParam?this.currtableDataModel_data.category:'文件')
+              .value(this.isParam ? this.currtableDataModel_data.category : '文件')
               .height(32)
               .font({
                 weight: CommonConstants.CreateNewInstruction_pop_DEFAULT_FONT_WEIGHT,
@@ -91,7 +97,7 @@ export struct CreateNewInstruction_pop {
               .fontColor(CommonConstants.COMMAND_DEFAULT_FONT_COLOR)
               .fontWeight(CommonConstants.CreateNewInstruction_pop_DEFAULT_FONT_WEIGHT)
 
-            TextInput({ placeholder: '输入触发文字',text:$$this.currtableDataModel_data.voice })
+            TextInput({ placeholder: '输入触发文字', text: $$this.currtableDataModel_data.voice })
               .placeholderColor('#bbbdbf')
               .borderRadius(0)
               .backgroundColor('#fff')
@@ -112,7 +118,10 @@ export struct CreateNewInstruction_pop {
               .fontColor(CommonConstants.COMMAND_DEFAULT_FONT_COLOR)
               .fontWeight(CommonConstants.CreateNewInstruction_pop_DEFAULT_FONT_WEIGHT)
             Row() {
-              TextInput({placeholder:this.response_[this.currentindex].response_,text:$$this.currtableDataModel_data.execute})
+              TextInput({
+                placeholder: this.response_[this.currentindex].response_,
+                text: $$this.currtableDataModel_data.execute
+              })
                 .fontSize(CommonConstants.CreateNewInstruction_pop_DEFAULT_FONT_SIZE)
                 .placeholderColor('#bbbdbf')
                 .borderRadius(0)
@@ -123,9 +132,9 @@ export struct CreateNewInstruction_pop {
                 .layoutWeight(1)
               Image($r('app.media.Frame_2093'))
                 .width(24)
-                .visibility(this.response_[this.currentindex].isShow?Visibility.Visible:Visibility.None)
+                .visibility(this.response_[this.currentindex].isShow ? Visibility.Visible : Visibility.None)
             }
-            .padding({ left: 15, right:10})
+            .padding({ left: 15, right: 10 })
             .width(410)
             .height(32)
             .borderRadius(4)
@@ -154,18 +163,18 @@ export struct CreateNewInstruction_pop {
               if (this.isParam) {
                 //编辑
                 console.log(this.table_data.length.toString())
-                this.table_data[this.currIndexParam]=this.currtableDataModel_data
+                this.table_data[this.currIndexParam] = this.currtableDataModel_data
                 console.log(this.table_data.length.toString())
                 console.log(JSON.stringify(this.table_data[this.table_data.length-1]))
-                this.isShow_EditInstruction_pop=false
+                this.isShow_EditInstruction_pop = false
 
-              }else {
+              } else {
                 //创建
                 console.log(this.table_data.length.toString())
                 this.table_data.push(this.currtableDataModel_data)
                 console.log(this.table_data.length.toString())
                 console.log(JSON.stringify(this.table_data[this.table_data.length-1]))
-                this.isShow_CreateNewInstruction_pop=false
+                this.isShow_CreateNewInstruction_pop = false
                 // AppStorage.setOrCreate('table_data',this.table_data)
                 console.log(JSON.stringify(AppStorage.get('table_data')))
               }

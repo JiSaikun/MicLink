@@ -152,57 +152,8 @@ struct Index {
       .hideToolBar(true)
       .hideTitleBar(true)
       .mode(NavigationMode.Stack)
+      Image($r('app.media.create_Command_Ai'))
     }
 
   }
 }
-
-/**
- * 响应数据记录
- */
-// [
-//   {
-//     "data": {
-//       "btype": false,
-//       "clientId": "clientId1751968608",
-//       "sn": "iat000d0ef1@dx19956d2f7747024802",
-//       "text": "语",
-//       "type": "MID"
-//     },
-//     "message": "操作成功",
-//     "status": 200
-//   },
-//   {
-//     "data": {
-//       "btype": false,
-//       "clientId": "clientId1751968608",
-//       "sn": "iat000d0ef1@dx19956d2f7747024802",
-//       "text": "语音",
-//       "type": "MID"
-//     },
-//     "message": "操作成功",
-//     "status": 200
-//   },
-//   {
-//     "data": {
-//       "btype": false,
-//       "clientId": "clientId1751968608",
-//       "sn": "iat000d0ef1@dx19956d2f7747024802",
-//       "text": "语音测试，语音测试",
-//       "type": "MID"
-//     },
-//     "message": "操作成功",
-//     "status": 200
-//   },
-//   {
-//     "data": {
-//       "btype": false,
-//       "clientId": "clientId1751968608",
-//       "sn": "iat000d0ef1@dx19956d2f7747024802",
-//       "text": "语音测试，语音测试。",
-//       "type": "LAST"
-//     },
-//     "message": "操作成功",
-//     "status": 200
-//   }
-// ]

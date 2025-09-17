@@ -83,6 +83,10 @@
     {
       "name": "mouse",
       "srcPath": "./commons/mouse",
+    },
+    {
+      "name": "command_ai",
+      "srcPath": "./features/command_ai",
     }
   ]
 }

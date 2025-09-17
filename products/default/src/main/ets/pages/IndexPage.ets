@@ -1,7 +1,7 @@
 import { LeftBar, Topbar, Content, paramModel } from 'common'
-import Content_Ai from '../components/Command_Ai'
+import Content_Ai from 'command_ai/src/main/ets/components/Command_Ai'
 import {DeviceSettings} from '../components/DeviceSettings'
-import {CreateNewInstruction_pop}from '../components/CreateNewInstruction_pop'
+import {CreateNewInstruction_pop}from 'command_ai/src/main/ets/components/CreateNewInstruction_pop'
 
 // PersistentStorage.persistProp("login", false)
 

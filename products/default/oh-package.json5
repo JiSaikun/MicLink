@@ -14,5 +14,6 @@
     "usb_hid": 'file:../../commons/usb_hid',
     "bluetooth": 'file:../../commons/bluetooth',
     "mouse": 'file:../../commons/mouse',
+    "command_ai": "file:../../features/command_ai"
   }
 }
