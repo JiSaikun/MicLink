@@ -268,19 +268,17 @@ export class Communication {
       return;
     }
     Communication.isPhysicalKeyboardExist = false
-    if (Communication.sendState) {
+    if (Communication.sendState&&command[0]!==0x61) {
       console.log('有消息正在发送------------------------');
       if (command !== Communication.sendDataList[0]) {
         Communication.sendDataList = Communication.sendDataList.filter(item => item[0] !== command[0]);
         Communication.sendDataList.push(command);
-
       }
       setTimeout(() => {
         Communication.getDeviceInfo(command)
       }, 1000)
       return
     }
-
     if (Communication.sendDataList.length && command !== Communication.sendDataList[0]) {
       console.log('前面消息命令还没发送完：排队------------------------');
       Communication.sendDataList = Communication.sendDataList.filter(item => item[0] !== command[0]);
@@ -294,11 +292,11 @@ export class Communication {
       }, 1000)
       return
     }
-    // 释放接口
-    if (Communication.devicePipe && Communication.inputInterface) {
-      // let a = usbManager.releaseInterface(Communication.devicePipe, Communication.inputInterface);
-      // console.log('hjdashdjiashuuahs', a)
-    }
+    // // 释放接口
+    // if (Communication.devicePipe && Communication.inputInterface) {
+    //   // let a = usbManager.releaseInterface(Communication.devicePipe, Communication.inputInterface);
+    //   // console.log('hjdashdjiashuuahs', a)
+    // }
     console.log('开始获取设备信息');
     try {
       // const devices = usbManager.getDevices();
@@ -313,7 +311,7 @@ export class Communication {
         let a = await Communication.sendCommand(Communication.outputInterface, Communication.outputEndpoint, command);
         console.log('================================', a)
         // 发送命令完成后释放输出接口
-        usbManager.releaseInterface(Communication.devicePipe, Communication.outputInterface);
+        // usbManager.releaseInterface(Communication.devicePipe, Communication.outputInterface);
         /**
          * 命令发送失败判断
          */
@@ -404,8 +402,8 @@ export class Communication {
        */
     }
     //通信前先关闭可能未关闭的通信通道
-    let a = usbManager.releaseInterface(Communication.devicePipe, iface);
-    console.log('================================================发送信息前，关闭通道状态显示：', a, '验证起作用，保留')
+    // let a = usbManager.releaseInterface(Communication.devicePipe, iface);
+    // console.log('================================================发送信息前，关闭通道状态显示：', a, '验证起作用，保留')
     try {
       //建立信息发送通道
       const claimResult = usbManager.claimInterface(Communication.devicePipe, iface, true);
@@ -414,11 +412,11 @@ export class Communication {
         claimResult,)
 
       if (claimResult === 0) {
-        if (a === 0 && claimResult === 0) {
-          console.log('================================================移除了旧的信息发送通道,并建立起了新的通信通道：')
-        } else if (a !== 0 && claimResult === 0) {
-          console.log('================================================没有旧的信息发送通道,只建立起了新的通信通道：')
-        }
+      //   if (a === 0 && claimResult === 0) {
+      //     console.log('================================================移除了旧的信息发送通道,并建立起了新的通信通道：')
+      //   } else if (a !== 0 && claimResult === 0) {
+      //     console.log('================================================没有旧的信息发送通道,只建立起了新的通信通道：')
+      //   }
 
         // 构建命令帧
         const cmdData = Communication.buildCommandFrame(command, length);
@@ -428,6 +426,7 @@ export class Communication {
         console.log('\n', `发送命令 0x${command[0].toString(16)}:`, hexString, '\n',
           `发送命令 0x${command[0].toString(16)}:`,
           hexString_21);
+        console.log('`````````````````````````````````````````````````````````````等待发送的命令:',Communication.sendDataList.length)
 
         // 发送命令
         const result = await usbManager.bulkTransfer(
@@ -444,8 +443,8 @@ export class Communication {
         );
         console.log('发送命令成功:33-----usbManager.bulkTransfer()返回发送的数据的长度:', result);
         console.log('发送命令成功:21-----usbManager.bulkTransfer()返回发送的数据的长度:', result_21);
-        let b = usbManager.releaseInterface(Communication.devicePipe, iface);
-        console.log('发送命令完毕-----移除通信接口:', b);
+        // let b = usbManager.releaseInterface(Communication.devicePipe, iface);
+        // console.log('发送命令完毕-----移除通信接口:', b);
         Communication.sendState = false
         if (result !== -1) {
           return result;

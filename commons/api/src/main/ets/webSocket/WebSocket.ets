@@ -1,11 +1,13 @@
 import { webSocket } from '@kit.NetworkKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 
+
+
 export class WebSocket {
   public isConnected: boolean = false;
   // 创建 WebSocket 实例
   private ws: webSocket.WebSocket | null = null;
-  private serverUrl: string = "ws://echo.websocket.events";
+  private serverUrl: string = "ws://asr.miclink.net/ws";
 
   constructor(serverUrl: string) {
     this.serverUrl = serverUrl;
@@ -65,10 +67,11 @@ export class WebSocket {
     });
 
     // 发起连接
+    console.warn('正在连接到服务器...')
     const connectingMsg: string = "正在连接到服务器...";
     this.ws.connect(this.serverUrl, (err: BusinessError, value: boolean) => {
       if (!err) {
-        console.log("连接成功");
+        console.warn("连接成功");
       } else {
         const msg: string = "连接失败。错误信息:" + err.message;
         console.error(msg);
@@ -98,19 +101,24 @@ export class WebSocket {
   public sendMessage(inputMessage: string): boolean {
     if (!this.isConnected || !this.ws) {
       const msg: string = "未连接到服务器，无法发送消息";
+      console.error(msg)
       return false;
     }
 
     if (!inputMessage.trim()) {
       const msg: string = "消息不能为空";
+      console.error(msg)
       return false;
     }
 
     // 发送消息到服务器
-    this.ws.send(inputMessage, (err: BusinessError, value: boolean) => {
+    this.ws.send(JSON.stringify(inputMessage), (err: BusinessError, value: boolean) => {
       if (err) {
         const msg: string = "消息发送失败: " + err.message;
         console.error(msg);
+      } else {
+        const msg: string = "消息发送成功~~~";
+        console.error(msg)
       }
     });
 
@@ -128,4 +136,5 @@ export class WebSocket {
 
     return result;
   }
+
 }

@@ -1,491 +1,279 @@
-// // AudioWebSocketHandler.ets
-// import { webSocket } from '@kit.NetworkKit';
-// import { BusinessError } from '@kit.BasicServicesKit';
-// import fileio from '@ohos.fileio';
-// import { SmartMouseAudioProcessor } from 'mouse';
-// import { Communication } from 'mouse';
-// import { hilog } from '@kit.PerformanceAnalysisKit';
-//
-// // 音频数据类型枚举
-// enum AudioDataType {
-//   adpcmEncrypted, // ADPCM加密前（原始ADPCM）
-//   adpcmDecrypted, // ADPCM解密后
-//   pcmDecoded      // PCM解码后
-// }
-//
-// export class AudioWebSocketHandler {
-//   private webSocket: webSocket.WebSocket | null = null;
-//   private audioProcessor: SmartMouseAudioProcessor = new SmartMouseAudioProcessor();
-//   private enableAudioSave: boolean = false;
-//   private audioSaveBasePath: string = '/data/storage/el2/base/files/audio/';
-//   private adpcmEncryptedFile: fileio.File | null = null;
-//   private adpcmDecryptedFile: fileio.File | null = null;
-//   private pcmDecodedFile: fileio.File | null = null;
-//   private audioFileTimestamp: string | null = null;
-//
-//   // 状态变量
-//   private isRunning: boolean = false;
-//   private sendCount: number = 0;
-//   private processFrameCount: number = 0;
-//   private pendingPcmData: Uint8Array = new Uint8Array(0);
-//   private sendThreshold: number = 1024;
-//   private clientId: string = "";
-//   private language: string = "ZH_CN";
-//   private ptt: string = "1";
-//   private audioSampleRate: string = '16k';
-//   private isFirstFrame: boolean = true;
-//   private reconnectAttempts: number = 0;
-//   private maxReconnectAttempts: number = 5;
-//   private baseReconnectDelay: number = 2;
-//   private reconnectTimer: number | null = null;
-//   private currentUrl: string | null = null;
-//
-//   // 回调函数
-//   public onMessageReceived: (message: Object) => void = () => {};
-//   public onReceiveError: (error: string) => void = () => {};
-//   public onDisconnected: (code: number | null, reason: string) => void = () => {};
-//   public onConnected: () => void = () => {};
-//
-//   constructor(config: {
-//     sendThreshold?: number;
-//     serialNo: string;
-//     apiKey: string;
-//     deviceNo: string;
-//     enableAudioSave?: boolean;
-//   }) {
-//     if (config.sendThreshold) {
-//       this.sendThreshold = config.sendThreshold;
-//     }
-//
-//     this.enableAudioSave = config.enableAudioSave || false;
-//
-//     if (this.enableAudioSave) {
-//       this.initAudioSavePath();
-//     }
-//   }
-//
-//   // 初始化音频保存路径
-//   private async initAudioSavePath(): Promise<void> {
-//     try {
-//       // 创建音频保存目录
-//       await fileio.mkdir(this.audioSaveBasePath, 0o775);
-//       hilog.info(0x0000, 'AudioWebSocket', '音频保存路径创建成功');
-//     } catch (err) {
-//       hilog.error(0x0000, 'AudioWebSocket', `音频保存路径创建失败: ${JSON.stringify(err)}`);
-//       this.enableAudioSave = false;
-//     }
-//   }
-//
-//   // 初始化音频文件句柄
-//   private async initAudioFileHandles(): Promise<void> {
-//     if (!this.enableAudioSave) return;
-//
-//     try {
-//       // 生成时间戳
-//       const timestamp = new Date().toISOString().replace(/[:.-]/g, '_');
-//       this.audioFileTimestamp = timestamp;
-//
-//       // 创建三个音频文件
-//       this.adpcmEncryptedFile = await fileio.open(
-//         `${this.audioSaveBasePath}${timestamp}_adpcm_encrypted.adpcm`,
-//         fileio.O_CREAT | fileio.O_RDWR | fileio.O_TRUNC, 0o666
-//       );
-//
-//       this.adpcmDecryptedFile = await fileio.open(
-//         `${this.audioSaveBasePath}${timestamp}_adpcm_decrypted.adpcm`,
-//         fileio.O_CREAT | fileio.O_RDWR | fileio.O_TRUNC, 0o666
-//       );
-//
-//       this.pcmDecodedFile = await fileio.open(
-//         `${this.audioSaveBasePath}${timestamp}_pcm_decoded.pcm`,
-//         fileio.O_CREAT | fileio.O_RDWR | fileio.O_TRUNC, 0o666
-//       );
-//
-//       hilog.info(0x0000, 'AudioWebSocket', '音频文件创建成功');
-//     } catch (err) {
-//       hilog.error(0x0000, 'AudioWebSocket', `音频文件初始化失败: ${JSON.stringify(err)}`);
-//       await this.closeAudioFileHandles();
-//     }
-//   }
-//
-//   // 写入音频数据
-//   private async writeAudioData(data: Uint8Array, dataType: AudioDataType): Promise<void> {
-//     if (!this.enableAudioSave || data.length === 0) return;
-//
-//     try {
-//       let file: fileio.File | null = null;
-//       switch (dataType) {
-//         case AudioDataType.adpcmEncrypted:
-//           file = this.adpcmEncryptedFile;
-//           break;
-//         case AudioDataType.adpcmDecrypted:
-//           file = this.adpcmDecryptedFile;
-//           break;
-//         case AudioDataType.pcmDecoded:
-//           file = this.pcmDecodedFile;
-//           break;
-//       }
-//
-//       if (file) {
-//         await fileio.write(file.fd, data);
-//       }
-//     } catch (err) {
-//       hilog.error(0x0000, 'AudioWebSocket', `${AudioDataType[dataType]} 数据写入失败: ${JSON.stringify(err)}`);
-//     }
-//   }
-//
-//   // 关闭音频文件句柄
-//   private async closeAudioFileHandles(): Promise<void> {
-//     if (!this.enableAudioSave) return;
-//
-//     const closeFile = async (file: fileio.File | null) => {
-//       if (file) {
-//         try {
-//           await fileio.close(file.fd);
-//         } catch (err) {
-//           hilog.error(0x0000, 'AudioWebSocket', `关闭文件失败: ${JSON.stringify(err)}`);
-//         }
-//       }
-//     };
-//
-//     await closeFile(this.adpcmEncryptedFile);
-//     await closeFile(this.adpcmDecryptedFile);
-//     await closeFile(this.pcmDecodedFile);
-//
-//     this.adpcmEncryptedFile = null;
-//     this.adpcmDecryptedFile = null;
-//     this.pcmDecodedFile = null;
-//
-//     if (this.audioFileTimestamp) {
-//       hilog.info(0x0000, 'AudioWebSocket', `音频文件保存完成: ${this.audioFileTimestamp}`);
-//       this.audioFileTimestamp = null;
-//     }
-//   }
-//
-//   // 开始音频处理
-//   async startAudio(config: {
-//     language?: string;
-//     ptt?: string;
-//     clientId: string;
-//     audioSampleRate?: number;
-//   }): Promise<void> {
-//     hilog.info(0x0000, 'AudioWebSocket',
-//       `startAudio: clientId ${config.clientId}, language ${config.language}, ptt ${config.ptt}, audioSampleRate ${config.audioSampleRate}`);
-//
-//     this.isRunning = true;
-//     this.sendCount = 0;
-//     this.processFrameCount = 0;
-//     this.clientId = config.clientId;
-//     this.language = config.language || "ZH_CN";
-//     this.ptt = config.ptt || "1";
-//     this.isFirstFrame = true;
-//
-//     if (config.audioSampleRate === 1) {
-//       this.audioSampleRate = '16k';
-//     } else {
-//       this.audioSampleRate = '8k';
-//     }
-//
-//     // 初始化音频文件
-//     if (this.enableAudioSave) {
-//       await this.initAudioFileHandles();
-//     }
-//   }
-//
-//   // 处理音频帧
-//   async processAudioFrame(rawData: Uint8Array, firmwareVersion: number): Promise<void> {
-//     this.processFrameCount++;
-//
-//     if (!this.webSocket || !this.isConnected()) {
-//       hilog.warn(0x0000, 'AudioWebSocket', 'WebSocket未连接，无法处理音频');
-//       return;
-//     }
-//
-//     // 保存原始ADPCM数据
-//     const adpcmEncryptedData = rawData.slice(1);
-//     await this.writeAudioData(adpcmEncryptedData, AudioDataType.adpcmEncrypted);
-//
-//     let pcmData: Int16Array | null = null;
-//     let adpcmDecryptedData: Uint8Array;
-//
-//     if (firmwareVersion > 23) {
-//       // 解密数据
-//       adpcmDecryptedData = this.audioProcessor.miclinkDecrypt(adpcmEncryptedData);
-//       await this.writeAudioData(adpcmDecryptedData, AudioDataType.adpcmDecrypted);
-//
-//       // 解码为PCM
-//       pcmData = this.audioProcessor.processVoiceData(adpcmDecryptedData);
-//     } else {
-//       adpcmDecryptedData = adpcmEncryptedData;
-//       pcmData = this.audioProcessor.processVoiceData(adpcmEncryptedData);
-//     }
-//
-//     if (!pcmData) {
-//       hilog.error(0x0000, 'AudioWebSocket', 'PCM数据解码失败');
-//       return;
-//     }
-//
-//     // 转换PCM为Uint8Array
-//     const pcmBytes = this.audioProcessor.int16ArrayToBytes(pcmData);
-//     await this.writeAudioData(pcmBytes, AudioDataType.pcmDecoded);
-//
-//     // 积累PCM数据
-//     const newPendingData = new Uint8Array(this.pendingPcmData.length + pcmBytes.length);
-//     newPendingData.set(this.pendingPcmData);
-//     newPendingData.set(pcmBytes, this.pendingPcmData.length);
-//     this.pendingPcmData = newPendingData;
-//
-//     // 达到阈值则发送
-//     if (this.pendingPcmData.length >= this.sendThreshold) {
-//       await this.sendToWebSocket(false);
-//     }
-//   }
-//
-//   // 停止音频处理
-//   async stopAudio(): Promise<void> {
-//     if (!this.isRunning) {
-//       hilog.info(0x0000, 'AudioWebSocket', '音频已停止');
-//       return;
-//     }
-//
-//     this.isRunning = false;
-//     hilog.info(0x0000, 'AudioWebSocket',
-//       `计数器 - 发送次数: ${this.sendCount}, 处理帧次数: ${this.processFrameCount}`);
-//
-//     // 发送剩余PCM数据
-//     if (this.pendingPcmData.length > 0) {
-//       await this.sendToWebSocket(true);
-//     } else {
-//       await this.sendToWebSocket(true);
-//     }
-//
-//     this.clientId = "";
-//
-//     // 关闭文件句柄
-//     if (this.enableAudioSave) {
-//       await this.closeAudioFileHandles();
-//     }
-//
-//     hilog.info(0x0000, 'AudioWebSocket',
-//       `音频停止 - 总发送次数: ${this.sendCount}, 总处理帧次数: ${this.processFrameCount}`);
-//   }
-//
-//   // 连接到WebSocket服务器
-//   async connect(url: string): Promise<void> {
-//     this.currentUrl = url;
-//     this.resetReconnectState();
-//
-//     return new Promise((resolve, reject) => {
-//       try {
-//         this.webSocket = webSocket.createWebSocket();
-//
-//         this.webSocket.on('open', () => {
-//           hilog.info(0x0000, 'AudioWebSocket', 'WebSocket连接成功');
-//           this.resetReconnectState();
-//           this.onConnected();
-//           resolve();
-//         });
-//
-//         this.webSocket.on('message', (data: string | ArrayBuffer) => {
-//           if (typeof data === 'string') {
-//             this.handleTextMessage(data);
-//           } else {
-//             this.handleBinaryMessage(new Uint8Array(data));
-//           }
-//         });
-//
-//         this.webSocket.on('close', (err: BusinessError, value: webSocket.CloseResult) => {
-//           this.onDisconnected(value.code, value.reason);
-//         });
-//
-//         this.webSocket.on('error', (err: BusinessError) => {
-//           hilog.error(0x0000, 'AudioWebSocket', `WebSocket错误: ${JSON.stringify(err)}`);
-//           if (!this.isConnected()) {
-//             this.onDisconnected(null, err.message);
-//           }
-//           reject(err);
-//         });
-//
-//         this.webSocket.connect(url, (err: BusinessError, value: boolean) => {
-//           if (err) {
-//             hilog.error(0x0000, 'AudioWebSocket', `连接失败: ${JSON.stringify(err)}`);
-//             reject(err);
-//           }
-//         });
-//       } catch (err) {
-//         hilog.error(0x0000, 'AudioWebSocket', `创建WebSocket失败: ${JSON.stringify(err)}`);
-//         reject(err);
-//       }
-//     });
-//   }
-//
-//   // 断开连接
-//   disconnect(): void {
-//     this.resetReconnectState();
-//     this.stopAudio();
-//
-//     if (this.webSocket) {
-//       this.webSocket.close({
-//         code: 1000,
-//         reason: "客户端主动关闭"
-//       });
-//       this.webSocket = null;
-//     }
-//
-//     // 确保文件句柄关闭
-//     if (this.enableAudioSave) {
-//       this.closeAudioFileHandles();
-//     }
-//
-//     // 清空回调
-//     this.onMessageReceived = () => {};
-//     this.onReceiveError = () => {};
-//     this.onDisconnected = () => {};
-//     this.onConnected = () => {};
-//   }
-//
-//   // 重连逻辑
-//   async reconnect(): Promise<void> {
-//     if (!this.currentUrl || this.reconnectAttempts >= this.maxReconnectAttempts) {
-//       hilog.error(0x0000, 'AudioWebSocket', '重连失败：已达最大次数或URL为空');
-//       this.resetReconnectState();
-//       return;
-//     }
-//
-//     if (this.reconnectTimer) {
-//       return;
-//     }
-//
-//     this.reconnectAttempts++;
-//     const delay = this.baseReconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
-//
-//     hilog.info(0x0000, 'AudioWebSocket', `第 ${this.reconnectAttempts} 次重连，延迟 ${delay} 秒...`);
-//
-//     this.reconnectTimer = setTimeout(async () => {
-//       try {
-//         await this.connect(this.currentUrl!);
-//       } catch (err) {
-//         hilog.error(0x0000, 'AudioWebSocket', `重连失败: ${JSON.stringify(err)}`);
-//         await this.reconnect();
-//       }
-//     }, delay * 1000);
-//   }
-//
-//   // 重置重连状态
-//   private resetReconnectState(): void {
-//     this.reconnectAttempts = 0;
-//     if (this.reconnectTimer) {
-//       clearTimeout(this.reconnectTimer);
-//       this.reconnectTimer = null;
-//     }
-//   }
-//
-//   // 发送数据到WebSocket
-//   private async sendToWebSocket(isLastFrame: boolean): Promise<void> {
-//     if (!this.webSocket || !this.isConnected()) {
-//       hilog.warn(0x0000, 'AudioWebSocket', 'WebSocket未连接，无法发送数据');
-//       return;
-//     }
-//
-//     this.sendCount++;
-//
-//     const message = {
-//       "start": this.isFirstFrame,
-//       "clientId": this.clientId,
-//       "ptt": this.ptt,
-//       "serialNo": Communication.deviceInfo.sn,
-//       "phrases": "",
-//       "format": "pcm",
-//       "apiKey": "", // 需要从配置获取
-//       "language": this.language,
-//       "end": isLastFrame,
-//       "rate": this.audioSampleRate,
-//       "deviceNo": "", // 需要从配置获取
-//       "content": this.arrayBufferToBase64(this.pendingPcmData.buffer),
-//     };
-//
-//     try {
-//       this.webSocket.send(JSON.stringify(message), (err: BusinessError, value: boolean) => {
-//         if (err) {
-//           hilog.error(0x0000, 'AudioWebSocket', `消息发送失败: ${JSON.stringify(err)}`);
-//         }
-//       });
-//
-//       this.pendingPcmData = new Uint8Array(0);
-//       this.isFirstFrame = false;
-//     } catch (err) {
-//       hilog.error(0x0000, 'AudioWebSocket', `发送消息异常: ${JSON.stringify(err)}`);
-//     }
-//   }
-//
-//   // 处理文本消息
-//   private handleTextMessage(text: string): void {
-//     try {
-//       const jsonMessage = JSON.parse(text);
-//       this.onMessageReceived(jsonMessage);
-//     } catch (err) {
-//       const error = `接收消息解析失败: ${JSON.stringify(err)}`;
-//       this.onReceiveError(error);
-//     }
-//   }
-//
-//   // 处理二进制消息
-//   private handleBinaryMessage(data: Uint8Array): void {
-//     const error = `暂不支持处理二进制消息，长度: ${data.length}`;
-//     this.onReceiveError(error);
-//   }
-//
-//   // 检查连接状态
-//   isConnected(): boolean {
-//     return this.webSocket !== null;
-//   }
-//
-//   // ArrayBuffer转Base64
-//   private arrayBufferToBase64(buffer: ArrayBuffer): string {
-//     let binary = '';
-//     const bytes = new Uint8Array(buffer);
-//     const len = bytes.byteLength;
-//
-//     for (let i = 0; i < len; i++) {
-//       binary += String.fromCharCode(bytes[i]);
-//     }
-//
-//     return base64.encode(binary);
-//   }
-//
-//   // 获取重连状态
-//   isReconnecting(): boolean {
-//     return this.reconnectAttempts > 0;
-//   }
-// }
-//
-// // Base64编码工具函数
-// const base64 = {
-//   encode: (str: string): string => {
-//     // 简单的Base64编码实现
-//     const base64Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-//     let result = '';
-//     let i = 0;
-//
-//     while (i < str.length) {
-//       const a = str.charCodeAt(i++);
-//       const b = str.charCodeAt(i++);
-//       const c = str.charCodeAt(i++);
-//
-//       const bits = (a << 16) | (b << 8) | c;
-//
-//       result += base64Chars.charAt((bits >> 18) & 0x3F) +
-//       base64Chars.charAt((bits >> 12) & 0x3F) +
-//       base64Chars.charAt((bits >> 6) & 0x3F) +
-//       base64Chars.charAt(bits & 0x3F);
-//     }
-//
-//     // 处理填充
-//     const padding = str.length % 3;
-//     if (padding > 0) {
-//       result = result.slice(0, padding - 3) + (padding === 1 ? '==' : '=');
-//     }
-//
-//     return result;
-//   }
-// };
+import { webSocket } from '@kit.NetworkKit';
+import { BusinessError } from '@kit.BasicServicesKit';
+
+// 定义日志消息接口
+interface logMessageModel {
+  "start": boolean,
+  "clientId": string,
+  "ptt": string,
+  "serialNo": string,
+  "phrases": string,
+  "format": string,
+  "apiKey": string,
+  "language": string,
+  "end": boolean,
+  "rate": string,
+  "deviceNo": string,
+  "content": string
+}
+
+export interface inputMessageModel {
+  start: boolean
+  "clientId": string,
+  "ptt": string,
+  "serialNo": string,
+  "phrases": string,
+  "format": string,
+  "apiKey": string,
+  "language": string,
+  "end": boolean,
+  "rate": string,
+  "deviceNo": string,
+  content: string
+}
+
+interface res_moudel {
+  "data": res_data_moudel
+  "message": string,
+  "status": number
+}
+
+interface res_data_moudel {
+  "btype": boolean,
+  "clientId": string
+  "sn": string
+  "text": string
+  "type": string
+}
+
+export class AudioWebSocketHandler {
+  public isConnected: boolean = false;
+  private ws: webSocket.WebSocket | null = null;
+  private serverUrl: string = "ws://asr.miclink.net/ws";
+  private audioData: Int16Array[] = []
+  private inputMessage: inputMessageModel = {
+    start: false,
+    "clientId": '',
+    "ptt": '',
+    "serialNo": '',
+    "phrases": '',
+    "format": '',
+    "apiKey": '',
+    "language": '',
+    "end": false,
+    "rate": '',
+    "deviceNo": '',
+    content: ''
+  }
+  // Base64编码表，用于自定义Base64编码实现
+  private base64Chars: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+  constructor(serverUrl: string, audioData: Int16Array[], inputMessage: inputMessageModel) {
+    this.serverUrl = serverUrl;
+    this.audioData = audioData;
+    this.inputMessage = inputMessage;
+  }
+
+  public connect(): void {
+    console.log('*************************进入webSocket连接************************', typeof this.ws)
+    if (this.ws) {
+      this.disconnect();
+    }
+
+    this.ws = webSocket.createWebSocket();
+
+    this.ws.on('open', (err: BusinessError, value: Object) => {
+      if (!err) {
+        this.isConnected = true;
+        console.log("连接已打开，状态:" + JSON.stringify(value));
+        console.log('*******************************语音数据长度：', this.audioData.length)
+        this.sendAudioData(this.audioData)
+      } else {
+        console.error("连接错误:" + JSON.stringify(err));
+      }
+    });
+
+    this.ws.on('message', (err: BusinessError, value: string | ArrayBuffer) => {
+      if (!err) {
+        let message: string;
+        if (typeof value === 'string') {
+          message = value;
+        } else {
+          message = this.arrayBufferToString(value);
+        }
+        console.log("收到消息，内容:" + message);
+        let res: res_moudel = JSON.parse(message)
+        if (res.status === 200) {
+          AppStorage.setOrCreate('audioToText_res', res)
+        } else {
+          console.error('响应异常')
+        }
+      } else {
+        console.error("消息错误:" + JSON.stringify(err));
+      }
+    });
+
+    this.ws.on('close', (err: BusinessError, value: webSocket.CloseResult) => {
+      this.isConnected = false;
+      console.log(`连接已关闭，状态码: ${value.code}, 原因: ${value.reason}`);
+    });
+
+    this.ws.on('error', (err: BusinessError) => {
+      console.error("发生错误: " + err.message);
+    });
+
+    console.warn('正在连接到服务器...')
+    this.ws.connect(this.serverUrl, (err: BusinessError, value: boolean) => {
+      if (!err) {
+        console.warn("连接成功");
+      } else {
+        console.error("连接失败。错误信息:" + err.message);
+      }
+    });
+  }
+
+  public disconnect(): void {
+    if (this.ws) {
+      this.ws.close({
+        code: 1000,
+        reason: "客户端主动关闭"
+      }, (err: BusinessError, value: boolean) => {
+        if (!err) {
+          console.log("连接已成功关闭");
+        } else {
+          console.error("关闭连接失败。错误信息: " + JSON.stringify(err));
+        }
+      });
+      this.ws = null;
+      this.isConnected = false;
+    }
+  }
+
+  public sendMessage(inputMessage: inputMessageModel): boolean {
+    if (!this.isConnected || !this.ws) {
+      console.error("未连接到服务器，无法发送消息")
+      return false;
+    }
+
+    if (!inputMessage.content.trim()) {
+      console.error("消息不能为空")
+      return false;
+    }
+
+    this.ws.send(JSON.stringify(inputMessage), (err: BusinessError, value: boolean) => {
+      if (err) {
+        console.error("消息发送失败: " + err.message);
+      } else {
+        // console.error("消息发送成功~~~")
+      }
+    });
+
+    return true;
+  }
+
+  private arrayBufferToString(buffer: ArrayBuffer): string {
+    const uint8Array: Uint8Array = new Uint8Array(buffer);
+    let result: string = "";
+
+    for (let i = 0; i < uint8Array.length; i++) {
+      result += String.fromCharCode(uint8Array[i]);
+    }
+
+    return result;
+  }
+
+  // 自定义Base64编码实现，不依赖平台特定模块
+  private base64Encode(uint8Array: Uint8Array): string {
+    let result = '';
+    let i = 0;
+    const length = uint8Array.length;
+
+    while (i < length) {
+      // 取三个字节
+      const byte1 = uint8Array[i++] || 0;
+      const byte2 = i < length ? uint8Array[i++] : 0;
+      const byte3 = i < length ? uint8Array[i++] : 0;
+
+      // 拆分为4个6位值
+      const enc1 = byte1 >> 2;
+      const enc2 = ((byte1 & 0x03) << 4) | (byte2 >> 4);
+      const enc3 = ((byte2 & 0x0F) << 2) | (byte3 >> 6);
+      const enc4 = byte3 & 0x3F;
+
+      // 转换为Base64字符
+      result += this.base64Chars.charAt(enc1);
+      result += this.base64Chars.charAt(enc2);
+      result += i > length + 1 ? '=' : this.base64Chars.charAt(enc3);
+      result += i > length ? '=' : this.base64Chars.charAt(enc4);
+    }
+
+    return result;
+  }
+
+  // 将Int16Array转换为Base64编码
+  private int16ToBase64(int16Array: Int16Array): string {
+    // 创建一个Uint8Array来存储转换后的字节
+    const byteArray = new Uint8Array(int16Array.length * 2);
+
+    // 将16位整数转换为两个8位字节
+    for (let i = 0; i < int16Array.length; i++) {
+      const value = int16Array[i];
+      // 低8位
+      byteArray[i * 2] = value & 0xFF;
+      // 高8位
+      byteArray[i * 2 + 1] = (value >> 8) & 0xFF;
+    }
+
+    // 使用自定义的Base64编码方法
+    return this.base64Encode(byteArray);
+  }
+
+  private sendAudioData(audioData: Int16Array[]) {
+    for (let a = 0; a < audioData.length; a++) {
+      const isStart: boolean = a === 0;
+      const isEnd: boolean = a === audioData.length - 1;
+
+      // 将Int16Array转换为Base64编码的音频数据
+      const base64Audio = this.int16ToBase64(audioData[a]);
+      // console.log(`第${a+1}帧音频数据Base64长度:`, base64Audio.length);
+
+      // 显式创建对象
+      const inputMessage: inputMessageModel = {
+        "start": isStart,
+        "clientId": this.inputMessage.clientId,
+        "ptt": this.inputMessage.ptt,
+        "serialNo": this.inputMessage.serialNo,
+        "phrases": this.inputMessage.phrases,
+        "format": this.inputMessage.format || "pcm",
+        "apiKey": this.inputMessage.apiKey,
+        "language": this.inputMessage.language,
+        "end": isEnd,
+        "rate": this.inputMessage.rate,
+        "deviceNo": this.inputMessage.deviceNo,
+        "content": base64Audio
+      };
+
+      this.sendMessage(inputMessage);
+
+      if (isEnd) {
+        // 使用显式接口定义的对象
+        const logMessage: logMessageModel = {
+          "start": inputMessage.start,
+          "clientId": inputMessage.clientId,
+          "ptt": inputMessage.ptt,
+          "serialNo": inputMessage.serialNo,
+          "phrases": inputMessage.phrases,
+          "format": inputMessage.format,
+          "apiKey": inputMessage.apiKey,
+          "language": inputMessage.language,
+          "end": inputMessage.end,
+          "rate": inputMessage.rate,
+          "deviceNo": inputMessage.deviceNo,
+          "content": inputMessage.content.substring(0, 50) + "...[省略部分内容]"
+        };
+        // console.log('最后一帧数据信息：', a.toString(), JSON.stringify(logMessage));
+      }
+    }
+  }
+}
+    

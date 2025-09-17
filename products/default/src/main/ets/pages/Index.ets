@@ -4,6 +4,9 @@ import { LeftBar, Topbar, Content } from 'common'
 import { inputDevice } from '@kit.InputKit';
 import { Communication, DeviceInfo, MouseICType, KeyPressType, AudioFileManager } from 'mouse'
 import common from '@ohos.app.ability.common';
+import { AudioWebSocketHandler, inputMessageModel } from 'api';
+import { WebSocket_serverUrl } from 'config';
+
 
 PersistentStorage.persistProp("login", false)
 
@@ -14,24 +17,45 @@ PersistentStorage.persistProp("login", false)
 struct Index {
   @StorageLink("login") login: boolean = true //登录状态
   @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null //鼠标信息
-  @Watch('a') @StorageLink("mouse_KeyPressType") mouse_KeyPressType: KeyPressType =
+  @Watch('change_mouse_KeyPressType') @StorageLink("mouse_KeyPressType") mouse_KeyPressType: KeyPressType =
     KeyPressType.VOICE_CLICK //鼠标按键事件监听
   @Provide('pageInfo') pageInfo: NavPathStack = new NavPathStack() //页面跳转路由栈
   @State web: string =
     'https://asrai.miclink.net?sno=123&productCode=999999&config=configMiclink_B_1755079145452' //web组件链接
 
-  a() {
+  change_mouse_KeyPressType() {
     if (this.mouse_KeyPressType === 54) {
+      /**
+       * 语音数据处理
+       */
+      //保存本地PCM文件
       const context = getContext(this) as common.UIAbilityContext;
       let a: AudioFileManager = new AudioFileManager(Communication.audioData, context)
       console.log(Communication.audioData.length.toString(), '语音数据结束*****模拟')
-
+      //WebSocket  语音数据处理
+      let inputMessage: inputMessageModel = {
+        start: false,
+        "clientId": "clientId1751968608",
+        "ptt": "1",
+        "serialNo": this.mouseconfig?.sn as string,
+        "phrases": "",
+        "format": "pcm",
+        "apiKey": "ebb72c9db60147febd2ccd50a705de57",
+        "language": "ZH_CN",
+        "end": false,
+        "rate": "16k",
+        "deviceNo": "6c:b1:33:9f:b9:8b",
+        content: ''
+      }
+      let audioToText: AudioWebSocketHandler =
+        new AudioWebSocketHandler(WebSocket_serverUrl.audioToText, Communication.audioData,
+          inputMessage) //语音转文字 websocket
+      audioToText.connect()
     }
   }
 
   aboutToAppear(): void {
     const context = getContext(this) as common.UIAbilityContext;
-
     /*
     热插拔:检测鼠标的插入与拔出
     */
@@ -132,3 +156,53 @@ struct Index {
 
   }
 }
+
+/**
+ * 响应数据记录
+ */
+// [
+//   {
+//     "data": {
+//       "btype": false,
+//       "clientId": "clientId1751968608",
+//       "sn": "iat000d0ef1@dx19956d2f7747024802",
+//       "text": "语",
+//       "type": "MID"
+//     },
+//     "message": "操作成功",
+//     "status": 200
+//   },
+//   {
+//     "data": {
+//       "btype": false,
+//       "clientId": "clientId1751968608",
+//       "sn": "iat000d0ef1@dx19956d2f7747024802",
+//       "text": "语音",
+//       "type": "MID"
+//     },
+//     "message": "操作成功",
+//     "status": 200
+//   },
+//   {
+//     "data": {
+//       "btype": false,
+//       "clientId": "clientId1751968608",
+//       "sn": "iat000d0ef1@dx19956d2f7747024802",
+//       "text": "语音测试，语音测试",
+//       "type": "MID"
+//     },
+//     "message": "操作成功",
+//     "status": 200
+//   },
+//   {
+//     "data": {
+//       "btype": false,
+//       "clientId": "clientId1751968608",
+//       "sn": "iat000d0ef1@dx19956d2f7747024802",
+//       "text": "语音测试，语音测试。",
+//       "type": "LAST"
+//     },
+//     "message": "操作成功",
+//     "status": 200
+//   }
+// ]
