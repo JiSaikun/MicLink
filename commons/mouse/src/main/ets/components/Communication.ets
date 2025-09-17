@@ -273,8 +273,7 @@ export class Communication {
       if (command !== Communication.sendDataList[0]) {
         Communication.sendDataList = Communication.sendDataList.filter(item => item[0] !== command[0]);
         Communication.sendDataList.push(command);
-        console.log(']]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]',
-          JSON.stringify(Communication.sendDataList))
+
       }
       setTimeout(() => {
         Communication.getDeviceInfo(command)
@@ -286,7 +285,6 @@ export class Communication {
       console.log('前面消息命令还没发送完：排队------------------------');
       Communication.sendDataList = Communication.sendDataList.filter(item => item[0] !== command[0]);
       Communication.sendDataList.push(command);
-      console.log('[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[', JSON.stringify(Communication.sendDataList))
       command = Communication.sendDataList[0]
     }
     if (Communication.readState && command[0] !== 0x61) {
@@ -298,8 +296,8 @@ export class Communication {
     }
     // 释放接口
     if (Communication.devicePipe && Communication.inputInterface) {
-      let a = usbManager.releaseInterface(Communication.devicePipe, Communication.inputInterface);
-      console.log('hjdashdjiashuuahs', a)
+      // let a = usbManager.releaseInterface(Communication.devicePipe, Communication.inputInterface);
+      // console.log('hjdashdjiashuuahs', a)
     }
     console.log('开始获取设备信息');
     try {
@@ -474,9 +472,9 @@ export class Communication {
       return;
     }
     Communication.readState = true
-    let a = usbManager.releaseInterface(Communication.devicePipe, iface);
-    console.log('***************************************************************************确保读取前关闭之前开辟的读取信息端口：',
-      a)
+    // let a = usbManager.releaseInterface(Communication.devicePipe, iface);
+    // console.log('***************************************************************************确保读取前关闭之前开辟的读取信息端口：',
+    //   a)
     try {
       const claimResult = usbManager.claimInterface(Communication.devicePipe, iface, true);
       console.log('声明接口结果:', claimResult);
@@ -505,7 +503,7 @@ export class Communication {
           console.log('未接收到数据');
         }
 
-        usbManager.releaseInterface(Communication.devicePipe, iface);
+        // usbManager.releaseInterface(Communication.devicePipe, iface);
         Communication.readState = false
         return result;
       } else {
@@ -533,7 +531,7 @@ export class Communication {
           c++
           console.log('循环读取鼠标数据-----', c, '---------------------', JSON.stringify(Communication.inputInterface),
             JSON.stringify(Communication.inputEndpoint))
-          usbManager.releaseInterface(Communication.devicePipe, Communication.inputInterface)
+          // usbManager.releaseInterface(Communication.devicePipe, Communication.inputInterface)
           let a = await Communication.readResponse(Communication.inputInterface as usbManager.USBInterface,
             Communication.inputEndpoint as usbManager.USBEndpoint);
           if (a === -1) {
@@ -803,20 +801,21 @@ export class Communication {
   }
 
   static audioData: Int16Array[] = []
-  static PCM_RAW: Uint8Array[] = []
 
   // 处理音频数据
   static processAudioData(data: Uint8Array) {
     try {
       // 移除帧头(0x1b)
-      const audioFrame = data.subarray(1);
-
-      // 解密音频数据
-      const decryptedData = Communication.audioProcessor.miclinkDecrypt(audioFrame);
+      let audioFrame = data.subarray(1);
+      if (Number(Communication.deviceInfo.firmwareVersion) > 23) {
+        // 解密音频数据
+        const decryptedData = Communication.audioProcessor.miclinkDecrypt(audioFrame);
         // 这里可以添加播放或保存PCM数据的逻辑
-        Communication.PCM_RAW.push(decryptedData)
+        audioFrame = decryptedData
+      }
+
       // 解码为PCM
-      const pcmData = Communication.audioProcessor.processVoiceData(decryptedData);
+      const pcmData = Communication.audioProcessor.processVoiceData(audioFrame);
 
       if (pcmData) {
         // 处理PCM数据（播放或保存）

@@ -2,7 +2,7 @@ import { LeftBar, Topbar, Content } from 'common'
 // import {Hid}from "usb_hid"
 // import { BlueTooth_api } from "bluetooth"
 import { inputDevice } from '@kit.InputKit';
-import { Communication, DeviceInfo, MouseICType,KeyPressType ,AudioFileManager} from 'mouse'
+import { Communication, DeviceInfo, MouseICType, KeyPressType, AudioFileManager } from 'mouse'
 import common from '@ohos.app.ability.common';
 
 PersistentStorage.persistProp("login", false)
@@ -21,11 +21,10 @@ struct Index {
     'https://asrai.miclink.net?sno=123&productCode=999999&config=configMiclink_B_1755079145452' //web组件链接
 
   a() {
-    console.log('99999999999999999999999999999999999999999',this.mouse_KeyPressType)
-    if (this.mouse_KeyPressType===54) {
+    if (this.mouse_KeyPressType === 54) {
       const context = getContext(this) as common.UIAbilityContext;
-      let a:AudioFileManager=new AudioFileManager(Communication.PCM_RAW,Communication.audioData,context)
-      console.log(Communication.audioData.length.toString(),'999999999999999999999999')
+      let a: AudioFileManager = new AudioFileManager(Communication.audioData, context)
+      console.log(Communication.audioData.length.toString(), '语音数据结束*****模拟')
 
     }
   }
