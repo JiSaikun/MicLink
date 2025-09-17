@@ -29,9 +29,9 @@ struct Index {
        * 语音数据处理
        */
       //保存本地PCM文件
-      const context = getContext(this) as common.UIAbilityContext;
-      let a: AudioFileManager = new AudioFileManager(Communication.audioData, context)
-      console.log(Communication.audioData.length.toString(), '语音数据结束*****模拟')
+      // const context = getContext(this) as common.UIAbilityContext;
+      // let a: AudioFileManager = new AudioFileManager(Communication.audioData, context)
+      // console.log(Communication.audioData.length.toString(), '语音数据结束*****模拟')
       //WebSocket  语音数据处理
       let inputMessage: inputMessageModel = {
         start: false,
