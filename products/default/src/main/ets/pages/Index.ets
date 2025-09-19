@@ -11,6 +11,12 @@ import { WebSocket_serverUrl } from 'config';
 PersistentStorage.persistProp("login", false)
 
 // PersistentStorage.persistProp("mouseconfig", null)
+interface a {}
+
+interface b {
+  code: string
+
+}
 
 @Entry
 @Component
@@ -152,6 +158,7 @@ struct Index {
       .hideToolBar(true)
       .hideTitleBar(true)
       .mode(NavigationMode.Stack)
+
       Image($r('app.media.create_Command_Ai'))
     }
 

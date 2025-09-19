@@ -21,4 +21,15 @@ class AppStorage {
    * 根据鼠标响应数据随时改变
    */
   static readonly mouse_KeyPressType: boolean = false
+  /**
+   * 验证码保存,用于登录测试
+   */
+  static readonly _getCode: boolean = false
+  /**
+   * 用户注册登录，用户信息数据
+   * 初始化 ：用户登录时
+   *包含：账号、密码、token等信息
+   * 测试密码：123456
+   */
+  static readonly userLoginInfo: boolean = false
 }

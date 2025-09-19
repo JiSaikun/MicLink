@@ -1,30 +1,62 @@
 import instance from "./Config";
 
-interface ApiResponse<T> { //根据项目实际项目修改
-  code?: number;
-  data: T | null;
-  message?: string;
+/**
+ * 基础参数标记接口
+ * 仅作为类型标记，不包含任何索引签名
+ */
+export interface BaseParams {
+  // 空接口，用于类型标记
 }
 
-// 封装请求方法
+/**
+ * 统一 API 响应类型
+ */
+interface ApiResponse<T> {
+  statusCode?: number;
+  code?: number;
+  data: T | null;
+  message: string;
+}
+
+/**
+ * HTTP请求封装类
+ * 完全符合ArkTS规范，不使用任何索引签名
+ */
 class HttpRequest {
-  get<T>(url: string, params?: object): Promise<ApiResponse<T>> {
-    return instance.get<T, ApiResponse<T>>(url, { params })
+  /**
+   * GET请求
+   * @param url 请求地址
+   * @param params 查询参数（必须是实现BaseParams的具体类型）
+   */
+  get<TData, TParams extends BaseParams>(url: string, params?: TParams): Promise<ApiResponse<TData>> {
+    return instance.get<TData, ApiResponse<TData>>(url, { params });
   }
 
-  // 封装post方法
-  post<T>(url: string, data?: object): Promise<ApiResponse<T>> {
-    return instance.post<T, ApiResponse<T>>(url, data)
+  /**
+   * POST请求 - 参数放query
+   * @param url 请求地址
+   * @param params 查询参数（必须是实现BaseParams的具体类型）
+   */
+  post<TData, TParams extends BaseParams>(url: string, params?: TParams): Promise<ApiResponse<TData>> {
+    return instance.post<TData, ApiResponse<TData>>(url, null, { params });
   }
 
-  // 封装delete方法
-  delete<T>(url: string, data?: object): Promise<ApiResponse<T>> {
-    return instance.delete<T, ApiResponse<T>>(url, data)
+  /**
+   * DELETE请求
+   * @param url 请求地址
+   * @param params 查询参数（必须是实现BaseParams的具体类型）
+   */
+  delete<TData, TParams extends BaseParams>(url: string, params?: TParams): Promise<ApiResponse<TData>> {
+    return instance.delete<TData, ApiResponse<TData>>(url, { params });
   }
 
-  // 封装put方法
-  put<T>(url: string, data?: object): Promise<ApiResponse<T>> {
-    return instance.put<T, ApiResponse<T>>(url, data)
+  /**
+   * PUT请求
+   * @param url 请求地址
+   * @param params 查询参数（必须是实现BaseParams的具体类型）
+   */
+  put<TData, TParams extends BaseParams>(url: string, params?: TParams): Promise<ApiResponse<TData>> {
+    return instance.put<TData, ApiResponse<TData>>(url, null, { params });
   }
 }
 

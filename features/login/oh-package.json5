@@ -7,5 +7,6 @@
   "license": "Apache-2.0",
   "dependencies": {
     'config': 'file:../../commons/config',
+    'api': 'file:../../commons/api',
   }
 }

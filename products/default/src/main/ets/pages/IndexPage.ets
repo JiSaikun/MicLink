@@ -1,7 +1,7 @@
 import { LeftBar, Topbar, Content, paramModel } from 'common'
 import Content_Ai from 'command_ai/src/main/ets/components/Command_Ai'
-import {DeviceSettings} from '../components/DeviceSettings'
-import {CreateNewInstruction_pop}from 'command_ai/src/main/ets/components/CreateNewInstruction_pop'
+import { DeviceSettings } from '../components/DeviceSettings'
+import { CreateNewInstruction_pop } from 'command_ai/src/main/ets/components/CreateNewInstruction_pop'
 
 // PersistentStorage.persistProp("login", false)
 
@@ -18,10 +18,12 @@ struct IndexPage {
   @State currentIndex: number = 0
   @State bottomCurrIndex: number = 10000
   @State extend: boolean = true //状态栏延申
-  @State width_length: number = 248
-  @State isShow_CreateNewInstruction_pop: boolean = false
-  @State isShow_EditInstruction_pop: boolean = false
-  @State EditInstruction_pop_currIndex:number=0
+  @State width_length: number = 248//左侧选项卡样式宽度
+  @State isShow_CreateNewInstruction_pop: boolean = false //AI指令创建弹窗
+  @State isShow_EditInstruction_pop: boolean = false //AI指令编辑弹窗
+  @State EditInstruction_pop_currIndex: number = 0   //AI指令编辑弹窗定位索引
+
+
   aboutToAppear(): void {
     if (!this.login) {
       this.pageInfo.pushPath({ 'name': 'login' })
@@ -37,59 +39,71 @@ struct IndexPage {
   }
 
   build() {
-      Column() {
-        NavDestination() {
-          Stack(){
-            Row() {
-              LeftBar({
-                currentIndex: this.currentIndex,
-                web: this.web,
-                bottomCurrIndex: this.bottomCurrIndex,
-                extend: this.extend
-              ,
-                width_length: this.width_length
-              })
-              Stack() {
-                Topbar()
-                  .zIndex(100)
-                if (this.web) {
-                  if (this.web === 'Command_Ai') {
-                    Content_Ai({isShow_CreateNewInstruction_pop:this.isShow_CreateNewInstruction_pop,isShow_EditInstruction_pop:this.isShow_EditInstruction_pop,EditInstruction_pop_currIndex:this.EditInstruction_pop_currIndex}) //AI--指令
-                  } else if (this.web === 'DeviceSettings') {
-                    /*
-                      设备设置
-                     */
-                    DeviceSettings()
-                  } else {
-                    Content({ web: this.web })
-                  }
+    Column() {
+      NavDestination() {
+        Stack() {
+          Row() {
+            LeftBar({
+              currentIndex: this.currentIndex,
+              web: this.web,
+              bottomCurrIndex: this.bottomCurrIndex,
+              extend: this.extend
+            ,
+              width_length: this.width_length
+            })
+            Stack() {
+              Topbar()
+                .zIndex(100)
+              if (this.web) {
+                if (this.web === 'Command_Ai') {
+                  Content_Ai({
+                    isShow_CreateNewInstruction_pop: this.isShow_CreateNewInstruction_pop,
+                    isShow_EditInstruction_pop: this.isShow_EditInstruction_pop,
+                    EditInstruction_pop_currIndex: this.EditInstruction_pop_currIndex
+                  }) //AI--指令
+                } else if (this.web === 'DeviceSettings') {
+                  /*
+                    设备设置
+                   */
+                  DeviceSettings()
+                } else {
+                  Content({ web: this.web })
                 }
               }
-              // .border({width:1})
-              .align(Alignment.TopStart)
-              .height('100%')
-              .layoutWeight(1)
             }
-            // .backgroundColor(Color.Blue)
-            .width('100%')
+            // .border({width:1})
+            .align(Alignment.TopStart)
             .height('100%')
-            if (this.isShow_CreateNewInstruction_pop){
-              CreateNewInstruction_pop({isShow_CreateNewInstruction_pop:this.isShow_CreateNewInstruction_pop,isShow_EditInstruction_pop:this.isShow_EditInstruction_pop})
-            }
-            if (this.isShow_EditInstruction_pop){
-              CreateNewInstruction_pop({isShow_CreateNewInstruction_pop:this.isShow_CreateNewInstruction_pop,isShow_EditInstruction_pop:this.isShow_EditInstruction_pop,isParam:true,currIndexParam:this.EditInstruction_pop_currIndex})
-            }
-
+            .layoutWeight(1)
           }
+          // .backgroundColor(Color.Blue)
           .width('100%')
           .height('100%')
 
+          if (this.isShow_CreateNewInstruction_pop) {
+            CreateNewInstruction_pop({
+              isShow_CreateNewInstruction_pop: this.isShow_CreateNewInstruction_pop,
+              isShow_EditInstruction_pop: this.isShow_EditInstruction_pop
+            })
+          }
+          if (this.isShow_EditInstruction_pop) {
+            CreateNewInstruction_pop({
+              isShow_CreateNewInstruction_pop: this.isShow_CreateNewInstruction_pop,
+              isShow_EditInstruction_pop: this.isShow_EditInstruction_pop,
+              isParam: true,
+              currIndexParam: this.EditInstruction_pop_currIndex
+            })
+          }
+
         }
-        .hideToolBar(true)
-        .hideTitleBar(true)
+        .width('100%')
+        .height('100%')
 
       }
+      .hideToolBar(true)
+      .hideTitleBar(true)
 
+    }
 
   }
 }

@@ -1,22 +1,22 @@
 import { Contentbottom } from '../components/Contentbottom'
-import {InputBox}from '../common/InputBox'
-import {Captcha}from '../common/Captcha'
+import { InputBox } from '../common/InputBox'
+import { Captcha } from '../common/Captcha'
+
+
 @Builder
 export function LoginBuilder() {
   Login()
 }
 
-
 @Component
 struct Login {
   @State longin_operation: number = 0 //0:登录页 1：验证登录页 2：注册页 3：修改密码
-  @State phone:string=''    //手机号
-  @State captcha:string=''  //验证码
-  @State loginPassword:string=''  //登陆密码
-  @State confirmPasswordTwice:string=''  //二次确认密码
-  @State oldPassword:string=''  //旧密码
-  @State newPassword:string=''  //新密码
-  @State isReaded:boolean=false
+  @State phone: string = '2847714478@qq.com' //手机号
+  @State captcha: string = '' //验证码
+  @State loginPassword: string = '' //登陆密码
+  @State confirmPasswordTwice: string = '' //二次确认密码
+  @State oldPassword: string = '' //旧密码
+  @State newPassword: string = '' //新密码
 
   aboutToAppear(): void {
     // console.log('进入了登录页面')
@@ -32,21 +32,31 @@ struct Login {
           Image($r("app.media.trademark_login"))
             .width(150)
             .height(55)
-          Column(){
-            InputBox({placeholder:'手机号',data:this.phone})
-            Captcha({data:this.captcha})
-              .visibility(this.longin_operation!==0?Visibility.Visible:Visibility.None)
-            InputBox({placeholder:'登录密码',data:this.loginPassword})
-              .visibility(this.longin_operation===0||this.longin_operation===2?Visibility.Visible:Visibility.None)
-            InputBox({placeholder:'二次确认密码',data:this.confirmPasswordTwice})
-              .visibility(this.longin_operation===2?Visibility.Visible:Visibility.None)
-            InputBox({placeholder:'旧密码',data:this.oldPassword})
-              .visibility(this.longin_operation===3?Visibility.Visible:Visibility.None)
-            InputBox({placeholder:'新密码',data:this.newPassword})
-              .visibility(this.longin_operation===3?Visibility.Visible:Visibility.None)
+          Column() {
+            InputBox({ placeholder: '手机号/邮箱', data: this.phone, type: InputType.Email || InputType.PhoneNumber })
+            Captcha({ captcha: this.captcha, phone: this.phone, longin_operation: this.longin_operation })
+              .visibility(this.longin_operation !== 0 ? Visibility.Visible : Visibility.None)
+            InputBox({ placeholder: '登录密码', data: this.loginPassword, type: InputType.Password })
+              .visibility(this.longin_operation === 0 || this.longin_operation === 2 ? Visibility.Visible :
+              Visibility.None)
+            InputBox({ placeholder: '二次确认密码', data: this.confirmPasswordTwice, type: InputType.Password })
+              .visibility(this.longin_operation === 2 ? Visibility.Visible : Visibility.None)
+            InputBox({ placeholder: '旧密码', data: this.oldPassword, type: InputType.Password })
+              .visibility(this.longin_operation === 3 ? Visibility.Visible : Visibility.None)
+            InputBox({ placeholder: '新密码', data: this.newPassword, type: InputType.Password })
+              .visibility(this.longin_operation === 3 ? Visibility.Visible : Visibility.None)
           }
-          .margin({top:this.longin_operation===0||this.longin_operation===1?60:20})
-          Contentbottom({isChecked:this.isReaded,longin_operation:this.longin_operation})
+          .margin({ top: this.longin_operation === 0 || this.longin_operation === 1 ? 60 : 20 })
+
+          Contentbottom({
+            longin_operation: this.longin_operation,
+            phone: this.phone,
+            captcha: this.captcha,
+            loginPassword: this.loginPassword,
+            confirmPasswordTwice: this.confirmPasswordTwice,
+            oldPassword: this.oldPassword,
+            newPassword: this.newPassword
+          })
 
         }
         .width(400)
