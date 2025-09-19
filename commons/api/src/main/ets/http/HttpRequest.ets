@@ -13,7 +13,7 @@ export interface BaseParams {
  */
 interface ApiResponse<T> {
   statusCode?: number;
-  code?: number;
+  status?: number;
   data: T | null;
   message: string;
 }

@@ -30,6 +30,13 @@ class AppStorage {
    * 初始化 ：用户登录时
    *包含：账号、密码、token等信息
    * 测试密码：123456
+   * 数据类型：register_Response---------------features\login\src\main\ets\model
    */
   static readonly userLoginInfo: boolean = false
+  /**
+   * 鼠标配置相关：用户按键模式详情
+   * 初始化 ：获取到鼠标0x61命令，拿到sn数据后调用接口
+   * 数据类型：getModelInfoModel---------------commons\config\src\main\ets\components
+   */
+  static readonly getModelInfo: boolean = false
 }

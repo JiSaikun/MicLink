@@ -1,19 +1,14 @@
-// import { http } from 'api'
-// import {
-//   getCode_Params, //获取验证码
-//   register_Params, //注册登录
-//   register_Response,
-//   login_Params, //密码登录
-//   resetPwd_Params, //修改密码
-// } from '../model/UserModel'
-//
-// // getCode_Params为参数的类型声明，之后在页面中传入参数时，TS能够正确推断并代码提示
-// // getCode_Response为服务器端返回的，页面中要渲染的那部分数据的数据类型, 之后在页面中也能正确推断并代码提示
-// /**
-//  * 获取验证码
-//  * @param params
-//  * @returns
-//  */
-// export function _getCode(params: getCode_Params) {
-//   return http.post<string, getCode_Params>('/api/getCode', params);
-// }
+import { http } from 'api'
+import { getModelInfo_Params } from '../model/MouseInfoModel'
+import { getModelInfoModel } from 'config'
+
+// getCode_Params为参数的类型声明，之后在页面中传入参数时，TS能够正确推断并代码提示
+// getCode_Response为服务器端返回的，页面中要渲染的那部分数据的数据类型, 之后在页面中也能正确推断并代码提示
+/**
+ * 用户按键模式详情
+ * @param params
+ * @returns
+ */
+export function _getModelInfo(params: getModelInfo_Params) {
+  return http.get<getModelInfoModel, getModelInfo_Params>('/api/getModelInfo', params);
+}

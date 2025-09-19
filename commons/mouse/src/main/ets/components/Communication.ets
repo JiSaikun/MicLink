@@ -1,6 +1,9 @@
 import { usbManager } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { SmartMouseAudioProcessor } from './SmartMouseAudioProcessor'
+import { getModelInfo_Params } from '../model/MouseInfoModel'
+import { _getModelInfo } from '../viewmodel/UserViewModel'
+import { getModelInfoModel } from 'config'
 
 // 按键类型枚举
 export enum KeyPressType {
@@ -268,7 +271,7 @@ export class Communication {
       return;
     }
     Communication.isPhysicalKeyboardExist = false
-    if (Communication.sendState&&command[0]!==0x61) {
+    if (Communication.sendState && command[0] !== 0x61) {
       console.log('有消息正在发送------------------------');
       if (command !== Communication.sendDataList[0]) {
         Communication.sendDataList = Communication.sendDataList.filter(item => item[0] !== command[0]);
@@ -347,6 +350,19 @@ export class Communication {
           if (Communication.deviceInfo.sn === '' && Communication.devicePipe) {
             console.log('没有收到0x61命令,重新获取设备信息')
             Communication.getDeviceInfo()
+          } else {
+            const params: getModelInfo_Params = {
+              languageCode: '',
+              productCode: Communication.deviceInfo.productType.toString(),
+              sno: Communication.deviceInfo.sn
+            }
+            _getModelInfo(params).then((res) => {
+              console.log('获取用户按键模式详情数据', JSON.stringify(res.data))
+              if (res.status === 200) {
+                let getModelInfo: getModelInfoModel = res.data as getModelInfoModel
+                AppStorage.setOrCreate('getModelInfo', getModelInfo)
+              }
+            })
           }
         }, 1000)
         console.log('+++++++++++++++++++++++++++++++++++++++++++=========================================命令发送成功，并成功读取一次数据，开始执行循环读取',
@@ -412,11 +428,11 @@ export class Communication {
         claimResult,)
 
       if (claimResult === 0) {
-      //   if (a === 0 && claimResult === 0) {
-      //     console.log('================================================移除了旧的信息发送通道,并建立起了新的通信通道：')
-      //   } else if (a !== 0 && claimResult === 0) {
-      //     console.log('================================================没有旧的信息发送通道,只建立起了新的通信通道：')
-      //   }
+        //   if (a === 0 && claimResult === 0) {
+        //     console.log('================================================移除了旧的信息发送通道,并建立起了新的通信通道：')
+        //   } else if (a !== 0 && claimResult === 0) {
+        //     console.log('================================================没有旧的信息发送通道,只建立起了新的通信通道：')
+        //   }
 
         // 构建命令帧
         const cmdData = Communication.buildCommandFrame(command, length);
@@ -426,7 +442,8 @@ export class Communication {
         console.log('\n', `发送命令 0x${command[0].toString(16)}:`, hexString, '\n',
           `发送命令 0x${command[0].toString(16)}:`,
           hexString_21);
-        console.log('`````````````````````````````````````````````````````````````等待发送的命令:',Communication.sendDataList.length)
+        console.log('`````````````````````````````````````````````````````````````等待发送的命令:',
+          Communication.sendDataList.length)
 
         // 发送命令
         const result = await usbManager.bulkTransfer(
