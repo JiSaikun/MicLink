@@ -7,6 +7,14 @@
       "data": {
         "description": "登录"
       }
+    },
+    {
+      "name": "aipage",
+      "pageSourceFile": "src/main/ets/pages/AiPage.ets",
+      "buildFunction": "AiPageBuilder",
+      "data": {
+        "description": "AI界面"
+      }
     }
   ]
 }

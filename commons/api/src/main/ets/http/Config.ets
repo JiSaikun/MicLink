@@ -34,7 +34,7 @@ instance.interceptors.response.use(
   (response: AxiosResponse) => {
     logger.debug('响应成功：', JSON.stringify(response), JSON.stringify(response.data));
     // 注意：后端可能返回的状态码字段是 code 而非 statusCode，需根据实际调整
-    if (response.data.code === 200 || response.data.statusCode === 200) { // 兼容两种常见状态码字段
+    if (response.data.status === 200 || response.data.statusCode === 200) { // 兼容两种常见状态码字段
       return Promise.resolve(response.data);
     } else {
       promptAction.showToast({

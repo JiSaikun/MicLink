@@ -7,6 +7,7 @@ import { getModelInfoModel } from 'config'
 
 // 按键类型枚举
 export enum KeyPressType {
+  DEFAULT = 0,
   VOICE_CLICK = 11, //语音键-单击
   VOICE_DOUBLE_CLICK = 12, //语音键-双击
   VOICE_LONG_PRESS_DOWN = 13, //语音键-长按按下
@@ -105,6 +106,7 @@ export class Communication {
   static sendState: boolean = false //标记现在是否正在发送消息
   static sendDataList: number[][] = [] //排队发送的数据
   static audioProcessor: SmartMouseAudioProcessor = new SmartMouseAudioProcessor();
+  static audioDataState: boolean = false //是否录入开启
 
   // static audioDataBuffer: Uint8Array = new Uint8Array(0);
 
@@ -237,6 +239,8 @@ export class Communication {
       console.log('设备连接成功', JSON.stringify(Communication.devicePipe));
       hilog.info(0x0000, 'USB', 'Device connected successfully');
 
+      AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DEFAULT)
+
       if (!targetDevice?.configs?.[0]?.interfaces) {
         console.log('无法获取设备接口信息');
         return;
@@ -279,7 +283,7 @@ export class Communication {
       }
       setTimeout(() => {
         Communication.getDeviceInfo(command)
-      }, 1000)
+      }, 500)
       return
     }
     if (Communication.sendDataList.length && command !== Communication.sendDataList[0]) {
@@ -292,7 +296,7 @@ export class Communication {
       // console.log('有消息正在接收中------------------------');
       setTimeout(() => {
         Communication.getDeviceInfo(command)
-      }, 1000)
+      }, 50)
       return
     }
     // // 释放接口
@@ -331,7 +335,6 @@ export class Communication {
           Communication.getDeviceInfo(command)
           return
         }
-
         Communication.sendDataList.splice(0, 1);
         if (Communication.sendDataList.length) {
           setTimeout(() => {
@@ -351,18 +354,23 @@ export class Communication {
             console.log('没有收到0x61命令,重新获取设备信息')
             Communication.getDeviceInfo()
           } else {
-            const params: getModelInfo_Params = {
-              languageCode: '',
-              productCode: Communication.deviceInfo.productType.toString(),
-              sno: Communication.deviceInfo.sn
-            }
-            _getModelInfo(params).then((res) => {
-              console.log('获取用户按键模式详情数据', JSON.stringify(res.data))
-              if (res.status === 200) {
-                let getModelInfo: getModelInfoModel = res.data as getModelInfoModel
-                AppStorage.setOrCreate('getModelInfo', getModelInfo)
+            if (!AppStorage.get('getModelInfo')) {
+              const params: getModelInfo_Params = {
+                languageCode: '',
+                productCode: Communication.deviceInfo.productType.toString(),
+                sno: Communication.deviceInfo.sn
               }
-            })
+              _getModelInfo(params).then((res) => {
+                console.log('获取用户按键模式详情数据', JSON.stringify(res.data))
+                if (res.status === 200) {
+                  let getModelInfo: getModelInfoModel = res.data as getModelInfoModel
+                  AppStorage.setOrCreate('getModelInfo', getModelInfo)
+                }
+              }).catch(() => {
+                // console.log('请求失败')
+              })
+            }
+
           }
         }, 1000)
         console.log('+++++++++++++++++++++++++++++++++++++++++++=========================================命令发送成功，并成功读取一次数据，开始执行循环读取',
@@ -598,7 +606,7 @@ export class Communication {
 
     try {
       // 检查帧头F
-      if (data.length > 0 && data[0] === 0x1b) {
+      if (data.length > 0 && data[0] === 0x1b && Communication.audioDataState) {
         console.log('****************************语音数据****************************')
         console.log('接收到音频数据');
         Communication.processAudioData(data);
@@ -755,19 +763,19 @@ export class Communication {
 
         if (data[3] === 0x42) {
           console.log('****************************翻译键单击按下****************************')
-          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM_CLICK)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TRANSLATE_CLICK)
         }
         if (data[3] === 0x43) {
           console.log('****************************翻译键双击按下****************************')
-          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM_DOUBLE_CLICK)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TRANSLATE_DOUBLE_CLICK)
         }
         if (data[3] === 0x44) {
           console.log('****************************翻译键长按按下****************************')
-          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM_LONG_PRESS_DOWN)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TRANSLATE_LONG_PRESS_DOWN)
         }
         if (data[3] === 0x45) {
           console.log('****************************翻译键长按抬起****************************')
-          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM_LONG_PRESS_UP)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TRANSLATE_LONG_PRESS_UP)
         }
 
         if (data[3] === 0x46) {
@@ -798,12 +806,10 @@ export class Communication {
         if (data[3] === 0x52) {
           console.log('****************************AI键长按按下****************************')
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_LONG_PRESS_DOWN)
-          Communication.audioData = []
         }
         if (data[3] === 0x53) {
           console.log('****************************AI键长按抬起****************************')
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_LONG_PRESS_UP)
-          console.log(Communication.audioData.length.toString(), '0000000000000000000000000000000000000000000000')
         }
 
       } else {

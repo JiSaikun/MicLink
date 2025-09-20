@@ -4,6 +4,10 @@ class AppStorage {
    */
   static readonly login: boolean = false
   /**
+   * 首页上下文信息  Index
+   */
+  static readonly context: boolean = false
+  /**
    * 鼠标信息
    * 数据类型：DeviceInfo
    * 根据鼠标0x69命令实时变化

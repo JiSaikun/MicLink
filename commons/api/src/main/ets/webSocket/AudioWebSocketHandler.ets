@@ -1,5 +1,8 @@
 import { webSocket } from '@kit.NetworkKit';
+import { pasteboard } from '@kit.BasicServicesKit';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { inputMethodEngine } from '@kit.IMEKit';
+
 
 // 定义日志消息接口
 interface logMessageModel {
@@ -103,8 +106,38 @@ export class AudioWebSocketHandler {
         }
         console.log("收到消息，内容:" + message);
         let res: res_moudel = JSON.parse(message)
-        if (res.status === 200) {
-          AppStorage.setOrCreate('audioToText_res', res)
+        if (res.status === 200&&res.data.type==='LAST') {
+          // AppStorage.setOrCreate('audioToText_res', res.data.text)
+          let audioToText_res: string = res.data.text
+          if (!audioToText_res) {
+            return;
+          }
+          try {
+            const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, audioToText_res);
+            const systemPasteboard = pasteboard.getSystemPasteboard(); //获取系统剪贴板对象。
+            // systemPasteboard.setAppShareOptions(pasteboard.ShareOption.INAPP);
+            systemPasteboard.setData(pasteData)
+              .then(() => {
+                console.info('文本已复制到剪贴板: ' + audioToText_res);
+                // setTimeout(() => { //移除一条条目
+                //   // pasteData.removeRecord(0)
+                //   // let isRemove: boolean = pasteData.removeRecordAt(0);
+                // }, 10000)
+
+                // systemPasteboard.getData().then((pasteData: pasteboard.PasteData) => {
+                //   let text: string = pasteData.getPrimaryText();
+                //   console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%', text)
+                // }).catch((err: BusinessError) => {
+                //   console.error('Failed to get PasteData. Cause: ' + err.message);
+                // });
+              })
+              .catch((err: BusinessError) => {
+                console.error('复制失败: ' + err.message);
+              });
+          } catch (error) {
+            console.error('复制操作异常: ' + error.message);
+          }
+
         } else {
           console.error('响应异常')
         }
@@ -327,4 +360,3 @@ export class AudioWebSocketHandler {
 //   }
 // ]
 
-    
