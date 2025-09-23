@@ -1,6 +1,11 @@
 import { CommonConstants_pop } from "config"
 import CommonConstants from '../common/CommonConstants'
 import { tableDataModel } from './Command_Ai'
+//拉起资源管理器
+import { picker } from '@kit.CoreFileKit'; // 导入文件选择器模块，用于调用系统文件选择器
+import { common } from '@kit.AbilityKit'; // 导入Ability常用功能
+import { BusinessError } from '@kit.BasicServicesKit'; // 导入业务错误类型
+import { promptAction } from '@kit.ArkUI'; // 导入UI提示操作模块
 
 interface response_interface {
   title: string
@@ -26,6 +31,7 @@ export struct CreateNewInstruction_pop {
     voice: '', //语音指令
     execute: '', //执行目标
   }
+  @State isLoading: boolean = false; // 加载状态标志，防止重复点击
 
   aboutToAppear(): void {
     if (this.isParam) {
@@ -87,6 +93,7 @@ export struct CreateNewInstruction_pop {
                 console.log(index.toString(), value)
                 this.currentindex = index
                 this.currtableDataModel_data.category = value
+                this.currtableDataModel_data.execute= ''; // 保存文件的完整URI/URL地址
               })
 
           }
@@ -133,6 +140,37 @@ export struct CreateNewInstruction_pop {
               Image($r('app.media.Frame_2093'))
                 .width(24)
                 .visibility(this.response_[this.currentindex].isShow ? Visibility.Visible : Visibility.None)
+                .onClick(() => {
+                  this.isLoading = true; // 开始加载，禁用按钮
+                  try {
+                    // 创建文档选择选项
+                    const documentSelectOptions = new picker.DocumentSelectOptions();
+                    documentSelectOptions.maxSelectNumber = 1; // 设置最大选择文件数为1
+                    // 设置文件后缀过滤器，只允许选择特定类型的文件
+                    // documentSelectOptions.fileSuffixFilters = ['.pdf', '.txt', '.doc', '.docx', '.jpg', '.png'];
+                    const context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext
+                    // 创建文档视图选择器实例
+                    const documentViewPicker = new picker.DocumentViewPicker(context);
+                    // 调用选择方法并等待结果
+                    documentViewPicker.select(documentSelectOptions).then((result) => {
+
+                      // 检查结果是否有效且有文件被选中
+                      if (result && result.length > 0) {
+                        this.currtableDataModel_data.execute= result[0]; // 保存文件的完整URI/URL地址
+                        console.log('文件信息', JSON.stringify(this.currtableDataModel_data.execute))
+                        // 显示成功提示
+                        promptAction.showToast({ message: '文件选择成功', duration: 2000 });
+                      }
+                    })
+
+                  } catch (err) {
+                    // 捕获并处理错误
+                    console.error('Failed to select file. Cause: ' + (err as BusinessError).message);
+                    promptAction.showToast({ message: '文件选择失败', duration: 2000 });
+                  } finally {
+                    this.isLoading = false; // 无论成功或失败，都结束加载状态
+                  }
+                })
             }
             .padding({ left: 15, right: 10 })
             .width(410)

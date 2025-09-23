@@ -3,6 +3,12 @@ import { ConfigPage1 } from './ConfigPage1'
 import { ConfigPage2 } from './ConfigPage2'
 import { ConfigPage3 } from './ConfigPage3'
 
+import {
+  getModelInfoModel,
+  imagesModel,
+  imagesDataModel
+} from 'config' //获取设备按键信息
+
 @Component
 export struct DevicesConfig {
   @Link isShowConfig: boolean //控制显隐状态
@@ -12,9 +18,21 @@ export struct DevicesConfig {
   @State reportRate_currIndex: number = 0
   @State DPI_currIndex: number = 0
   @State currLED: boolean = true
+  @StorageLink('languages') languages: string = 'ZH_CN'
+  @State getModelInfo: getModelInfoModel = AppStorage.get('getModelInfo') as getModelInfoModel
 
   onDidBuild(): void {
     this.data_init()
+  }
+
+  getdeviesImage(): string {
+    for (let item of this.getModelInfo.images) {
+      if ((item as imagesModel)[this.languages]) {
+        console.log('****************************************1', JSON.stringify(item))
+        return ((item as imagesModel)[this.languages][0] as imagesDataModel)['img']
+      }
+    }
+    return ''
   }
 
   data_init() {
@@ -50,7 +68,7 @@ export struct DevicesConfig {
         .width('100%')
         .margin({ right: 1 })
 
-        Image($r('app.media.DevicesConfig_HM_001_MIFI'))
+        Image(this.getdeviesImage())
           .width('100%')
           .layoutWeight(1)
         // .borderWidth(1)
@@ -151,12 +169,6 @@ export struct DevicesConfig {
           .margin({ bottom: 10 })
         Scroll() {
           Column() {
-            Text(this.configsList[this.currIndex])
-              .fontSize(14)
-              .lineHeight(14)
-              .fontWeight(400)
-              .fontColor('#a4aab2')
-              .margin({ bottom: 20 })
             ConfigPage1()
               .visibility(this.currIndex === 0 ? Visibility.Visible : Visibility.None)
             ConfigPage2()

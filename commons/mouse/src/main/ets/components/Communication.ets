@@ -283,7 +283,7 @@ export class Communication {
       }
       setTimeout(() => {
         Communication.getDeviceInfo(command)
-      }, 500)
+      }, 50)
       return
     }
     if (Communication.sendDataList.length && command !== Communication.sendDataList[0]) {
@@ -292,13 +292,13 @@ export class Communication {
       Communication.sendDataList.push(command);
       command = Communication.sendDataList[0]
     }
-    if (Communication.readState && command[0] !== 0x61) {
-      // console.log('有消息正在接收中------------------------');
-      setTimeout(() => {
-        Communication.getDeviceInfo(command)
-      }, 50)
-      return
-    }
+    // if (Communication.readState && command[0] !== 0x61) {
+    //   // console.log('有消息正在接收中------------------------');
+    //   setTimeout(() => {
+    //     Communication.getDeviceInfo(command)
+    //   }, 50)
+    //   return
+    // }
     // // 释放接口
     // if (Communication.devicePipe && Communication.inputInterface) {
     //   // let a = usbManager.releaseInterface(Communication.devicePipe, Communication.inputInterface);
@@ -360,6 +360,7 @@ export class Communication {
                 productCode: Communication.deviceInfo.productType.toString(),
                 sno: Communication.deviceInfo.sn
               }
+
               _getModelInfo(params).then((res) => {
                 console.log('获取用户按键模式详情数据', JSON.stringify(res.data))
                 if (res.status === 200) {
@@ -553,7 +554,7 @@ export class Communication {
       while (Communication.isPhysicalKeyboardExist && Communication.devicePipe) {
         try {
           c++
-          console.log('循环读取鼠标数据-----', c, '---------------------', JSON.stringify(Communication.inputInterface),
+          console.log('循环读取鼠标数据-----', c, '---------------------',
             JSON.stringify(Communication.inputEndpoint))
           // usbManager.releaseInterface(Communication.devicePipe, Communication.inputInterface)
           let a = await Communication.readResponse(Communication.inputInterface as usbManager.USBInterface,
@@ -708,20 +709,20 @@ export class Communication {
           } else {
             Communication.deviceInfo.atmosphereLight = false;
           }
-          AppStorage.setOrCreate("mouseconfig", Communication.deviceInfo)
-          console.log('设备信息解析成功:');
-          console.log('SN:', Communication.deviceInfo.sn);
-          console.log('麦克风状态:', Communication.deviceInfo.micStatus);
-          console.log('LED状态:', Communication.deviceInfo.ledStatus);
-          console.log('采样率:', Communication.deviceInfo.sampleRate);
-          console.log('光电类型:', Communication.deviceInfo.icType);
-          console.log('DPI档位:', Communication.deviceInfo.dpiLevel);
-          console.log('产品型号:', Communication.deviceInfo.productType);
-          console.log('电量:', Communication.deviceInfo.batteryLevel);
-          console.log('固件版本:', Communication.deviceInfo.firmwareVersion);
-          console.log('鼠标连接状态:', Communication.deviceInfo.isConnected);
-          console.log('当前回报率:', Communication.deviceInfo.reportRate, 'Hz/min');
-          console.log('当前氛围灯状态:', Communication.deviceInfo.atmosphereLight);
+          // AppStorage.setOrCreate("mouseconfig", Communication.deviceInfo)
+          // console.log('设备信息解析成功:');
+          // console.log('SN:', Communication.deviceInfo.sn);
+          // console.log('麦克风状态:', Communication.deviceInfo.micStatus);
+          // console.log('LED状态:', Communication.deviceInfo.ledStatus);
+          // console.log('采样率:', Communication.deviceInfo.sampleRate);
+          // console.log('光电类型:', Communication.deviceInfo.icType);
+          // console.log('DPI档位:', Communication.deviceInfo.dpiLevel);
+          // console.log('产品型号:', Communication.deviceInfo.productType);
+          // console.log('电量:', Communication.deviceInfo.batteryLevel);
+          // console.log('固件版本:', Communication.deviceInfo.firmwareVersion);
+          // console.log('鼠标连接状态:', Communication.deviceInfo.isConnected);
+          // console.log('当前回报率:', Communication.deviceInfo.reportRate, 'Hz/min');
+          // console.log('当前氛围灯状态:', Communication.deviceInfo.atmosphereLight);
           AppStorage.setOrCreate("mouseconfig", Communication.deviceInfo)
           // console.log(JSON.stringify(AppStorage.get('mouseconfig')),'===================================================================')
         }

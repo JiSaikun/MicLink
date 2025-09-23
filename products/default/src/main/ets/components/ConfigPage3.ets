@@ -131,6 +131,12 @@ export struct ConfigPage3 {
 
   build() {
     Flex({ space: { main: LengthMetrics.px(15) }, direction: FlexDirection.Column }) {
+      Text('设备设置')
+        .fontSize(14)
+        .lineHeight(14)
+        .fontWeight(400)
+        .fontColor('#a4aab2')
+        .margin({ bottom: 20 })
       Text("DPI")
         .fontSize($r('app.float.default_text_font_size_14'))
         .fontWeight(400)

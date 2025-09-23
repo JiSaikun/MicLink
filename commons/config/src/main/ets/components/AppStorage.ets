@@ -43,4 +43,19 @@ class AppStorage {
    * 数据类型：getModelInfoModel---------------commons\config\src\main\ets\components
    */
   static readonly getModelInfo: boolean = false
+  /**
+   * 点击ai页面是判断是否已经在ai页面了
+   * 如果已经在了，不再执行跳转操作
+   */
+  static readonly currpageIsAI: boolean = false
+  /**
+   * 语言设置——————多语言
+   * 个人中心页面设置
+   */
+  static readonly languages: boolean = false
+  /**
+   * 按键方法执行配置
+   * 持久化存储
+   */
+  static readonly KeymethodConfig: boolean = false
 }

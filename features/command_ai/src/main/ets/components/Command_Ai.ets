@@ -236,7 +236,6 @@ export default struct Command_Ai {
               .flexGrow(2)
               .flexShrink(2)
             }
-            .height('20%')
             .padding({ left: 16, right: 16 })
             .border({ width: { bottom: 1 }, color: '#e6e8eb' })
           }
@@ -245,7 +244,7 @@ export default struct Command_Ai {
       }
       .edgeEffect(EdgeEffect.Spring)
       .width('100%')
-      .height(200)
+
       .flexGS()
 
 
