@@ -360,13 +360,13 @@ export class Communication {
                 productCode: Communication.deviceInfo.productType.toString(),
                 sno: Communication.deviceInfo.sn
               }
-
               _getModelInfo(params).then((res) => {
                 console.log('获取用户按键模式详情数据', JSON.stringify(res.data))
                 if (res.status === 200) {
                   let getModelInfo: getModelInfoModel = res.data as getModelInfoModel
                   AppStorage.setOrCreate('getModelInfo', getModelInfo)
                 }
+                Communication.getDeviceInfo([0x63])
               }).catch(() => {
                 // console.log('请求失败')
               })
@@ -554,8 +554,9 @@ export class Communication {
       while (Communication.isPhysicalKeyboardExist && Communication.devicePipe) {
         try {
           c++
-          console.log('循环读取鼠标数据-----', c, '---------------------',
-            JSON.stringify(Communication.inputEndpoint))
+          console.log('循环读取鼠标数据-----', c, '---------------------')
+          // console.log('循环读取鼠标数据-----', c, '---------------------',
+          //   JSON.stringify(Communication.inputEndpoint))
           // usbManager.releaseInterface(Communication.devicePipe, Communication.inputInterface)
           let a = await Communication.readResponse(Communication.inputInterface as usbManager.USBInterface,
             Communication.inputEndpoint as usbManager.USBEndpoint);
@@ -603,14 +604,16 @@ export class Communication {
     }
 
     const hexData = Array.from(data).map(b => b.toString(16).padStart(2, '0')).join(' ');
-    console.log('解析设备数据:', hexData);
+    // console.log('解析设备数据:', hexData);
 
     try {
       // 检查帧头F
-      if (data.length > 0 && data[0] === 0x1b && Communication.audioDataState) {
-        console.log('****************************语音数据****************************')
-        console.log('接收到音频数据');
-        Communication.processAudioData(data);
+      if (data.length > 0 && data[0] === 0x1b) {
+        if (Communication.audioDataState) {
+          console.log('****************************语音数据****************************')
+          console.log('接收到音频数据');
+          Communication.processAudioData(data);
+        }
         return
       }
 
@@ -661,16 +664,16 @@ export class Communication {
           // 7. 固件版本（协议：byte19）
           Communication.deviceInfo.firmwareVersion = data[19].toString();
 
-          console.log('设备信息解析成功:');
-          console.log('SN:', Communication.deviceInfo.sn);
-          console.log('麦克风状态:', Communication.deviceInfo.micStatus);
-          console.log('LED状态:', Communication.deviceInfo.ledStatus);
-          console.log('采样率:', Communication.deviceInfo.sampleRate);
-          console.log('光电类型:', Communication.deviceInfo.icType);
-          console.log('DPI档位:', Communication.deviceInfo.dpiLevel);
-          console.log('产品型号:', Communication.deviceInfo.productType);
-          console.log('电量:', Communication.deviceInfo.batteryLevel); // 现在对应协议的byte18
-          console.log('固件版本:', Communication.deviceInfo.firmwareVersion);
+          // console.log('设备信息解析成功:');
+          // console.log('SN:', Communication.deviceInfo.sn);
+          // console.log('麦克风状态:', Communication.deviceInfo.micStatus);
+          // console.log('LED状态:', Communication.deviceInfo.ledStatus);
+          // console.log('采样率:', Communication.deviceInfo.sampleRate);
+          // console.log('光电类型:', Communication.deviceInfo.icType);
+          // console.log('DPI档位:', Communication.deviceInfo.dpiLevel);
+          // console.log('产品型号:', Communication.deviceInfo.productType);
+          // console.log('电量:', Communication.deviceInfo.batteryLevel); // 现在对应协议的byte18
+          // console.log('固件版本:', Communication.deviceInfo.firmwareVersion);
 
           AppStorage.setOrCreate("mouseconfig", Communication.deviceInfo);
         }

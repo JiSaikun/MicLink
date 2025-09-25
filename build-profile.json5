@@ -87,6 +87,10 @@
     {
       "name": "command_ai",
       "srcPath": "./features/command_ai",
+    },
+    {
+      "name": "keymethodconfig",
+      "srcPath": "./commons/keymethodconfig",
     }
   ]
 }

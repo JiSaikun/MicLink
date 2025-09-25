@@ -2,6 +2,7 @@ import { PopViewUtils, LaunchLogin_pop, PopParams_1 } from 'utils'
 import CommonConstants from '../common/CommonConstants'
 import { CommonConstants_pop } from "config"
 import { App, SymbolGlyphModifier } from '@kit.ArkUI';
+
 /**
  * AI指令本地存储
  */
@@ -205,6 +206,7 @@ export default struct Command_Ai {
               Text(item.execute)
                 .style1()
                 .fontWeight(400)
+                .padding({ right: 15 })
               Row() {
                 Text('编辑')
                   .fontColor(CommonConstants.COMMAND_SECOND_FONT_COLOR)
@@ -236,7 +238,12 @@ export default struct Command_Ai {
               .flexGrow(2)
               .flexShrink(2)
             }
-            .padding({ left: 16, right: 16 })
+            .padding({
+              left: 16,
+              right: 16,
+              top: 10,
+              bottom: 10
+            })
             .border({ width: { bottom: 1 }, color: '#e6e8eb' })
           }
         }, (item: tableDataModel) => item.category)

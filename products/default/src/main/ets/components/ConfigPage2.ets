@@ -22,6 +22,7 @@ export struct ConfigPage2 {
   @State getModelInfo: getModelInfoModel = AppStorage.get('getModelInfo') as getModelInfoModel
   @StorageLink('languages') languages: string = 'ZH_CN'
   @StorageLink('KeymethodConfig') KeymethodConfig: KeymethodConfig[] = []
+
   /**
    * 将子项转换为ArkUI官方SelectOption数组
    * （使用官方类型，避免自定义对象导致的“未声明类型”报错）
@@ -54,10 +55,10 @@ export struct ConfigPage2 {
             { key: KeyPressType.AI_CLICK, currIndex: 0 }, { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
           ])
           this.KeymethodConfig[index1 * 2+index2].currIndex = i
-          console.log('*/*/*/*/*', JSON.stringify(AppStorage.get('KeymethodConfig')))
+          // console.log('*/*/*/*/*', JSON.stringify(AppStorage.get('KeymethodConfig')))
+          AppStorage.setOrCreate('KeymethodConfig', this.KeymethodConfig)
           return i;
         }
-        console.log('*/*/*/*/*', JSON.stringify(AppStorage.get('KeymethodConfig')))
         return this.KeymethodConfig[index1 * 2+index2].currIndex
       }
     }
@@ -84,14 +85,12 @@ export struct ConfigPage2 {
               index2)] as keyInfos_childs_childsModel).names as LanguageNames)[this.languages
             ])
             .onSelect((index: number) => {
-              // this.reportRate_currIndex = index
               this.getModelInfo.keyInfos[index1].childs[index2].childs[this.getDefaultSelectedIndex(item.childs || [],
                 index1, index2)].first = 0
               this.getModelInfo.keyInfos[index1].childs[index2].childs[index].first = 1
               this.KeymethodConfig[index1 * 2+index2].currIndex = index
-              console.log('5555555555555555555555555555555555555555',
-                JSON.stringify(this.KeymethodConfig[index1 * 2+index2]))
-              console.log('*/*/*/*/*', JSON.stringify(AppStorage.get('KeymethodConfig')))
+              AppStorage.setOrCreate('KeymethodConfig', this.KeymethodConfig)
+
             })
             .selected(this.getDefaultSelectedIndex(item.childs || [], index1, index2))
             .width('100%')

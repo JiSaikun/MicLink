@@ -58,4 +58,18 @@ class AppStorage {
    * 持久化存储
    */
   static readonly KeymethodConfig: boolean = false
+  /**
+   * 路由栈储存，方便在非页面的方法中调用路由栈对象
+   * 初始化：Index
+   */
+  static readonly pageInfo: boolean = false
+  /**
+   * 切换DPI，记录当前挡位，以及挡位个数
+   */
+  static readonly DPI_currInfo: boolean = false
+  /**
+   * 是否开启低电量提醒
+   * 持久化存储
+   */
+  static readonly lowPowerAlertEnabled: boolean = false
 }

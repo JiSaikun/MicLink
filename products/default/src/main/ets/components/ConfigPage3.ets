@@ -3,6 +3,12 @@ import { LengthMetrics } from '@kit.ArkUI'
 import { config } from 'config'
 
 PersistentStorage.persistProp("lowPowerAlertEnabled", true)
+PersistentStorage.persistProp("DPI_currInfo", null)
+
+interface DPI_currInfoModel {
+  length: number
+  curr: number
+}
 
 /**
  * 设备设置
@@ -101,6 +107,14 @@ export struct ConfigPage3 {
     }
     this.DPI_currIndex = this.mouseconfig?.dpiLevel as number
     this.currLED = this.mouseconfig?.atmosphereLight as boolean
+
+    let currDPI_Info: DPI_currInfoModel = {
+      length: this.DPI.length,
+      curr: this.DPI_currIndex
+    }
+    AppStorage.setOrCreate('DPI_currInfo', currDPI_Info)
+    console.error(JSON.stringify(currDPI_Info), '00000000000000000000000000000000000000000000000000')
+
   }
 
   // @Link pageshow:boolean
@@ -117,6 +131,13 @@ export struct ConfigPage3 {
         AppStorage.setOrCreate("mouseconfig", Communication.deviceInfo);
       })
     }, 50)
+    let currDPI_Info: DPI_currInfoModel = {
+      length: this.DPI.length,
+      curr: this.DPI_currIndex
+    }
+    AppStorage.setOrCreate('DPI_currInfo', currDPI_Info)
+    console.error(JSON.stringify(currDPI_Info), '00000000000000000000000000000000000000000000000000')
+
   }
 
   change_LEDstate() {

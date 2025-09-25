@@ -106,7 +106,7 @@ export class AudioWebSocketHandler {
         }
         console.log("收到消息，内容:" + message);
         let res: res_moudel = JSON.parse(message)
-        if (res.status === 200 && (res.data.type === 'LAST'||res.data.type === "FIN")) {
+        if (res.status === 200 && (res.data.type === 'LAST' || res.data.type === "FIN")) {
           // AppStorage.setOrCreate('audioToText_res', res.data.text)
           let audioToText_res: string = res.data.text
           if (!audioToText_res) {
@@ -304,7 +304,7 @@ export class AudioWebSocketHandler {
           "deviceNo": inputMessage.deviceNo,
           "content": inputMessage.content.substring(0, 50) + "...[省略部分内容]"
         };
-        // console.log('最后一帧数据信息：', a.toString(), JSON.stringify(logMessage));
+        console.log('最后一帧数据信息：', a.toString(), JSON.stringify(logMessage));
       }
     }
   }
