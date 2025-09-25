@@ -54,6 +54,51 @@ export class _KeyMethodConfig {
   }
 
   /**
+   * 语音输入_长按按下
+   */
+  static voiceInput_long() {
+    if (Communication.audioDataState) { //若开始长按时，有通过0x62命令开启的语音输入等，先进行关闭 ...否则改变audioDataState 采集状态，确保1b数据被放到语音数据里
+      Communication.audioData = []
+    } else {
+      Communication.audioDataState = !Communication.audioDataState
+    }
+  }
+
+  /**
+   * 语音输入_长按抬起
+   */
+  static endvoiceInput_long() {
+    Communication.audioDataState = !Communication.audioDataState
+    /**
+     * 语音数据处理
+     */
+    //保存本地PCM文件
+    // const context = AppStorage.get('context') as common.UIAbilityContext;
+    // let a: AudioFileManager = new AudioFileManager(Communication.audioData, context)
+    // console.log(Communication.audioData.length.toString(), '语音数据结束*****模拟')
+
+    //WebSocket  语音数据处理
+    let inputMessage: inputMessageModel = {
+      start: false,
+      "clientId": "clientId1751968608",
+      "ptt": "1",
+      "serialNo": Communication.deviceInfo.sn,
+      "phrases": "",
+      "format": "pcm",
+      "apiKey": "ebb72c9db60147febd2ccd50a705de57",
+      "language": "ZH_CN",
+      "end": false,
+      "rate": "16k",
+      "deviceNo": "6c:b1:33:9f:b9:8b",
+      content: ''
+    }
+    let audioToText: AudioWebSocketHandler =
+      new AudioWebSocketHandler(WebSocket_serverUrl.audioToText, Communication.audioData,
+        inputMessage) //语音转文字 websocket
+    audioToText.connect()
+  }
+
+  /**
    *回车/发送
    */
   static entry() {
@@ -104,7 +149,7 @@ export class _KeyMethodConfig {
   }
 
   /**
-   *回到桌面
+   *一键锁屏
    */
   static lockNow() {
     Communication.getDeviceInfo([0x20, 0x08, 0x0F])

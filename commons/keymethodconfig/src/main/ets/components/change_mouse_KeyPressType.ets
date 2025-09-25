@@ -86,8 +86,9 @@ export function _change_mouse_KeyPressType() {
     switch (KeymethodConfig[1].currIndex) {
       case 0:
         //语音输入
-        console.warn('语音输入+')
+        console.warn('语音输入+长按按下')
         // _KeyMethodConfig.voiceInput()
+        _KeyMethodConfig.voiceInput_long()
         break
       case 1:
         //语音翻译
@@ -101,6 +102,29 @@ export function _change_mouse_KeyPressType() {
         //删除
         console.warn('删除+')
         _KeyMethodConfig.delete()
+        break
+    }
+  }
+  if (mouse_KeyPressType === 14) {
+    switch (KeymethodConfig[1].currIndex) {
+      case 0:
+        //语音输入
+        console.warn('语音输入+长按抬起')
+        // _KeyMethodConfig.voiceInput()
+        _KeyMethodConfig.endvoiceInput_long()
+        break
+      case 1:
+        //语音翻译
+        console.warn('语音翻译+')
+        break
+      case 2:
+        //语音助手
+        console.warn('语音助手+')
+        break
+      case 3:
+        //删除
+        console.warn('删除+') //**避免按下可抬起都执行一次
+        // _KeyMethodConfig.delete()
         break
     }
   }
