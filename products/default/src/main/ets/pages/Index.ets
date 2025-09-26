@@ -3,13 +3,7 @@ import { LeftBar, Topbar, Content } from 'common'
 // import { BlueTooth_api } from "bluetooth"
 import { inputDevice, KeyCode } from '@kit.InputKit';
 import {
-  Communication,
-  DeviceInfo,
-  MouseICType,
-  KeyPressType,
-  AudioFileManager,
-  AudioWebSocketHandler,
-  inputMessageModel
+  Communication, DeviceInfo, KeyPressType,
 } from 'mouse'
 import common from '@ohos.app.ability.common';
 import { _KeyMethodConfig, _change_mouse_KeyPressType } from 'keymethodconfig'; //按键执行方法回调
@@ -84,7 +78,6 @@ struct Index {
       /**
        * 检查鼠标设备，并建立连接
        */
-      console.log('*/*/*/*/*', JSON.stringify(AppStorage.get('KeymethodConfig')))
       Communication.connectDevice().then(() => {
         setTimeout(() => {
           Communication.getDeviceInfo() //获取鼠标初始信息

@@ -2,8 +2,11 @@ import { webSocket } from '@kit.NetworkKit';
 import { pasteboard } from '@kit.BasicServicesKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 // import { inputMethodEngine } from '@kit.IMEKit';
+import { getModelInfoModel } from 'config'
 import { Communication } from './Communication'
-
+import { _translate } from '../viewmodel/UserViewModel'
+import { translate_Params } from '../model/MouseInfoModel'
+import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
 // 定义日志消息接口
 interface logMessageModel {
   "start": boolean,
@@ -54,6 +57,7 @@ export class AudioWebSocketHandler {
   private ws: webSocket.WebSocket | null = null;
   private serverUrl: string = "ws://asr.miclink.net/ws";
   private audioData: Int16Array[] = []
+  private state: number = 0 //0:语音输入
   private inputMessage: inputMessageModel = {
     start: false,
     "clientId": '',
@@ -71,11 +75,19 @@ export class AudioWebSocketHandler {
   // Base64编码表，用于自定义Base64编码实现
   private base64Chars: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
-  constructor(serverUrl: string, audioData: Int16Array[], inputMessage: inputMessageModel) {
+  // constructor(serverUrl: string, audioData: Int16Array[], inputMessage: inputMessageModel) {
+  //   this.serverUrl = serverUrl;
+  //   this.audioData = audioData;
+  //   this.inputMessage = inputMessage;
+  // }
+
+  constructor(serverUrl: string, audioData: Int16Array[], state: number, inputMessage: inputMessageModel) {
     this.serverUrl = serverUrl;
     this.audioData = audioData;
+    this.state = state;
     this.inputMessage = inputMessage;
   }
+
 
   public connect(): void {
     console.log('*************************进入webSocket连接************************', typeof this.ws)
@@ -114,22 +126,59 @@ export class AudioWebSocketHandler {
           }
           try {
             const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, audioToText_res);
-            const systemPasteboard = pasteboard.getSystemPasteboard(); //获取系统剪贴板对象。
+            let systemPasteboard: pasteboard.SystemPasteboard = pasteboard.getSystemPasteboard(); //获取系统剪贴板对象。
             // systemPasteboard.setAppShareOptions(pasteboard.ShareOption.INAPP);
             systemPasteboard.setData(pasteData)
               .then(() => {
                 console.info('文本已复制到剪贴板: ' + audioToText_res);
-                Communication.getDeviceInfo([0x20, 0x01, 0x19])
-                // setTimeout(() => { //移除一条条目
-                //   // pasteData.removeRecord(0)
-                //   // let isRemove: boolean = pasteData.removeRecordAt(0);
-                // }, 10000)
-                // systemPasteboard.getData().then((pasteData: pasteboard.PasteData) => {
-                //   let text: string = pasteData.getPrimaryText();
-                //   console.log('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%', text)
-                // }).catch((err: BusinessError) => {
-                //   console.error('Failed to get PasteData. Cause: ' + err.message);
-                // });
+                let atManager = abilityAccessCtrl.createAtManager();
+                try {
+                  atManager.requestPermissionsFromUser(AppStorage.get('context'), ['ohos.permission.READ_PASTEBOARD'])
+                } catch (err) {
+                  console.error(`权限申请失败: ${err.code}, ${err.message}`);
+                }
+                systemPasteboard.getData().then((pasteData: pasteboard.PasteData) => {
+                  console.error(JSON.stringify(pasteData.getRecordCount()))
+                  let text: string = pasteData.getPrimaryText();
+                  console.log('111111111111111', text, this.state)
+                  if (this.state === 0) { //:语音输入
+                    Communication.getDeviceInfo([0x20, 0x01, 0x19])
+                      .then(() => {
+                        setTimeout(() => {
+                          systemPasteboard.clearData() //清空剪贴板
+                        }, 2000)
+                      })
+                  }
+                  if (this.state === 1) { //语音翻译
+                    let params: translate_Params = {
+                      appkey: (AppStorage.get('getModelInfo') as getModelInfoModel).appkey, //获取用户按键模式详情中得到
+                      from: 'ZH_CN', //源语言___后面配置
+                      productCode: Communication.deviceInfo.productType.toString(), //产品编码
+                      sno: Communication.deviceInfo.sn, //设备号
+                      text: text, //翻译内容
+                      to: 'EN_US' //翻译语言___后面配置
+                    }
+                    _translate(params).then((res) => {
+                      console.log('翻译请求成功————翻译结果：' + res.data?.transText)
+                      const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, res.data?.transText);
+                      systemPasteboard.setData(pasteData).then(() => {
+                        Communication.getDeviceInfo([0x20, 0x01, 0x19])
+                          .then(() => {
+                            systemPasteboard.clearData() //清空剪贴板
+                          })
+                      })
+                    })
+                  }
+                  // setTimeout(() => { //移除一条条目
+                  //   pasteData.removeRecord(0)
+                  //   // let isRemove: boolean = pasteData.removeRecordAt(0);
+                  //   // console.error(JSON.stringify(isRemove))
+                  // }, 10)
+                }
+                )
+                  .catch((err: BusinessError) => {
+                    console.error('Failed to get PasteData. Cause: ' + err.message);
+                  });
               })
               .catch((err: BusinessError) => {
                 console.error('复制失败: ' + err.message);
@@ -144,7 +193,9 @@ export class AudioWebSocketHandler {
       } else {
         console.error("消息错误:" + JSON.stringify(err));
       }
-    });
+    }
+    )
+    ;
 
     this.ws.on('close', (err: BusinessError, value: webSocket.CloseResult) => {
       this.isConnected = false;
@@ -176,7 +227,9 @@ export class AudioWebSocketHandler {
         } else {
           console.error("关闭连接失败。错误信息: " + JSON.stringify(err));
         }
-      });
+      }
+      )
+      ;
       this.ws = null;
       this.isConnected = false;
     }
@@ -216,7 +269,8 @@ export class AudioWebSocketHandler {
   }
 
   // 自定义Base64编码实现，不依赖平台特定模块
-  private base64Encode(uint8Array: Uint8Array): string {
+  private base64Encode(uint8Array: Uint8Array):
+    string {
     let result = '';
     let i = 0;
     const length = uint8Array.length;

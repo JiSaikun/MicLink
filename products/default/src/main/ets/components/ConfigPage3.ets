@@ -16,6 +16,7 @@ interface DPI_currInfoModel {
 @Component
 export struct ConfigPage3 {
   @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null //鼠标信息
+  @StorageLink("DPI_currInfo") DPI_currInfo: DPI_currInfoModel | null = null //鼠标信息
   @StorageLink("lowPowerAlertEnabled") lowPowerAlertEnabled: boolean = true //是否开启低电量提醒
   @State reportRate: SelectOption[] = [{ value: '125' }, { value: '250' }, { value: '500' }, { value: '1000' }]
   @State DPI: SelectOption[] =
@@ -113,7 +114,7 @@ export struct ConfigPage3 {
       curr: this.DPI_currIndex
     }
     AppStorage.setOrCreate('DPI_currInfo', currDPI_Info)
-    console.error(JSON.stringify(currDPI_Info), '00000000000000000000000000000000000000000000000000')
+    // console.error(JSON.stringify(currDPI_Info), '00000000000000000000000000000000000000000000000000')
 
   }
 
@@ -136,8 +137,7 @@ export struct ConfigPage3 {
       curr: this.DPI_currIndex
     }
     AppStorage.setOrCreate('DPI_currInfo', currDPI_Info)
-    console.error(JSON.stringify(currDPI_Info), '00000000000000000000000000000000000000000000000000')
-
+    // console.error(JSON.stringify(currDPI_Info), '00000000000000000000000000000000000000000000000000')
   }
 
   change_LEDstate() {
@@ -167,7 +167,7 @@ export struct ConfigPage3 {
         .onSelect((index: number) => {
           this.DPI_currIndex = index
         })
-        .selected(this.DPI_currIndex)
+        .selected(this.DPI_currInfo ? this.DPI_currInfo?.curr : this.DPI_currIndex)
         .width('100%')
         .font({ size: $r('app.float.default_text_font_size_14'), weight: 400 })
         .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
@@ -261,7 +261,6 @@ export struct ConfigPage3 {
             .onChange((isChecked: boolean) => {
               if (isChecked) {
                 console.log('*****************************打开低电量提醒****************************************')
-
               }
             })
           Text("开启")

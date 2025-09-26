@@ -46,16 +46,16 @@
       //          "when": "inuse"
       //        }
       //      }
-//      {
-//        "name": "ohos.permission.READ_PASTEBOARD",
-//        "reason": "$string:READ_PASTEBOARD",
-//        "usedScene": {
-//          "abilities": [
-//            "EntryAbility"
-//          ],
-//          "when": "inuse"
-//        }
-//      }
+      {
+        "name": "ohos.permission.READ_PASTEBOARD",
+        "reason": "$string:READ_PASTEBOARD",
+        "usedScene": {
+          "abilities": [
+            "EntryAbility"
+          ],
+          "when": "inuse"
+        }
+      }
     ],
     "deliveryWithInstall": true,
     "installationFree": false,

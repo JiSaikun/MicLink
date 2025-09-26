@@ -1,6 +1,6 @@
 import { pasteboard } from '@kit.BasicServicesKit';
 import { BusinessError } from '@kit.BasicServicesKit';
-
+import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
 @Entry
 @Component
 struct ClipboardDemo {
@@ -117,7 +117,19 @@ struct ClipboardDemo {
   private pasteFromClipboard() {
     try {
       const systemPasteboard = pasteboard.getSystemPasteboard();
-
+      let atManager = abilityAccessCtrl.createAtManager();
+      try {
+        // 向用户申请读取剪贴板的权限
+        atManager.requestPermissionsFromUser(AppStorage.get('context'), ['ohos.permission.READ_PASTEBOARD'])
+          .then((data) => {
+            console.info("权限申请结果: " + JSON.stringify(data));
+          })
+          .catch((err: BusinessError) => {
+            console.error("权限申请失败: " + err.message);
+          });
+      } catch (err) {
+        console.error(`权限申请捕获异常: ${err.code}, ${err.message}`);
+      }
       systemPasteboard.getData()
         .then((pasteData: pasteboard.PasteData) => {
           console.log('***************************************'+JSON.stringify(pasteData))

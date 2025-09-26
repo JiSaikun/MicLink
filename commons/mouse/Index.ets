@@ -2,3 +2,5 @@ export { Communication,DeviceInfo,MouseICType,KeyPressType } from './src/main/et
 export { SmartMouseAudioProcessor } from './src/main/ets/components/SmartMouseAudioProcessor';
 export { AudioFileManager } from './src/main/ets/components/AudioFileManager';
 export { AudioWebSocketHandler,inputMessageModel } from './src/main/ets/components/AudioWebSocketHandler';
+export { translate_Params } from './src/main/ets/model/MouseInfoModel';
+export { _translate } from './src/main/ets/viewmodel/UserViewModel';
