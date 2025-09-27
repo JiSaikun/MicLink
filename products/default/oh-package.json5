@@ -15,6 +15,7 @@
     "bluetooth": 'file:../../commons/bluetooth',
     "mouse": 'file:../../commons/mouse',
     "keymethodconfig": 'file:../../commons/keymethodconfig',
-    "command_ai": "file:../../features/command_ai"
+    "command_ai": "file:../../features/command_ai",
+    "float_window": "file:../../commons/float_window"
   }
 }

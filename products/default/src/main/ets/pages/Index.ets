@@ -2,18 +2,16 @@ import { LeftBar, Topbar, Content } from 'common'
 // import {Hid}from "usb_hid"
 // import { BlueTooth_api } from "bluetooth"
 import { inputDevice, KeyCode } from '@kit.InputKit';
-import {
-  Communication, DeviceInfo, KeyPressType,
-} from 'mouse'
+import { Communication, DeviceInfo, KeyPressType, } from 'mouse'
 import common from '@ohos.app.ability.common';
-import { _KeyMethodConfig, _change_mouse_KeyPressType } from 'keymethodconfig'; //按键执行方法回调
+import { _change_mouse_KeyPressType } from 'keymethodconfig'; //按键执行方法回调
+import { Float_Window } from 'float_window'; //按键执行方法回调
 
 
 PersistentStorage.persistProp("login", false)
-PersistentStorage.persistProp("KeymethodConfig", null)
-
-
-// PersistentStorage.persistProp("mouseconfig", null)
+PersistentStorage.persistProp("KeymethodConfig", null) //按键设置方法执行记录
+PersistentStorage.persistProp("mouseconfig", null) //鼠标实时数据
+PersistentStorage.persistProp("getModelInfo", null) //获取用户按键模式详情
 
 
 @Entry
@@ -21,23 +19,35 @@ PersistentStorage.persistProp("KeymethodConfig", null)
 struct Index {
   @StorageLink("login") login: boolean = true //登录状态
   @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null //鼠标信息
-  @StorageLink("currpageIsAI") currpageIsAI: boolean = true //鼠标信息
-  @Watch('change_mouse_KeyPressType') @StorageLink("mouse_KeyPressType") mouse_KeyPressType: KeyPressType =
-    KeyPressType.VOICE_CLICK //鼠标按键事件监听
+  @StorageLink("currpageIsAI") currpageIsAI: boolean = false //鼠标信息
+  // @Watch('change_mouse_KeyPressType') @StorageLink("float_window") float_window: boolean = true //悬浮窗显示与隐藏
   @Provide('pageInfo') pageInfo: NavPathStack = new NavPathStack() //页面跳转路由栈
   @StorageLink("pageInfo") pageInfo_: NavPathStack = this.pageInfo
+  @Watch('change_mouse_KeyPressType') @StorageLink("mouse_KeyPressType") mouse_KeyPressType: KeyPressType =
+    KeyPressType.VOICE_CLICK //鼠标按键事件监听
   @State web: string =
     'https://asrai.miclink.net?sno=123&productCode=999999&config=configMiclink_B_1755079145452' //web组件链接
   @State currentIndex: number = 0
 
   change_mouse_KeyPressType() {
-    _change_mouse_KeyPressType()
+    if (this.login) {
+      _change_mouse_KeyPressType()
+    }
+  }
+
+  watch_float_window() {
+    // if (this.float_window) {
+    //   Float_Window.creat()
+    // } else {
+    //   Float_Window.destroyWindow()
+    // }
   }
 
   aboutToAppear(): void {
+
     const context = getContext(this) as common.UIAbilityContext;
     AppStorage.setOrCreate('context', context);
-
+    // AppStorage.setOrCreate('float_window', false);
     /*
     热插拔:检测鼠标的插入与拔出
     */
@@ -113,9 +123,8 @@ struct Index {
           .flexShrink(1)
 
           Stack() {
-            Topbar()
-              .zIndex(100)
             Content({ web: this.web })
+            Topbar()
           }
           .flexGrow(1)
           .flexShrink(1)

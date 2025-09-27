@@ -11,7 +11,8 @@ import { OpenLinkOptions } from '@kit.AbilityKit'; // 导入AbilityKit中的常�
 import { hilog } from '@kit.PerformanceAnalysisKit'; // 导入性能分析工具包中的日志功能
 import { pasteboard } from '@kit.BasicServicesKit'; //划词翻译————剪切板
 import { _translate, translate_Params } from 'mouse'
-import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
+import abilityAccessCtrl from '@ohos.abilityAccessCtrl'; //读取剪切板————主动获取权限
+import { Float_Window } from 'float_window'; //按键执行方法回调
 
 export class _KeyMethodConfig {
   /**
@@ -26,6 +27,10 @@ export class _KeyMethodConfig {
           Communication.audioData = []
           Communication.audioDataState = !Communication.audioDataState
         })
+      Float_Window.creat()
+      setTimeout(() => {
+        Float_Window.destroyWindow()
+      }, 60000)
     } else {
       Communication.getDeviceInfo([0x63]).then(() => {
         Communication.audioDataState = !Communication.audioDataState

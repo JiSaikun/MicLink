@@ -7,6 +7,8 @@
   "license": "Apache-2.0",
   "dependencies": {
     'mouse': 'file:../mouse',
-    'config': 'file:../config'
+    'config': 'file:../config',
+    'api': 'file:../api',
+    'float_window': 'file:../float_window'
   }
 }

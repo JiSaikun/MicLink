@@ -1,10 +1,13 @@
 class AppStorage {
   /**
    * 登录   持久化存储
+   * 数据类型：Boolean
    */
   static readonly login: boolean = false
   /**
    * 首页上下文信息  Index
+   * 数据类型：common.UIAbilityContext
+   * 首页初始化
    */
   static readonly context: boolean = false
   /**
@@ -41,21 +44,26 @@ class AppStorage {
    * 鼠标配置相关：用户按键模式详情
    * 初始化 ：获取到鼠标0x61命令，拿到sn数据后调用接口
    * 数据类型：getModelInfoModel---------------commons\config\src\main\ets\components
+   * 持久化存储
    */
   static readonly getModelInfo: boolean = false
   /**
    * 点击ai页面是判断是否已经在ai页面了
    * 如果已经在了，不再执行跳转操作
+   * 数据类型：Boolean
    */
   static readonly currpageIsAI: boolean = false
   /**
    * 语言设置——————多语言
-   * 个人中心页面设置
+   * 个人中心页面设置——————暂未初始化
+   * 数据类型：string
    */
   static readonly languages: boolean = false
   /**
    * 按键方法执行配置
-   * 持久化存储
+   * 持久化存储——————
+   * 初始化在设备详细设置页面——————ConfigPage2
+   * 数据类型：KeymethodConfig
    */
   static readonly KeymethodConfig: boolean = false
   /**
@@ -65,11 +73,13 @@ class AppStorage {
   static readonly pageInfo: boolean = false
   /**
    * 切换DPI，记录当前挡位，以及挡位个数
+   * 数据类型：number
    */
   static readonly DPI_currInfo: boolean = false
   /**
    * 是否开启低电量提醒
    * 持久化存储
+   * 数据类型：Boolean
    */
   static readonly lowPowerAlertEnabled: boolean = false
 }

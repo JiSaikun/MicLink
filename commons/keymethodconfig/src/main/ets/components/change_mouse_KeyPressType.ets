@@ -2,6 +2,7 @@ import { KeyPressType } from 'mouse' //语音输入
 import { _KeyMethodConfig } from './KeyMethodConfig'
 import { fileGuard } from '@kit.EnterpriseDataGuardKit';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { OpenFileWithSystemApp } from 'api';
 
 export interface KeymethodConfig {
   key: KeyPressType
@@ -36,16 +37,17 @@ export function _change_mouse_KeyPressType() {
       case 4:
         //文件
         console.warn('文件+')
-        let guard: fileGuard.FileGuard = new fileGuard.FileGuard();
-        let path: string =
-          'file://docs/storage/Users/currentUser/Desktop/%E6%96%B0%E5%BB%BA%20DWG%20%E6%96%87%E4%BB%B6.dwg';
-        guard.openFile(path, (err: BusinessError, fd: number) => {
-          if (err) {
-            console.error(`Failed to open file. Code: ${err.code}, message: ${err.message}.`);
-            return;
-          }
-          console.info(`Succeeded in opening file. path: ${path}, fd: ${fd}.`);
-        });
+        OpenFileWithSystemApp.openFileWithSystemApp()
+        // let guard: fileGuard.FileGuard = new fileGuard.FileGuard();
+        // let path: string =
+        //   'file://docs/storage/Users/currentUser/Desktop/%E6%96%B0%E5%BB%BA%20DWG%20%E6%96%87%E4%BB%B6.dwg';
+        // guard.openFile(path, (err: BusinessError, fd: number) => {
+        //   if (err) {
+        //     console.error(`Failed to open file. Code: ${err.code}, message: ${err.message}.`);
+        //     return;
+        //   }
+        //   console.info(`Succeeded in opening file. path: ${path}, fd: ${fd}.`);
+        // });
         break
       case 5:
         //打开网页

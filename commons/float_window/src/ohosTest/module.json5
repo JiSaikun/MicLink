@@ -1,0 +1,12 @@
+{
+  "module": {
+    "name": "float_window_test",
+    "type": "feature",
+    "deviceTypes": [
+      "tablet",
+      "2in1"
+    ],
+    "deliveryWithInstall": true,
+    "installationFree": false
+  }
+}

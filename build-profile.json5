@@ -6,11 +6,11 @@
         "type": "HarmonyOS",
         "material": {
           "storeFile": "E:/jisaikun/Projects/miclink.p12",
-          "storePassword": "0000001B82D273A63D336C7F97EBE408E87FB8B20BFC8708E4A49BB8E16178F33EB17065E91F847BBCA4B7",
+          "storePassword": "0000001B34B1D464F9D060CEF704F9817ADEF16C57AEE98AA72155C3430DACB1F28C57472F3DC4F373D029",
           "keyAlias": "MicLink",
-          "keyPassword": "0000001B1D2DFA42FC95FE8F1D6E9DF774307C566C3ED2331C5EAF6AAB04EBC987C141496BF19532B26BF4",
+          "keyPassword": "0000001B50C9ABFCA78CA1AB8CA6E4C38290571764CEF28857F6847F394FC6BF4B5FD905EE1DA95F78CFE0",
           "signAlg": "SHA256withECDSA",
-          "profile": "E:/jisaikun/Projects/add_READ_PASTEBOARDDebug.p7b",
+          "profile": "E:/jisaikun/Projects/system_float_windowDebug.p7b",
           "certpath": "E:/jisaikun/Projects/MicLink.cer"
         }
       }
@@ -91,6 +91,10 @@
     {
       "name": "keymethodconfig",
       "srcPath": "./commons/keymethodconfig",
+    },
+    {
+      "name": "float_window",
+      "srcPath": "./commons/float_window",
     }
   ]
 }

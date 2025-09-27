@@ -26,18 +26,24 @@
         "name": "ohos.permission.ACCESS_DDK_HID",
         "reason": "$string:ACCESS_DDK_HID"
       },
-//      {
-//        "name": "ohos.permission.MANAGE_PASTEBOARD_APP_SHARE_OPTION",
-//        "reason": "$string:MANAGE_PASTEBOARD_APP_SHARE_OPTION"
-//      },
       //      {
-      //        "name": "ohos.permission.READ_MEDIA",
-      //        "reason": "$string:read_media_reason",
-      //        "usedScene": {
-      //          "abilities": ["EntryAbility"],
-      //          "when": "inuse"
-      //        }
+      //        "name": "ohos.permission.MANAGE_PASTEBOARD_APP_SHARE_OPTION",
+      //        "reason": "$string:MANAGE_PASTEBOARD_APP_SHARE_OPTION"
       //      },
+      {
+        "name": "ohos.permission.SYSTEM_FLOAT_WINDOW",
+        "reason": "$string:SYSTEM_FLOAT_WINDOW"
+      },
+      {
+        "name": "ohos.permission.READ_MEDIA",
+        "reason": "$string:read_media_reason",
+        "usedScene": {
+          "abilities": [
+            "EntryAbility"
+          ],
+          "when": "inuse"
+        }
+      },
       //      {
       //        "name": "ohos.permission.WRITE_MEDIA",
       //        "reason": "$string:write_media_reason",

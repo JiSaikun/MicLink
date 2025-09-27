@@ -28,9 +28,6 @@ export enum KeyPressType {
   AI_DOUBLE_CLICK = 52, //AI键-双击
   AI_LONG_PRESS_DOWN = 53, //AI键-长按按下
   AI_LONG_PRESS_UP = 54, //AI键-长按抬起
-  // LEFT = 6,//左键
-  // MIDDLE = 7,//中键
-  // RIGHT = 8//右键
 }
 
 // USB设备类型枚举————鼠标光电类型
@@ -107,42 +104,6 @@ export class Communication {
   static sendDataList: number[][] = [] //排队发送的数据
   static audioProcessor: SmartMouseAudioProcessor = new SmartMouseAudioProcessor();
   static audioDataState: boolean = false //是否录入开启
-
-  // static audioDataBuffer: Uint8Array = new Uint8Array(0);
-
-  // 构建0x61命令帧：0c4d04614c00000000000000000000000000000000
-  static buildGetInfoCommand(length: number = 33): Uint8Array {
-    const frame = new Uint8Array(length); // 固定33字节长度
-    // 帧头
-    frame[0] = 0x0C; // 帧头高位
-    frame[1] = 0x4D; // 帧头低位
-    frame[2] = 0x04; // 数据长度
-    frame[3] = 0x61; // 命令字 (获取设备信息)
-    frame[4] = 0x4C; // 结束标志
-
-    // 剩余字节填充0
-    for (let i = 5; i < length; i++) {
-      frame[i] = 0x00;
-    }
-
-    return frame;
-  }
-
-  // 构建其他命令帧的通用方法
-  // static buildCommandFrame(cmd: number, length: number = 33): Uint8Array {
-  //   const frame = new Uint8Array(length);
-  //   frame[0] = 0x0C; // 帧头高位
-  //   frame[1] = 0x4D; // 帧头低位
-  //   frame[2] = 0x04; // 数据长度固定为4
-  //   frame[3] = cmd; // 命令字
-  //   frame[4] = 0x4C; // 结束标志
-  //
-  //   // 剩余字节填充0
-  //   for (let i = 5; i < 33; i++) {
-  //     frame[i] = 0x00;
-  //   }
-  //   return frame;
-  // }
 
   // 构建命令帧的通用方法
   static buildCommandFrame(cmd: number[], length: number): Uint8Array {
@@ -361,7 +322,7 @@ export class Communication {
                 sno: Communication.deviceInfo.sn
               }
               _getModelInfo(params).then((res) => {
-                console.log('获取用户按键模式详情数据', JSON.stringify(res.data))
+                // console.log('获取用户按键模式详情数据', JSON.stringify(res.data))
                 if (res.status === 200) {
                   let getModelInfo: getModelInfoModel = res.data as getModelInfoModel
                   AppStorage.setOrCreate('getModelInfo', getModelInfo)
@@ -374,11 +335,11 @@ export class Communication {
 
           }
         }, 1000)
-        console.log('+++++++++++++++++++++++++++++++++++++++++++=========================================命令发送成功，并成功读取一次数据，开始执行循环读取',
-          '发送的命令是：', JSON.stringify(command),
-          JSON.stringify(Communication.isPhysicalKeyboardExist))
+        console.log('=========================================命令发送成功，并成功读取一次数据，开始执行循环读取',
+          '发送的命令是：', JSON.stringify(command), JSON.stringify(Communication.isPhysicalKeyboardExist))
         // 开始持续读取数据
         Communication.startContinuousReading();
+
         // let c = 0
         // // if (command[0]===0x61){
         // while (Communication.isPhysicalKeyboardExist) {

@@ -55,6 +55,10 @@
     {
       "name": "WRITE_PASTEBOARD",
       "value": "写入剪贴板内容"
+    },
+    {
+      "name": "SYSTEM_FLOAT_WINDOW",
+      "value": "开发悬浮窗窗口"
     }
   ]
 }
