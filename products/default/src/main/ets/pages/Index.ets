@@ -44,6 +44,7 @@ struct Index {
   // }
   onPageHide(): void {
     console.log('应用最小化')
+    Float_Window.creat_hide()
   }
 
   aboutToAppear(): void {
@@ -86,24 +87,29 @@ struct Index {
   onPageShow(): void {
     // BlueTooth_api.init_bluetoothState()
     // Hid.Hid_add()
-    try {
-      /**
-       * 检查鼠标设备，并建立连接
-       */
-      Communication.connectDevice().then(() => {
-        setTimeout(() => {
-          Communication.getDeviceInfo() //获取鼠标初始信息
-        }, 2000)
-      })
-    } catch (e) {
-      console.log(e)
+    if (!AppStorage.get('firstOpen')) { //确保最小化后重新进入页面时的再次执行——————只在最开始打开应用的时候调用一次即可
+      try {
+        /**
+         * 检查鼠标设备，并建立连接
+         */
+        Communication.connectDevice().then(() => {
+          setTimeout(() => {
+            Communication.getDeviceInfo() //获取鼠标初始信息
+          }, 2000)
+        })
+      } catch (e) {
+        console.log(e)
+      }
+    } else {
+      Float_Window.destroyWindow(Float_Window.window_hide)
     }
     this.pageInfo.disableAnimation(true)
     // console.log(JSON.stringify(this.login))
     if (!this.login) {
       this.pageInfo.pushPath({ 'name': 'login' })
-    } else {
     }
+
+    AppStorage.setOrCreate('firstOpen', 1)
 
 
   }

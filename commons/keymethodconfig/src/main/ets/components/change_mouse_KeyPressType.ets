@@ -38,7 +38,6 @@ export function _change_mouse_KeyPressType() {
         //文件
         console.warn('文件+')
         OpenFileWithSystemApp.openFileWithSystemApp()
-
         // let guard: fileGuard.FileGuard = new fileGuard.FileGuard();
         // let path: string =
         //   'file://docs/storage/Users/currentUser/Desktop/%E6%96%B0%E5%BB%BA%20DWG%20%E6%96%87%E4%BB%B6.dwg';
@@ -111,7 +110,7 @@ export function _change_mouse_KeyPressType() {
       case 1:
         //语音翻译
         console.warn('语音翻译+长按按下')
-        _KeyMethodConfig.voiceInput_long()
+        _KeyMethodConfig.voiceInput_long(1)
         break
       case 2:
         //语音助手
@@ -224,7 +223,7 @@ export function _change_mouse_KeyPressType() {
       case 1:
         //语音翻译
         console.warn('语音翻译+长按按下')
-        _KeyMethodConfig.voiceInput_long()
+        _KeyMethodConfig.voiceInput_long(1)
         break
       case 2:
         //语音输入
@@ -333,7 +332,7 @@ export function _change_mouse_KeyPressType() {
       case 1:
         //语音翻译
         console.warn('语音翻译+')
-        _KeyMethodConfig.voiceInput_long()
+        _KeyMethodConfig.voiceInput_long(1)
         break
       case 2:
         //语音助手

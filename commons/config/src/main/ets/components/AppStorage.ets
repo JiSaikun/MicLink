@@ -92,4 +92,9 @@ class AppStorage {
    * 初始化 ：语音输入弹窗
    */
   static readonly voiceInputState: boolean = false
+  /**
+   * 语音翻译是否正在采集语音
+   * 初始化 ：语音翻译弹窗
+   */
+  static readonly voiceTranslationState: boolean = false
 }

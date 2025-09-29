@@ -10,9 +10,10 @@ import { Want } from '@kit.AbilityKit'; //打开网页
 import { OpenLinkOptions } from '@kit.AbilityKit'; // 导入AbilityKit中的常用功能和打开链接选项
 import { hilog } from '@kit.PerformanceAnalysisKit'; // 导入性能分析工具包中的日志功能
 import { pasteboard } from '@kit.BasicServicesKit'; //划词翻译————剪切板
-import { _translate, translate_Params } from 'mouse'
+import { _translate, translate_Params, translate_Response } from 'mouse'
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl'; //读取剪切板————主动获取权限
 import { Float_Window } from 'float_window'; //按键执行方法回调
+import { promptAction } from '@kit.ArkUI';
 
 export class _KeyMethodConfig {
   /**
@@ -27,21 +28,42 @@ export class _KeyMethodConfig {
           Communication.audioData = []
           Communication.audioDataState = !Communication.audioDataState
         })
-      if (!Float_Window.showVoiceInput) { //窗口没有显示时创建窗口
-        Float_Window.creat()
+      if (state) {
+        if (!AppStorage.get('voiceOrText')) {
+          AppStorage.setOrCreate('voiceTranslationText', [])
+        }
+        AppStorage.setOrCreate('voiceOrText', true)
+        if (!Float_Window.showVoiceTranslation) {
+          Float_Window.showVoiceTranslation = true
+          Float_Window.creat_VoiceTranslation()
+        }
+        // else {  //窗口无法置顶
+        //   Float_Window.show_float_window(Float_Window.window_VoiceTranslation)
+        // }
+      } else {
+        if (!Float_Window.showVoiceInput) { //窗口没有显示时创建窗口
+          Float_Window.creat()
+        } else {
+          Float_Window.show_float_window()
+        }
+        Float_Window.showVoiceInput += 1
       }
-      Float_Window.showVoiceInput += 1
+
     } else {
       Communication.getDeviceInfo([0x63]).then(() => {
         Communication.audioDataState = !Communication.audioDataState
       })
-      let flax = Float_Window.showVoiceInput
-      setTimeout(() => {
-        if (Float_Window.showVoiceInput === flax) {
-          Float_Window.showVoiceInput = 0
-          Float_Window.destroyWindow() //在悬浮窗关闭后清空语音输入文本状态变量，文本显示：如果文本变量不为空，在后面拼接，如果为空则直接将新数据赋值即可
-        }
-      }, 60000)
+      if (!state) {
+        let flax = Float_Window.showVoiceInput
+        setTimeout(() => {
+          if (Float_Window.showVoiceInput === flax) {
+            // Float_Window.showVoiceInput = 0
+            Float_Window.minimize_float_window()
+            // Float_Window.destroyWindow() //在悬浮窗关闭后清空语音输入文本状态变量，文本显示：如果文本变量不为空，在后面拼接，如果为空则直接将新数据赋值即可
+          }
+        }, 10000)
+      }
+
 
       /**
        * 语音数据处理
@@ -70,24 +92,54 @@ export class _KeyMethodConfig {
           inputMessage) //语音转文字 websocket  //0：语音输入
       audioToText.connect()
     }
-    AppStorage.setOrCreate('voiceInputState', !Communication.audioDataState) //语音状态
+    if (state) {
+      if (AppStorage.get('voiceInputState')) {
+        AppStorage.setOrCreate('voiceInputState', false) //语音状态
+      }
+      AppStorage.setOrCreate('voiceTranslationState', !Communication.audioDataState) //语音状态
+    } else {
+      if (AppStorage.get('voiceTranslationState')) {
+        AppStorage.setOrCreate('voiceTranslationState', false) //语音状态
+      }
+      AppStorage.setOrCreate('voiceInputState', !Communication.audioDataState) //语音状态
+    }
   }
 
   /**
    * 语音输入_长按按下
    */
-  static voiceInput_long() {
+  static voiceInput_long(state: number = 0) {
     Communication.audioData = []
     if (Communication.audioDataState) { //若开始长按时，有通过0x62命令开启的语音输入等，先进行关闭 ...否则改变audioDataState 采集状态，确保1b数据被放到语音数据里 ——————手动发起0x62收集录音数据
       Communication.getDeviceInfo([0x62])
     } else {
       Communication.audioDataState = !Communication.audioDataState
     }
-    if (!Float_Window.showVoiceInput) { //窗口没有显示时创建窗口
-      Float_Window.creat()
+    if (state) {
+      if (!AppStorage.get('voiceOrText')) {
+        AppStorage.setOrCreate('voiceTranslationText', [])
+      }
+      AppStorage.setOrCreate('voiceOrText', true)
+      if (!Float_Window.showVoiceTranslation) {
+        Float_Window.showVoiceTranslation = true
+        Float_Window.creat_VoiceTranslation()
+      }
+      if (AppStorage.get('voiceInputState')) {
+        AppStorage.setOrCreate('voiceInputState', false) //语音状态
+      }
+      AppStorage.setOrCreate('voiceTranslationState', Communication.audioDataState) //语音状态
+    } else {
+      if (!Float_Window.showVoiceInput) { //窗口没有显示时创建窗口
+        Float_Window.creat()
+      } else {
+        Float_Window.show_float_window()
+      }
+      Float_Window.showVoiceInput += 1
+      if (AppStorage.get('voiceTranslationState')) {
+        AppStorage.setOrCreate('voiceTranslationState', false) //语音状态
+      }
+      AppStorage.setOrCreate('voiceInputState', Communication.audioDataState) //语音状态
     }
-    Float_Window.showVoiceInput += 1
-    AppStorage.setOrCreate('voiceInputState', Communication.audioDataState) //语音状态
   }
 
   /**
@@ -96,13 +148,16 @@ export class _KeyMethodConfig {
   static endvoiceInput_long(state: number = 0) {
     Communication.audioDataState = !Communication.audioDataState
     Communication.getDeviceInfo([0x63])
-    let flax = Float_Window.showVoiceInput
-    setTimeout(() => {
-      if (Float_Window.showVoiceInput === flax) { //说明在60s内没有再进行过语音输入功能
-        Float_Window.showVoiceInput = 0
-        Float_Window.destroyWindow() //在悬浮窗关闭后清空语音输入文本状态变量，文本显示：如果文本变量不为空，在后面拼接，如果为空则直接将新数据赋值即可
-      }
-    }, 60000)
+    if (!state) {
+      let flax = Float_Window.showVoiceInput
+      setTimeout(() => {
+        if (Float_Window.showVoiceInput === flax) { //说明在60s内没有再进行过语音输入功能
+          // Float_Window.showVoiceInput = 0
+          Float_Window.minimize_float_window()
+          // Float_Window.destroyWindow() //在悬浮窗关闭后清空语音输入文本状态变量，文本显示：如果文本变量不为空，在后面拼接，如果为空则直接将新数据赋值即可
+        }
+      }, 10000)
+    }
     /**
      * 语音数据处理
      */
@@ -130,7 +185,18 @@ export class _KeyMethodConfig {
       new AudioWebSocketHandler(WebSocket_serverUrl.audioToText, Communication.audioData, state,
         inputMessage) //语音转文字 websocket
     audioToText.connect()
-    AppStorage.setOrCreate('voiceInputState', Communication.audioDataState) //语音状态
+
+    if (state) {
+      if (AppStorage.get('voiceInputState')) {
+        AppStorage.setOrCreate('voiceInputState', false) //语音状态
+      }
+      AppStorage.setOrCreate('voiceTranslationState', Communication.audioDataState) //语音状态
+    } else {
+      if (AppStorage.get('voiceTranslationState')) {
+        AppStorage.setOrCreate('voiceTranslationState', false) //语音状态
+      }
+      AppStorage.setOrCreate('voiceInputState', Communication.audioDataState) //语音状态
+    }
   }
 
   /**
@@ -230,20 +296,41 @@ export class _KeyMethodConfig {
         console.error(JSON.stringify(pasteData.getRecordCount()))
         let text: string = pasteData.getPrimaryText();
         console.log('111111111111111', text)
-        let params: translate_Params = {
-          appkey: (AppStorage.get('getModelInfo') as getModelInfoModel).appkey, //获取用户按键模式详情中得到
-          from: 'ZH_CN', //源语言___后面配置
-          productCode: Communication.deviceInfo.productType.toString(), //产品编码
-          sno: Communication.deviceInfo.sn, //设备号
-          text: text, //翻译内容
-          to: 'EN_US' //翻译语言___后面配置
+        if (text) {
+          // if (AppStorage.get('voiceOrText')) {
+          AppStorage.setOrCreate('voiceTranslationText', [])
+          // }
+          AppStorage.setOrCreate('voiceOrText', false)
+          if (!Float_Window.showVoiceTranslation) {
+            Float_Window.showVoiceTranslation = true
+            Float_Window.creat_VoiceTranslation()
+          }
+          let params: translate_Params = {
+            appkey: (AppStorage.get('getModelInfo') as getModelInfoModel).appkey, //获取用户按键模式详情中得到
+            from: 'ZH_CN', //源语言___后面配置
+            productCode: Communication.deviceInfo.productType.toString(), //产品编码
+            sno: Communication.deviceInfo.sn, //设备号
+            text: text, //翻译内容
+            to: 'EN_US' //翻译语言___后面配置
+          }
+          _translate(params).then((res) => {
+            console.log('翻译请求成功————翻译结果：' + res.data?.transText)
+            let dataArray = AppStorage.get('voiceTranslationText') as translate_Response[]
+            let data: translate_Response = {
+              transText: res.data?.transText as string,
+              text: res.data?.text as string,
+              index: dataArray.length
+            }
+            dataArray.push(data)
+            AppStorage.setOrCreate('voiceTranslationText', dataArray)
+            // const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, res.data?.transText);
+            // Communication.getDeviceInfo([0x20, 0x01, 0x19])
+            systemPasteboard.clearData() //清空剪贴板
+          })
+
+        } else {
+          promptAction.showToast({ message: '未识别到选中划词' });
         }
-        _translate(params).then((res) => {
-          console.log('翻译请求成功————翻译结果：' + res.data?.transText)
-          const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, res.data?.transText);
-          // Communication.getDeviceInfo([0x20, 0x01, 0x19])
-          systemPasteboard.clearData() //清空剪贴板
-        })
 
         // setTimeout(() => { //移除一条条目
         //   pasteData.removeRecord(0)

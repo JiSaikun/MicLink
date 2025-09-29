@@ -5,7 +5,7 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { getModelInfoModel } from 'config'
 import { Communication } from './Communication'
 import { _translate } from '../viewmodel/UserViewModel'
-import { translate_Params } from '../model/MouseInfoModel'
+import { translate_Params, translate_Response } from '../model/MouseInfoModel'
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
 
 // 定义日志消息接口
@@ -146,7 +146,7 @@ export class AudioWebSocketHandler {
                 systemPasteboard.getData().then((pasteData: pasteboard.PasteData) => {
                   console.error(JSON.stringify(pasteData.getRecordCount()))
                   let text: string = pasteData.getPrimaryText();
-                  console.log('111111111111111', text, this.state)
+                  // console.log('111111111111111', text, this.state)
                   if (this.state === 0) { //:语音输入
                     Communication.getDeviceInfo([0x20, 0x01, 0x19])
                       .then(() => {
@@ -166,13 +166,21 @@ export class AudioWebSocketHandler {
                     }
                     _translate(params).then((res) => {
                       console.log('翻译请求成功————翻译结果：' + res.data?.transText)
-                      const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, res.data?.transText);
-                      systemPasteboard.setData(pasteData).then(() => {
-                        Communication.getDeviceInfo([0x20, 0x01, 0x19])
-                          .then(() => {
-                            systemPasteboard.clearData() //清空剪贴板
-                          })
-                      })
+                      let dataArray = AppStorage.get('voiceTranslationText') as translate_Response[]
+                      let data: translate_Response = {
+                        transText: res.data?.transText as string,
+                        text: res.data?.text as string,
+                        index: dataArray.length
+                      }
+                      dataArray.push(data)
+                      AppStorage.setOrCreate('voiceTranslationText', dataArray)
+                      // const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, res.data?.transText);
+                      // systemPasteboard.setData(pasteData).then(() => {
+                      //   Communication.getDeviceInfo([0x20, 0x01, 0x19])
+                      //     .then(() => {
+                      //       systemPasteboard.clearData() //清空剪贴板
+                      //     })
+                      // })
                     })
                   }
                   // setTimeout(() => { //移除一条条目

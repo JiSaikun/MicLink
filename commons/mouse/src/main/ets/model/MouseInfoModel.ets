@@ -22,6 +22,7 @@ export interface translate_Params extends BaseParams {
 }
 
 export interface translate_Response {
-  transText:string
-  text:string
+  transText: string
+  text: string
+  index: number //自己加的，用于ForEach遍历
 }

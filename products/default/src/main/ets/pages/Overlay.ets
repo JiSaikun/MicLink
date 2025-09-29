@@ -1,5 +1,3 @@
-import { Communication } from 'mouse'
-
 @Entry
 @Component
 export struct Overlay {
@@ -21,13 +19,18 @@ export struct Overlay {
         .width(100)
 
         Scroll() {
-          Text(this.voiceInputText)
-            .textAlign(TextAlign.Start)
-            .padding({ right: 8, left: 8 })
-            .fontSize(14)
-            .fontWeight(400)
-            .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-            .width('100%')
+          if (!this.voiceInputText) {
+            Text('注意输入框的聚焦！！！')
+              .fontSize(28)
+          } else {
+            Text(this.voiceInputText)
+              .textAlign(TextAlign.Start)
+              .padding({ right: 8, left: 8 })
+              .fontSize(14)
+              .fontWeight(400)
+              .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
+              .width('100%')
+          }
         }
         .align(Alignment.TopStart)
         .height('100%')
