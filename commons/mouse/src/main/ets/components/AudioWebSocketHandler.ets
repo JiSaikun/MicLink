@@ -7,6 +7,7 @@ import { Communication } from './Communication'
 import { _translate } from '../viewmodel/UserViewModel'
 import { translate_Params } from '../model/MouseInfoModel'
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
+
 // 定义日志消息接口
 interface logMessageModel {
   "start": boolean,
@@ -90,6 +91,7 @@ export class AudioWebSocketHandler {
 
 
   public connect(): void {
+    let voiceInputText = AppStorage.get('voiceInputText') as string
     console.log('*************************进入webSocket连接************************', typeof this.ws)
     if (this.ws) {
       this.disconnect();
@@ -118,6 +120,10 @@ export class AudioWebSocketHandler {
         }
         console.log("收到消息，内容:" + message);
         let res: res_moudel = JSON.parse(message)
+        if (res.status === 200 && this.state === 0) {
+          AppStorage.setOrCreate('voiceInputText', voiceInputText + res.data.text)
+          console.error(JSON.stringify(AppStorage.get('voiceInputText')) + '33333333333333333333333333333333333')
+        }
         if (res.status === 200 && (res.data.type === 'LAST' || res.data.type === "FIN")) {
           // AppStorage.setOrCreate('audioToText_res', res.data.text)
           let audioToText_res: string = res.data.text

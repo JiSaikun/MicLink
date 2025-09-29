@@ -82,4 +82,14 @@ class AppStorage {
    * 数据类型：Boolean
    */
   static readonly lowPowerAlertEnabled: boolean = false
+  /**
+   * 语音输入文本记录
+   * 初始化 ：语音输入弹窗
+   */
+  static readonly voiceInputText: boolean = false
+  /**
+   * 语音输入是否正在采集语音
+   * 初始化 ：语音输入弹窗
+   */
+  static readonly voiceInputState: boolean = false
 }

@@ -27,14 +27,22 @@ export class _KeyMethodConfig {
           Communication.audioData = []
           Communication.audioDataState = !Communication.audioDataState
         })
-      Float_Window.creat()
-      setTimeout(() => {
-        Float_Window.destroyWindow()
-      }, 60000)
+      if (!Float_Window.showVoiceInput) { //窗口没有显示时创建窗口
+        Float_Window.creat()
+      }
+      Float_Window.showVoiceInput += 1
     } else {
       Communication.getDeviceInfo([0x63]).then(() => {
         Communication.audioDataState = !Communication.audioDataState
       })
+      let flax = Float_Window.showVoiceInput
+      setTimeout(() => {
+        if (Float_Window.showVoiceInput === flax) {
+          Float_Window.showVoiceInput = 0
+          Float_Window.destroyWindow() //在悬浮窗关闭后清空语音输入文本状态变量，文本显示：如果文本变量不为空，在后面拼接，如果为空则直接将新数据赋值即可
+        }
+      }, 60000)
+
       /**
        * 语音数据处理
        */
@@ -62,6 +70,7 @@ export class _KeyMethodConfig {
           inputMessage) //语音转文字 websocket  //0：语音输入
       audioToText.connect()
     }
+    AppStorage.setOrCreate('voiceInputState', !Communication.audioDataState) //语音状态
   }
 
   /**
@@ -74,6 +83,11 @@ export class _KeyMethodConfig {
     } else {
       Communication.audioDataState = !Communication.audioDataState
     }
+    if (!Float_Window.showVoiceInput) { //窗口没有显示时创建窗口
+      Float_Window.creat()
+    }
+    Float_Window.showVoiceInput += 1
+    AppStorage.setOrCreate('voiceInputState', Communication.audioDataState) //语音状态
   }
 
   /**
@@ -82,6 +96,13 @@ export class _KeyMethodConfig {
   static endvoiceInput_long(state: number = 0) {
     Communication.audioDataState = !Communication.audioDataState
     Communication.getDeviceInfo([0x63])
+    let flax = Float_Window.showVoiceInput
+    setTimeout(() => {
+      if (Float_Window.showVoiceInput === flax) { //说明在60s内没有再进行过语音输入功能
+        Float_Window.showVoiceInput = 0
+        Float_Window.destroyWindow() //在悬浮窗关闭后清空语音输入文本状态变量，文本显示：如果文本变量不为空，在后面拼接，如果为空则直接将新数据赋值即可
+      }
+    }, 60000)
     /**
      * 语音数据处理
      */
@@ -109,6 +130,7 @@ export class _KeyMethodConfig {
       new AudioWebSocketHandler(WebSocket_serverUrl.audioToText, Communication.audioData, state,
         inputMessage) //语音转文字 websocket
     audioToText.connect()
+    AppStorage.setOrCreate('voiceInputState', Communication.audioDataState) //语音状态
   }
 
   /**

@@ -6,11 +6,11 @@ export class Float_Window {
   static screen_width = display.getDefaultDisplaySync().width
   static screen_height = display.getDefaultDisplaySync().height
   static windowClass: window.Window | null = null;
+  static showVoiceInput: number = 0 //判断在窗口显示期间再次进行语音输入的话，不必在执行创建，打断60s窗口关闭的倒计时
 
   static creat(windowName = 'pages/Overlay', float_window_width = 1100, float_window_height = 300) {
     // 1.创建悬浮窗。
     let windowClass: window.Window | null = null;
-    Float_Window.windowClass = windowClass
     let config: window.Configuration = {
       name: "floatWindow", windowType: window.WindowType.TYPE_FLOAT, ctx: AppStorage.get('context')
     };
@@ -22,6 +22,7 @@ export class Float_Window {
       }
       console.info('Succeeded in creating the floatWindow. Data: ' + JSON.stringify(data));
       windowClass = data;
+      Float_Window.windowClass = windowClass
       // 2.悬浮窗窗口创建成功后，设置悬浮窗的位置、大小及相关属性等。
       windowClass.moveWindowTo(Float_Window.screen_width - float_window_width - 10,
         Float_Window.screen_height - float_window_height - 250, (err: BusinessError) => {
@@ -70,6 +71,7 @@ export class Float_Window {
         return;
       }
       console.info('Succeeded in destroying the window.');
+      AppStorage.setOrCreate('voiceInputText', '')
     });
   }
 }

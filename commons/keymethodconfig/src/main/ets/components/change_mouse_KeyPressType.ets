@@ -38,6 +38,7 @@ export function _change_mouse_KeyPressType() {
         //文件
         console.warn('文件+')
         OpenFileWithSystemApp.openFileWithSystemApp()
+
         // let guard: fileGuard.FileGuard = new fileGuard.FileGuard();
         // let path: string =
         //   'file://docs/storage/Users/currentUser/Desktop/%E6%96%B0%E5%BB%BA%20DWG%20%E6%96%87%E4%BB%B6.dwg';

@@ -35,16 +35,18 @@ struct Index {
     }
   }
 
-  watch_float_window() {
-    // if (this.float_window) {
-    //   Float_Window.creat()
-    // } else {
-    //   Float_Window.destroyWindow()
-    // }
+  // watch_float_window() {
+  //   // if (this.float_window) {
+  //   //   Float_Window.creat()
+  //   // } else {
+  //   //   Float_Window.destroyWindow()
+  //   // }
+  // }
+  onPageHide(): void {
+    console.log('应用最小化')
   }
 
   aboutToAppear(): void {
-
     const context = getContext(this) as common.UIAbilityContext;
     AppStorage.setOrCreate('context', context);
     // AppStorage.setOrCreate('float_window', false);
@@ -108,7 +110,7 @@ struct Index {
 
   aboutToDisappear(): void {
     // console.log('应用关闭======================================')
-    console.log(JSON.stringify(Communication.devicePipe))
+    // console.log(JSON.stringify(Communication.devicePipe))
     Communication.changPhysicalKeyboardExistState(false)
   }
 
