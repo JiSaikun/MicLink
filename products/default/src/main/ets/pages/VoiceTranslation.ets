@@ -1,6 +1,7 @@
 import { Float_Window } from 'float_window'
-import { translate_Response, Communication } from "mouse"
+import { translate_Response, Communication, _translate, translate_Params } from "mouse"
 import { getModelInfoModel, languagesModel } from 'config'
+import { promptAction } from '@kit.ArkUI'
 
 /**
  * 语音翻译悬浮窗
@@ -12,17 +13,48 @@ struct VoiceTranslation {
   @Watch('cope') @StorageLink('voiceTranslationText') voiceTranslationText: translate_Response[] = []
   @StorageLink('voiceTranslationState') voiceTranslationState: boolean = true
   @StorageLink('voiceOrText') voiceOrText: boolean = true //语音翻译为true,文本翻译为false
-  @StorageLink('from_languages') from_languages: string = 'ZH_CN' //翻译源语言
-  @StorageLink('to_languages') to_languages: string = 'EN_US' //翻译目标语言
+  @Watch('changeLanguages') @StorageLink('from_languages') from_languages: string = 'ZH_CN' //翻译源语言
+  @Watch('changeLanguages') @StorageLink('to_languages') to_languages: string = 'EN_US' //翻译目标语言
   @State translationCope: string = '' //复制翻译文本
   // 1. 初始化滚动控制器
   private scroller_to: Scroller = new Scroller();
   private scroller_from: Scroller = new Scroller();
 
+  changeLanguages() {
+    this.voiceTranslationText.forEach((item, index) => {
+      let params: translate_Params = {
+        appkey: (AppStorage.get('getModelInfo') as getModelInfoModel).appkey, //获取用户按键模式详情中得到
+        from: AppStorage.get('from_languages') as string, //源语言___后面配置
+        productCode: Communication.deviceInfo.productType.toString(), //产品编码
+        sno: Communication.deviceInfo.sn, //设备号
+        text: item.text, //翻译内容
+        to: AppStorage.get('to_languages') as string //翻译语言___后面配置
+      }
+      _translate(params).then((res) => {
+        if (res.data) {
+          let reason: translate_Response[] = AppStorage.get('voiceTranslationText') as translate_Response[]
+          console.log('翻译请求成功————翻译结果：' + res.data?.transText)
+          let data: translate_Response = {
+            transText: res.data?.transText as string,
+            text: res.data?.text as string,
+            index: item.index-1
+          }
+          reason[index] = data
+          AppStorage.setOrCreate('voiceTranslationText', reason)
+          console.warn('****************111111111111*****************',
+            JSON.stringify(reason) + '\n' + JSON.stringify(params))
+        }else {
+          promptAction.showToast({ message: '无法翻译到对应目标语言' });
+        }
+      })
+    })
+  }
+
   cope() {
     this.voiceTranslationText.forEach(item => {
       this.translationCope += '\n' + item.transText
     })
+    console.error('21edqwahsjkh')
     // 方式一：使用 scrollToIndex，滚动到最后一个列表项
     // 获取最后一个元素的索引
     let lastIndex = this.voiceTranslationText.length - 1;

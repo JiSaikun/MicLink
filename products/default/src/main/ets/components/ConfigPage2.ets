@@ -13,8 +13,6 @@ export interface KeymethodConfig {
   currIndex: number
 }
 
-
-
 /**
  * 按键设置
  */
@@ -66,6 +64,11 @@ export struct ConfigPage2 {
     return 0; // 无默认项时选中第一个
   }
 
+  aboutToAppear(): void {
+    if (!AppStorage.get('languages')) {
+      AppStorage.setOrCreate('languages', 'ZH_CN')
+    }
+  }
 
   build() {
     Flex({ space: { main: LengthMetrics.px(15) }, direction: FlexDirection.Column }) {
