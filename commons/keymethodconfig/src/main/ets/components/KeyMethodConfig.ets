@@ -307,11 +307,11 @@ export class _KeyMethodConfig {
           }
           let params: translate_Params = {
             appkey: (AppStorage.get('getModelInfo') as getModelInfoModel).appkey, //获取用户按键模式详情中得到
-            from: 'ZH_CN', //源语言___后面配置
+            from: AppStorage.get('from_languages') as string, //源语言___后面配置
             productCode: Communication.deviceInfo.productType.toString(), //产品编码
             sno: Communication.deviceInfo.sn, //设备号
             text: text, //翻译内容
-            to: 'EN_US' //翻译语言___后面配置
+            to: AppStorage.get('to_languages') as string //翻译语言___后面配置
           }
           _translate(params).then((res) => {
             console.log('翻译请求成功————翻译结果：' + res.data?.transText)

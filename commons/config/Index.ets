@@ -11,5 +11,6 @@ export { getModelInfoModel,
   keyInfos_childsModel,
   keyInfos_childs_childsModel,
   imagesModel,
-  imagesDataModel
+  imagesDataModel,
+  languagesModel
 } from './src/main/ets/components/getModelInfoModel'

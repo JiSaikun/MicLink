@@ -233,6 +233,11 @@ export class Communication {
   static async getDeviceInfo(command: number[] = [0x61]) {
     if (!Communication.devicePipe) {
       console.log('设备未连接------------------------');
+      // Communication.connectDevice().then(() => {
+      //   setTimeout(() => {
+      //     Communication.getDeviceInfo() //获取鼠标初始信息
+      //   }, 2000)
+      // })
       return;
     }
     Communication.isPhysicalKeyboardExist = false
@@ -310,31 +315,34 @@ export class Communication {
         /**
          * 防止没有接收到鼠标配置信息
          */
-        setTimeout(() => {
-          if (Communication.deviceInfo.sn === '' && Communication.devicePipe) {
-            console.log('没有收到0x61命令,重新获取设备信息')
-            Communication.getDeviceInfo()
-          } else {
-            if (!AppStorage.get('getModelInfo')) {
-              const params: getModelInfo_Params = {
-                languageCode: '',
-                productCode: Communication.deviceInfo.productType.toString(),
-                sno: Communication.deviceInfo.sn
-              }
-              _getModelInfo(params).then((res) => {
-                // console.log('获取用户按键模式详情数据', JSON.stringify(res.data))
-                if (res.status === 200) {
-                  let getModelInfo: getModelInfoModel = res.data as getModelInfoModel
-                  AppStorage.setOrCreate('getModelInfo', getModelInfo)
+        if (Communication.deviceInfo.sn === '') {
+          setTimeout(() => {
+            if (Communication.deviceInfo.sn === '' && Communication.devicePipe) {
+              console.log('没有收到0x61命令,重新获取设备信息')
+              Communication.getDeviceInfo()
+            } else {
+              if (!AppStorage.get('getModelInfo')) {
+                const params: getModelInfo_Params = {
+                  languageCode: '',
+                  productCode: Communication.deviceInfo.productType.toString(),
+                  sno: Communication.deviceInfo.sn
                 }
-                Communication.getDeviceInfo([0x63])
-              }).catch(() => {
-                // console.log('请求失败')
-              })
-            }
+                _getModelInfo(params).then((res) => {
+                  // console.log('获取用户按键模式详情数据', JSON.stringify(res.data))
+                  if (res.status === 200) {
+                    let getModelInfo: getModelInfoModel = res.data as getModelInfoModel
+                    AppStorage.setOrCreate('getModelInfo', getModelInfo)
+                  }
+                }).catch(() => {
+                  // console.log('请求失败')
+                })
+              }
+              Communication.getDeviceInfo([0x63])
 
-          }
-        }, 1000)
+            }
+          }, 1000)
+        }
+
         console.log('=========================================命令发送成功，并成功读取一次数据，开始执行循环读取',
           '发送的命令是：', JSON.stringify(command), JSON.stringify(Communication.isPhysicalKeyboardExist))
         // 开始持续读取数据

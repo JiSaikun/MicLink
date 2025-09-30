@@ -14,12 +14,13 @@ export interface KeymethodConfig {
 }
 
 
+
 /**
  * 按键设置
  */
 @Component
 export struct ConfigPage2 {
-  @State getModelInfo: getModelInfoModel = AppStorage.get('getModelInfo') as getModelInfoModel
+  @StorageLink('getModelInfo') getModelInfo: getModelInfoModel = AppStorage.get('getModelInfo') as getModelInfoModel
   @StorageLink('languages') languages: string = 'ZH_CN'
   @StorageLink('KeymethodConfig') KeymethodConfig: KeymethodConfig[] = []
 
@@ -64,6 +65,7 @@ export struct ConfigPage2 {
     }
     return 0; // 无默认项时选中第一个
   }
+
 
   build() {
     Flex({ space: { main: LengthMetrics.px(15) }, direction: FlexDirection.Column }) {

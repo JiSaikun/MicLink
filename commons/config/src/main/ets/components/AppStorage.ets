@@ -56,6 +56,7 @@ class AppStorage {
   /**
    * 语言设置——————多语言
    * 个人中心页面设置——————暂未初始化
+   * 持久化储存
    * 数据类型：string
    */
   static readonly languages: boolean = false
@@ -68,6 +69,7 @@ class AppStorage {
   static readonly KeymethodConfig: boolean = false
   /**
    * 路由栈储存，方便在非页面的方法中调用路由栈对象
+   * 持久化储存
    * 初始化：Index
    */
   static readonly pageInfo: boolean = false
@@ -97,4 +99,16 @@ class AppStorage {
    * 初始化 ：语音翻译弹窗
    */
   static readonly voiceTranslationState: boolean = false
+  /**
+   * 翻译原语言
+   * 持久化储存
+   * 初始化 ：语音翻译弹窗
+   */
+  static readonly from_languages: boolean = false
+  /**
+   * 翻译目标语言
+   * 持久化储存
+   * 初始化 ：语音翻译弹窗
+   */
+  static readonly to_languages: boolean = false
 }

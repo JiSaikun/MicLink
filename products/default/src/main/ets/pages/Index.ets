@@ -12,6 +12,7 @@ PersistentStorage.persistProp("login", false)
 PersistentStorage.persistProp("KeymethodConfig", null) //按键设置方法执行记录
 PersistentStorage.persistProp("mouseconfig", null) //鼠标实时数据
 PersistentStorage.persistProp("getModelInfo", null) //获取用户按键模式详情
+PersistentStorage.persistProp("languages", null) //用户语音
 
 
 @Entry

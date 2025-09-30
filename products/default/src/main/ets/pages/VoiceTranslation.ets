@@ -1,5 +1,6 @@
 import { Float_Window } from 'float_window'
-import { translate_Response } from "mouse"
+import { translate_Response, Communication } from "mouse"
+import { getModelInfoModel, languagesModel } from 'config'
 
 /**
  * 语音翻译悬浮窗
@@ -7,9 +8,27 @@ import { translate_Response } from "mouse"
 @Entry
 @Component
 struct VoiceTranslation {
-  @StorageLink('voiceTranslationText') voiceTranslationText: translate_Response[] = []
+  @State getModelInfo: getModelInfoModel = AppStorage.get('getModelInfo') as getModelInfoModel
+  @Watch('cope') @StorageLink('voiceTranslationText') voiceTranslationText: translate_Response[] = []
   @StorageLink('voiceTranslationState') voiceTranslationState: boolean = true
   @StorageLink('voiceOrText') voiceOrText: boolean = true //语音翻译为true,文本翻译为false
+  @StorageLink('from_languages') from_languages: string = 'ZH_CN' //翻译源语言
+  @StorageLink('to_languages') to_languages: string = 'EN_US' //翻译目标语言
+  @State translationCope: string = '' //复制翻译文本
+  // 1. 初始化滚动控制器
+  private scroller_to: Scroller = new Scroller();
+  private scroller_from: Scroller = new Scroller();
+
+  cope() {
+    this.voiceTranslationText.forEach(item => {
+      this.translationCope += '\n' + item.transText
+    })
+    // 方式一：使用 scrollToIndex，滚动到最后一个列表项
+    // 获取最后一个元素的索引
+    let lastIndex = this.voiceTranslationText.length - 1;
+    this.scroller_to.scrollToIndex(lastIndex, true, ScrollAlign.END); // 使用END对齐到底部:cite[2]:cite[4]
+    this.scroller_from.scrollToIndex(lastIndex, true, ScrollAlign.END); // 使用END对齐到底部:cite[2]:cite[4]
+  }
 
   build() {
     Flex({ direction: FlexDirection.Column }) {
@@ -40,60 +59,266 @@ struct VoiceTranslation {
           .onClick(() => {
             Float_Window.destroyWindow(Float_Window.window_VoiceTranslation)
             Float_Window.showVoiceTranslation = false
+            this.voiceTranslationText = []
+            if (Communication.audioDataState) {
+              Communication.getDeviceInfo([0x63])
+              Communication.audioDataState = !Communication.audioDataState
+            }
           })
       }
       .width('100%')
 
       Column() {
-        Scroll() {
-          Column() {
-            ForEach(this.voiceTranslationText, (item: translate_Response) => {
-              TextArea({text:item.text})
+        List({ scroller: this.scroller_from }) {
+          ForEach(this.voiceTranslationText, (item: translate_Response) => {
+            ListItem() {
+              TextArea({ text: item.text })
                 .width('100%')
                 .textAlign(TextAlign.Start)
-                .padding({ bottom: 10 })
+                .padding({ left: 0, top: 0, right: 0 })
+                .borderRadius(0)
                 .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
                 .fontWeight(400)
                 .fontSize(14)
                 .backgroundColor('#f8f8f8')
-            }, (item: translate_Response) => item.index.toString())
-          }
-          .padding(12)
+                .focusable(false)
+            }
+          }, (item: translate_Response) => item.index.toString())
         }
+        .padding({
+          left: 12,
+          top: 12,
+          right: 24,
+          bottom: 12
+        })
         .width('100%')
         .height('50%')
         .align(Alignment.TopStart)
 
-        Scroll() {
-          Column() {
+        Column() {
+          List({ scroller: this.scroller_to }) {
             ForEach(this.voiceTranslationText, (item: translate_Response) => {
-              TextArea({ text: item.transText })
-                .width('100%')
-                .textAlign(TextAlign.Start)
-                .padding({ bottom: 10 })
-                .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-                .fontWeight(400)
-                .fontSize(14)
-                .backgroundColor(Color.White)
+              ListItem() {
+                TextArea({ text: item.transText })
+                  .width('100%')
+                  .textAlign(TextAlign.Start)
+                  .padding({ left: 0, top: 0, right: 0 })
+                  .borderRadius(0)
+                  .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
+                  .fontWeight(400)
+                  .fontSize(14)
+                  .backgroundColor(Color.White)
+                  .focusable(false)
+              }
             }, (item: translate_Response) => item.index.toString())
           }
-          .padding(12)
+          .layoutWeight(1)
+          .align(Alignment.TopStart)
+
+          Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
+            Select(this.convert_ttsLanguagesToOptions())
+              .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.ttsLanguages[this.getDefaultSelectedIndex_from()]))
+              .onSelect((index: number) => {
+                this.from_languages = this.getModelInfo.ttsLanguages[index].code
+              })
+              .selected(this.getDefaultSelectedIndex_from())
+              .width('100%')
+              .font({ size: 12, weight: 400 })
+              .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
+              .borderRadius(4)
+              .border({ width: 1, color: $r('app.string.DEFAULT_BORDER_COLOR') })
+              .backgroundColor(Color.White)
+              .width(150)
+            Text('至')
+              .fontSize(12)
+              .fontWeight(400)
+              .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
+              .padding({ left: 20, right: 20 })
+            Select(this.convert_ttsLanguagesToOptions())
+              .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.ttsLanguages[this.getDefaultSelectedIndex_to()]))
+              .onSelect((index: number) => {
+                this.to_languages = this.getModelInfo.ttsLanguages[index].code
+              })
+              .selected(this.getDefaultSelectedIndex_to())
+              .width('100%')
+              .font({ size: 12, weight: 400 })
+              .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
+              .borderRadius(4)
+              .border({ width: 1, color: $r('app.string.DEFAULT_BORDER_COLOR') })
+              .backgroundColor(Color.White)
+              .width(150)
+            Blank()
+            Image($r('app.media.Frame_1984'))
+              .width(25)
+              .height(25)
+              .padding(4)
+          }
+          .width('100%')
         }
+        .padding(12)
         .borderRadius(8)
         .backgroundColor(Color.White)
         .width('100%')
         .height('50%')
         .align(Alignment.TopStart)
+        .justifyContent(FlexAlign.SpaceBetween)
       }
       .layoutWeight(1)
       .width('100%')
-
-      Flex() {
-
-      }
     }.width('100%')
     .padding(24)
     .height('100%')
     .backgroundColor('#f8f8f8')
+  }
+
+  convert_ttsLanguagesToOptions(): SelectOption[] {
+    return ((this.getModelInfo.ttsLanguages).map((item, index) => {
+      // 多语言适配：优先取当前语言文本，无则按顺序兜底
+      let languageField: string = item.name; // 默认使用中文简体
+
+      switch (AppStorage.get('languages') as string) {
+        case "FIL_PH":
+          languageField = item.nameFil_ph;
+          break;
+        case "ES_ES":
+          languageField = item.nameEs_es;
+          break;
+        case "JA_JP":
+          languageField = item.nameJp;
+          break;
+        case "ZH_TW":
+          languageField = item.nameTw;
+          break;
+        case "UYGUR":
+          languageField = item.nameUygur;
+          break;
+        case "MO_MO":
+          languageField = item.nameMo_mo;
+          break;
+        case "RU_RU":
+          languageField = item.nameRu_ru;
+          break;
+        case "IT_IT":
+          languageField = item.nameIt_it;
+          break;
+        case "ZH_TI":
+          languageField = item.nameZh_ti;
+          break;
+        case "EN_US":
+          languageField = item.nameEn;
+          break;
+        case "MAY_MAY":
+          languageField = item.nameMay_may;
+          break;
+        case "AR_SA":
+          languageField = item.nameAr_sa;
+          break;
+        case "DE_DE":
+          languageField = item.nameDe_de;
+          break;
+        case "KO_KR":
+          languageField = item.nameKo_kr;
+          break;
+        case "ID_ID":
+          languageField = item.nameId_id;
+          break;
+        case "TR_TR":
+          languageField = item.nameTr_tr;
+          break;
+        case "KA_KA":
+          languageField = item.nameKa_ka;
+          break;
+        case "FR_FR":
+          languageField = item.nameFr_fr;
+          break;
+        case "MN_MN":
+          languageField = item.nameMn_mn;
+          break;
+        case "TH_TH":
+          languageField = item.nameTh_th;
+          break;
+        case "VI_VN":
+          languageField = item.nameVi_vn;
+          break;
+        // 默认使用中文简体
+        default:
+          languageField = item.name;
+          break;
+      }
+
+      // 使用方括号表示法动态访问属性
+      return {
+        value: languageField // 正确的属性访问方式
+      } as SelectOption;
+    }));
+  }
+
+  /**
+   * 获取默认选中索引（childs中first=1的项为默认选中）
+   */
+  /**
+   * 获取默认选中索引（childs中first=1的项为默认选中）
+   */
+  private getDefaultSelectedIndex_from(): number {
+    const index = this.getModelInfo.ttsLanguages.findIndex((item) => {
+      return item.code === this.from_languages;
+    });
+    return index !== -1 ? index : 0; // 找到返回索引，否则返回0
+  }
+
+  private getDefaultSelectedIndex_fromText(item: languagesModel): string {
+    switch (AppStorage.get('languages') as string) {
+      case "FIL_PH":
+        return item.nameFil_ph;
+      case "ES_ES":
+        return item.nameEs_es;
+      case "JA_JP":
+        return item.nameJp;
+      case "ZH_TW":
+        return item.nameTw;
+      case "UYGUR":
+        return item.nameUygur;
+      case "MO_MO":
+        return item.nameMo_mo;
+      case "RU_RU":
+        return item.nameRu_ru;
+      case "IT_IT":
+        return item.nameIt_it;
+      case "ZH_TI":
+        return item.nameZh_ti;
+      case "EN_US":
+        return item.nameEn;
+      case "MAY_MAY":
+        return item.nameMay_may;
+      case "AR_SA":
+        return item.nameAr_sa;
+      case "DE_DE":
+        return item.nameDe_de;
+      case "KO_KR":
+        return item.nameKo_kr;
+      case "ID_ID":
+        return item.nameId_id;
+      case "TR_TR":
+        return item.nameTr_tr;
+      case "KA_KA":
+        return item.nameKa_ka;
+      case "FR_FR":
+        return item.nameFr_fr;
+      case "MN_MN":
+        return item.nameMn_mn;
+      case "TH_TH":
+        return item.nameTh_th;
+      case "VI_VN":
+        return item.nameVi_vn;
+      default:
+        return item.name;
+    }
+  }
+
+  private getDefaultSelectedIndex_to(): number {
+    const index = this.getModelInfo.ttsLanguages.findIndex((item) => {
+      return item.code === this.to_languages;
+    });
+    return index !== -1 ? index : 0; // 找到返回索引，否则返回0
   }
 }

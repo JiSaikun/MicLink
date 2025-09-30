@@ -90,7 +90,7 @@ export interface keyInfos_childs_childsModel {
   first: number
 }
 
-interface languagesModel {
+export interface languagesModel {
   code: string //语言编号
   nameFil_ph: string //菲律宾语
   icon: string //国旗
