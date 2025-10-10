@@ -153,7 +153,7 @@ export struct LeftBar {
         .margin({ top: 5, bottom: 5 })
         .backgroundColor('#eaeaea')
       // 对话记录
-      Flex() {
+      Flex({alignItems:ItemAlign.Center}) {
         Image($r(`app.media.sessionSecord`))
           .width(16).height(16)
           .objectFit(ImageFit.Fill)
