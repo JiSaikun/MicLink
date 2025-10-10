@@ -1,4 +1,5 @@
 import { Ai_Model, AiModel_data, bottom_data } from '../model/LeftBar_DataModel'
+import { Languages } from 'config'
 
 export interface paramModel {
   web: string,
@@ -11,6 +12,7 @@ export interface paramModel {
 @Component
 export struct LeftBar {
   @Consume('pageInfo') pageInfo: NavPathStack
+  @StorageLink('languages') languages: string = 'ZH_CN' //语言适配
   @State AiModel_data: Ai_Model[] = AiModel_data
   @State bottom_data: Ai_Model[] = bottom_data
   @Prop currentIndex: number = 0
@@ -42,7 +44,7 @@ export struct LeftBar {
   }
 
   aboutToAppear(): void {
-    // console.log('=========================0',this.extend)
+    // console.log('=========================0', this.extend)
   }
 
   build() {
@@ -120,12 +122,12 @@ export struct LeftBar {
 
 
       ForEach(this.AiModel_data, (item: Ai_Model, index) => {
-        Row() {
+        Flex({ alignItems: ItemAlign.Center }) {
           Image(this.currentIndex === index ? $r(`app.media.${item.select}`) : $r(`app.media.${item.img}`))
             .width(16).height(16)
             .objectFit(ImageFit.Fill)
             .margin({ right: 13 })
-          Text(item.title)
+          Text(item.title[this.languages])
             .fontSize(14)
             .fontWeight(400)
             .lineHeight(14)
@@ -137,7 +139,6 @@ export struct LeftBar {
         .height(40)
         .borderRadius(8)
         .width('100%')
-        .alignItems(VerticalAlign.Center)
         .onClick(() => {
           this.currentIndex = index
           this.bottomCurrIndex = 10000
@@ -152,12 +153,12 @@ export struct LeftBar {
         .margin({ top: 5, bottom: 5 })
         .backgroundColor('#eaeaea')
       // 对话记录
-      Row() {
+      Flex() {
         Image($r(`app.media.sessionSecord`))
           .width(16).height(16)
           .objectFit(ImageFit.Fill)
           .margin({ right: 13 })
-        Text('对话记录')
+        Text(Languages.sessionSecord[this.languages])
           .fontSize(14)
           .fontWeight(400)
           .lineHeight(14)
@@ -184,12 +185,12 @@ export struct LeftBar {
       Scroll() {
         Flex({ direction: FlexDirection.Column }) {
           ForEach(this.bottom_data, (item: Ai_Model, index) => {
-            Row() {
+            Flex({ alignItems: ItemAlign.Center }) {
               Image(this.currentIndex === index ? $r(`app.media.${item.select}`) : $r(`app.media.${item.img}`))
                 .width(16).height(16)
                 .objectFit(ImageFit.Fill)
                 .margin({ right: 13 })
-              Text(item.title)
+              Text(item.title[this.languages])
                 .fontSize(14)
                 .fontWeight(400)
                 .lineHeight(14)
@@ -200,7 +201,6 @@ export struct LeftBar {
             .height(40)
             .borderRadius(8)
             .width('100%')
-            .alignItems(VerticalAlign.Center)
             .onClick(() => {
               this.currentIndex = index
             })
@@ -223,12 +223,12 @@ export struct LeftBar {
         .flexGrow(50)
       //底部
       ForEach(this.bottom_data, (item: Ai_Model, index) => {
-        Row() {
+        Flex({ alignItems: ItemAlign.Center }) {
           Image(this.bottomCurrIndex === index ? $r(`app.media.${item.select}`) : $r(`app.media.${item.img}`))
             .width(16).height(16)
             .objectFit(ImageFit.Fill)
             .margin({ right: 13 })
-          Text(item.title)
+          Text(item.title[this.languages])
             .fontSize(14)
             .fontWeight(400)
             .lineHeight(14)
@@ -240,7 +240,6 @@ export struct LeftBar {
         .height(40)
         .borderRadius(8)
         .width('100%')
-        .alignItems(VerticalAlign.Center)
         .onClick(() => {
           this.bottomCurrIndex = index
           this.currentIndex = 10000

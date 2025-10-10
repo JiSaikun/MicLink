@@ -1,4 +1,4 @@
-import { config } from 'config'
+import { config, Languages } from 'config'
 import { getCode_Params } from '../model/UserModel' //数据响应模型
 import { _getCode } from '../viewmodel/UserViewModel'
 import { AxiosError } from '@ohos/axios';
@@ -15,7 +15,10 @@ export struct Captcha {
 
   build() {
     Row() {
-      TextInput({ placeholder: '填写验证码', text: $$this.captcha })
+      TextInput({
+        placeholder: Languages.verificationInput[AppStorage.get('languages') as string],
+        text: $$this.captcha
+      })//填写验证码
         .width(175)
         .borderRadius({ topLeft: 8, bottomLeft: 8 })
         .padding(8)
@@ -24,7 +27,7 @@ export struct Captcha {
         .placeholderColor(config.login_dafault_text_font_color)
         .fontSize(config.login_dafault_text_font_size)
         .fontWeight(config.login_dafault_text_font_weight)
-      Text(this.sendState ? `${this.countdown}s` : '获取验证码')
+      Text(this.sendState ? `${this.countdown}s` :  Languages.verificationRetrieval[AppStorage.get('languages') as string])//获取验证码
         .fontColor('#fff')
         .layoutWeight(1)
         .fontSize(12)
@@ -71,7 +74,7 @@ export struct Captcha {
           // 若两者都不匹配，保持accountType为空（无需额外代码）
           if (!accountType) {
             promptAction.showToast({
-              message: '账号格式不正确,请输入正确的手机号/邮箱',
+              message: Languages.login_invalidAccountFormat[AppStorage.get('languages') as string],//账号格式不正确,请输入正确的手机号/邮箱
               duration: 2000,
               alignment: 4 // 鸿蒙 Alignment.Center 的枚举值为 4，避免直接引用可能的类型问题
             });
@@ -99,7 +102,7 @@ export struct Captcha {
                 this.countdown--
                 console.warn(this.countdown.toString())
               }, 1000)
-              console.log('页面渲染', JSON.stringify(res))
+              // console.log('页面渲染', JSON.stringify(res))
               // 提取验证码并存储到AppStorage
               let verificationCode = ''
               if (res.message && res.message.includes('临时显示:')) {

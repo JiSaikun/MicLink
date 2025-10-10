@@ -13,4 +13,6 @@ export { getModelInfoModel,
   imagesModel,
   imagesDataModel,
   languagesModel
-} from './src/main/ets/components/getModelInfoModel'
+} from './src/main/ets/components/GetModelInfoModel'
+
+export { Languages } from './src/main/ets/components/Languages'

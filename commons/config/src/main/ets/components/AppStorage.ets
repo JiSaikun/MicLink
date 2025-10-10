@@ -100,15 +100,75 @@ class AppStorage {
    */
   static readonly voiceTranslationState: boolean = false
   /**
-   * 翻译原语言
+   * 语音翻译原语言
    * 持久化储存
-   * 初始化 ：语音翻译弹窗
+   * 初始化 ：语音翻译弹窗&&Index
    */
   static readonly from_languages: boolean = false
   /**
-   * 翻译目标语言
+   * 语音翻译目标语言
    * 持久化储存
-   * 初始化 ：语音翻译弹窗
+   * 初始化 ：语音翻译弹窗&&Index
    */
   static readonly to_languages: boolean = false
+  /**
+   * 划词翻译原语言
+   * 持久化储存
+   * 初始化 ：语音翻译弹窗&&Index
+   */
+  static readonly wordScan_from_languages: boolean = false
+  /**
+   * 划词翻译目标语言
+   * 持久化储存
+   * 初始化 ：语音翻译弹窗&&Index
+   */
+  static readonly wordScan_to_languages: boolean = false
+  /**
+   * 截图识别/翻译原语言
+   * 持久化储存
+   * 初始化 ：Index
+   */
+  static readonly screenshotOCR_from_languages: boolean = false
+  /**
+   * 截图识别/翻译目标语言
+   * 持久化储存
+   * 初始化 ：Index
+   */
+  static readonly screenshotOCR_to_languages: boolean = false
+  /**
+   * 语音识别目标语言
+   * 持久化储存
+   * 初始化 ：Index
+   */
+  static readonly speech_Recognition_languages: boolean = false
+  /**
+   * 语音识别是否带标点
+   * 持久化储存
+   * 初始化 ：Index
+   */
+  static readonly isPunctuationRecognition: boolean = false
+  /**
+   * 是否开启长语音识别
+   * 持久化储存
+   * 初始化 ：Index
+   */
+  static readonly isEnableLongVoiceRecog: boolean = false
+  /**
+   * 是否开启划词翻译功能
+   * 持久化储存
+   * 初始化 ：Index
+   */
+  static readonly isWordScan_Translation: boolean = false
+  /**
+   * 是否开启截图识别/翻译
+   * 持久化储存
+   * 初始化 ：Index
+   */
+  static readonly isOCR_Translate_Toggle: boolean = false
+  /**
+   * 是否开启语音翻译弹窗自动关闭
+   * 持久化储存
+   * 初始化 ：Index
+   */
+  static readonly isAutoCloseVoiceTransPop: boolean = false
 }

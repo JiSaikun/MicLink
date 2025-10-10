@@ -12,7 +12,19 @@ PersistentStorage.persistProp("login", false)
 PersistentStorage.persistProp("KeymethodConfig", null) //按键设置方法执行记录
 PersistentStorage.persistProp("mouseconfig", null) //鼠标实时数据
 PersistentStorage.persistProp("getModelInfo", null) //获取用户按键模式详情
-PersistentStorage.persistProp("languages", null) //用户语音
+PersistentStorage.persistProp("languages", 'ZH_CN') //用户语言
+PersistentStorage.persistProp("speech_Recognition_languages", 'ZH_CN') //语音识别语言
+PersistentStorage.persistProp("from_languages", 'ZH_CN') //语音翻译源语言
+PersistentStorage.persistProp("to_languages", 'EN_US') //语音翻译目标语言
+PersistentStorage.persistProp("wordScan_from_languages", 'ZH_CN') //划词翻译源语言
+PersistentStorage.persistProp("wordScan_to_languages", 'EN_US') //划词翻译目标语言
+PersistentStorage.persistProp("screenshotOCR_from_languages", 'ZH_CN') //截图识别/翻译源语言
+PersistentStorage.persistProp("screenshotOCR_to_languages", 'EN_US') //截图识别/翻译目标语言
+PersistentStorage.persistProp("isPunctuationRecognition", true) //语音识别是否带标点
+PersistentStorage.persistProp("isEnableLongVoiceRecog", true) //是否开启长语音识别
+PersistentStorage.persistProp("isWordScan_Translation", true) //是否开启划词翻译功能
+PersistentStorage.persistProp("isOCR_Translate_Toggle", true) //是否开启截图识别/翻译
+PersistentStorage.persistProp("isAutoCloseVoiceTransPop", true) //是否开启语音翻译弹窗自动关闭
 
 
 @Entry
@@ -21,6 +33,7 @@ struct Index {
   @StorageLink("login") login: boolean = true //登录状态
   @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null //鼠标信息
   @StorageLink("currpageIsAI") currpageIsAI: boolean = false //鼠标信息
+  @StorageLink('languages') languages: string = 'ZH_CN'
   // @Watch('change_mouse_KeyPressType') @StorageLink("float_window") float_window: boolean = true //悬浮窗显示与隐藏
   @Provide('pageInfo') pageInfo: NavPathStack = new NavPathStack() //页面跳转路由栈
   @StorageLink("pageInfo") pageInfo_: NavPathStack = this.pageInfo
@@ -44,7 +57,7 @@ struct Index {
   //   // }
   // }
   onPageHide(): void {
-    console.log('应用最小化')
+    // console.log('应用最小化')
     Float_Window.creat_hide()
   }
 
@@ -109,10 +122,7 @@ struct Index {
     if (!this.login) {
       this.pageInfo.pushPath({ 'name': 'login' })
     }
-
     AppStorage.setOrCreate('firstOpen', 1)
-
-
   }
 
   aboutToDisappear(): void {

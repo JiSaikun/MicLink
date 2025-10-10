@@ -1,6 +1,7 @@
 import { Contentbottom } from '../components/Contentbottom'
 import { InputBox } from '../common/InputBox'
 import { Captcha } from '../common/Captcha'
+import { Languages } from 'config'
 
 
 @Builder
@@ -10,6 +11,7 @@ export function LoginBuilder() {
 
 @Component
 struct Login {
+  @StorageLink('languages') languages: string = 'ZH_CN'
   @State longin_operation: number = 0 //0:登录页 1：验证登录页 2：注册页 3：修改密码
   @State phone: string = '2847714478@qq.com' //手机号
   @State captcha: string = '' //验证码
@@ -33,17 +35,37 @@ struct Login {
             .width(150)
             .height(55)
           Column() {
-            InputBox({ placeholder: '手机号/邮箱', data: this.phone, type: InputType.Email || InputType.PhoneNumber })
+            InputBox({
+              placeholder: Languages.login_Contact[this.languages],
+              data: this.phone,
+              type: InputType.Email || InputType.PhoneNumber
+            }) //手机号/邮箱
             Captcha({ captcha: this.captcha, phone: this.phone, longin_operation: this.longin_operation })
               .visibility(this.longin_operation !== 0 ? Visibility.Visible : Visibility.None)
-            InputBox({ placeholder: '登录密码', data: this.loginPassword, type: InputType.Password })
+            InputBox({
+              placeholder: Languages.login_Password[this.languages],
+              data: this.loginPassword,
+              type: InputType.Password
+            })//登录密码
               .visibility(this.longin_operation === 0 || this.longin_operation === 2 ? Visibility.Visible :
               Visibility.None)
-            InputBox({ placeholder: '二次确认密码', data: this.confirmPasswordTwice, type: InputType.Password })
+            InputBox({
+              placeholder: Languages.login_confirmPassword[this.languages],
+              data: this.confirmPasswordTwice,
+              type: InputType.Password
+            })//二次确认密码
               .visibility(this.longin_operation === 2 ? Visibility.Visible : Visibility.None)
-            InputBox({ placeholder: '旧密码', data: this.oldPassword, type: InputType.Password })
+            InputBox({
+              placeholder: Languages.login_oldPassword[this.languages],
+              data: this.oldPassword,
+              type: InputType.Password
+            })//旧密码
               .visibility(this.longin_operation === 3 ? Visibility.Visible : Visibility.None)
-            InputBox({ placeholder: '新密码', data: this.newPassword, type: InputType.Password })
+            InputBox({
+              placeholder: Languages.login_newPassword[this.languages],
+              data: this.newPassword,
+              type: InputType.Password
+            })//新密码
               .visibility(this.longin_operation === 3 ? Visibility.Visible : Visibility.None)
           }
           .margin({ top: this.longin_operation === 0 || this.longin_operation === 1 ? 60 : 20 })

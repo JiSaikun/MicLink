@@ -33,6 +33,9 @@ export class _KeyMethodConfig {
           AppStorage.setOrCreate('voiceTranslationText', [])
         }
         AppStorage.setOrCreate('voiceOrText', true)
+        if (Float_Window.windowClass) {
+          Float_Window.minimize_float_window()
+        }
         if (!Float_Window.showVoiceTranslation) {
           Float_Window.showVoiceTranslation = true
           Float_Window.creat_VoiceTranslation()
@@ -76,12 +79,13 @@ export class _KeyMethodConfig {
       let inputMessage: inputMessageModel = {
         start: false,
         "clientId": "clientId1751968608",
-        "ptt": "1",
+        "ptt": AppStorage.get('isPunctuationRecognition') ? '1' : '0',
         "serialNo": Communication.deviceInfo.sn,
         "phrases": "",
         "format": "pcm",
         "apiKey": "ebb72c9db60147febd2ccd50a705de57",
-        "language": "ZH_CN",
+        "language": state ? AppStorage.get('from_languages') as string :
+          AppStorage.get('speech_Recognition_languages') as string,
         "end": false,
         "rate": "16k",
         "deviceNo": "6c:b1:33:9f:b9:8b",
@@ -120,6 +124,10 @@ export class _KeyMethodConfig {
         AppStorage.setOrCreate('voiceTranslationText', [])
       }
       AppStorage.setOrCreate('voiceOrText', true)
+      AppStorage.setOrCreate('flax_yuyinfanyi_chachaobudaoyuyan', !AppStorage.get('flax_yuyinfanyi_chachaobudaoyuyan'))
+      if (Float_Window.windowClass) {
+        Float_Window.minimize_float_window()
+      }
       if (!Float_Window.showVoiceTranslation) {
         Float_Window.showVoiceTranslation = true
         Float_Window.creat_VoiceTranslation()
@@ -170,12 +178,13 @@ export class _KeyMethodConfig {
     let inputMessage: inputMessageModel = {
       start: false,
       "clientId": "clientId1751968608",
-      "ptt": "1",
+      "ptt": AppStorage.get('isPunctuationRecognition') ? '1' : '0',
       "serialNo": Communication.deviceInfo.sn,
       "phrases": "",
       "format": "pcm",
       "apiKey": "ebb72c9db60147febd2ccd50a705de57",
-      "language": "ZH_CN",
+      "language": state ? AppStorage.get('from_languages') as string :
+        AppStorage.get('speech_Recognition_languages') as string,
       "end": false,
       "rate": "16k",
       "deviceNo": "6c:b1:33:9f:b9:8b",
@@ -222,9 +231,9 @@ export class _KeyMethodConfig {
       action: 'ohos.want.action.viewData',
       entities: ['entity.system.browsable'],
       uri: 'https://www.baidu.com/',
-      parameters: {
-        'ohos.ability.params.showDefaultPicker': true
-      }
+      // parameters: {
+      //   'ohos.ability.params.showDefaultPicker': true
+      // }
     };
     context.startAbility(want)
   }
@@ -274,7 +283,14 @@ export class _KeyMethodConfig {
    *划词翻译
    */
   static word_SelectedTranslation() {
+    if (!AppStorage.get('isWordScan_Translation')){
+      return
+    }
+    if (Float_Window.windowClass) {
+      Float_Window.minimize_float_window()
+    }
     let systemPasteboard: pasteboard.SystemPasteboard = pasteboard.getSystemPasteboard(); //获取系统剪贴板对象。
+    systemPasteboard.clearData() //清空剪贴板
     Communication.getDeviceInfo([0x20, 0x01, 0x06]) //Ctrl+C
     let atManager = abilityAccessCtrl.createAtManager();
     try {
@@ -290,8 +306,6 @@ export class _KeyMethodConfig {
       console.error(`权限申请捕获异常: ${err.code}, ${err.message}`);
     }
     setTimeout(() => {
-      // Communication.getDeviceInfo([0x20, 0x01, 0x19]) //Ctrl+C
-      // Communication.getDeviceInfo([0x20, 0x01, 0x19]) //Ctrl+C
       systemPasteboard.getData().then((pasteData: pasteboard.PasteData) => {
         console.error(JSON.stringify(pasteData.getRecordCount()))
         let text: string = pasteData.getPrimaryText();
@@ -303,19 +317,22 @@ export class _KeyMethodConfig {
           AppStorage.setOrCreate('voiceOrText', false)
           let params: translate_Params = {
             appkey: (AppStorage.get('getModelInfo') as getModelInfoModel).appkey, //获取用户按键模式详情中得到
-            from: AppStorage.get('from_languages')?AppStorage.get('from_languages') as string:'ZH_CN', //源语言___后面配置
+            from: AppStorage.get('wordScan_from_languages') ? AppStorage.get('wordScan_from_languages') as string :
+              'ZH_CN', //源语言___后面配置
             productCode: Communication.deviceInfo.productType.toString(), //产品编码
             sno: Communication.deviceInfo.sn, //设备号
             text: text, //翻译内容
-            to: AppStorage.get('to_languages')? AppStorage.get('to_languages') as string:'EN_US' //翻译语言___后面配置
+            to: AppStorage.get('wordScan_to_languages') ? AppStorage.get('wordScan_to_languages') as string :
+              'EN_US' //翻译语言___后面配置
+          }
+          if (!Float_Window.showVoiceTranslation) {
+            Float_Window.showVoiceTranslation = true
+            Float_Window.creat_VoiceTranslation()
           }
           _translate(params).then((res) => {
             console.log('翻译请求成功————翻译结果：' + res.data?.transText)
+            systemPasteboard.clearData() //清空剪贴板
             if (res.data) {
-              if (!Float_Window.showVoiceTranslation) {
-                Float_Window.showVoiceTranslation = true
-                Float_Window.creat_VoiceTranslation()
-              }
               let dataArray = AppStorage.get('voiceTranslationText') as translate_Response[]
               let data: translate_Response = {
                 transText: res.data?.transText as string,
@@ -324,14 +341,16 @@ export class _KeyMethodConfig {
               }
               dataArray.push(data)
               AppStorage.setOrCreate('voiceTranslationText', dataArray)
-            }else {
-              promptAction.showToast({ message: '无法翻译到对应目标语言' });
+            } else {
+              AppStorage.setOrCreate('flax_yuyinfanyi_chachaobudaoyuyan',
+                !AppStorage.get('flax_yuyinfanyi_chachaobudaoyuyan'))
             }
 
           })
 
         } else {
-          promptAction.showToast({ message: '未识别到选中划词' });
+          AppStorage.setOrCreate('flax_huacifanyi',
+            !AppStorage.get('flax_huacifanyi'))
         }
 
         // setTimeout(() => { //移除一条条目

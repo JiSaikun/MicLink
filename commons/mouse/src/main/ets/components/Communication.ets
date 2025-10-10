@@ -104,6 +104,7 @@ export class Communication {
   static sendDataList: number[][] = [] //排队发送的数据
   static audioProcessor: SmartMouseAudioProcessor = new SmartMouseAudioProcessor();
   static audioDataState: boolean = false //是否录入开启
+  static flax_yuyin: boolean = true //标记：防止鼠标上来直接开启了语音输入————先发送一次0x63命令
 
   // 构建命令帧的通用方法
   static buildCommandFrame(cmd: number[], length: number): Uint8Array {
@@ -312,36 +313,6 @@ export class Communication {
         // 2. 然后读取响应数据
         let b = await Communication.readResponse(Communication.inputInterface, Communication.inputEndpoint);
         console.log('==================b', b)
-        /**
-         * 防止没有接收到鼠标配置信息
-         */
-        if (Communication.deviceInfo.sn === '') {
-          setTimeout(() => {
-            if (Communication.deviceInfo.sn === '' && Communication.devicePipe) {
-              console.log('没有收到0x61命令,重新获取设备信息')
-              Communication.getDeviceInfo()
-            } else {
-              if (!AppStorage.get('getModelInfo')) {
-                const params: getModelInfo_Params = {
-                  languageCode: '',
-                  productCode: Communication.deviceInfo.productType.toString(),
-                  sno: Communication.deviceInfo.sn
-                }
-                _getModelInfo(params).then((res) => {
-                  // console.log('获取用户按键模式详情数据', JSON.stringify(res.data))
-                  if (res.status === 200) {
-                    let getModelInfo: getModelInfoModel = res.data as getModelInfoModel
-                    AppStorage.setOrCreate('getModelInfo', getModelInfo)
-                  }
-                }).catch(() => {
-                  // console.log('请求失败')
-                })
-              }
-              Communication.getDeviceInfo([0x63])
-
-            }
-          }, 1000)
-        }
 
         console.log('=========================================命令发送成功，并成功读取一次数据，开始执行循环读取',
           '发送的命令是：', JSON.stringify(command), JSON.stringify(Communication.isPhysicalKeyboardExist))
@@ -571,7 +542,6 @@ export class Communication {
       console.log('数据长度不足，期望至少21字节，实际:', data.length);
       return;
     }
-
     const hexData = Array.from(data).map(b => b.toString(16).padStart(2, '0')).join(' ');
     // console.log('解析设备数据:', hexData);
 
@@ -701,6 +671,9 @@ export class Communication {
         if (command === 0x11) {
 
         }
+        if (command === 0x63) {
+          Communication.flax_yuyin = false
+        }
         if (data[3] === 0x33) {
           console.log('****************************语音键单击按下****************************')
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.VOICE_CLICK)
@@ -792,6 +765,40 @@ export class Communication {
 
     } catch (error) {
       console.error('解析设备信息错误:', error);
+    }
+
+    /**
+     * 防止没有接收到鼠标配置信息
+     */
+    if (Communication.deviceInfo.sn === '') {
+      if (Communication.devicePipe) {
+        console.log('没有收到0x61命令,重新获取设备信息')
+        Communication.getDeviceInfo()
+      }
+    } else {
+      if (!AppStorage.get('getModelInfo')) {
+        const params: getModelInfo_Params = {
+          languageCode: '',
+          productCode: Communication.deviceInfo.productType.toString(),
+          sno: Communication.deviceInfo.sn
+        }
+        _getModelInfo(params).then((res) => {
+          console.log('获取用户按键模式详情数据', JSON.stringify(res.data))
+          if (res.status === 200) {
+            let getModelInfo: getModelInfoModel = res.data as getModelInfoModel
+            AppStorage.setOrCreate('getModelInfo', getModelInfo)
+          }
+        }).catch(() => {
+          // console.log('请求失败')
+        })
+      }
+      // else {
+      // console.error('551215451564564121', JSON.stringify(AppStorage.get('getModelInfo')))
+      // }
+      if (Communication.flax_yuyin) {
+        Communication.getDeviceInfo([0x63])
+      }
+
     }
   }
 

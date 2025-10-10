@@ -2,6 +2,8 @@ import { Float_Window } from 'float_window'
 import { translate_Response, Communication, _translate, translate_Params } from "mouse"
 import { getModelInfoModel, languagesModel } from 'config'
 import { promptAction } from '@kit.ArkUI'
+import { pasteboard } from '@kit.BasicServicesKit'; //复制
+import { BusinessError } from '@kit.BasicServicesKit';
 
 /**
  * 语音翻译悬浮窗
@@ -15,6 +17,8 @@ struct VoiceTranslation {
   @StorageLink('voiceOrText') voiceOrText: boolean = true //语音翻译为true,文本翻译为false
   @Watch('changeLanguages') @StorageLink('from_languages') from_languages: string = 'ZH_CN' //翻译源语言
   @Watch('changeLanguages') @StorageLink('to_languages') to_languages: string = 'EN_US' //翻译目标语言
+  @Watch('changeLanguages') @StorageLink('wordScan_from_languages') wordScan_from_languages: string = 'ZH_CN' //翻译源语言
+  @Watch('changeLanguages') @StorageLink('wordScan_to_languages') wordScan_to_languages: string = 'EN_US' //翻译目标语言
   @State translationCope: string = '' //复制翻译文本
   // 1. 初始化滚动控制器
   private scroller_to: Scroller = new Scroller();
@@ -24,11 +28,13 @@ struct VoiceTranslation {
     this.voiceTranslationText.forEach((item, index) => {
       let params: translate_Params = {
         appkey: (AppStorage.get('getModelInfo') as getModelInfoModel).appkey, //获取用户按键模式详情中得到
-        from: AppStorage.get('from_languages') as string, //源语言___后面配置
+        from: this.voiceOrText ? AppStorage.get('from_languages') as string :
+          AppStorage.get('wordScan_from_languages') as string, //源语言___后面配置
         productCode: Communication.deviceInfo.productType.toString(), //产品编码
         sno: Communication.deviceInfo.sn, //设备号
         text: item.text, //翻译内容
-        to: AppStorage.get('to_languages') as string //翻译语言___后面配置
+        to: this.voiceOrText ? AppStorage.get('to_languages') as string :
+          AppStorage.get('wordScan_to_languages') as string //翻译语言___后面配置
       }
       _translate(params).then((res) => {
         if (res.data) {
@@ -37,13 +43,13 @@ struct VoiceTranslation {
           let data: translate_Response = {
             transText: res.data?.transText as string,
             text: res.data?.text as string,
-            index: item.index-1
+            index: Date.now() + Math.floor(Math.random() * 1000)
           }
           reason[index] = data
           AppStorage.setOrCreate('voiceTranslationText', reason)
           console.warn('****************111111111111*****************',
             JSON.stringify(reason) + '\n' + JSON.stringify(params))
-        }else {
+        } else {
           promptAction.showToast({ message: '无法翻译到对应目标语言' });
         }
       })
@@ -51,10 +57,14 @@ struct VoiceTranslation {
   }
 
   cope() {
-    this.voiceTranslationText.forEach(item => {
-      this.translationCope += '\n' + item.transText
+    this.translationCope = ''
+    this.voiceTranslationText.forEach((item, index) => {
+      if (index === 0) {
+        this.translationCope += item.transText
+      } else {
+        this.translationCope += '\n' + item.transText
+      }
     })
-    console.error('21edqwahsjkh')
     // 方式一：使用 scrollToIndex，滚动到最后一个列表项
     // 获取最后一个元素的索引
     let lastIndex = this.voiceTranslationText.length - 1;
@@ -149,11 +159,17 @@ struct VoiceTranslation {
 
           Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
             Select(this.convert_ttsLanguagesToOptions())
-              .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.ttsLanguages[this.getDefaultSelectedIndex_from()]))
+              .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.ttsLanguages[this.getDefaultSelectedIndex_from(this.voiceOrText ?
+              this.from_languages : this.wordScan_from_languages)]))
               .onSelect((index: number) => {
-                this.from_languages = this.getModelInfo.ttsLanguages[index].code
+                if (this.voiceOrText) {
+                  this.from_languages = this.getModelInfo.ttsLanguages[index].code
+                } else {
+                  this.wordScan_from_languages = this.getModelInfo.ttsLanguages[index].code
+                }
               })
-              .selected(this.getDefaultSelectedIndex_from())
+              .selected(this.getDefaultSelectedIndex_from(this.voiceOrText ? this.from_languages :
+              this.wordScan_from_languages))
               .width('100%')
               .font({ size: 12, weight: 400 })
               .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
@@ -167,11 +183,17 @@ struct VoiceTranslation {
               .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
               .padding({ left: 20, right: 20 })
             Select(this.convert_ttsLanguagesToOptions())
-              .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.ttsLanguages[this.getDefaultSelectedIndex_to()]))
+              .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.ttsLanguages[this.getDefaultSelectedIndex_from(this.voiceOrText ?
+              this.to_languages : this.wordScan_to_languages)]))
               .onSelect((index: number) => {
-                this.to_languages = this.getModelInfo.ttsLanguages[index].code
+                if (this.voiceOrText) {
+                  this.to_languages = this.getModelInfo.ttsLanguages[index].code
+                } else {
+                  this.wordScan_to_languages = this.getModelInfo.ttsLanguages[index].code
+                }
               })
-              .selected(this.getDefaultSelectedIndex_to())
+              .selected(this.getDefaultSelectedIndex_from(this.voiceOrText ? this.to_languages :
+              this.wordScan_to_languages))
               .width('100%')
               .font({ size: 12, weight: 400 })
               .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
@@ -184,6 +206,23 @@ struct VoiceTranslation {
               .width(25)
               .height(25)
               .padding(4)
+              .onClick(() => {
+                try {
+                  const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, this.translationCope);
+                  let systemPasteboard: pasteboard.SystemPasteboard = pasteboard.getSystemPasteboard(); //获取系统剪贴板对象。
+                  // systemPasteboard.setAppShareOptions(pasteboard.ShareOption.INAPP);
+                  systemPasteboard.setData(pasteData)
+                    .then(() => {
+                      console.error('文本已复制到剪贴板: ' + this.translationCope);
+                      promptAction.showToast({ message: '复制成功' });
+                    })
+                    .catch((err: BusinessError) => {
+                      console.error('复制失败: ' + err.message);
+                    });
+                } catch (error) {
+                  console.error('复制操作异常: ' + error.message);
+                }
+              })
           }
           .width('100%')
         }
@@ -291,9 +330,10 @@ struct VoiceTranslation {
   /**
    * 获取默认选中索引（childs中first=1的项为默认选中）
    */
-  private getDefaultSelectedIndex_from(): number {
+  private getDefaultSelectedIndex_from(from_languages: string):
+    number {
     const index = this.getModelInfo.ttsLanguages.findIndex((item) => {
-      return item.code === this.from_languages;
+      return item.code === from_languages;
     });
     return index !== -1 ? index : 0; // 找到返回索引，否则返回0
   }
@@ -347,10 +387,18 @@ struct VoiceTranslation {
     }
   }
 
-  private getDefaultSelectedIndex_to(): number {
-    const index = this.getModelInfo.ttsLanguages.findIndex((item) => {
-      return item.code === this.to_languages;
-    });
-    return index !== -1 ? index : 0; // 找到返回索引，否则返回0
+  @Watch('change_flax_yuyinfanyi_chachaobudaoyuyan') @StorageLink('flax_yuyinfanyi_chachaobudaoyuyan') flax_yuyinfanyi_chachaobudaoyuyan: boolean =
+    true //语音翻译为true,文本翻译为false
+
+  change_flax_yuyinfanyi_chachaobudaoyuyan() {
+    promptAction.showToast({ message: '无法翻译到对应目标语言', backgroundColor: Color.Red, duration: 3000 });
+  }
+
+  @Watch('change_flax_huacifanyi') @StorageLink('flax_huacifanyi') flax_huacifanyi: boolean =
+    true //语音翻译为true,文本翻译为false
+
+  change_flax_huacifanyi() {
+    promptAction.showToast({ message: '未识别到选中划词', backgroundColor: Color.Red });
+
   }
 }

@@ -1,12 +1,10 @@
-import { Communication, DeviceInfo, MouseICType } from 'mouse'
+import { Communication, DeviceInfo } from 'mouse'
 import { ConfigPage1 } from './ConfigPage1'
 import { ConfigPage2 } from './ConfigPage2'
 import { ConfigPage3 } from './ConfigPage3'
 
 import {
-  getModelInfoModel,
-  imagesModel,
-  imagesDataModel
+  getModelInfoModel, imagesModel, imagesDataModel, Languages
 } from 'config' //获取设备按键信息
 
 @Component
@@ -14,44 +12,16 @@ export struct DevicesConfig {
   @Link isShowConfig: boolean //控制显隐状态
   @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null //鼠标信息
   @State currIndex: number = 0
-  @State configsList: string[] = ['智能设置', '按键设置', '设备设置']
+  @StorageLink('languages') languages: string = 'ZH_CN'
+  @State configsList: string[] =
+    [Languages.smartSetup[this.languages], Languages.keySetup[this.languages], Languages.deviceSetup[this.languages]]
   @State reportRate_currIndex: number = 0
   @State DPI_currIndex: number = 0
   @State currLED: boolean = true
-  @StorageLink('languages') languages: string = 'ZH_CN'
   @State getModelInfo: getModelInfoModel = AppStorage.get('getModelInfo') as getModelInfoModel
 
   onDidBuild(): void {
     this.data_init()
-  }
-
-  getdeviesImage(): string {
-    for (let item of this.getModelInfo.images) {
-      if ((item as imagesModel)[this.languages]) {
-        console.log('****************************************1', JSON.stringify(item))
-        return ((item as imagesModel)[this.languages][0] as imagesDataModel)['img']
-      }
-    }
-    return ''
-  }
-
-  data_init() {
-    switch (this.mouseconfig?.reportRate) {
-      case 125:
-        this.reportRate_currIndex = 0
-        break
-      case 250:
-        this.reportRate_currIndex = 1
-        break
-      case 500:
-        this.reportRate_currIndex = 2
-        break
-      case 1000:
-        this.reportRate_currIndex = 3
-        break
-    }
-    this.DPI_currIndex = this.mouseconfig?.dpiLevel as number
-    this.currLED = this.mouseconfig?.atmosphereLight as boolean
   }
 
   build() {
@@ -72,7 +42,7 @@ export struct DevicesConfig {
           .width('100%')
           .layoutWeight(1)
         // .borderWidth(1)
-        Text('重设按键设置')
+        Text(Languages.keyReset[this.languages])
           .fontSize(12)
           .lineHeight(12)
           .fontWeight(400)
@@ -100,7 +70,7 @@ export struct DevicesConfig {
             }
           })
         Row() {
-          Text('固件版本：')
+          Text(Languages.firmwareVersion[this.languages])
             .fontSize(14)
             .lineHeight(14)
             .fontWeight(400)
@@ -121,7 +91,7 @@ export struct DevicesConfig {
             .lineHeight(14)
             .fontWeight(400)
             .fontColor('#a4aab2')
-          Text('设备型号：')
+          Text(Languages.modelNumber[this.languages])
             .fontSize(14)
             .lineHeight(14)
             .fontWeight(400)
@@ -202,5 +172,34 @@ export struct DevicesConfig {
     // .borderWidth(1)
     .width('100%')
     .height('100%')
+  }
+
+  getdeviesImage(): string {
+    for (let item of this.getModelInfo.images) {
+      if ((item as imagesModel)[this.languages]) {
+        // console.log('****************************************1', JSON.stringify(item))
+        return ((item as imagesModel)[this.languages][0] as imagesDataModel)['img']
+      }
+    }
+    return ''
+  }
+
+  data_init() {
+    switch (this.mouseconfig?.reportRate) {
+      case 125:
+        this.reportRate_currIndex = 0
+        break
+      case 250:
+        this.reportRate_currIndex = 1
+        break
+      case 500:
+        this.reportRate_currIndex = 2
+        break
+      case 1000:
+        this.reportRate_currIndex = 3
+        break
+    }
+    this.DPI_currIndex = this.mouseconfig?.dpiLevel as number
+    this.currLED = this.mouseconfig?.atmosphereLight as boolean
   }
 }

@@ -78,7 +78,7 @@ export struct ConfigPage2 {
           .lineHeight(14)
           .fontWeight(400)
           .fontColor('#a4aab2')
-          .margin({ bottom: 10 })
+          .margin(index1===0? { bottom:10 }:{ bottom:5,top:10 })
         // Select()
         ForEach(item.childs, (item: keyInfos_childsModel, index2) => {
           Text((item.names as LanguageNames)[this.languages])

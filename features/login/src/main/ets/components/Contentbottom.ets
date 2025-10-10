@@ -1,4 +1,4 @@
-import { config } from 'config'
+import { config, Languages } from 'config'
 import { promptAction } from '@kit.ArkUI'
 import { register_Params, register_Response, login_Params, resetPwd_Params } from '../model/UserModel' //数据响应模型
 import { _register, _login, _resetPwd } from '../viewmodel/UserViewModel'
@@ -13,6 +13,7 @@ function textDefaultStyle() {
 
 @Component
 export struct Contentbottom {
+  @StorageLink('languages') languages: string = 'ZH_CN'
   @State isChecked: boolean = false
   @Watch('change_longin_operation') @Link longin_operation: number
   @Consume('pageInfo') pageInfo: NavPathStack
@@ -24,7 +25,7 @@ export struct Contentbottom {
   @Link newPassword: string
 
   change_longin_operation() {
-    console.error('索引号改变')
+    // console.error('索引号改变')
     // AppStorage.setOrCreate('_getCode', '')
     // this.phone=''
     this.captcha = ''
@@ -44,11 +45,11 @@ export struct Contentbottom {
             this.isChecked = isChecked
           })
         Text() {
-          Span('我已阅读并同意')
-          Span('服务协议')
+          Span(Languages.login_agreeTerms[this.languages]) //我已阅读并同意
+          Span(Languages.login_serviceTerms[this.languages])//服务协议
             .fontColor('#00aecc')
-          Span('和')
-          Span('隐私保护')
+          Span(Languages.login_and[this.languages]) //和
+          Span(Languages.login_privacyPolicy[this.languages])//隐私保护
             .fontColor('#00aecc')
         }
         .fontSize(config.login_dafault_text_font_size)
@@ -58,7 +59,9 @@ export struct Contentbottom {
       .width(config.login_dafault_input_width)
       .margin({ bottom: 10 })
 
-      Text(this.longin_operation === 3 ? '确认修改' : this.longin_operation === 2 ? '注册并登录' : '登录')
+      Text(this.longin_operation === 3 ? Languages.login_confirmModifyBtn[this.languages] //确认修改
+        : this.longin_operation === 2 ? Languages.login_registerLoginBtn[this.languages] //注册并登录
+          : Languages.login_loginBtn[this.languages])//登录
         .width(config.login_dafault_input_width)
         .textAlign(TextAlign.Center)
         .height(32)
@@ -70,7 +73,7 @@ export struct Contentbottom {
           console.log('********************************点击登录')
           if (!this.phone) {
             promptAction.showToast({
-              message: '账号不能为空',
+              message: Languages.login_accountEmpty[this.languages], //账号不能为空
               duration: 2000,
               alignment: Alignment.Center
             });
@@ -78,9 +81,30 @@ export struct Contentbottom {
           }
           if (this.longin_operation === 0) {
             /******登录页*********/
+            // 3. 核心修改：根据phone判断accountType
+            let accountType = '' // 初始为空（默认“两者都不是”）
+            // 3.1 手机号正则：匹配11位数字（国内手机号通用格式）
+            const phoneReg = /^1\d{10}$/
+            // 3.2 邮箱正则：匹配“xxx@xxx.xxx”格式（基础通用邮箱规则）
+            const emailReg = /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/
+            // 3.3 优先级：先判断手机号，再判断邮箱（可根据业务调整）
+            if (phoneReg.test(this.phone.trim())) { // 去除空格后匹配（避免用户误输入空格）
+              accountType = 'PHONE'
+            } else if (emailReg.test(this.phone.trim())) {
+              accountType = 'EMAIL'
+            }
+            // 若两者都不匹配，保持accountType为空（无需额外代码）
+            if (!accountType) {
+              promptAction.showToast({
+                message: Languages.login_invalidAccountFormat[AppStorage.get('languages') as string],//账号格式不正确,请输入正确的手机号/邮箱
+                duration: 2000,
+                alignment: 4 // 鸿蒙 Alignment.Center 的枚举值为 4，避免直接引用可能的类型问题
+              });
+              return
+            }
             if (!this.loginPassword) {
               promptAction.showToast({
-                message: '登录密码不能为空1',
+                message: Languages.login_PwdEmpty[this.languages], //登录密码不能为空
                 duration: 2000,
                 alignment: Alignment.Center
               });
@@ -91,7 +115,7 @@ export struct Contentbottom {
             /******验证登录页*********/
             if (!this.captcha) {
               promptAction.showToast({
-                message: '请输入验证码',
+                message: Languages.login_captchaEmpty[this.languages], //请输入验证码
                 duration: 2000,
                 alignment: Alignment.Center
               });
@@ -102,7 +126,7 @@ export struct Contentbottom {
             /******注册页*********/
             if (!this.captcha) {
               promptAction.showToast({
-                message: '请输入验证码',
+                message: Languages.login_captchaEmpty[this.languages], //请输入验证码
                 duration: 2000,
                 alignment: Alignment.Center
               });
@@ -110,7 +134,7 @@ export struct Contentbottom {
             }
             if (!this.loginPassword) {
               promptAction.showToast({
-                message: '登录密码不能为空2',
+                message: Languages.login_PwdEmpty[this.languages], //登录密码不能为空
                 duration: 2000,
                 alignment: Alignment.Center
               });
@@ -118,7 +142,7 @@ export struct Contentbottom {
             }
             if (!this.confirmPasswordTwice) {
               promptAction.showToast({
-                message: '二次确认密码不能为空',
+                message: Languages.login_confirmPwdEmpty[this.languages], //二次确认密码不能为空
                 duration: 2000,
                 alignment: Alignment.Center
               });
@@ -126,7 +150,7 @@ export struct Contentbottom {
             }
             if (this.loginPassword !== this.confirmPasswordTwice) {
               promptAction.showToast({
-                message: '两次密码输入不一致',
+                message: Languages.login_pwdNotMatch[this.languages], //两次密码输入不一致
                 duration: 2000,
                 alignment: Alignment.Center
               });
@@ -138,7 +162,7 @@ export struct Contentbottom {
             /******修改密码页*********/
             if (!this.captcha) {
               promptAction.showToast({
-                message: '请输入验证码',
+                message: Languages.login_captchaEmpty[this.languages], //请输入验证码
                 duration: 2000,
                 alignment: Alignment.Center
               });
@@ -146,7 +170,7 @@ export struct Contentbottom {
             }
             if (!this.oldPassword) {
               promptAction.showToast({
-                message: '旧密码不能为空',
+                message: Languages.login_oldPwdEmpty[this.languages], //旧密码不能为空
                 duration: 2000,
                 alignment: Alignment.Center
               });
@@ -154,7 +178,7 @@ export struct Contentbottom {
             }
             if (!this.newPassword) {
               promptAction.showToast({
-                message: '新密码不能为空',
+                message: Languages.login_newPwdEmpty[this.languages], //新密码不能为空
                 duration: 2000,
                 alignment: Alignment.Center
               });
@@ -164,7 +188,7 @@ export struct Contentbottom {
           }
           if (!this.isChecked) {
             promptAction.showToast({
-              message: '请先阅读并同意服务协议和隐私保护',
+              message: Languages.login_agreeTermsFirst[this.languages], //请先阅读并同意服务协议和隐私保护
               duration: 2000,
               alignment: Alignment.Center
             });
@@ -173,7 +197,7 @@ export struct Contentbottom {
           let getcode = AppStorage.get('_getCode') as string
           if (this.captcha !== getcode && this.longin_operation !== 0) {
             promptAction.showToast({
-              message: '验证码不正确',
+              message: Languages.login_captchaError[this.languages], //验证码不正确
               duration: 2000,
               alignment: Alignment.Center
             });
@@ -183,7 +207,6 @@ export struct Contentbottom {
           /**
            * 判断账号类型
            */
-
           // 3. 核心修改：根据phone判断accountType
           let accountType = '' // 初始为空（默认“两者都不是”）
           // 3.1 手机号正则：匹配11位数字（国内手机号通用格式）
@@ -228,7 +251,6 @@ export struct Contentbottom {
                 .then(res => {
                   console.log('验证码登录', JSON.stringify(res))
                   //显示必须要有登录密码
-
                   //   if (res.statusCode === 200) {
                   //     // let userLoginInfo: register_Response = res.data as register_Response
                   //     // AppStorage.setOrCreate('userLoginInfo', userLoginInfo)
@@ -275,7 +297,7 @@ export struct Contentbottom {
               }
               _resetPwd(params4)
                 .then(res => {
-                  console.log('验证码登录', JSON.stringify(res))
+                  console.log('修改密码', JSON.stringify(res))
                   //显示必须要有登录密码
 
                   //   if (res.statusCode === 200) {
@@ -295,7 +317,8 @@ export struct Contentbottom {
 
         })
       Row() {
-        Text(this.longin_operation === 0 ? '切换至验证码登录' : '切换至密码登录')
+        Text(this.longin_operation === 0 ? Languages.login_switchCaptcha[this.languages] //切换至验证码登录
+          : Languages.login_switchPassword[this.languages])//切换至密码登录
           .textDefaultStyle()
           .onClick(() => {
             if (this.longin_operation === 0) {
@@ -305,13 +328,13 @@ export struct Contentbottom {
             }
           })
         Blank()
-        Text('注册账号')
+        Text(Languages.login_registerAccount[this.languages])//注册账号
           .textDefaultStyle()
           .margin({ right: 5 })
           .onClick(() => {
             this.longin_operation = 2
           })
-        Text('忘记密码?')
+        Text(Languages.login_forgotPassword[this.languages])//忘记密码?
           .textDefaultStyle()
           .onClick(() => {
             this.longin_operation = 3
@@ -321,13 +344,13 @@ export struct Contentbottom {
       .visibility(this.longin_operation == 0 || this.longin_operation == 1 ? Visibility.Visible : Visibility.None)
 
       Row() {
-        Text('返回登录页')
+        Text(Languages.login_returnLogin[this.languages])//返回登录页
           .textDefaultStyle()
           .onClick(() => {
             this.longin_operation = 0
           })
         Blank()
-        Text('忘记密码?')
+        Text(Languages.login_forgotPassword[this.languages])//忘记密码?
           .textDefaultStyle()
           .onClick(() => {
             this.longin_operation = 3
@@ -337,7 +360,7 @@ export struct Contentbottom {
       .visibility(this.longin_operation == 2 ? Visibility.Visible : Visibility.None)
 
       Row() {
-        Text('返回登录页')
+        Text(Languages.login_returnLogin[this.languages])//返回登录页
           .textDefaultStyle()
           .onClick(() => {
             this.longin_operation = 0

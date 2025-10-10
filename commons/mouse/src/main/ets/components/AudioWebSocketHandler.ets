@@ -7,6 +7,7 @@ import { Communication } from './Communication'
 import { _translate } from '../viewmodel/UserViewModel'
 import { translate_Params, translate_Response } from '../model/MouseInfoModel'
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
+import { promptAction } from '@kit.ArkUI';
 
 // 定义日志消息接口
 interface logMessageModel {
@@ -158,29 +159,36 @@ export class AudioWebSocketHandler {
                   if (this.state === 1) { //语音翻译
                     let params: translate_Params = {
                       appkey: (AppStorage.get('getModelInfo') as getModelInfoModel).appkey, //获取用户按键模式详情中得到
-                      from: AppStorage.get('from_languages')?AppStorage.get('from_languages') as string:'ZH_CN', //源语言___后面配置
+                      from: AppStorage.get('from_languages') ? AppStorage.get('from_languages') as string :
+                        'ZH_CN', //源语言___后面配置
                       productCode: Communication.deviceInfo.productType.toString(), //产品编码
                       sno: Communication.deviceInfo.sn, //设备号
                       text: text, //翻译内容
-                      to: AppStorage.get('to_languages')? AppStorage.get('to_languages') as string:'EN_US' //翻译语言___后面配置
+                      to: AppStorage.get('to_languages') ? AppStorage.get('to_languages') as string :
+                        'EN_US' //翻译语言___后面配置
                     }
                     _translate(params).then((res) => {
                       console.log('翻译请求成功————翻译结果：' + res.data?.transText)
-                      let dataArray = AppStorage.get('voiceTranslationText') as translate_Response[]
-                      let data: translate_Response = {
-                        transText: res.data?.transText as string,
-                        text: res.data?.text as string,
-                        index: dataArray.length
+                      if (res.data) {
+                        let dataArray = AppStorage.get('voiceTranslationText') as translate_Response[]
+                        let data: translate_Response = {
+                          transText: res.data?.transText as string,
+                          text: res.data?.text as string,
+                          index: dataArray.length
+                        }
+                        dataArray.push(data)
+                        AppStorage.setOrCreate('voiceTranslationText', dataArray)
+                        // const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, res.data?.transText);
+                        // systemPasteboard.setData(pasteData).then(() => {
+                        //   Communication.getDeviceInfo([0x20, 0x01, 0x19])
+                        //     .then(() => {
+                        systemPasteboard.clearData() //清空剪贴板
+                        //     })
+                        // })
+                      }else{
+                        AppStorage.setOrCreate('flax_yuyinfanyi_chachaobudaoyuyan',!AppStorage.get('flax_yuyinfanyi_chachaobudaoyuyan'))
                       }
-                      dataArray.push(data)
-                      AppStorage.setOrCreate('voiceTranslationText', dataArray)
-                      // const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, res.data?.transText);
-                      // systemPasteboard.setData(pasteData).then(() => {
-                      //   Communication.getDeviceInfo([0x20, 0x01, 0x19])
-                      //     .then(() => {
-                      //       systemPasteboard.clearData() //清空剪贴板
-                      //     })
-                      // })
+
                     })
                   }
                   // setTimeout(() => { //移除一条条目
