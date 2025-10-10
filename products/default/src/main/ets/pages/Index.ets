@@ -6,6 +6,8 @@ import { Communication, DeviceInfo, KeyPressType, } from 'mouse'
 import common from '@ohos.app.ability.common';
 import { _change_mouse_KeyPressType } from 'keymethodconfig'; //按键执行方法回调
 import { Float_Window } from 'float_window'; //按键执行方法回调
+import { window } from '@kit.ArkUI';
+import { BusinessError } from '@kit.BasicServicesKit';
 
 
 PersistentStorage.persistProp("login", false)
@@ -166,5 +168,41 @@ struct Index {
       Image($r('app.media.create_Command_Ai'))
     }
 
+  }
+
+  //锁定设备横屏，使得窗口不随屏幕旋转————平板适配：暂时不做处理
+  fixWindowToLandscape(){
+    //1.Get the window instance object, use the createWindow method to create a new window, and use the findWindow method to obtain an existing window
+    let windowClass: window.Window | undefined = undefined;
+    let config: window.Configuration = {
+      name: "alertWindow",
+      windowType: window.WindowType.TYPE_SYSTEM_ALERT,
+      ctx: AppStorage.get('context')
+    };
+    try {
+      let promise = window.createWindow(config);
+      promise.then((data)=> {
+        windowClass = data;
+        console.info('Succeeded in creating the window. Data:' + JSON.stringify(data));
+      }).catch((err: BusinessError)=>{
+        console.error('Failed to create the Window. Cause:' + JSON.stringify(err));
+      });} catch (exception) {
+      console.error('Failed to create the window. Cause: ' + JSON.stringify(exception));
+    }
+    //2.The window instance uses the setPreferred Orientation method to set the display orientation of the window. PORTRAIT is a fixed vertical screen, and other orientations can refer to the reference link
+    let orientation = window.Orientation.LANDSCAPE;
+    try {
+      let windowClass: window.Window = window.findWindow("test");
+      windowClass.setPreferredOrientation(orientation, (err: BusinessError) => {
+        const errCode: number = err.code;
+        if (errCode) {
+          console.error('Failed to set window orientation. Cause: ' + JSON.stringify(err));
+          return;
+        }
+        console.info('Succeeded in setting window orientation.');
+      });
+    } catch (exception) {
+      console.error('Failed to set window orientation. Cause: ' + JSON.stringify(exception));
+    }
   }
 }
