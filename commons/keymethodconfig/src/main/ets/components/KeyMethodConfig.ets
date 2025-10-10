@@ -124,7 +124,6 @@ export class _KeyMethodConfig {
         AppStorage.setOrCreate('voiceTranslationText', [])
       }
       AppStorage.setOrCreate('voiceOrText', true)
-      AppStorage.setOrCreate('flax_yuyinfanyi_chachaobudaoyuyan', !AppStorage.get('flax_yuyinfanyi_chachaobudaoyuyan'))
       if (Float_Window.windowClass) {
         Float_Window.minimize_float_window()
       }

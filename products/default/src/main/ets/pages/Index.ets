@@ -1,4 +1,4 @@
-import { LeftBar, Topbar, Content } from 'common'
+import { LeftBar, Topbar, Content, Reset } from 'common'
 // import {Hid}from "usb_hid"
 // import { BlueTooth_api } from "bluetooth"
 import { inputDevice, KeyCode } from '@kit.InputKit';
@@ -66,6 +66,7 @@ struct Index {
   aboutToAppear(): void {
     const context = getContext(this) as common.UIAbilityContext;
     AppStorage.setOrCreate('context', context);
+    AppStorage.setOrCreate('currpageIsAI', true);
     // AppStorage.setOrCreate('float_window', false);
     /*
     热插拔:检测鼠标的插入与拔出
@@ -73,6 +74,7 @@ struct Index {
     let isPhysicalKeyboardExist = true;
     try {
       inputDevice.on("change", (data: inputDevice.DeviceListener) => {
+        Reset()
         console.log(`Device event info: ${JSON.stringify(data)}`);
         inputDevice.getKeyboardType(data.deviceId, (err: Error, type: inputDevice.KeyboardType) => {
           console.log("The keyboard type is: " + type);
@@ -171,7 +173,7 @@ struct Index {
   }
 
   //锁定设备横屏，使得窗口不随屏幕旋转————平板适配：暂时不做处理
-  fixWindowToLandscape(){
+  fixWindowToLandscape() {
     //1.Get the window instance object, use the createWindow method to create a new window, and use the findWindow method to obtain an existing window
     let windowClass: window.Window | undefined = undefined;
     let config: window.Configuration = {
@@ -181,12 +183,13 @@ struct Index {
     };
     try {
       let promise = window.createWindow(config);
-      promise.then((data)=> {
+      promise.then((data) => {
         windowClass = data;
         console.info('Succeeded in creating the window. Data:' + JSON.stringify(data));
-      }).catch((err: BusinessError)=>{
+      }).catch((err: BusinessError) => {
         console.error('Failed to create the Window. Cause:' + JSON.stringify(err));
-      });} catch (exception) {
+      });
+    } catch (exception) {
       console.error('Failed to create the window. Cause: ' + JSON.stringify(exception));
     }
     //2.The window instance uses the setPreferred Orientation method to set the display orientation of the window. PORTRAIT is a fixed vertical screen, and other orientations can refer to the reference link
