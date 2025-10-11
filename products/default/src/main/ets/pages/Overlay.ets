@@ -19,10 +19,6 @@ export struct Overlay {
         .width(100)
 
         Scroll() {
-          if (!this.voiceInputText) {
-            Text('注意输入框的聚焦！！！')
-              .fontSize(28)
-          } else {
             Text(this.voiceInputText)
               .textAlign(TextAlign.Start)
               .padding({ right: 8, left: 8 })
@@ -30,7 +26,6 @@ export struct Overlay {
               .fontWeight(400)
               .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
               .width('100%')
-          }
         }
         .align(Alignment.TopStart)
         .height('100%')

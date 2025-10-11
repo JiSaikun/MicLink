@@ -21,6 +21,7 @@ export struct ConfigPage2 {
   @StorageLink('getModelInfo') getModelInfo: getModelInfoModel = AppStorage.get('getModelInfo') as getModelInfoModel
   @StorageLink('languages') languages: string = 'ZH_CN'
   @StorageLink('KeymethodConfig') KeymethodConfig: KeymethodConfig[] = []
+  @StorageLink("shortcut") shortcut: number = 0 //改变该值弹出对应快捷键悬浮窗口 1：语音识别 2：语音翻译 3:截图识别 4：自定义快捷键
 
   /**
    * 将子项转换为ArkUI官方SelectOption数组
@@ -78,7 +79,7 @@ export struct ConfigPage2 {
           .lineHeight(14)
           .fontWeight(400)
           .fontColor('#a4aab2')
-          .margin(index1===0? { bottom:10 }:{ bottom:5,top:10 })
+          .margin(index1 === 0 ? { bottom: 10 } : { bottom: 5, top: 10 })
         // Select()
         ForEach(item.childs, (item: keyInfos_childsModel, index2) => {
           Text((item.names as LanguageNames)[this.languages])
@@ -89,12 +90,23 @@ export struct ConfigPage2 {
             .value(((item.childs[this.getDefaultSelectedIndex(item.childs, index1,
               index2)] as keyInfos_childs_childsModel).names as LanguageNames)[this.languages
             ])
-            .onSelect((index: number) => {
+            .onSelect((index: number, value) => {
               this.getModelInfo.keyInfos[index1].childs[index2].childs[this.getDefaultSelectedIndex(item.childs || [],
                 index1, index2)].first = 0
               this.getModelInfo.keyInfos[index1].childs[index2].childs[index].first = 1
               this.KeymethodConfig[index1 * 2+index2].currIndex = index
               AppStorage.setOrCreate('KeymethodConfig', this.KeymethodConfig)
+              const shortcutKeywords = [
+                '快捷按键', 'Tasten für Verknüpfungen', "كنوپكا", "快捷按鍵", "단축키",
+                "Shortcut key", "زر الاختصار", "Botones de acceso directo", "མྱུར་མཐེབ་",
+                "Tasto di scorciatoia", "Kekunci pintasan", "تېز كۇنۇپكىسى", "Kısayol tuşları",
+                "Tombol pintasan", "Phím tắt", "ᠲᠦᠷᠭᠡᠨ ᠳᠠᠷᠤᠭᠤᠯ", "Boutons de raccourci",
+                "Торчлолын товчлуур", "ปุ่มทางลัด", "ショートカットキー"
+              ];
+
+              if (shortcutKeywords.includes(value)) {
+                this.shortcut = 4;
+              }
 
             })
             .selected(this.getDefaultSelectedIndex(item.childs || [], index1, index2))

@@ -171,4 +171,37 @@ class AppStorage {
    * 初始化 ：Index
    */
   static readonly isAutoCloseVoiceTransPop: boolean = false
+  /**
+   * 改变该值弹出对应快捷键悬浮窗口 1：语音识别 2：语音翻译 3:截图识别 4：自定义快捷键
+   * 持久化储存
+   * 初始化 ：IndexPage
+   */
+  static readonly shortcut: boolean = false
+  /**
+   * 语音识别快捷键
+   * 数据类型：shortcutType   { keyPreview: string, pressedKeys: number[] }
+   * 初始化 ：IndexPage
+   */
+  static readonly voice_recognition_shortcut: boolean = false
+  /**
+   * 语音翻译快捷键
+   * 持久化储存
+   * 数据类型：shortcutType   { keyPreview: string, pressedKeys: number[] }
+   * 初始化 ：IndexPage
+   */
+  static readonly voice_translation_shortcut: boolean = false
+  /**
+   * 截图识别快捷键
+   * 持久化储存
+   * 数据类型：shortcutType   { keyPreview: string, pressedKeys: number[] }
+   * 初始化 ：IndexPage
+   */
+  static readonly screenshot_recognition_shortcut: boolean = false
+  /**
+   * 自定义快捷键
+   * 持久化储存
+   * 数据类型：shortcutType   { keyPreview: string, pressedKeys: number[] }
+   * 初始化 ：IndexPage
+   */
+  static readonly custom_shortcut: boolean = false
 }

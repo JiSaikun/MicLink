@@ -64,7 +64,7 @@ export class _KeyMethodConfig {
             Float_Window.minimize_float_window()
             // Float_Window.destroyWindow() //在悬浮窗关闭后清空语音输入文本状态变量，文本显示：如果文本变量不为空，在后面拼接，如果为空则直接将新数据赋值即可
           }
-        }, 10000)
+        }, 2000)
       }
 
 
@@ -163,7 +163,7 @@ export class _KeyMethodConfig {
           Float_Window.minimize_float_window()
           // Float_Window.destroyWindow() //在悬浮窗关闭后清空语音输入文本状态变量，文本显示：如果文本变量不为空，在后面拼接，如果为空则直接将新数据赋值即可
         }
-      }, 10000)
+      }, 2000)
     }
     /**
      * 语音数据处理

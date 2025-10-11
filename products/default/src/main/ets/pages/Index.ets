@@ -28,7 +28,6 @@ PersistentStorage.persistProp("isWordScan_Translation", true) //是否开启划�
 PersistentStorage.persistProp("isOCR_Translate_Toggle", true) //是否开启截图识别/翻译
 PersistentStorage.persistProp("isAutoCloseVoiceTransPop", true) //是否开启语音翻译弹窗自动关闭
 
-
 @Entry
 @Component
 struct Index {

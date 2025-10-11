@@ -1,11 +1,19 @@
 import { LengthMetrics } from "@kit.ArkUI"
 import { Languages, getModelInfoModel, languagesModel } from 'config'
 
+interface shortcutType {
+  keyPreview: string
+  pressedKeys: number[]
+}
+
 /**
  * 智能设置
  */
 @Component
 export struct ConfigPage1 {
+  aboutToAppear(): void {
+    this.shortcut_change()
+  }
   @StorageLink('languages') languages: string = 'ZH_CN'
   @State getModelInfo: getModelInfoModel = AppStorage.get('getModelInfo') as getModelInfoModel
   @StorageLink('isPunctuationRecognition') isPunctuationRecognition: boolean = true //语音识别是否带标点
@@ -22,6 +30,10 @@ export struct ConfigPage1 {
   @StorageLink('wordScan_to_languages') wordScan_to_languages: string = 'EN_US' //划词翻译目标语言
   @StorageLink('screenshotOCR_from_languages') screenshotOCR_from_languages: string = 'ZH_CN' //截图识别/翻译源语言
   @StorageLink('screenshotOCR_to_languages') screenshotOCR_to_languages: string = 'EN_US' //截图识别/翻译目标语言
+  @Watch('shortcut_change') @StorageLink("shortcut") shortcut: number = 0 //改变该值弹出对应快捷键悬浮窗口 1：语音识别 2：语音翻译 3:截图识别 4：自定义快捷键
+  @State voice_recognition_shortcut: string = ''//语音识别快捷键
+  @State voice_translation_shortcut: string = ''//语音翻译快捷键
+  @State screenshot_recognition_shortcut: string = ''//截图识别快捷键
 
   build() {
     Flex({ space: { main: LengthMetrics.px(15) }, direction: FlexDirection.Column }) {
@@ -180,13 +192,14 @@ export struct ConfigPage1 {
         .fontSize($r('app.float.default_text_font_size_14'))
         .fontWeight(400)
         .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-      TextInput({ placeholder: '点击后输入目标按键即可' })
+      TextInput({ placeholder: '点击后输入目标按键即可', text:this.voice_recognition_shortcut })
         .backgroundColor('#fff')
         .placeholderColor('#bbbdbf')
         .placeholderFont({ size: 14, weight: 400 })
         .focusable(false)
         .border({ width: 1, color: $r('app.string.DEFAULT_BORDER_COLOR') })
         .borderRadius(5)
+        .onClick(() => this.shortcut = 1)
       //======================================================语音翻译设置
       Text('语音翻译设置')
         .fontSize(14)
@@ -243,13 +256,14 @@ export struct ConfigPage1 {
         .fontSize($r('app.float.default_text_font_size_14'))
         .fontWeight(400)
         .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-      TextInput({ placeholder: '点击后输入目标按键即可' })
+      TextInput({ placeholder: '点击后输入目标按键即可', text:this.voice_translation_shortcut})
         .backgroundColor('#fff')
         .placeholderColor('#bbbdbf')
         .placeholderFont({ size: 14, weight: 400 })
         .focusable(false)
         .border({ width: 1, color: $r('app.string.DEFAULT_BORDER_COLOR') })
         .borderRadius(5)
+        .onClick(() => this.shortcut = 2)
       //======================================================划词翻译
       Text('划词翻译')
         .fontSize(14)
@@ -400,7 +414,6 @@ export struct ConfigPage1 {
               if (isChecked) {
                 console.log('*****************************关闭截图识别/翻译****************************************')
                 this.isOCR_Translate_Toggle = false
-
               }
             })
           Text(Languages.off_common[this.languages])
@@ -463,13 +476,14 @@ export struct ConfigPage1 {
         .fontSize($r('app.float.default_text_font_size_14'))
         .fontWeight(400)
         .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-      TextInput({ placeholder: '点击后输入目标按键即可' })
+      TextInput({ placeholder: '点击后输入目标按键即可', text:this.screenshot_recognition_shortcut })
         .backgroundColor('#fff')
         .placeholderColor('#bbbdbf')
         .placeholderFont({ size: 14, weight: 400 })
         .focusable(false)
         .border({ width: 1, color: $r('app.string.DEFAULT_BORDER_COLOR') })
         .borderRadius(5)
+        .onClick(() => this.shortcut = 3)
 
       //======================================================语音搜索设置
       Text('语音搜索设置')
@@ -697,5 +711,15 @@ export struct ConfigPage1 {
         value: languageField // 正确的属性访问方式
       } as SelectOption;
     }));
+  }
+
+  shortcut_change() {
+    console.error('asdjkai:1',AppStorage.get('voice_recognition_shortcut'))
+    console.error('asdjkai:2',AppStorage.get('screenshot_recognition_shortcut'))
+    console.error('asdjkai:3',JSON.stringify(AppStorage.get('screenshot_recognition_shortcut')))
+    console.error('asdjkai:4',JSON.stringify(AppStorage.get('custom_shortcut')))
+    this.voice_recognition_shortcut=(AppStorage.get('voice_recognition_shortcut') as shortcutType).keyPreview
+    this.voice_translation_shortcut=(AppStorage.get('voice_translation_shortcut') as shortcutType).keyPreview
+    this.screenshot_recognition_shortcut=(AppStorage.get('screenshot_recognition_shortcut') as shortcutType).keyPreview
   }
 }

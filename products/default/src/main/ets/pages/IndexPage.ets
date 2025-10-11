@@ -1,28 +1,41 @@
 import { LeftBar, Topbar, Content, paramModel } from 'common'
+// import { Shortcut_pop } from 'utils'
 import Content_Ai from 'command_ai/src/main/ets/components/Command_Ai'
 import { DeviceSettings } from '../components/DeviceSettings'
 import { CreateNewInstruction_pop } from 'command_ai/src/main/ets/components/CreateNewInstruction_pop'
-
-// PersistentStorage.persistProp("login", false)
 
 @Builder
 function IndexPageBuilder() {
   IndexPage()
 }
 
+PersistentStorage.persistProp("voice_recognition_shortcut", { keyPreview: '', pressedKeys: [] }) //语音识别快捷键
+PersistentStorage.persistProp("voice_translation_shortcut",  { keyPreview: '', pressedKeys: [] }) //语音翻译快捷键
+PersistentStorage.persistProp("screenshot_recognition_shortcut",  { keyPreview: '', pressedKeys: [] }) //截图识别快捷键
+PersistentStorage.persistProp("custom_shortcut",  { keyPreview: '', pressedKeys: [] }) //自定义快捷键
+
 @Component
 struct IndexPage {
   @StorageLink("login") login: boolean = true
+  @Watch('shortcut_change') @StorageLink("shortcut") shortcut: number = 0 //改变该值弹出对应快捷键悬浮窗口 1：语音识别 2：语音翻译 3:截图识别 4：自定义快捷键
   @Consume('pageInfo') pageInfo: NavPathStack
   @State web: string = 'https://asrai.miclink.net/'
   @State currentIndex: number = 0
   @State bottomCurrIndex: number = 10000
   @State extend: boolean = true //状态栏延申
-  @State width_length: number = 248//左侧选项卡样式宽度
+  @State width_length: number = 248 //左侧选项卡样式宽度
   @State isShow_CreateNewInstruction_pop: boolean = false //AI指令创建弹窗
   @State isShow_EditInstruction_pop: boolean = false //AI指令编辑弹窗
-  @State EditInstruction_pop_currIndex: number = 0   //AI指令编辑弹窗定位索引
+  @State EditInstruction_pop_currIndex: number = 0 //AI指令编辑弹窗定位索引
+  @State shortcut_pop: boolean = false //快捷键弹窗
 
+  shortcut_change() {
+    this.shortcut_pop = !this.shortcut_pop
+    if (this.shortcut_pop) {
+      // Shortcut_pop()
+      this.pageInfo.pushPath({ 'name': 'shortcut_pop' })
+    }
+  }
 
   aboutToAppear(): void {
     if (!this.login) {
