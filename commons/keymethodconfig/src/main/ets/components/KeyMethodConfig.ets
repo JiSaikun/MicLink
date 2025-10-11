@@ -258,6 +258,14 @@ export class _KeyMethodConfig {
   }
 
   /**
+   *快捷按键
+   */
+  static triggerShortcut() {
+    console.log(JSON.stringify(AppStorage.get('custom_shortcut')))
+    Communication.getDeviceInfo((AppStorage.get('custom_shortcut') as shortcutType).pressedKeys)
+  }
+
+  /**
    *前进
    */
   static forward() {
@@ -282,7 +290,7 @@ export class _KeyMethodConfig {
    *划词翻译
    */
   static word_SelectedTranslation() {
-    if (!AppStorage.get('isWordScan_Translation')){
+    if (!AppStorage.get('isWordScan_Translation')) {
       return
     }
     if (Float_Window.windowClass) {
@@ -433,9 +441,39 @@ export class _KeyMethodConfig {
       console.error(`获取窗口失败: ${err.message}`);
     });
   }
+
+  /**
+   * 固定文本
+   */
+  static inputFixedText() {
+    try {
+      const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, AppStorage.get('fixedText'));
+      let systemPasteboard: pasteboard.SystemPasteboard = pasteboard.getSystemPasteboard(); //获取系统剪贴板对象。
+      // systemPasteboard.setAppShareOptions(pasteboard.ShareOption.INAPP);
+      systemPasteboard.setData(pasteData)
+        .then(() => {
+          // console.info('文本已复制到剪贴板: ' + audioToText_res);
+          Communication.getDeviceInfo([0x20, 0x01, 0x19]) //Ctrl+V
+          setTimeout(() =>
+          systemPasteboard.clearData() //清空剪贴板
+            , 2000)
+        })
+        .catch((err: BusinessError) => {
+          console.error('复制失败: ' + err.message);
+        });
+    } catch (error) {
+      console.error('复制操作异常: ' + error.message);
+    }
+
+  }
 }
 
 interface DPI_currInfoModel { //切换DPI 记录当前DPI挡位
   length: number
   curr: number
+}
+
+interface shortcutType {
+  keyPreview: string
+  pressedKeys: number[]
 }

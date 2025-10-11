@@ -206,8 +206,6 @@ struct Shortcut_pop {
       .width('100%')
       .height('100%')
     }
-    .title('sda')
-    .title("登录")
     .hideTitleBar(true)
     .hideToolBar(true)
     .onKeyEvent((event: KeyEvent) => {

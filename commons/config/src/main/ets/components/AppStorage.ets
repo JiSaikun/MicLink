@@ -198,10 +198,16 @@ class AppStorage {
    */
   static readonly screenshot_recognition_shortcut: boolean = false
   /**
-   * 自定义快捷键
+   * 自定义快捷键__只有一个主键和一个辅助键——转化为HID值
    * 持久化储存
    * 数据类型：shortcutType   { keyPreview: string, pressedKeys: number[] }
    * 初始化 ：IndexPage
    */
   static readonly custom_shortcut: boolean = false
+  /**
+   * 输入固定文本
+   * 持久化储存
+   * 初始化 ：IndexPage
+   */
+  static readonly fixedText: boolean = false
 }

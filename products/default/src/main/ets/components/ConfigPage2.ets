@@ -107,6 +107,9 @@ export struct ConfigPage2 {
               if (shortcutKeywords.includes(value)) {
                 this.shortcut = 4;
               }
+              if (value === '固定文案') {
+                AppStorage.setOrCreate('isShowFixedText_pop', true)
+              }
 
             })
             .selected(this.getDefaultSelectedIndex(item.childs || [], index1, index2))

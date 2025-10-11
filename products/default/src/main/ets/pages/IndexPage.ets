@@ -1,5 +1,5 @@
 import { LeftBar, Topbar, Content, paramModel } from 'common'
-// import { Shortcut_pop } from 'utils'
+import { FixedText_pop } from 'utils'
 import Content_Ai from 'command_ai/src/main/ets/components/Command_Ai'
 import { DeviceSettings } from '../components/DeviceSettings'
 import { CreateNewInstruction_pop } from 'command_ai/src/main/ets/components/CreateNewInstruction_pop'
@@ -10,14 +10,16 @@ function IndexPageBuilder() {
 }
 
 PersistentStorage.persistProp("voice_recognition_shortcut", { keyPreview: '', pressedKeys: [] }) //语音识别快捷键
-PersistentStorage.persistProp("voice_translation_shortcut",  { keyPreview: '', pressedKeys: [] }) //语音翻译快捷键
-PersistentStorage.persistProp("screenshot_recognition_shortcut",  { keyPreview: '', pressedKeys: [] }) //截图识别快捷键
-PersistentStorage.persistProp("custom_shortcut",  { keyPreview: '', pressedKeys: [] }) //自定义快捷键
+PersistentStorage.persistProp("voice_translation_shortcut", { keyPreview: '', pressedKeys: [] }) //语音翻译快捷键
+PersistentStorage.persistProp("screenshot_recognition_shortcut", { keyPreview: '', pressedKeys: [] }) //截图识别快捷键
+PersistentStorage.persistProp("custom_shortcut", { keyPreview: '', pressedKeys: [] }) //自定义快捷键
+PersistentStorage.persistProp("fixedText", '') //输入固定文本
 
 @Component
 struct IndexPage {
   @StorageLink("login") login: boolean = true
-  @Watch('shortcut_change') @StorageLink("shortcut") shortcut: number = 0 //改变该值弹出对应快捷键悬浮窗口 1：语音识别 2：语音翻译 3:截图识别 4：自定义快捷键
+  @Watch('shortcut_change') @StorageLink("shortcut") shortcut: number =
+    0 //改变该值弹出对应快捷键悬浮窗口 1：语音识别 2：语音翻译 3:截图识别 4：自定义快捷键
   @Consume('pageInfo') pageInfo: NavPathStack
   @State web: string = 'https://asrai.miclink.net/'
   @State currentIndex: number = 0
@@ -28,6 +30,7 @@ struct IndexPage {
   @State isShow_EditInstruction_pop: boolean = false //AI指令编辑弹窗
   @State EditInstruction_pop_currIndex: number = 0 //AI指令编辑弹窗定位索引
   @State shortcut_pop: boolean = false //快捷键弹窗
+  @StorageLink("isShowFixedText_pop") isShowFixedText_pop: boolean = false //快捷键弹窗
 
   shortcut_change() {
     this.shortcut_pop = !this.shortcut_pop
@@ -106,6 +109,9 @@ struct IndexPage {
               isParam: true,
               currIndexParam: this.EditInstruction_pop_currIndex
             })
+          }
+          if (this.isShowFixedText_pop) {
+            FixedText_pop({isShowFixedText_pop:this.isShowFixedText_pop})
           }
 
         }

@@ -33,6 +33,7 @@ export function _change_mouse_KeyPressType() {
       case 3:
         //固定文案
         console.warn('固定文案+')
+        _KeyMethodConfig.inputFixedText()
         break
       case 4:
         //文件
@@ -57,6 +58,7 @@ export function _change_mouse_KeyPressType() {
       case 6:
         //快捷按键
         console.warn('快捷按键+')
+        _KeyMethodConfig.triggerShortcut()
         break
       case 7:
         //截图翻译
@@ -171,6 +173,7 @@ export function _change_mouse_KeyPressType() {
       case 4:
         //快捷按键
         console.warn('快捷按键+')
+        _KeyMethodConfig.triggerShortcut()
         break
 
       case 5:
@@ -313,6 +316,7 @@ export function _change_mouse_KeyPressType() {
       case 10:
         //固定文案
         console.warn('固定文案+')
+        _KeyMethodConfig.inputFixedText()
         break
       case 11:
         //划词翻译
