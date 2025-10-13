@@ -132,8 +132,6 @@ struct Index {
   }
 
   aboutToDisappear(): void {
-    // 从存储中加载已保存的快捷键配置
-    this.loadSavedShortcuts()
 
     // 注册快捷键回调（这里只是示例，后续您可以替换为实际功能）
     this.registerShortcutCallbacks()
@@ -182,26 +180,6 @@ struct Index {
       globalShortcutService.handleGlobalKeyEvent(event)
     })
 
-  }
-  // 从存储中加载已保存的快捷键
-  private loadSavedShortcuts() {
-    // 语音识别快捷键
-    const voiceRecognition = AppStorage.get<shortcutType>('voice_recognition_shortcut')
-    if (voiceRecognition && voiceRecognition.pressedKeys.length > 0) {
-      globalShortcutService.updateShortcut(1, voiceRecognition.pressedKeys)
-    }
-
-    // 语音翻译快捷键
-    const voiceTranslation = AppStorage.get<shortcutType>('voice_translation_shortcut')
-    if (voiceTranslation && voiceTranslation.pressedKeys.length > 0) {
-      globalShortcutService.updateShortcut(2, voiceTranslation.pressedKeys)
-    }
-
-    // 截图识别快捷键
-    const screenshotRecognition = AppStorage.get<shortcutType>('screenshot_recognition_shortcut')
-    if (screenshotRecognition && screenshotRecognition.pressedKeys.length > 0) {
-      globalShortcutService.updateShortcut(3, screenshotRecognition.pressedKeys)
-    }
   }
 
   // 注册快捷键回调函数

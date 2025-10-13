@@ -141,6 +141,7 @@ struct Shortcut_pop {
               })
               .backgroundColor('#00afcc')
               .borderRadius(5)
+              // 在Shortcut_pop的确定按钮点击事件中简化：
               .onClick(() => {
                 if (this.keyPreview) {
                   // 检查快捷键是否重复（对于shortcut=1,2,3）
@@ -151,35 +152,34 @@ struct Shortcut_pop {
                     }
                   }
 
+                  // 获取标准化后的按键
+                  const normalizedKeys = this.getNormalizedPressedKeys()
+
                   switch (this.shortcut) {
                     case 1:
-                      //语音识别
+                      // 语音识别 - 只更新持久化存储
                       this.voice_recognition_shortcut = {
-                        pressedKeys: this.getNormalizedPressedKeys(),
+                        pressedKeys: normalizedKeys,
                         keyPreview: this.keyPreview
                       }
-                      // 更新全局服务
-                      globalShortcutService.updateShortcut(1, this.getNormalizedPressedKeys())
                       break
                     case 2:
-                      //语音翻译
+                      // 语音翻译
                       this.voice_translation_shortcut = {
-                        pressedKeys: this.getNormalizedPressedKeys(),
+                        pressedKeys: normalizedKeys,
                         keyPreview: this.keyPreview
                       }
-                      globalShortcutService.updateShortcut(2, this.getNormalizedPressedKeys())
                       break
                     case 3:
-                      //截图识别
+                      // 截图识别
                       this.screenshot_recognition_shortcut = {
-                        pressedKeys: this.getNormalizedPressedKeys(),
+                        pressedKeys: normalizedKeys,
                         keyPreview: this.keyPreview
                       }
-                      globalShortcutService.updateShortcut(3, this.getNormalizedPressedKeys())
                       break
                     case 4:
-                      //自定义快捷键 - 转换为HID键值数组
-                      const hidArray = this.convertToHIDArray(this.getNormalizedPressedKeys())
+                      // 自定义快捷键 - 转换为HID键值数组
+                      const hidArray = this.convertToHIDArray(normalizedKeys)
                       this.custom_shortcut = {
                         pressedKeys: hidArray,
                         keyPreview: this.keyPreview

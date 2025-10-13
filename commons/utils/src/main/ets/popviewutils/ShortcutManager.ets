@@ -1,14 +1,17 @@
-// GlobalShortcutService.ets (修正版)
+// GlobalShortcutService.ets
 import { KeyCode } from '@kit.InputKit'
 import { prompt } from '@kit.ArkUI'
+
+// 定义 shortcutType 接口
+interface ShortcutType {
+  keyPreview: string
+  pressedKeys: number[]
+}
 
 class GlobalShortcutService {
   private static instance: GlobalShortcutService
   private currentPressedKeys: number[] = []
   private shortcutCallbacks: Map<number, () => void> = new Map()
-
-  // 存储标准化后的快捷键配置
-  private shortcutConfigs: Map<number, number[]> = new Map()
 
   static getInstance(): GlobalShortcutService {
     if (!GlobalShortcutService.instance) {
@@ -17,11 +20,33 @@ class GlobalShortcutService {
     return GlobalShortcutService.instance
   }
 
-  // 更新快捷键配置
-  updateShortcut(shortcutType: number, pressedKeys: number[]) {
-    // 存储标准化后的按键
-    this.shortcutConfigs.set(shortcutType, pressedKeys)
-    console.log(`更新全局快捷键类型 ${shortcutType}:`, pressedKeys)
+  // 获取当前快捷键配置（每次从持久化存储读取）
+  private getShortcutConfigs(): Map<number, number[]> {
+    const configs = new Map<number, number[]>()
+
+    try {
+      // 语音识别快捷键 - 使用明确的类型
+      const voiceRecognition = AppStorage.get<ShortcutType>('voice_recognition_shortcut')
+      if (voiceRecognition && voiceRecognition.pressedKeys.length > 0) {
+        configs.set(1, voiceRecognition.pressedKeys)
+      }
+
+      // 语音翻译快捷键 - 使用明确的类型
+      const voiceTranslation = AppStorage.get<ShortcutType>('voice_translation_shortcut')
+      if (voiceTranslation && voiceTranslation.pressedKeys.length > 0) {
+        configs.set(2, voiceTranslation.pressedKeys)
+      }
+
+      // 截图识别快捷键 - 使用明确的类型
+      const screenshotRecognition = AppStorage.get<ShortcutType>('screenshot_recognition_shortcut')
+      if (screenshotRecognition && screenshotRecognition.pressedKeys.length > 0) {
+        configs.set(3, screenshotRecognition.pressedKeys)
+      }
+    } catch (error) {
+      console.error('读取快捷键配置失败:', error)
+    }
+
+    return configs
   }
 
   // 注册快捷键触发回调
@@ -56,8 +81,11 @@ class GlobalShortcutService {
     // 对当前按下的键进行标准化和排序（确保比较的一致性）
     const currentKeys = [...this.currentPressedKeys].sort()
 
-    // 检查所有已配置的快捷键 - 使用forEach替代解构
-    this.shortcutConfigs.forEach((shortcutKeys, shortcutType) => {
+    // 每次检查时都从持久化存储读取最新配置
+    const shortcutConfigs = this.getShortcutConfigs()
+
+    // 检查所有已配置的快捷键
+    shortcutConfigs.forEach((shortcutKeys: number[], shortcutType: number) => {
       if (shortcutKeys.length > 0 && this.arraysEqual(shortcutKeys, currentKeys)) {
         this.triggerShortcut(shortcutType)
         // 匹配成功后清空当前按键状态，避免连续触发
@@ -146,11 +174,6 @@ class GlobalShortcutService {
   // 清空当前按键状态（可选，用于重置）
   clearCurrentKeys() {
     this.currentPressedKeys = []
-  }
-
-  // 获取当前快捷键配置（调试用）
-  getShortcutConfigs(): Map<number, number[]> {
-    return new Map(this.shortcutConfigs)
   }
 }
 
