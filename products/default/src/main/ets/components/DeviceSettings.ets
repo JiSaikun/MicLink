@@ -1,7 +1,7 @@
 import { LengthMetrics } from "@kit.ArkUI"
 import { it } from "@ohos/hypium"
 import { DeviceInfo, MouseICType } from 'mouse'
-import {DevicesConfig}from './DevicesConfig'
+import { DevicesConfig } from './DevicesConfig'
 
 interface DeviceInfo_Model {
   deviceModel: string, //设备型号
@@ -19,7 +19,7 @@ interface connectionmethod_Model {
 
 @Component
 export struct DeviceSettings {
-  @State isShowConfig:boolean=false
+  @State isShowConfig: boolean = false
   @State deviesList: DeviceInfo_Model[] = [
     {
       deviceModel: 'GM009',
@@ -53,7 +53,7 @@ export struct DeviceSettings {
   @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null //鼠标信息
 
   build() {
-    Stack(){
+    Stack() {
       Column() {
         Row() {
           Text('设备')
@@ -67,8 +67,9 @@ export struct DeviceSettings {
             .height(32)
         }
         .alignItems(VerticalAlign.Center)
-        .padding({ bottom: 15,left:5,right:10 })
+        .padding({ bottom: 15, left: 5, right: 10 })
         .width('100%')
+
         // .borderWidth(1)
 
         Flex({ wrap: FlexWrap.Wrap, space: { main: LengthMetrics.px(30), cross: LengthMetrics.px(30) } }) {
@@ -119,25 +120,25 @@ export struct DeviceSettings {
               Image($r(`app.media.${item.icon}`))
                 .width('100%')
                 .margin({ bottom: 15, top: 15 })
-              Row(){
+              Row() {
                 Image($r('app.media.Cloud_true'))
-                  .visibility(item.connectionmethod.Cloud?Visibility.Visible:Visibility.None)
-                  .margin({left:10}).width(24)
+                  .visibility(item.connectionmethod.Cloud ? Visibility.Visible : Visibility.None)
+                  .margin({ left: 10 }).width(24)
                 Image($r('app.media.Cloud_false'))
-                  .visibility(item.connectionmethod.Cloud?Visibility.None:Visibility.Visible)
-                  .margin({left:10}).width(24)
+                  .visibility(item.connectionmethod.Cloud ? Visibility.None : Visibility.Visible)
+                  .margin({ left: 10 }).width(24)
                 Image($r('app.media.USB_true'))
-                  .visibility(item.connectionmethod.USB?Visibility.Visible:Visibility.None)
-                  .margin({left:10}).width(24)
+                  .visibility(item.connectionmethod.USB ? Visibility.Visible : Visibility.None)
+                  .margin({ left: 10 }).width(24)
                 Image($r('app.media.USB_false'))
-                  .visibility(item.connectionmethod.USB?Visibility.None:Visibility.Visible)
-                  .margin({left:10}).width(24)
+                  .visibility(item.connectionmethod.USB ? Visibility.None : Visibility.Visible)
+                  .margin({ left: 10 }).width(24)
                 Image($r('app.media.Bluetooth_true'))
-                  .visibility(item.connectionmethod.Bluetooth?Visibility.Visible:Visibility.None)
-                  .margin({left:10}).width(24)
+                  .visibility(item.connectionmethod.Bluetooth ? Visibility.Visible : Visibility.None)
+                  .margin({ left: 10 }).width(24)
                 Image($r('app.media.Bluetooth_false'))
-                  .visibility(item.connectionmethod.Bluetooth?Visibility.None:Visibility.Visible)
-                  .margin({left:10}).width(24)
+                  .visibility(item.connectionmethod.Bluetooth ? Visibility.None : Visibility.Visible)
+                  .margin({ left: 10 }).width(24)
               }
               .justifyContent(FlexAlign.End)
               .width('100%')
@@ -150,7 +151,7 @@ export struct DeviceSettings {
             .width(230)
             .border({ width: 2, color: '#e6e8eb' })
             .onMouse((event?: MouseEvent) => { // 设置Button的onMouse回调
-              if (event&&!item.ConnectionStatus) {
+              if (event && !item.ConnectionStatus) {
                 if (event.stopPropagation) {
                   event.stopPropagation(); // 在Button的onMouse事件中设置阻止冒泡
                 }
@@ -162,10 +163,11 @@ export struct DeviceSettings {
                 // }
               }
             })
-            .onClick(()=>{
-              if (item.ConnectionStatus) {
+            .onClick(() => {
+              // if (item.ConnectionStatus) {
+              if (this.mouseconfig?.sn && item.ConnectionStatus) {
                 //设备连接————点击进入配置页面
-                this.isShowConfig=true
+                this.isShowConfig = true
               }
             })
           }, (item: DeviceInfo_Model) => item.icon)
@@ -185,9 +187,9 @@ export struct DeviceSettings {
       /**
        * 设备详情配置
        */
-      if (this.isShowConfig){
-        Row(){
-          DevicesConfig({isShowConfig:this.isShowConfig})
+      if (this.isShowConfig) {
+        Row() {
+          DevicesConfig({ isShowConfig: this.isShowConfig })
         }
         .width('100%')
         .height('100%')
@@ -201,7 +203,6 @@ export struct DeviceSettings {
       }
       // .visibility(this.isShowConfig?Visibility.Visible:Visibility.None)
     }
-
 
   }
 }

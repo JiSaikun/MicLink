@@ -13,7 +13,6 @@ import { pasteboard } from '@kit.BasicServicesKit'; //划词翻译————�
 import { _translate, translate_Params, translate_Response } from 'mouse'
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl'; //读取剪切板————主动获取权限
 import { Float_Window } from 'float_window'; //按键执行方法回调
-import { promptAction } from '@kit.ArkUI';
 
 export class _KeyMethodConfig {
   /**

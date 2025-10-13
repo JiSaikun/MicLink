@@ -82,7 +82,7 @@ struct VoiceTranslation {
             .width(100)
             .height(100)
           if (this.voiceOrText) {
-            Image($r(`${this.voiceTranslationState ? 'app.media.voiceing_icon' : 'app.media.voice_icon'}`))
+            Image($r(`${this.voiceTranslationState ? 'app.media.textTranslation' : 'app.media.unTextTranslation'}`))
               .width(32)
               .height(32)
           } else {

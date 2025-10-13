@@ -13,7 +13,6 @@ PersistentStorage.persistProp("voice_recognition_shortcut", { keyPreview: '', pr
 PersistentStorage.persistProp("voice_translation_shortcut", { keyPreview: '', pressedKeys: [] }) //语音翻译快捷键
 PersistentStorage.persistProp("screenshot_recognition_shortcut", { keyPreview: '', pressedKeys: [] }) //截图识别快捷键
 PersistentStorage.persistProp("custom_shortcut", { keyPreview: '', pressedKeys: [] }) //自定义快捷键
-PersistentStorage.persistProp("fixedText", '') //输入固定文本
 
 @Component
 struct IndexPage {

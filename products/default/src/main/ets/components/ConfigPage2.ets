@@ -96,6 +96,7 @@ export struct ConfigPage2 {
               this.getModelInfo.keyInfos[index1].childs[index2].childs[index].first = 1
               this.KeymethodConfig[index1 * 2+index2].currIndex = index
               AppStorage.setOrCreate('KeymethodConfig', this.KeymethodConfig)
+
               const shortcutKeywords = [
                 '快捷按键', 'Tasten für Verknüpfungen', "كنوپكا", "快捷按鍵", "단축키",
                 "Shortcut key", "زر الاختصار", "Botones de acceso directo", "མྱུར་མཐེབ་",
@@ -103,11 +104,18 @@ export struct ConfigPage2 {
                 "Tombol pintasan", "Phím tắt", "ᠲᠦᠷᠭᠡᠨ ᠳᠠᠷᠤᠭᠤᠯ", "Boutons de raccourci",
                 "Торчлолын товчлуур", "ปุ่มทางลัด", "ショートカットキー"
               ];
-
               if (shortcutKeywords.includes(value)) {
                 this.shortcut = 4;
               }
-              if (value === '固定文案') {
+
+              const fixedText = [
+                "Feste Textverfassung", "تۇراقتى دەلو", "固定文案", "고정 카피라이팅", "Fixed copy", "كتابة نسخة ثابتة",
+                "固定文案", "Redacción fija", "གཏན་འཇགས་ཡིག་ཆ་", "Copywriting fisso", "Fixed copy",
+                "nakapirming copywriting", "Copywriting tetap", "مۇقىم دەپتەردار", "Sabit metin yazarlığı",
+                "Copywriting tetap", "Bản sao cố định", "ᠲᠣᠭᠲᠠᠮᠠᠯ ᠠᠯᠪᠠᠨ ᠪᠢᠴᠢᠭ", "Rédaction fixe", "Тогтмол бичих",
+                "การเขียนคำโฆษณาคงที่", "修正されたコピー"
+              ];
+              if (fixedText.includes(value)) {
                 AppStorage.setOrCreate('isShowFixedText_pop', true)
               }
 

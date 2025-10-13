@@ -210,4 +210,10 @@ class AppStorage {
    * 初始化 ：IndexPage
    */
   static readonly fixedText: boolean = false
+  /**
+   * 控制打开固定文本悬浮窗
+   * 持久化储存
+   * 初始化 ：IndexPage
+   */
+  static readonly isShowFixedText_pop: boolean = false
 }

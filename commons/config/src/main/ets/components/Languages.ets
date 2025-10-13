@@ -655,7 +655,11 @@ export class Languages {
     "TH_TH": "หมายเลขรุ่น:",
     "JA_JP": "モデル番号:"
   }
-
+  /**
+   *ConfigPage1页面
+   * 快捷键设置弹窗
+   * 固定文本设置弹窗
+   */
   // static readonly modelNumber: LanguageNames = {
   //   "DE_DE": "",
   //   "KA_KA": "",
@@ -1380,6 +1384,4 @@ export class Languages {
     "TH_TH": "รูปแบบบัญชีไม่ถูกต้อง โปรดใส่หมายเลขโทรศัพท์หรืออีเมลที่ถูกต้อง",
     "JA_JP": "アカウント形式が無効です。正しい電話番号またはメールアドレスを入力してください。"
   }
-
-
 }
