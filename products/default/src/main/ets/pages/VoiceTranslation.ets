@@ -112,6 +112,18 @@ struct VoiceTranslation {
       .width('100%')
 
       Column() {
+        if (this.voiceTranslationState){
+          TextArea( {text:'请讲话'})
+            .width('100%')
+            .textAlign(TextAlign.Start)
+            .padding({ left: 0, top: 0, right: 0 })
+            .borderRadius(0)
+            .fontColor('#a4aab2')
+            .fontWeight(400)
+            .fontSize(14)
+            .backgroundColor('#f8f8f8')
+            .focusable(false)
+        }
         List({ scroller: this.scroller_from }) {
           ForEach(this.voiceTranslationText, (item: translate_Response) => {
             ListItem() {
@@ -135,7 +147,7 @@ struct VoiceTranslation {
           bottom: 12
         })
         .width('100%')
-        .height('50%')
+        .layoutWeight(1)
         .align(Alignment.TopStart)
 
         Column() {
