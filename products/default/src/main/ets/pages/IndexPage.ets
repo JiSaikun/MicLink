@@ -1,8 +1,8 @@
 import { LeftBar, Topbar, Content, paramModel } from 'common'
-import { FixedText_pop,WebUrlToOpen_pop } from 'utils'
+import { FixedText_pop, WebUrlToOpen_pop } from 'utils'
 import Content_Ai from 'command_ai/src/main/ets/components/Command_Ai'
 import { DeviceSettings } from '../components/DeviceSettings'
-import { CreateNewInstruction_pop } from 'command_ai/src/main/ets/components/CreateNewInstruction_pop'
+import { CreateNewInstruction_pop } from 'command_ai'
 
 @Builder
 function IndexPageBuilder() {
@@ -111,10 +111,10 @@ struct IndexPage {
             })
           }
           if (this.isShowFixedText_pop) {
-            FixedText_pop({isShowFixedText_pop:this.isShowFixedText_pop})
+            FixedText_pop({ isShowFixedText_pop: this.isShowFixedText_pop })
           }
           if (this.isShow_webUrlToOpen_pop) {
-            WebUrlToOpen_pop({isShow_webUrlToOpen_pop:this.isShow_webUrlToOpen_pop})
+            WebUrlToOpen_pop({ isShow_webUrlToOpen_pop: this.isShow_webUrlToOpen_pop })
           }
 
         }

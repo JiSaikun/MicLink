@@ -161,6 +161,7 @@ export function _change_mouse_KeyPressType() {
       case 1:
         //文件
         console.warn('文件+')
+        OpenFileWithSystemApp.openFileWithSystemApp()
         break
       case 2:
         //文件夹
@@ -317,6 +318,7 @@ export function _change_mouse_KeyPressType() {
       case 9:
         //文件
         console.warn('文件+')
+        OpenFileWithSystemApp.openFileWithSystemApp()
         break
       case 10:
         //固定文案

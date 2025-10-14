@@ -17,9 +17,9 @@ interface response_interface {
 export struct CreateNewInstruction_pop {
   @Consume('pageInfo') pageInfo: NavPathStack
   @State array: SelectOption[] = [{ value: '文件' }, { value: '网址' }, { value: '生成文本' }]
-  @State response_: response_interface[] = [{ title: '执行路径', isShow: true, response_: '执行路径' },
-    { title: '网址', isShow: false, response_: '输入网址' },
-    { title: '生成文本', isShow: false, response_: '输入要一键生成的文本' }]
+  @State response_: response_interface[] = [{ title: '执行路径：', isShow: true, response_: '执行路径' },
+    { title: '网址：', isShow: false, response_: '输入网址' },
+    { title: '生成文本：', isShow: false, response_: '输入要一键生成的文本' }]
   @State currentindex: number = 0
   @Link isShow_CreateNewInstruction_pop: boolean //创建指令弹窗
   @Link isShow_EditInstruction_pop: boolean //编辑指令弹窗

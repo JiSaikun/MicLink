@@ -112,7 +112,7 @@ export class _KeyMethodConfig {
   /**
    * 语音输入_长按按下
    */
-  static voiceInput_long(state: number = 0,isAI_assistant: boolean = false) {
+  static voiceInput_long(state: number = 0, isAI_assistant: boolean = false) {
     Communication.audioData = []
     if (Communication.audioDataState) { //若开始长按时，有通过0x62命令开启的语音输入等，先进行关闭 ...否则改变audioDataState 采集状态，确保1b数据被放到语音数据里 ——————手动发起0x62收集录音数据
       Communication.getDeviceInfo([0x62])
@@ -221,7 +221,6 @@ export class _KeyMethodConfig {
   static delete() {
     Communication.getDeviceInfo([0x20, 0, 0x2A])
   }
-
   /**
    *打开网页 __百度
    */
@@ -232,8 +231,10 @@ export class _KeyMethodConfig {
     console.error(AppStorage.get('webUrlToOpen'))
     // 明确context的类型
     const context: common.UIAbilityContext = AppStorage.get('context') as common.UIAbilityContext;
+    const encodedKeyword = encodeURIComponent(AppStorage.get('webUrlToOpen') as string);
+
     // 明确storedUrl为string类型（可能为null/undefined）
-    const storedUrl: string | null | undefined = AppStorage.get('webUrlToOpen');
+    const storedUrl: string | null | undefined = encodedKeyword;
     const defaultUrl: string = 'https://www.baidu.com/';
 
     // 网址校验函数（适配ArkTS，不依赖URL对象）
