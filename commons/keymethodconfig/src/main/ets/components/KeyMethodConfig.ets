@@ -20,7 +20,7 @@ export class _KeyMethodConfig {
    * 0：语音输入
    * 1：语音翻译
    */
-  static voiceInput(state: number = 0) {
+  static voiceInput(state: number = 0, isAI_assistant: boolean = false) {
     if (!Communication.audioDataState) {
       Communication.getDeviceInfo([0x62])
         .then(() => {
@@ -43,6 +43,7 @@ export class _KeyMethodConfig {
         //   Float_Window.show_float_window(Float_Window.window_VoiceTranslation)
         // }
       } else {
+        AppStorage.setOrCreate('isAI_assistant', isAI_assistant)
         if (!Float_Window.showVoiceInput) { //窗口没有显示时创建窗口
           Float_Window.creat()
         } else {
@@ -111,7 +112,7 @@ export class _KeyMethodConfig {
   /**
    * 语音输入_长按按下
    */
-  static voiceInput_long(state: number = 0) {
+  static voiceInput_long(state: number = 0,isAI_assistant: boolean = false) {
     Communication.audioData = []
     if (Communication.audioDataState) { //若开始长按时，有通过0x62命令开启的语音输入等，先进行关闭 ...否则改变audioDataState 采集状态，确保1b数据被放到语音数据里 ——————手动发起0x62收集录音数据
       Communication.getDeviceInfo([0x62])
@@ -135,6 +136,7 @@ export class _KeyMethodConfig {
       }
       AppStorage.setOrCreate('voiceTranslationState', Communication.audioDataState) //语音状态
     } else {
+      AppStorage.setOrCreate('isAI_assistant', isAI_assistant)
       if (!Float_Window.showVoiceInput) { //窗口没有显示时创建窗口
         Float_Window.creat()
       } else {
@@ -407,7 +409,7 @@ export class _KeyMethodConfig {
     AppStorage.setOrCreate('DPI_currInfo', DPI_currInfo)
     Communication.getDeviceInfo([0x68, DPI_currInfo.curr]).then(() => {
       let mouseconfig: DeviceInfo = AppStorage.get('mouseconfig') as DeviceInfo
-      mouseconfig.dpiLevel = DPI_currInfo.curr+1
+      mouseconfig.dpiLevel = DPI_currInfo.curr + 1
       AppStorage.setOrCreate("mouseconfig", mouseconfig);
     })
   }

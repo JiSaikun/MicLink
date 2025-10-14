@@ -122,8 +122,11 @@ export class AudioWebSocketHandler {
         console.log("收到消息，内容:" + message);
         let res: res_moudel = JSON.parse(message)
         if (res.status === 200 && this.state === 0) {
-          AppStorage.setOrCreate('voiceInputText', voiceInputText + res.data.text)
-          console.error(JSON.stringify(AppStorage.get('voiceInputText')) + '33333333333333333333333333333333333')
+          AppStorage.setOrCreate('voiceInputText', res.data.text)
+          if (AppStorage.get('isAI_assistant')) {
+            return
+          }
+          // console.error(JSON.stringify(AppStorage.get('voiceInputText')) + '33333333333333333333333333333333333')
         }
         if (res.status === 200 && (res.data.type === 'LAST' || res.data.type === "FIN")) {
           // AppStorage.setOrCreate('audioToText_res', res.data.text)

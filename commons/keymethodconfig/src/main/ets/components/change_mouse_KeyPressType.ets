@@ -117,6 +117,7 @@ export function _change_mouse_KeyPressType() {
       case 2:
         //语音助手
         console.warn('语音助手+')
+        _KeyMethodConfig.voiceInput_long(0, true)
         break
       case 3:
         //删除
@@ -141,6 +142,7 @@ export function _change_mouse_KeyPressType() {
       case 2:
         //语音助手
         console.warn('语音助手+')
+        _KeyMethodConfig.endvoiceInput_long()
         break
       case 3:
         //删除
@@ -222,6 +224,7 @@ export function _change_mouse_KeyPressType() {
       case 0:
         //语音助手
         console.warn('语音助手+')
+        _KeyMethodConfig.voiceInput_long(0, true)
         break
       case 1:
         //语音翻译
@@ -245,6 +248,7 @@ export function _change_mouse_KeyPressType() {
       case 0:
         //语音助手
         console.warn('语音助手+')
+        _KeyMethodConfig.endvoiceInput_long()
         break
       case 1:
         //语音翻译
@@ -288,6 +292,7 @@ export function _change_mouse_KeyPressType() {
       case 4:
         //语音助手
         console.warn('语音助手+')
+        _KeyMethodConfig.voiceInput(0, true)
         break
       case 5:
         //DPI切换
@@ -341,6 +346,7 @@ export function _change_mouse_KeyPressType() {
       case 2:
         //语音助手
         console.warn('语音助手+')
+        _KeyMethodConfig.voiceInput_long(0, true)
         break
     }
   }
@@ -349,7 +355,7 @@ export function _change_mouse_KeyPressType() {
       case 0:
         //删除
         console.warn('删除+')
-        _KeyMethodConfig.delete()
+        // _KeyMethodConfig.delete()
         break
       case 1:
         //语音翻译
@@ -358,7 +364,8 @@ export function _change_mouse_KeyPressType() {
         break
       case 2:
         //语音助手
-        console.warn('语音助手+')
+        console.warn('语音助手+长按抬起')
+        _KeyMethodConfig.endvoiceInput_long()
         break
     }
   }
