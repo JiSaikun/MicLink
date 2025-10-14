@@ -377,6 +377,7 @@ export class _KeyMethodConfig {
    */
   static DPI_Switch() {
     let DPI_currInfo: DPI_currInfoModel = AppStorage.get('DPI_currInfo') as DPI_currInfoModel
+    console.log(JSON.stringify(DPI_currInfo))
     if (DPI_currInfo.curr === DPI_currInfo.length - 1) {
       DPI_currInfo.curr = 0
     } else {
@@ -385,7 +386,7 @@ export class _KeyMethodConfig {
     AppStorage.setOrCreate('DPI_currInfo', DPI_currInfo)
     Communication.getDeviceInfo([0x68, DPI_currInfo.curr]).then(() => {
       let mouseconfig: DeviceInfo = AppStorage.get('mouseconfig') as DeviceInfo
-      mouseconfig.dpiLevel = DPI_currInfo.curr
+      mouseconfig.dpiLevel = DPI_currInfo.curr+1
       AppStorage.setOrCreate("mouseconfig", mouseconfig);
     })
   }

@@ -4,6 +4,7 @@ import { getModelInfoModel, languagesModel } from 'config'
 import { promptAction } from '@kit.ArkUI'
 import { pasteboard } from '@kit.BasicServicesKit'; //复制
 import { BusinessError } from '@kit.BasicServicesKit';
+import { globalShortcutService } from 'utils';
 
 /**
  * 语音翻译悬浮窗
@@ -240,6 +241,11 @@ struct VoiceTranslation {
     .padding(24)
     .height('100%')
     .backgroundColor('#f8f8f8')
+    .onKeyEvent((event: KeyEvent) => {
+      console.error('err：',JSON.stringify(event))
+      // 将按键事件传递给全局监听服务
+      globalShortcutService.handleGlobalKeyEvent(event)
+    })
   }
 
   convert_ttsLanguagesToOptions(): SelectOption[] {

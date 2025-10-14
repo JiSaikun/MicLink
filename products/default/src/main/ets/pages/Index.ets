@@ -133,8 +133,6 @@ struct Index {
 
   aboutToDisappear(): void {
 
-    // 注册快捷键回调（这里只是示例，后续您可以替换为实际功能）
-    this.registerShortcutCallbacks()
     // console.log('应用关闭======================================')
     // console.log(JSON.stringify(Communication.devicePipe))
     Communication.changPhysicalKeyboardExistState(false)
@@ -182,26 +180,6 @@ struct Index {
 
   }
 
-  // 注册快捷键回调函数
-  private registerShortcutCallbacks() {
-    globalShortcutService.registerCallback(1, () => {
-      console.log('执行语音识别功能')
-      // 这里可以调用您的语音识别方法
-      // this.startVoiceRecognition()
-    })
-
-    globalShortcutService.registerCallback(2, () => {
-      console.log('执行语音翻译功能')
-      // 这里可以调用您的语音翻译方法
-      // this.startVoiceTranslation()
-    })
-
-    globalShortcutService.registerCallback(3, () => {
-      console.log('执行截图识别功能')
-      // 这里可以调用您的截图识别方法
-      // this.startScreenshotRecognition()
-    })
-  }
 
 
   //锁定设备横屏，使得窗口不随屏幕旋转————平板适配：暂时不做处理

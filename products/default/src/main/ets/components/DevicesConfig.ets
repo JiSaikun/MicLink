@@ -199,7 +199,7 @@ export struct DevicesConfig {
         this.reportRate_currIndex = 3
         break
     }
-    this.DPI_currIndex = this.mouseconfig?.dpiLevel as number
+    this.DPI_currIndex = this.mouseconfig?.dpiLevel as number-1
     this.currLED = this.mouseconfig?.atmosphereLight as boolean
   }
 }

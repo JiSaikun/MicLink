@@ -1,6 +1,7 @@
 import { LeftBar, Topbar, Content, paramModel } from 'common'
 import { webview } from '@kit.ArkWeb';
 import { getModelInfoModel } from 'config'
+import { globalShortcutService } from 'utils';
 
 // PersistentStorage.persistProp("login", false)
 
@@ -56,6 +57,17 @@ struct AiPage {
                   .height('100%')
                   .flexShrink(1)
                   .domStorageAccess(true)
+                  .onInterceptKeyEvent((event: KeyEvent) => {
+                    console.warn(JSON.stringify(event))
+                    // 将按键事件传递给全局监听服务
+                    globalShortcutService.handleGlobalKeyEvent(event)
+                    // if (event.keyCode === KeyCode.KEYCODE_S && event.metaKey === 1) {
+                    //   console.log("Ctrl+S 被按下");
+                    //   // this.handleGlobalShortcut();
+                    //   return true;
+                    // }
+                    return false;
+                  })
                 // .key(this.web) // 添加key属性，确保值变化时重新创建组件
               }
               .width('100%')

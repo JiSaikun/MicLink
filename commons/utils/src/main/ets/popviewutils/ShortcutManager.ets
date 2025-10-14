@@ -1,5 +1,6 @@
 // GlobalShortcutService.ets
 import { KeyCode } from '@kit.InputKit'
+import { _KeyMethodConfig } from 'keymethodconfig'
 import { prompt } from '@kit.ArkUI'
 
 // 定义 shortcutType 接口
@@ -76,7 +77,9 @@ class GlobalShortcutService {
 
   // 检查快捷键匹配
   private checkShortcutMatch() {
-    if (this.currentPressedKeys.length === 0) return
+    if (this.currentPressedKeys.length === 0) {
+      return
+    }
 
     // 对当前按下的键进行标准化和排序（确保比较的一致性）
     const currentKeys = [...this.currentPressedKeys].sort()
@@ -115,15 +118,18 @@ class GlobalShortcutService {
     switch (shortcutType) {
       case 1:
         message = '触发语音识别快捷键'
+        console.log(message)
+        _KeyMethodConfig.voiceInput()
         break
       case 2:
         message = '触发语音翻译快捷键'
+        console.log(message)
+        _KeyMethodConfig.voiceInput(1)
         break
       case 3:
         message = '触发截图识别快捷键'
+        console.log(message)
         break
-      default:
-        message = `触发快捷键类型${shortcutType}`
     }
 
     try {
@@ -158,7 +164,9 @@ class GlobalShortcutService {
 
   // 比较数组是否相等
   private arraysEqual(arr1: number[], arr2: number[]): boolean {
-    if (arr1.length !== arr2.length) return false
+    if (arr1.length !== arr2.length) {
+      return false
+    }
 
     const sorted1 = [...arr1].sort()
     const sorted2 = [...arr2].sort()

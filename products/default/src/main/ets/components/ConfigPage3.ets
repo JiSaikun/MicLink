@@ -37,7 +37,7 @@ export struct ConfigPage3 {
 
   change_DPI() {
     setTimeout(() => {
-      Communication.getDeviceInfo([0x68, this.DPI_currIndex]).then(() => {
+      Communication.getDeviceInfo([0x68, this.DPI_currIndex+1]).then(() => {
         (this.mouseconfig as DeviceInfo).dpiLevel = this.DPI_currIndex
         AppStorage.setOrCreate("mouseconfig", Communication.deviceInfo);
       })
@@ -73,7 +73,7 @@ export struct ConfigPage3 {
         .fontWeight(400)
         .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
       Select(this.DPI)
-        .value(this.DPI[this.DPI_currIndex].value)
+        .value(this.DPI[this.DPI_currInfo ? this.DPI_currInfo?.curr : this.DPI_currIndex].value)
         .onSelect((index: number) => {
           this.DPI_currIndex = index
         })
@@ -289,7 +289,7 @@ export struct ConfigPage3 {
         this.reportRate_currIndex = 3
         break
     }
-    this.DPI_currIndex = this.mouseconfig?.dpiLevel as number
+    this.DPI_currIndex = AppStorage.get('DPI_currInfo')?(AppStorage.get('DPI_currInfo')as DPI_currInfoModel).curr:this.mouseconfig?.dpiLevel as number -1
     this.currLED = this.mouseconfig?.atmosphereLight as boolean
 
     let currDPI_Info: DPI_currInfoModel = {
