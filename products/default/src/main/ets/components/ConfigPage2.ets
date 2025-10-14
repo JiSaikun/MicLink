@@ -118,6 +118,9 @@ export struct ConfigPage2 {
               if (fixedText.includes(value)) {
                 AppStorage.setOrCreate('isShowFixedText_pop', true)
               }
+              if (value==='打开网页') {
+                AppStorage.setOrCreate('isShow_webUrlToOpen_pop', true)
+              }
 
             })
             .selected(this.getDefaultSelectedIndex(item.childs || [], index1, index2))

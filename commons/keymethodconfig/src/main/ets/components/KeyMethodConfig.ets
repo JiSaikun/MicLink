@@ -224,17 +224,38 @@ export class _KeyMethodConfig {
    *打开网页 __百度
    */
   static openTheWebpage() {
+    if (!AppStorage.get('webUrlToOpen')) {
+      return
+    }
+    console.error(AppStorage.get('webUrlToOpen'))
+    // 明确context的类型
     const context: common.UIAbilityContext = AppStorage.get('context') as common.UIAbilityContext;
-    let want: Want = {
+    // 明确storedUrl为string类型（可能为null/undefined）
+    const storedUrl: string | null | undefined = AppStorage.get('webUrlToOpen');
+    const defaultUrl: string = 'https://www.baidu.com/';
+
+    // 网址校验函数（适配ArkTS，不依赖URL对象）
+    const isValidUrl = (url: string): boolean => {
+      // 基础正则：检查http/https开头及基本域名格式
+      const urlRegex: RegExp = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w.-]*)*\/?$/i;
+      return urlRegex.test(url);
+    };
+
+    // 确定最终URL（严格类型判断）
+    let finalUrl: string = defaultUrl;
+    if (typeof storedUrl === 'string' && storedUrl.trim() !== '' && isValidUrl(storedUrl)) {
+      finalUrl = storedUrl;
+    }
+
+    const want: Want = {
       action: 'ohos.want.action.viewData',
       entities: ['entity.system.browsable'],
-      uri: 'https://www.baidu.com/',
-      // parameters: {
-      //   'ohos.ability.params.showDefaultPicker': true
-      // }
-    };
-    context.startAbility(want)
+      uri: finalUrl
+    }
+
+    context.startAbility(want);
   }
+
 
   /**
    *ChatGPT

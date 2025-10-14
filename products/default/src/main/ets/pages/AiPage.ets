@@ -58,7 +58,7 @@ struct AiPage {
                   .flexShrink(1)
                   .domStorageAccess(true)
                   .onInterceptKeyEvent((event: KeyEvent) => {
-                    console.warn(JSON.stringify(event))
+                    // console.warn(JSON.stringify(event))
                     // 将按键事件传递给全局监听服务
                     globalShortcutService.handleGlobalKeyEvent(event)
                     // if (event.keyCode === KeyCode.KEYCODE_S && event.metaKey === 1) {

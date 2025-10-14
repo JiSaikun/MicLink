@@ -659,6 +659,7 @@ export class Languages {
    *ConfigPage1页面
    * 快捷键设置弹窗
    * 固定文本设置弹窗
+   * 打开网页设置弹窗
    */
   // static readonly modelNumber: LanguageNames = {
   //   "DE_DE": "",

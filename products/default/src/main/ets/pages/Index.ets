@@ -29,6 +29,7 @@ PersistentStorage.persistProp("isWordScan_Translation", true) //是否开启划�
 PersistentStorage.persistProp("isOCR_Translate_Toggle", true) //是否开启截图识别/翻译
 PersistentStorage.persistProp("isAutoCloseVoiceTransPop", true) //是否开启语音翻译弹窗自动关闭
 PersistentStorage.persistProp("fixedText", '') //输入固定文本
+PersistentStorage.persistProp("webUrlToOpen", '') //输入打开网页的具体网址
 
 @Entry
 @Component
@@ -173,7 +174,7 @@ struct Index {
 
       Image($r('app.media.create_Command_Ai'))
     }.onKeyEvent((event: KeyEvent) => {
-      console.error('err：',JSON.stringify(event))
+      // console.error('err：',JSON.stringify(event))
       // 将按键事件传递给全局监听服务
       globalShortcutService.handleGlobalKeyEvent(event)
     })

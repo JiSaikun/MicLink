@@ -14,14 +14,15 @@ export struct Content {
         .domStorageAccess(true)
       // .key(this.web) // 添加key属性，确保值变化时重新创建组件
         .onInterceptKeyEvent((event: KeyEvent) => {
-          console.warn(JSON.stringify(event))
+          // console.warn(JSON.stringify(event))
           // 将按键事件传递给全局监听服务
-          globalShortcutService.handleGlobalKeyEvent(event)
+
           // if (event.keyCode === KeyCode.KEYCODE_S && event.metaKey === 1) {
           //   console.log("Ctrl+S 被按下");
           //   // this.handleGlobalShortcut();
           //   return true;
           // }
+          globalShortcutService.handleGlobalKeyEvent(event)
           return false;
         })
 

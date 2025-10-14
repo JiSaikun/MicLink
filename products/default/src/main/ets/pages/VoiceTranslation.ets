@@ -237,12 +237,13 @@ struct VoiceTranslation {
       }
       .layoutWeight(1)
       .width('100%')
-    }.width('100%')
+    }
+    .width('100%')
     .padding(24)
     .height('100%')
     .backgroundColor('#f8f8f8')
     .onKeyEvent((event: KeyEvent) => {
-      console.error('err：',JSON.stringify(event))
+      // console.error('err：',JSON.stringify(event))
       // 将按键事件传递给全局监听服务
       globalShortcutService.handleGlobalKeyEvent(event)
     })

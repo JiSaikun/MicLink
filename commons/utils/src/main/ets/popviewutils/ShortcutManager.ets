@@ -11,6 +11,7 @@ interface ShortcutType {
 
 class GlobalShortcutService {
   private static instance: GlobalShortcutService
+  private static flax: boolean=false
   private currentPressedKeys: number[] = []
   private shortcutCallbacks: Map<number, () => void> = new Map()
 
@@ -56,7 +57,7 @@ class GlobalShortcutService {
   }
 
   // 处理全局按键事件
-  handleGlobalKeyEvent(event: KeyEvent) {
+  handleGlobalKeyEvent(event: KeyEvent):boolean {
     if (event.type === KeyType.Down) {
       // 标准化按键并记录
       const normalizedKey = this.normalizeModifierKey(event.keyCode)
@@ -72,13 +73,13 @@ class GlobalShortcutService {
     }
 
     // 检查是否匹配任何快捷键
-    this.checkShortcutMatch()
+   return this.checkShortcutMatch()
   }
 
   // 检查快捷键匹配
-  private checkShortcutMatch() {
+  private checkShortcutMatch() :boolean{
     if (this.currentPressedKeys.length === 0) {
-      return
+      return false
     }
 
     // 对当前按下的键进行标准化和排序（确保比较的一致性）
@@ -96,6 +97,7 @@ class GlobalShortcutService {
         return
       }
     })
+    return GlobalShortcutService.flax
   }
 
   // 触发快捷键
@@ -118,17 +120,17 @@ class GlobalShortcutService {
     switch (shortcutType) {
       case 1:
         message = '触发语音识别快捷键'
-        console.log(message)
         _KeyMethodConfig.voiceInput()
+        GlobalShortcutService.flax=true
         break
       case 2:
         message = '触发语音翻译快捷键'
-        console.log(message)
         _KeyMethodConfig.voiceInput(1)
+        GlobalShortcutService.flax=true
         break
       case 3:
         message = '触发截图识别快捷键'
-        console.log(message)
+        GlobalShortcutService.flax=true
         break
     }
 

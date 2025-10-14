@@ -207,13 +207,23 @@ class AppStorage {
   /**
    * 输入固定文本
    * 持久化储存
-   * 初始化 ：IndexPage
+   * 初始化 ：Index
    */
   static readonly fixedText: boolean = false
   /**
-   * 控制打开固定文本悬浮窗
-   * 持久化储存
+   * 控制打开固定文本弹窗
    * 初始化 ：IndexPage
    */
   static readonly isShowFixedText_pop: boolean = false
+  /**
+   * 控制打开网页：输入网址弹窗
+   * 初始化 ：IndexPage
+   */
+  static readonly isShow_webUrlToOpen_pop: boolean = false
+  /**
+   * 输入打开网页的具体网址
+   * 持久化储存
+   * 初始化 ：Index
+   */
+  static readonly webUrlToOpen: boolean = false
 }
