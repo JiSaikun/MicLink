@@ -226,4 +226,11 @@ class AppStorage {
    * 初始化 ：Index
    */
   static readonly webUrlToOpen: boolean = false
+  /**
+   * 搜索引擎
+   * 持久化储存
+   * 初始化 ：Index
+   * 数据类型：number 0：百度 1：Google
+   */
+  static readonly EnhancedBrowserSearch: boolean = false
 }

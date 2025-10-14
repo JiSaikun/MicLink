@@ -23,7 +23,7 @@ export struct ConfigPage1 {
   @StorageLink('isAutoCloseVoiceTransPop') isAutoCloseVoiceTransPop: boolean = true //是否开启语音翻译弹窗自动关闭
   @StorageLink('speech_Recognition_languages') speech_Recognition_languages: string = 'ZH_CN' //语音识别语种
   @State keystroke: SelectOption[] = [{ value: '动态打字模式' }, { value: '兼容打字模式' }] //打字输入模式选项
-  @State searchEngine: SelectOption[] = [{ value: 'Bai Du' }, { value: 'Google' }] //搜索引擎
+  @State searchEngine: SelectOption[] = [{ value: '百度' }, { value: 'Google' }] //搜索引擎
   @StorageLink('from_languages') from_languages: string = 'ZH_CN' //语音翻译源语言
   @StorageLink('to_languages') to_languages: string = 'EN_US' //语音翻译目标语言
   @StorageLink('wordScan_from_languages') wordScan_from_languages: string = 'ZH_CN' //划词翻译源语言
@@ -498,12 +498,11 @@ export struct ConfigPage1 {
         .fontWeight(400)
         .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
       Select(this.searchEngine)
-        .value(this.searchEngine[0].value)
-        .onSelect((index: number) => {
-          // this.DPI_currIndex = index
+        .value(this.searchEngine[AppStorage.get('EnhancedBrowserSearch') as number].value)
+        .onSelect((index: number,value) => {
+          AppStorage.setOrCreate('EnhancedBrowserSearch',index)
         })
-        // .selected(this.DPI_currInfo ? this.DPI_currInfo?.curr : this.DPI_currIndex)
-        .selected(0)
+        .selected(AppStorage.get('EnhancedBrowserSearch') as number)
         .width('100%')
         .font({ size: $r('app.float.default_text_font_size_14'), weight: 400 })
         .fontColor($r('app.string.DEFAULT_FONT_COLOR'))

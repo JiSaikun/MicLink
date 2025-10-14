@@ -1,3 +1,5 @@
+import { common, Want } from "@kit.AbilityKit";
+
 @Entry
 @Component
 export struct Overlay {
@@ -8,7 +10,41 @@ export struct Overlay {
   changeText() {
     if (this.isAI_assistant) {
       //执行AI助手方法
+      if (this.voiceInputText) {
+        this.openTheWebpage(this.voiceInputText)
+      }
     }
+  }
+
+  openTheWebpage(text: string) {
+
+    const context: common.UIAbilityContext = AppStorage.get('context') as common.UIAbilityContext;
+    const encodedKeyword = encodeURIComponent(text);
+    let uri: string = ''
+    switch (AppStorage.get('EnhancedBrowserSearch') as number) {
+      case 0: //百度
+        uri = `https://www.baidu.com/s?wd=${encodedKeyword}`
+        break
+      case 1: //谷歌
+        uri = `https://www.google.com/search?q=${encodedKeyword}`
+        break
+      // case 2: //必应
+      //   uri = `https://www.bing.com/search?q=${encodedKeyword}`
+      //   break
+      // case 3: //搜狗
+      //   uri = `https://www.sogou.com/web?query=${encodedKeyword}`
+      //   break
+
+    }
+    let want: Want = {
+      action: 'ohos.want.action.viewData',
+      entities: ['entity.system.browsable'],
+      uri: uri,
+      // parameters: {
+      //   'ohos.ability.params.showDefaultPicker': true
+      // }
+    };
+    context.startAbility(want)
   }
 
   build() {

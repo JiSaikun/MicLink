@@ -30,6 +30,7 @@ PersistentStorage.persistProp("isOCR_Translate_Toggle", true) //是否开启截�
 PersistentStorage.persistProp("isAutoCloseVoiceTransPop", true) //是否开启语音翻译弹窗自动关闭
 PersistentStorage.persistProp("fixedText", '') //输入固定文本
 PersistentStorage.persistProp("webUrlToOpen", '') //输入打开网页的具体网址
+PersistentStorage.persistProp("EnhancedBrowserSearch", 0) //输入打开网页的具体网址
 
 @Entry
 @Component
