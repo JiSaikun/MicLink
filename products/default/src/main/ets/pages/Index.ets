@@ -1,4 +1,4 @@
-import { LeftBar, Topbar, Content, Reset } from 'common'
+import { LeftBar, Topbar, Content, Reset, observeSystemLanguageChanges } from 'common'
 // import {Hid}from "usb_hid"
 // import { BlueTooth_api } from "bluetooth"
 import { inputDevice, KeyCode } from '@kit.InputKit';
@@ -12,6 +12,7 @@ import { globalShortcutService } from 'utils';
 
 
 PersistentStorage.persistProp("login", false)
+PersistentStorage.persistProp("table_data", []) //AI指令本地存储
 PersistentStorage.persistProp("KeymethodConfig", null) //按键设置方法执行记录
 PersistentStorage.persistProp("mouseconfig", null) //鼠标实时数据
 PersistentStorage.persistProp("getModelInfo", null) //获取用户按键模式详情
@@ -122,6 +123,7 @@ struct Index {
       } catch (e) {
         console.log(e)
       }
+      observeSystemLanguageChanges()
     } else {
       Float_Window.destroyWindow(Float_Window.window_hide)
     }
@@ -182,8 +184,6 @@ struct Index {
 
   }
 
-
-
   //锁定设备横屏，使得窗口不随屏幕旋转————平板适配：暂时不做处理
   fixWindowToLandscape() {
     //1.Get the window instance object, use the createWindow method to create a new window, and use the findWindow method to obtain an existing window
@@ -220,8 +220,8 @@ struct Index {
       console.error('Failed to set window orientation. Cause: ' + JSON.stringify(exception));
     }
   }
-
 }
+
 interface shortcutType {
   keyPreview: string
   pressedKeys: number[]

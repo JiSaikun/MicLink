@@ -118,7 +118,14 @@ export struct ConfigPage2 {
               if (fixedText.includes(value)) {
                 AppStorage.setOrCreate('isShowFixedText_pop', true)
               }
-              if (value === '打开网页') {
+              const webUrlToOpen = [
+                "Öffnen Sie die Webseite", "تور جايىلۋ", "打開網頁", "웹 페이지 열기", "Open web page", "فتح صفحة الويب",
+                "打开网页", "Abra la página web", "དྲ་ངོས་ཁ་ཕྱེ་།", "Apri una pagina web", "Open web page",
+                "Magbukas ng web page", "Buka halaman web", "تور بەتنى ئېچىش", "Web sayfasını açın", "Buka halaman web",
+                "mở trang web", "ᠰᠦᠯᠵᠢᠶᠡᠨ\u202fᠦ ᠬᠠᠭᠤᠳᠠᠰᠤ\u202fᠶᠢ ᠨᠡᠭᠡᠭᠡᠬᠦ", "Ouvrir la page Web", "Вэб хуудсыг нээх",
+                "เปิดหน้าเว็บ", "Webページを開く"
+              ];
+              if (webUrlToOpen.includes(value)) {
                 AppStorage.setOrCreate('isShow_webUrlToOpen_pop', true)
               }
 

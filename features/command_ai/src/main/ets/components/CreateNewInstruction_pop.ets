@@ -2,10 +2,10 @@ import { CommonConstants_pop } from "config"
 import CommonConstants from '../common/CommonConstants'
 import { tableDataModel } from './Command_Ai'
 // 拉起资源管理器
-import { picker } from '@kit.CoreFileKit'; // 导入文件选择器模块
-import { common, Want } from '@kit.AbilityKit'; // 导入Ability常用功能
-import { BusinessError } from '@kit.BasicServicesKit'; // 导入业务错误类型
-import { promptAction } from '@kit.ArkUI'; // 导入UI提示操作模块
+import { picker } from '@kit.CoreFileKit';
+import { common, Want } from '@kit.AbilityKit';
+import { BusinessError } from '@kit.BasicServicesKit';
+import { promptAction } from '@kit.ArkUI';
 
 interface response_interface {
   title: string
@@ -24,7 +24,6 @@ export struct CreateNewInstruction_pop {
     { value: '网址' },
     { value: '生成文本' },
     { value: '文件夹' },
-  // { value: '应用操作' }
   ]
   @State response_: response_interface[] = [
     {
@@ -59,26 +58,30 @@ export struct CreateNewInstruction_pop {
       showFolderPicker: true,
       showAppPicker: false
     },
-  // { title: '应用信息：', isShow: true, response_: '应用包名或操作', showFilePicker: false, showFolderPicker: false, showAppPicker: true }
   ]
   @State currentindex: number = 0
-  @Link isShow_CreateNewInstruction_pop: boolean // 创建指令弹窗
-  @Link isShow_EditInstruction_pop: boolean // 编辑指令弹窗
+  @Link isShow_CreateNewInstruction_pop: boolean
+  @Link isShow_EditInstruction_pop: boolean
   @StorageLink('table_data') table_data: tableDataModel[] = []
-  @Prop isParam: boolean = false // 判断是否是编辑弹窗
-  @Prop currIndexParam: number // 编辑弹窗时，展示编辑前信息元素
+  @Prop isParam: boolean = false
+  @Prop currIndexParam: number
   @State currtableDataModel_data: tableDataModel = {
-    category: '文件', // 指令类别
-    voice: '', // 语音指令
-    execute: '', // 执行目标
+    category: '文件',
+    voice: '',
+    execute: '',
   }
-  @State isLoading: boolean = false; // 加载状态标志，防止重复点击
+  @State isLoading: boolean = false;
 
   aboutToAppear(): void {
     if (this.isParam) {
-      this.currtableDataModel_data = this.table_data[this.currIndexParam]
-      // 设置当前索引基于类别
+      // 使用显式赋值而不是展开操作符
+      const originalData = this.table_data[this.currIndexParam];
+      this.currtableDataModel_data.category = originalData.category;
+      this.currtableDataModel_data.voice = originalData.voice;
+      this.currtableDataModel_data.execute = originalData.execute;
+
       this.currentindex = this.array.findIndex(item => item.value === this.currtableDataModel_data.category);
+      console.log('编辑模式初始化:', JSON.stringify(this.currtableDataModel_data));
     }
   }
 
@@ -91,12 +94,12 @@ export struct CreateNewInstruction_pop {
       const documentSelectOptions = new picker.DocumentSelectOptions();
       documentSelectOptions.maxSelectNumber = 1;
 
-      // 移除不兼容的fileType属性
       const context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext;
       const documentViewPicker = new picker.DocumentViewPicker(context);
 
       documentViewPicker.select(documentSelectOptions).then((result) => {
         if (result && result.length > 0) {
+          // 直接赋值而不是使用展开操作符
           this.currtableDataModel_data.execute = result[0];
           console.log('文件信息', JSON.stringify(this.currtableDataModel_data.execute));
           promptAction.showToast({ message: '文件选择成功', duration: 2000 });
@@ -114,40 +117,34 @@ export struct CreateNewInstruction_pop {
   }
 
   /**
-   * 选择文件夹：兼容旧版本API的实现方式
+   * 选择文件夹
    */
   private selectFolder(): void {
     this.isLoading = true;
     try {
-      // 提示用户选择文件夹中的任意文件，后续会提取文件夹路径
       promptAction.showToast({ message: '请选择目标文件夹中的任意一个文件', duration: 3000 });
 
-      // 配置文件选择参数（旧版本API不支持直接选择文件夹）
       const documentSelectOptions = new picker.DocumentSelectOptions();
       documentSelectOptions.maxSelectNumber = 1;
 
-      // 获取Ability上下文
       const context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext;
       const documentViewPicker = new picker.DocumentViewPicker(context);
 
-      // 调用系统文件选择器
       documentViewPicker.select(documentSelectOptions)
         .then((result: string[]) => {
-          // 处理选择结果
           if (!result || result.length === 0) {
             promptAction.showToast({ message: '未选择任何文件', duration: 2000 });
             return;
           }
 
-          // 从选择的文件路径中提取文件夹路径
           const filePath = result[0];
           const lastSlashIndex = filePath.lastIndexOf('/');
 
           if (lastSlashIndex !== -1) {
             const folderPath = filePath.substring(0, lastSlashIndex);
+            // 直接赋值而不是使用展开操作符
             this.currtableDataModel_data.execute = folderPath;
 
-            // 日志打印+用户提示
             console.log('提取的文件夹路径:', folderPath);
             const folderName = folderPath.substring(folderPath.lastIndexOf('/') + 1);
             promptAction.showToast({ message: `已选择文件夹: ${folderName}`, duration: 2500 });
@@ -156,7 +153,6 @@ export struct CreateNewInstruction_pop {
           }
         })
         .catch((err: BusinessError) => {
-          // 捕获错误
           const errorMsg = this.getFolderSelectErrorMsg(err.code);
           console.error('文件夹选择失败:', errorMsg, '错误码:', err.code);
           promptAction.showToast({ message: errorMsg, duration: 3000 });
@@ -177,11 +173,11 @@ export struct CreateNewInstruction_pop {
    */
   private getFolderSelectErrorMsg(errorCode: number): string {
     switch (errorCode) {
-      case 1001: // 权限不足
+      case 1001:
         return '需要文件访问权限，请在设置中开启';
-      case 1002: // 用户取消选择
+      case 1002:
         return '已取消文件夹选择';
-      case 1003: // 无文件夹访问权限
+      case 1003:
         return '无文件夹访问权限，请授权后重试';
       default:
         return `选择失败（错误码: ${errorCode}）`;
@@ -196,12 +192,9 @@ export struct CreateNewInstruction_pop {
     try {
       const context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext;
 
-      // 通过Want启动应用选择器
       const want: Want = {
         action: 'ohos.want.action.selectApp',
-        parameters: {
-          // 选择应用的参数
-        }
+        parameters: {}
       };
 
       context.startAbility(want).then(() => {
@@ -209,7 +202,8 @@ export struct CreateNewInstruction_pop {
       }).catch((err: BusinessError) => {
         console.error('启动应用选择器失败: ' + err.message);
         promptAction.showToast({ message: '暂不支持应用选择，请手动输入包名', duration: 3000 });
-        this.currtableDataModel_data.execute = 'com.example.app'; // 示例包名
+        // 直接赋值而不是使用展开操作符
+        this.currtableDataModel_data.execute = 'com.example.app';
       });
     } catch (err) {
       console.error('应用选择失败: ' + (err as BusinessError).message);
@@ -224,7 +218,7 @@ export struct CreateNewInstruction_pop {
    */
   private handlePickerClick(): void {
     if (this.isLoading) {
-      return; // 防止重复点击
+      return;
     }
 
     const currentResponse = this.response_[this.currentindex];
@@ -245,14 +239,14 @@ export struct CreateNewInstruction_pop {
     const currentResponse = this.response_[this.currentindex];
 
     if (currentResponse.showFilePicker) {
-      return $r('app.media.Frame_2093'); // 文件选择图标
+      return $r('app.media.Frame_2093');
     } else if (currentResponse.showFolderPicker) {
-      return $r('app.media.Frame_2093'); // 文件夹图标
+      return $r('app.media.Frame_2093');
     } else if (currentResponse.showAppPicker) {
-      return $r('app.media.Frame_2093'); // 应用图标
+      return $r('app.media.Frame_2093');
     }
 
-    return $r('app.media.Frame_2093'); // 默认图标
+    return $r('app.media.Frame_2093');
   }
 
   /**
@@ -270,8 +264,8 @@ export struct CreateNewInstruction_pop {
     }
 
     // 网址验证
-    if (this.currentindex === 1) { // 网址类别
-      const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w.-]*)*\/?$/i;
+    if (this.currentindex === 1) {
+      const urlRegex = /^(https?:\/\/)?[\w.-]+\.[a-z]{2,}.*$/i;
       if (!urlRegex.test(this.currtableDataModel_data.execute)) {
         promptAction.showToast({ message: '请输入有效的网址', duration: 2000 });
         return false;
@@ -289,19 +283,65 @@ export struct CreateNewInstruction_pop {
       return;
     }
 
+    // 创建新的 tableDataModel 对象而不是使用展开操作符
+    const newData: tableDataModel = {
+      category: this.currtableDataModel_data.category,
+      voice: this.currtableDataModel_data.voice,
+      execute: this.currtableDataModel_data.execute
+    };
+
     if (this.isParam) {
-      // 编辑模式：直接赋值对象
-      this.table_data[this.currIndexParam] = this.currtableDataModel_data;
-      console.log('编辑指令:', JSON.stringify(this.table_data[this.currIndexParam]));
+      // 编辑模式：创建新数组并更新指定位置
+      const updatedData: tableDataModel[] = [];
+      for (let i = 0; i < this.table_data.length; i++) {
+        if (i === this.currIndexParam) {
+          updatedData.push(newData);
+        } else {
+          updatedData.push(this.table_data[i]);
+        }
+      }
+      this.table_data = updatedData;
+      console.log('编辑指令完成:', JSON.stringify(newData));
       this.isShow_EditInstruction_pop = false;
     } else {
-      // 创建模式：直接推入对象
-      this.table_data.push(this.currtableDataModel_data);
-      console.log('创建指令:', JSON.stringify(this.table_data[this.table_data.length - 1]));
+      // 创建模式：创建新数组并添加新项
+      const updatedData: tableDataModel[] = [];
+      for (let i = 0; i < this.table_data.length; i++) {
+        updatedData.push(this.table_data[i]);
+      }
+      updatedData.push(newData);
+      this.table_data = updatedData;
+      console.log('创建指令完成:', JSON.stringify(newData));
       this.isShow_CreateNewInstruction_pop = false;
     }
 
     promptAction.showToast({ message: '保存成功', duration: 2000 });
+  }
+
+  /**
+   * 修改选择器选项变更处理
+   */
+  private onCategorySelect(index: number, value: string): void {
+    console.log('选择功能:', index, value);
+    this.currentindex = index;
+
+    // 直接赋值而不是使用展开操作符
+    this.currtableDataModel_data.category = value;
+    this.currtableDataModel_data.execute = ''; // 重置执行目标
+  }
+
+  /**
+   * 修改指令词输入处理
+   */
+  private onVoiceChange(value: string): void {
+    this.currtableDataModel_data.voice = value;
+  }
+
+  /**
+   * 修改执行目标输入处理
+   */
+  private onExecuteChange(value: string): void {
+    this.currtableDataModel_data.execute = value;
   }
 
   build() {
@@ -356,10 +396,7 @@ export struct CreateNewInstruction_pop {
               .border({ width: 1, color: $r('app.string.DEFAULT_BORDER_COLOR') })
               .backgroundColor(Color.White)
               .onSelect((index: number, value: string) => {
-                console.log('选择功能:', index, value);
-                this.currentindex = index;
-                this.currtableDataModel_data.category = value;
-                this.currtableDataModel_data.execute = ''; // 重置执行目标
+                this.onCategorySelect(index, value);
               })
           }
 
@@ -370,7 +407,7 @@ export struct CreateNewInstruction_pop {
               .fontColor(CommonConstants.COMMAND_DEFAULT_FONT_COLOR)
               .fontWeight(CommonConstants.CreateNewInstruction_pop_DEFAULT_FONT_WEIGHT)
 
-            TextInput({ placeholder: '输入触发文字', text: $$this.currtableDataModel_data.voice })
+            TextInput({ placeholder: '输入触发文字', text: this.currtableDataModel_data.voice })
               .placeholderColor('#bbbdbf')
               .borderRadius(0)
               .backgroundColor('#fff')
@@ -383,7 +420,7 @@ export struct CreateNewInstruction_pop {
               .borderRadius(4)
               .border({ width: 1, color: '#eaeaEa' })
               .onChange((value: string) => {
-                this.currtableDataModel_data.voice = value;
+                this.onVoiceChange(value);
               })
           }
           .margin({ top: 15, bottom: 15 })
@@ -397,7 +434,7 @@ export struct CreateNewInstruction_pop {
             Row() {
               TextInput({
                 placeholder: this.response_[this.currentindex].response_,
-                text: $$this.currtableDataModel_data.execute
+                text: this.currtableDataModel_data.execute
               })
                 .fontSize(CommonConstants.CreateNewInstruction_pop_DEFAULT_FONT_SIZE)
                 .placeholderColor('#bbbdbf')
@@ -408,11 +445,8 @@ export struct CreateNewInstruction_pop {
                 .fontWeight(CommonConstants.CreateNewInstruction_pop_DEFAULT_FONT_WEIGHT)
                 .layoutWeight(1)
                 .onChange((value: string) => {
-                  this.currtableDataModel_data.execute = value;
+                  this.onExecuteChange(value);
                 })
-                .focusable((!this.response_[this.currentindex].showFilePicker ||
-                this.response_[this.currentindex].showFolderPicker ||
-                this.response_[this.currentindex].showAppPicker))
 
               // 选择器按钮
               Image(this.getPickerIcon())

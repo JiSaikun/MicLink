@@ -30,27 +30,6 @@ export default class EntryAbility extends UIAbility {
       let uiContext = data.getUIContext(); // 获取 UIContext
       AppStorage.setOrCreate('uiContext', uiContext); // 存储到应用全局变量
     });
-    //
-    // let windowClass: window.Window = windowStage.getMainWindowSync(); // 获取应用主窗口
-    // // 1. 设置窗口全屏
-    // let isLayoutFullScreen = true;
-    // windowClass.setWindowLayoutFullScreen(isLayoutFullScreen).then(() => {
-    //   console.info('Succeeded in setting the window layout to full-screen mode.');
-    // }).catch((err: BusinessError) => {
-    //   console.error(`Failed to set the window layout to full-screen mode. Code is ${err.code}, message is ${err.message}`);
-    // });
-    // // 2. 设置状态栏隐藏
-    // windowClass.setSpecificSystemBarEnabled('status', false).then(() => {
-    //   console.info('Succeeded in setting the status bar to be invisible.');
-    // }).catch((err: BusinessError) => {
-    //   console.error(`Failed to set the status bar to be invisible. Code is ${err.code}, message is ${err.message}`);
-    // });
-    // // 2. 设置导航区域隐藏
-    // windowClass.setSpecificSystemBarEnabled('navigationIndicator', false).then(() => {
-    //   console.info('Succeeded in setting the navigation indicator to be invisible.');
-    // }).catch((err: BusinessError) => {
-    //   console.error(`Failed to set the navigation indicator to be invisible. Code is ${err.code}, message is ${err.message}`);
-    // });
   }
 
   onWindowStageDestroy(): void {

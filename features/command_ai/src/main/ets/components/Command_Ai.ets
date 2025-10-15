@@ -3,10 +3,6 @@ import CommonConstants from '../common/CommonConstants'
 import { CommonConstants_pop } from "config"
 import { App, SymbolGlyphModifier } from '@kit.ArkUI';
 
-/**
- * AI指令本地存储
- */
-PersistentStorage.persistProp("table_data", [])
 
 @Styles
 function flexGS() {
