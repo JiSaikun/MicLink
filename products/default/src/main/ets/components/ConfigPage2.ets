@@ -47,7 +47,7 @@ export struct ConfigPage2 {
       if (childs[i].first === 1) {
         if (!AppStorage.get('KeymethodConfig')) {
           AppStorage.setOrCreate('KeymethodConfig', [
-            { key: KeyPressType.VOICE_CLICK, currIndex: 0 }, { key: KeyPressType.VOICE_LONG_PRESS_DOWN, currIndex: 0 },
+            { key: KeyPressType.VOICE_CLICK, currIndex: 0 }, { key: KeyPressType.VOICE_LONG_PRESS_DOWN, currIndex: 1 },
             { key: KeyPressType.SEARCH_CLICK, currIndex: 0 },
             { key: KeyPressType.SEARCH_LONG_PRESS_DOWN, currIndex: 0 },
             { key: KeyPressType.TRANSLATE_CLICK, currIndex: 0 },
@@ -118,7 +118,7 @@ export struct ConfigPage2 {
               if (fixedText.includes(value)) {
                 AppStorage.setOrCreate('isShowFixedText_pop', true)
               }
-              if (value==='打开网页') {
+              if (value === '打开网页') {
                 AppStorage.setOrCreate('isShow_webUrlToOpen_pop', true)
               }
 

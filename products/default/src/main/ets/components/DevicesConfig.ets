@@ -1,4 +1,4 @@
-import { Communication, DeviceInfo } from 'mouse'
+import { Communication, DeviceInfo, KeyPressType } from 'mouse'
 import { ConfigPage1 } from './ConfigPage1'
 import { ConfigPage2 } from './ConfigPage2'
 import { ConfigPage3 } from './ConfigPage3'
@@ -57,17 +57,25 @@ export struct DevicesConfig {
           })
           .margin({ bottom: 20 })
           .onClick(() => {
-            try {
-              Communication.getDeviceInfo([0x6f])
-              if (this.currIndex === 2) {
-                setTimeout(() => {
-                  this.data_init()
-                  this.currIndex = 11111
-                  this.currIndex = 2
-                }, 20000)
-              }
-            } catch (e) {
-            }
+            // try {
+            //   Communication.getDeviceInfo([0x6f])
+            //   if (this.currIndex === 2) {
+            //     setTimeout(() => {
+            //       this.data_init()
+            //       this.currIndex = 11111
+            //       this.currIndex = 2
+            //     }, 20000)
+            //   }
+            // } catch (e) {
+            // }
+            AppStorage.setOrCreate('KeymethodConfig', [
+              { key: KeyPressType.VOICE_CLICK, currIndex: 0 }, { key: KeyPressType.VOICE_LONG_PRESS_DOWN, currIndex: 0 },
+              { key: KeyPressType.SEARCH_CLICK, currIndex: 0 },
+              { key: KeyPressType.SEARCH_LONG_PRESS_DOWN, currIndex: 0 },
+              { key: KeyPressType.TRANSLATE_CLICK, currIndex: 0 },
+              { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
+              { key: KeyPressType.AI_CLICK, currIndex: 0 }, { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
+            ])
           })
         Row() {
           Text(Languages.firmwareVersion[this.languages])
