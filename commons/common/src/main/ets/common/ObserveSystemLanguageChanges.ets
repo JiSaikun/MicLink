@@ -1,7 +1,10 @@
+/**
+ *获取以及监听系统语言的改变
+ */
 import { i18n } from "@kit.LocalizationKit";
 import { BusinessError, commonEventManager } from "@kit.BasicServicesKit";
 
-export function observeSystemLanguageChanges(){
+export function observeSystemLanguageChanges() {
   // 获取系统语言
   let systemLanguage: string = i18n.System.getSystemLanguage();
   console.log('系统语言：', systemLanguage)
@@ -45,5 +48,6 @@ export function observeSystemLanguageChanges(){
         }
       });
     })
-    .catch((err: BusinessError) => {});
+    .catch((err: BusinessError) => {
+    });
 }
