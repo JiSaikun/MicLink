@@ -92,157 +92,163 @@ export class AudioWebSocketHandler {
 
 
   public connect(): void {
-    let voiceInputText = AppStorage.get('voiceInputText') as string
-    console.log('*************************进入webSocket连接************************', typeof this.ws)
-    if (this.ws) {
-      this.disconnect();
-    }
+    try {
 
-    this.ws = webSocket.createWebSocket();
-
-    this.ws.on('open', (err: BusinessError, value: Object) => {
-      if (!err) {
-        this.isConnected = true;
-        console.log("连接已打开，状态:" + JSON.stringify(value));
-        console.log('*******************************语音数据长度：', this.audioData.length)
-        this.sendAudioData(this.audioData)
-      } else {
-        console.error("连接错误:" + JSON.stringify(err));
+      let voiceInputText = AppStorage.get('voiceInputText') as string
+      console.log('*************************进入webSocket连接************************', typeof this.ws)
+      if (this.ws) {
+        this.disconnect();
       }
-    });
 
-    this.ws.on('message', (err: BusinessError, value: string | ArrayBuffer) => {
-      if (!err) {
-        let message: string;
-        if (typeof value === 'string') {
-          message = value;
+      this.ws = webSocket.createWebSocket();
+
+      this.ws.on('open', (err: BusinessError, value: Object) => {
+        if (!err) {
+          this.isConnected = true;
+          console.log("连接已打开，状态:" + JSON.stringify(value));
+          console.log('*******************************语音数据长度：', this.audioData.length)
+          this.sendAudioData(this.audioData)
         } else {
-          message = this.arrayBufferToString(value);
+          console.error("连接错误:" + JSON.stringify(err));
         }
-        console.log("收到消息，内容:" + message);
-        let res: res_moudel = JSON.parse(message)
-        if (res.status === 200 && this.state === 0) {
-          if (AppStorage.get('isAI_assistant')) {
-            if (res.data.type === 'LAST' || res.data.type === "FIN") {
+      });
+
+      this.ws.on('message', (err: BusinessError, value: string | ArrayBuffer) => {
+        if (!err) {
+          let message: string;
+          if (typeof value === 'string') {
+            message = value;
+          } else {
+            message = this.arrayBufferToString(value);
+          }
+          console.log("收到消息，内容:" + message);
+          let res: res_moudel = JSON.parse(message)
+          if (res.status === 200 && this.state === 0) {
+            if (AppStorage.get('isAI_assistant')) {
+              if (res.data.type === 'LAST' || res.data.type === "FIN") {
+                AppStorage.setOrCreate('voiceInputText', res.data.text)
+                return
+              }
+            } else {
               AppStorage.setOrCreate('voiceInputText', res.data.text)
-              return
             }
-          }else {
-            AppStorage.setOrCreate('voiceInputText', res.data.text)
+            // console.error(JSON.stringify(AppStorage.get('voiceInputText')) + '33333333333333333333333333333333333')
           }
-          // console.error(JSON.stringify(AppStorage.get('voiceInputText')) + '33333333333333333333333333333333333')
-        }
-        if (res.status === 200 && (res.data.type === 'LAST' || res.data.type === "FIN")) {
-          // AppStorage.setOrCreate('audioToText_res', res.data.text)
-          let audioToText_res: string = res.data.text
-          if (!audioToText_res) {
-            return;
-          }
-          try {
-            const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, audioToText_res);
-            let systemPasteboard: pasteboard.SystemPasteboard = pasteboard.getSystemPasteboard(); //获取系统剪贴板对象。
-            // systemPasteboard.setAppShareOptions(pasteboard.ShareOption.INAPP);
-            systemPasteboard.setData(pasteData)
-              .then(() => {
-                console.info('文本已复制到剪贴板: ' + audioToText_res);
-                let atManager = abilityAccessCtrl.createAtManager();
-                try {
-                  atManager.requestPermissionsFromUser(AppStorage.get('context'), ['ohos.permission.READ_PASTEBOARD'])
-                } catch (err) {
-                  console.error(`权限申请失败: ${err.code}, ${err.message}`);
-                }
-                systemPasteboard.getData().then((pasteData: pasteboard.PasteData) => {
-                  console.error(JSON.stringify(pasteData.getRecordCount()))
-                  let text: string = pasteData.getPrimaryText();
-                  // console.log('111111111111111', text, this.state)
-                  if (this.state === 0) { //:语音输入
-                    Communication.getDeviceInfo([0x20, 0x01, 0x19])
-                      .then(() => {
-                        setTimeout(() => {
-                          systemPasteboard.clearData() //清空剪贴板
-                        }, 2000)
-                      })
+          if (res.status === 200 && (res.data.type === 'LAST' || res.data.type === "FIN")) {
+            // AppStorage.setOrCreate('audioToText_res', res.data.text)
+            let audioToText_res: string = res.data.text
+            if (!audioToText_res) {
+              return;
+            }
+            try {
+              const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, audioToText_res);
+              let systemPasteboard: pasteboard.SystemPasteboard = pasteboard.getSystemPasteboard(); //获取系统剪贴板对象。
+              // systemPasteboard.setAppShareOptions(pasteboard.ShareOption.INAPP);
+              systemPasteboard.setData(pasteData)
+                .then(() => {
+                  console.info('文本已复制到剪贴板: ' + audioToText_res);
+                  let atManager = abilityAccessCtrl.createAtManager();
+                  try {
+                    atManager.requestPermissionsFromUser(AppStorage.get('context'), ['ohos.permission.READ_PASTEBOARD'])
+                  } catch (err) {
+                    console.error(`权限申请失败: ${err.code}, ${err.message}`);
                   }
-                  if (this.state === 1) { //语音翻译
-                    let params: translate_Params = {
-                      appkey: (AppStorage.get('getModelInfo') as getModelInfoModel).appkey, //获取用户按键模式详情中得到
-                      from: AppStorage.get('from_languages') ? AppStorage.get('from_languages') as string :
-                        'ZH_CN', //源语言___后面配置
-                      productCode: Communication.deviceInfo.productType.toString(), //产品编码
-                      sno: Communication.deviceInfo.sn, //设备号
-                      text: text, //翻译内容
-                      to: AppStorage.get('to_languages') ? AppStorage.get('to_languages') as string :
-                        'EN_US' //翻译语言___后面配置
+                  systemPasteboard.getData().then((pasteData: pasteboard.PasteData) => {
+                    console.error(JSON.stringify(pasteData.getRecordCount()))
+                    let text: string = pasteData.getPrimaryText();
+                    // console.log('111111111111111', text, this.state)
+                    if (this.state === 0) { //:语音输入
+                      Communication.getDeviceInfo([0x20, 0x01, 0x19])
+                        .then(() => {
+                          setTimeout(() => {
+                            systemPasteboard.clearData() //清空剪贴板
+                          }, 2000)
+                        })
                     }
-                    _translate(params).then((res) => {
-                      console.log('翻译请求成功————翻译结果：' + res.data?.transText)
-                      if (res.data) {
-                        let dataArray = AppStorage.get('voiceTranslationText') as translate_Response[]
-                        let data: translate_Response = {
-                          transText: res.data?.transText as string,
-                          text: res.data?.text as string,
-                          index: dataArray.length
-                        }
-                        dataArray.push(data)
-                        AppStorage.setOrCreate('voiceTranslationText', dataArray)
-                        // const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, res.data?.transText);
-                        // systemPasteboard.setData(pasteData).then(() => {
-                        //   Communication.getDeviceInfo([0x20, 0x01, 0x19])
-                        //     .then(() => {
-                        systemPasteboard.clearData() //清空剪贴板
-                        //     })
-                        // })
-                      }else{
-                        AppStorage.setOrCreate('flax_yuyinfanyi_chachaobudaoyuyan',!AppStorage.get('flax_yuyinfanyi_chachaobudaoyuyan'))
+                    if (this.state === 1) { //语音翻译
+                      let params: translate_Params = {
+                        appkey: (AppStorage.get('getModelInfo') as getModelInfoModel).appkey, //获取用户按键模式详情中得到
+                        from: AppStorage.get('from_languages') ? AppStorage.get('from_languages') as string :
+                          'ZH_CN', //源语言___后面配置
+                        productCode: Communication.deviceInfo.productType.toString(), //产品编码
+                        sno: Communication.deviceInfo.sn, //设备号
+                        text: text, //翻译内容
+                        to: AppStorage.get('to_languages') ? AppStorage.get('to_languages') as string :
+                          'EN_US' //翻译语言___后面配置
                       }
+                      _translate(params).then((res) => {
+                        console.log('翻译请求成功————翻译结果：' + res.data?.transText)
+                        if (res.data) {
+                          let dataArray = AppStorage.get('voiceTranslationText') as translate_Response[]
+                          let data: translate_Response = {
+                            transText: res.data?.transText as string,
+                            text: res.data?.text as string,
+                            index: dataArray.length
+                          }
+                          dataArray.push(data)
+                          AppStorage.setOrCreate('voiceTranslationText', dataArray)
+                          // const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, res.data?.transText);
+                          // systemPasteboard.setData(pasteData).then(() => {
+                          //   Communication.getDeviceInfo([0x20, 0x01, 0x19])
+                          //     .then(() => {
+                          systemPasteboard.clearData() //清空剪贴板
+                          //     })
+                          // })
+                        } else {
+                          AppStorage.setOrCreate('flax_yuyinfanyi_chachaobudaoyuyan',
+                            !AppStorage.get('flax_yuyinfanyi_chachaobudaoyuyan'))
+                        }
 
-                    })
+                      })
+                    }
+                    // setTimeout(() => { //移除一条条目
+                    //   pasteData.removeRecord(0)
+                    //   // let isRemove: boolean = pasteData.removeRecordAt(0);
+                    //   // console.error(JSON.stringify(isRemove))
+                    // }, 10)
                   }
-                  // setTimeout(() => { //移除一条条目
-                  //   pasteData.removeRecord(0)
-                  //   // let isRemove: boolean = pasteData.removeRecordAt(0);
-                  //   // console.error(JSON.stringify(isRemove))
-                  // }, 10)
-                }
-                )
-                  .catch((err: BusinessError) => {
-                    console.error('Failed to get PasteData. Cause: ' + err.message);
-                  });
-              })
-              .catch((err: BusinessError) => {
-                console.error('复制失败: ' + err.message);
-              });
-          } catch (error) {
-            console.error('复制操作异常: ' + error.message);
+                  )
+                    .catch((err: BusinessError) => {
+                      console.error('Failed to get PasteData. Cause: ' + err.message);
+                    });
+                })
+                .catch((err: BusinessError) => {
+                  console.error('复制失败: ' + err.message);
+                });
+            } catch (error) {
+              console.error('复制操作异常: ' + error.message);
+            }
+
+          } else {
+            console.error('响应异常')
           }
-
         } else {
-          console.error('响应异常')
+          console.error("消息错误:" + JSON.stringify(err));
         }
-      } else {
-        console.error("消息错误:" + JSON.stringify(err));
       }
+      )
+      ;
+
+      this.ws.on('close', (err: BusinessError, value: webSocket.CloseResult) => {
+        this.isConnected = false;
+        console.log(`连接已关闭，状态码: ${value.code}, 原因: ${value.reason}`);
+      });
+
+      this.ws.on('error', (err: BusinessError) => {
+        console.error("发生错误: " + err.message);
+      });
+
+      console.warn('正在连接到服务器...')
+      this.ws.connect(this.serverUrl, (err: BusinessError, value: boolean) => {
+        if (!err) {
+          console.warn("连接成功");
+        } else {
+          console.error("连接失败。错误信息:" + err.message);
+        }
+      });
+    } catch (e) {
+
     }
-    )
-    ;
-
-    this.ws.on('close', (err: BusinessError, value: webSocket.CloseResult) => {
-      this.isConnected = false;
-      console.log(`连接已关闭，状态码: ${value.code}, 原因: ${value.reason}`);
-    });
-
-    this.ws.on('error', (err: BusinessError) => {
-      console.error("发生错误: " + err.message);
-    });
-
-    console.warn('正在连接到服务器...')
-    this.ws.connect(this.serverUrl, (err: BusinessError, value: boolean) => {
-      if (!err) {
-        console.warn("连接成功");
-      } else {
-        console.error("连接失败。错误信息:" + err.message);
-      }
-    });
   }
 
   public disconnect(): void {
@@ -274,16 +280,21 @@ export class AudioWebSocketHandler {
       console.error("消息不能为空")
       return false;
     }
+    try {
+      this.ws.send(JSON.stringify(inputMessage), (err: BusinessError, value: boolean) => {
+        if (err) {
+          console.error("消息发送失败: " + err.message);
+        } else {
+          // console.error("消息发送成功~~~")
+        }
+      });
 
-    this.ws.send(JSON.stringify(inputMessage), (err: BusinessError, value: boolean) => {
-      if (err) {
-        console.error("消息发送失败: " + err.message);
-      } else {
-        // console.error("消息发送成功~~~")
-      }
-    });
+      return true;
+    } catch (e) {
+      console.error("未知错误：", e)
+      return false;
+    }
 
-    return true;
   }
 
   private arrayBufferToString(buffer: ArrayBuffer): string {

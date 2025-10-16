@@ -54,12 +54,36 @@ export struct ConfigPage2 {
             { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
             { key: KeyPressType.AI_CLICK, currIndex: 0 }, { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
           ])
-          this.KeymethodConfig[index1 * 2+index2].currIndex = i
           // console.log('*/*/*/*/*', JSON.stringify(AppStorage.get('KeymethodConfig')))
           AppStorage.setOrCreate('KeymethodConfig', this.KeymethodConfig)
           return i;
         }
-        return this.KeymethodConfig[index1 * 2+index2].currIndex
+        switch (this.getModelInfo.keyInfos[index1].names['ZH_CN']) {
+          case '语音键':
+            if (index2) {
+              return this.KeymethodConfig[1].currIndex
+            } else {
+              return this.KeymethodConfig[0].currIndex
+            }
+          case '搜索键':
+            if (index2) {
+              return this.KeymethodConfig[3].currIndex
+            } else {
+              return this.KeymethodConfig[2].currIndex
+            }
+          case '翻译键':
+            if (index2) {
+              return this.KeymethodConfig[5].currIndex
+            } else {
+              return this.KeymethodConfig[4].currIndex
+            }
+          case 'AI键':
+            if (index2) {
+              return this.KeymethodConfig[7].currIndex
+            } else {
+              return this.KeymethodConfig[6].currIndex
+            }
+        }
       }
     }
     return 0; // 无默认项时选中第一个
@@ -94,8 +118,41 @@ export struct ConfigPage2 {
               this.getModelInfo.keyInfos[index1].childs[index2].childs[this.getDefaultSelectedIndex(item.childs || [],
                 index1, index2)].first = 0
               this.getModelInfo.keyInfos[index1].childs[index2].childs[index].first = 1
-              this.KeymethodConfig[index1 * 2+index2].currIndex = index
+              // this.KeymethodConfig[index1 * 2+index2].currIndex = index
+              console.error('11', this.getModelInfo.keyInfos[index1].names['ZH_CN'], index2, index)
+              switch (this.getModelInfo.keyInfos[index1].names['ZH_CN']) {
+                case '语音键':
+                  if (index2) {
+                    this.KeymethodConfig[1].currIndex = index
+                  } else {
+                    this.KeymethodConfig[0].currIndex = index
+                  }
+                  break
+                case '搜索键':
+                  if (index2) {
+                    this.KeymethodConfig[3].currIndex = index
+                  } else {
+                    this.KeymethodConfig[2].currIndex = index
+                  }
+                  break
+                case '翻译键':
+                  if (index2) {
+                    this.KeymethodConfig[5].currIndex = index
+                  } else {
+                    this.KeymethodConfig[4].currIndex = index
+                  }
+                  break
+                case 'AI键':
+                  if (index2) {
+                    this.KeymethodConfig[7].currIndex = index
+                  } else {
+                    this.KeymethodConfig[6].currIndex = index
+                  }
+                  break
+              }
+              // console.log('*/*/*/*/*', JSON.stringify(AppStorage.get('KeymethodConfig')))
               AppStorage.setOrCreate('KeymethodConfig', this.KeymethodConfig)
+              console.log('*/*/*/*/*', JSON.stringify(AppStorage.get('KeymethodConfig')))
 
               const shortcutKeywords = [
                 '快捷按键', 'Tasten für Verknüpfungen', "كنوپكا", "快捷按鍵", "단축키",

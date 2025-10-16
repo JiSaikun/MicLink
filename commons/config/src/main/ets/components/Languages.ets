@@ -660,6 +660,7 @@ export class Languages {
    * 快捷键设置弹窗
    * 固定文本设置弹窗
    * 打开网页设置弹窗
+   * AI指令
    */
   // static readonly modelNumber: LanguageNames = {
   //   "DE_DE": "",

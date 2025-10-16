@@ -792,11 +792,11 @@ export class Communication {
           // console.log('请求失败')
         })
       }
-      // else {
+      else {
       // console.error('551215451564564121', JSON.stringify(AppStorage.get('getModelInfo')))
-      // }
-      if (Communication.flax_yuyin) {
-        Communication.getDeviceInfo([0x63])
+        if (Communication.flax_yuyin) {
+          Communication.getDeviceInfo([0x63])
+        }
       }
 
     }

@@ -14,8 +14,8 @@ import { globalShortcutService } from 'utils';
 PersistentStorage.persistProp("login", false)
 PersistentStorage.persistProp("table_data", []) //AI指令本地存储
 PersistentStorage.persistProp("KeymethodConfig", null) //按键设置方法执行记录
-PersistentStorage.persistProp("mouseconfig", null) //鼠标实时数据
-PersistentStorage.persistProp("getModelInfo", null) //获取用户按键模式详情
+// PersistentStorage.persistProp("mouseconfig", null) //鼠标实时数据
+// PersistentStorage.persistProp("getModelInfo", null) //获取用户按键模式详情
 PersistentStorage.persistProp("languages", 'ZH_CN') //用户语言
 PersistentStorage.persistProp("speech_Recognition_languages", 'ZH_CN') //语音识别语言
 PersistentStorage.persistProp("from_languages", 'ZH_CN') //语音翻译源语言
