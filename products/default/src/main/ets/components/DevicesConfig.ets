@@ -149,7 +149,7 @@ export struct DevicesConfig {
           Column() {
             ConfigPage1()
               .visibility(this.currIndex === 0 ? Visibility.Visible : Visibility.None)
-            ConfigPage2()
+            ConfigPage2({isShowConfig:this.isShowConfig})
               .visibility(this.currIndex === 1 ? Visibility.Visible : Visibility.None)
             if (this.currIndex === 2) {
               ConfigPage3({

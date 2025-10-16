@@ -112,7 +112,7 @@ struct VoiceTranslation {
       .width('100%')
 
       Column() {
-        if (this.voiceTranslationState){
+        if (this.voiceTranslationState&&this.voiceOrText){
           TextArea( {text:'请讲话'})
             .width('100%')
             .textAlign(TextAlign.Start)

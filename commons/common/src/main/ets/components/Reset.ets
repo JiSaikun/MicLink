@@ -1,7 +1,34 @@
+import {Communication}from'mouse'
 export function Reset(){
+  // (AppStorage.get('pageInfo') as NavPathStack).clear()
+  Communication.deviceInfo.sn=''
   AppStorage.setOrCreate("KeymethodConfig", null) //按键设置方法执行记录
   AppStorage.setOrCreate("mouseconfig", null) //鼠标实时数据
-  AppStorage.setOrCreate("getModelInfo", null) //获取用户按键模式详情
+  AppStorage.setOrCreate("getModelInfo", {
+    id: 0,
+    productId: 0,
+    productModelId: 0,
+    type: '',
+    name: null,
+    memberId: null,
+    sno: '',
+    first: '',
+    lastUpdatedDate: 0,
+    keyInfos: [],
+    appkey: '',
+    languages: [],
+    transLanguages: [],
+    ttsLanguages: [],
+    regionregion: '',
+    cmds: [],
+    xfocr: null,
+    images: [],
+    functions: [],
+    lives: '',
+    chatIeUrl: '',
+    chatChromeUrl: '',
+    pLevel: ''
+  }) //获取用户按键模式详情
   AppStorage.setOrCreate("languages", 'ZH_CN') //用户语言
   AppStorage.setOrCreate("speech_Recognition_languages", 'ZH_CN') //语音识别语言
   AppStorage.setOrCreate("from_languages", 'ZH_CN') //语音翻译源语言

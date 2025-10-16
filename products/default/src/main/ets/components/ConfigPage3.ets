@@ -1,6 +1,6 @@
 import { Communication, DeviceInfo, MouseICType } from 'mouse'
 import { LengthMetrics } from '@kit.ArkUI'
-import { Languages } from 'config'
+import { getModelInfoModel, Languages } from 'config'
 
 PersistentStorage.persistProp("lowPowerAlertEnabled", true)
 PersistentStorage.persistProp("DPI_currInfo", null)
@@ -18,6 +18,8 @@ export struct ConfigPage3 {
   @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null //鼠标信息
   @StorageLink("DPI_currInfo") DPI_currInfo: DPI_currInfoModel | null = null //鼠标信息
   @StorageLink("lowPowerAlertEnabled") lowPowerAlertEnabled: boolean = true //是否开启低电量提醒
+  @StorageLink('getModelInfo') getModelInfo: getModelInfoModel =
+    AppStorage.get('getModelInfo') as getModelInfoModel
   @StorageLink('languages') languages: string = 'ZH_CN'
   @State reportRate: SelectOption[] = [{ value: '125' }, { value: '250' }, { value: '500' }, { value: '1000' }]
   @State DPI: SelectOption[] =
@@ -37,7 +39,7 @@ export struct ConfigPage3 {
 
   change_DPI() {
     setTimeout(() => {
-      Communication.getDeviceInfo([0x68, this.DPI_currIndex+1]).then(() => {
+      Communication.getDeviceInfo([0x68, this.DPI_currIndex + 1]).then(() => {
         (this.mouseconfig as DeviceInfo).dpiLevel = this.DPI_currIndex
         AppStorage.setOrCreate("mouseconfig", Communication.deviceInfo);
       })
@@ -60,6 +62,18 @@ export struct ConfigPage3 {
     }, 50)
   }
 
+  isShow(name: string): boolean {
+    if (this.getModelInfo.functions.length === 0) {
+      return true
+    }
+    for (let item of this.getModelInfo.functions) {
+      if (item.name === name) {
+        return true
+      }
+    }
+    return false
+  }
+
   build() {
     Flex({ space: { main: LengthMetrics.px(15) }, direction: FlexDirection.Column }) {
       Text(Languages.deviceSetup[this.languages])
@@ -68,92 +82,98 @@ export struct ConfigPage3 {
         .fontWeight(400)
         .fontColor('#a4aab2')
         .margin({ bottom: 20 })
-      Text("DPI")
-        .fontSize($r('app.float.default_text_font_size_14'))
-        .fontWeight(400)
-        .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-      Select(this.DPI)
-        .value(this.DPI[this.DPI_currInfo ? this.DPI_currInfo?.curr : this.DPI_currIndex].value)
-        .onSelect((index: number) => {
-          this.DPI_currIndex = index
-        })
-        .selected(this.DPI_currInfo ? this.DPI_currInfo?.curr : this.DPI_currIndex)
-        .width('100%')
-        .font({ size: $r('app.float.default_text_font_size_14'), weight: 400 })
-        .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-        .borderRadius(4)
-        .border({ width: 1, color: $r('app.string.DEFAULT_BORDER_COLOR') })
-        .backgroundColor(Color.White)
-      // Select()
-      Text(Languages.return[this.languages])
-        .fontSize($r('app.float.default_text_font_size_14'))
-        .fontWeight(400)
-        .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-      Select(this.reportRate)
-        .value(this.reportRate[this.reportRate_currIndex].value)
-        .onSelect((index: number) => {
-          this.reportRate_currIndex = index
-        })
-        .selected(this.reportRate_currIndex)
-        .width('100%')
-        .font({ size: $r('app.float.default_text_font_size_14'), weight: 400 })
-        .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-        .borderRadius(4)
-        .border({ width: 1, color: $r('app.string.DEFAULT_BORDER_COLOR') })
-        .backgroundColor(Color.White)
-
-      Row() {
-        Text(Languages.lighting[this.languages])
+      if (this.isShow('DPI')) {
+        Text("DPI")
           .fontSize($r('app.float.default_text_font_size_14'))
           .fontWeight(400)
           .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-        Blank()
-        Row() {
-          Radio({
-            value: 'Radio2', group: 'radioGroup',
-            indicatorType: RadioIndicatorType.DOT
-          }).checked(this.currLED)
-            .height(14)
-            .width(14)
-            .onChange((isChecked: boolean) => {
-              if (isChecked) {
-                console.log('*****************************打开氛围灯****************************************')
-                this.currLED = true
-              }
-            })
-          Text(Languages.on_common[this.languages])
-            .fontSize($r('app.float.default_text_font_size_14'))
-            .fontWeight(400)
-            .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-        }
-        .onClick(() => {
-          this.currLED = true
-        })
-
-        Row() {
-          Radio({
-            value: 'Radio2', group: 'radioGroup',
-            indicatorType: RadioIndicatorType.DOT
-          }).checked(!this.currLED)
-            .height(14)
-            .width(14)
-            .onChange((isChecked: boolean) => {
-              if (isChecked) {
-                console.log('*****************************关闭氛围灯****************************************')
-                this.currLED = false
-
-              }
-            })
-          Text(Languages.off_common[this.languages])
-            .fontSize($r('app.float.default_text_font_size_14'))
-            .fontWeight(400)
-            .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-        }
-        .onClick(() => {
-          this.currLED = false
-        })
+        Select(this.DPI)
+          .value(this.DPI[this.DPI_currInfo ? this.DPI_currInfo?.curr : this.DPI_currIndex].value)
+          .onSelect((index: number) => {
+            this.DPI_currIndex = index
+          })
+          .selected(this.DPI_currInfo ? this.DPI_currInfo?.curr : this.DPI_currIndex)
+          .width('100%')
+          .font({ size: $r('app.float.default_text_font_size_14'), weight: 400 })
+          .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
+          .borderRadius(4)
+          .border({ width: 1, color: $r('app.string.DEFAULT_BORDER_COLOR') })
+          .backgroundColor(Color.White)
       }
-      .width('100%')
+
+      if (this.isShow('ReportRate')) {
+        Text(Languages.return[this.languages])
+          .fontSize($r('app.float.default_text_font_size_14'))
+          .fontWeight(400)
+          .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
+        Select(this.reportRate)
+          .value(this.reportRate[this.reportRate_currIndex].value)
+          .onSelect((index: number) => {
+            this.reportRate_currIndex = index
+          })
+          .selected(this.reportRate_currIndex)
+          .width('100%')
+          .font({ size: $r('app.float.default_text_font_size_14'), weight: 400 })
+          .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
+          .borderRadius(4)
+          .border({ width: 1, color: $r('app.string.DEFAULT_BORDER_COLOR') })
+          .backgroundColor(Color.White)
+
+      }
+      if (this.isShow("AmbientLightSwitch")) {
+        Row() {
+          Text(Languages.lighting[this.languages])
+            .fontSize($r('app.float.default_text_font_size_14'))
+            .fontWeight(400)
+            .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
+          Blank()
+          Row() {
+            Radio({
+              value: 'Radio2', group: 'radioGroup',
+              indicatorType: RadioIndicatorType.DOT
+            }).checked(this.currLED)
+              .height(14)
+              .width(14)
+              .onChange((isChecked: boolean) => {
+                if (isChecked) {
+                  console.log('*****************************打开氛围灯****************************************')
+                  this.currLED = true
+                }
+              })
+            Text(Languages.on_common[this.languages])
+              .fontSize($r('app.float.default_text_font_size_14'))
+              .fontWeight(400)
+              .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
+          }
+          .onClick(() => {
+            this.currLED = true
+          })
+
+          Row() {
+            Radio({
+              value: 'Radio2', group: 'radioGroup',
+              indicatorType: RadioIndicatorType.DOT
+            }).checked(!this.currLED)
+              .height(14)
+              .width(14)
+              .onChange((isChecked: boolean) => {
+                if (isChecked) {
+                  console.log('*****************************关闭氛围灯****************************************')
+                  this.currLED = false
+
+                }
+              })
+            Text(Languages.off_common[this.languages])
+              .fontSize($r('app.float.default_text_font_size_14'))
+              .fontWeight(400)
+              .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
+          }
+          .onClick(() => {
+            this.currLED = false
+          })
+        }
+        .width('100%')
+      }
 
       Row() {
         Text(Languages.battery_Low_Warning[this.languages])
@@ -289,7 +309,8 @@ export struct ConfigPage3 {
         this.reportRate_currIndex = 3
         break
     }
-    this.DPI_currIndex = AppStorage.get('DPI_currInfo')?(AppStorage.get('DPI_currInfo')as DPI_currInfoModel).curr:this.mouseconfig?.dpiLevel as number -1
+    this.DPI_currIndex = AppStorage.get('DPI_currInfo') ? (AppStorage.get('DPI_currInfo') as DPI_currInfoModel).curr :
+      this.mouseconfig?.dpiLevel as number - 1
     this.currLED = this.mouseconfig?.atmosphereLight as boolean
 
     let currDPI_Info: DPI_currInfoModel = {
@@ -300,5 +321,4 @@ export struct ConfigPage3 {
     // console.error(JSON.stringify(currDPI_Info), '00000000000000000000000000000000000000000000000000')
 
   }
-
 }
