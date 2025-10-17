@@ -89,12 +89,8 @@ export class AudioWebSocketHandler {
     this.audioData = audioData;
     this.state = state;
     this.inputMessage = inputMessage;
-    AppStorage.setOrCreate('voiceInputText', '')
-    AppStorage.setOrCreate('voiceTranslationText', {
-      transText: '',
-      text: ''
-    })
-    this.wending = false
+    AppStorage.setOrCreate('voiceInputText','')
+    AppStorage.setOrCreate('voiceInputText',null)
   }
 
 
@@ -114,17 +110,17 @@ export class AudioWebSocketHandler {
           this.isConnected = true;
           console.error("连接已打开，状态:" + JSON.stringify(value));
           console.error('*******************************语音数据长度：', this.audioData.length)
-          let flax = Communication.audioData.length
-          let a = setInterval(() => {
-            console.error('语音长度', Communication.audioData.length)
-            if (Communication.audioData.length === flax) {
+          let flax= Communication.audioData.length
+          let a= setInterval(()=>{
+            console.error('语音长度',Communication.audioData.length)
+            if (Communication.audioData.length===flax) {
               console.error('信息停止发送')
               clearInterval(a)
-              this.wending = true
+              this.wending=true
             }
-            flax = Communication.audioData.length
+            flax= Communication.audioData.length
             this.sendAudioData(Communication.audioData)
-          }, 500)
+          },2000)
         } else {
           console.error("连接错误:" + JSON.stringify(err));
         }
@@ -140,13 +136,11 @@ export class AudioWebSocketHandler {
           }
           console.error("收到消息，内容:" + message);
           let res: res_moudel = JSON.parse(message)
-          if (res.status === 200 && this.state === 0 && (res.data.type === 'LAST' || res.data.type === "FIN")) {
+          if (res.status === 200 && this.state === 0) {
             if (AppStorage.get('isAI_assistant')) {
-              if (this.wending) {
+              if (res.data.type === 'LAST' || res.data.type === "FIN") {
                 AppStorage.setOrCreate('voiceInputText', res.data.text)
                 return
-              }else {
-                AppStorage.setOrCreate('linshi', res.data.text)
               }
             } else {
               AppStorage.setOrCreate('voiceInputText', res.data.text)
@@ -157,6 +151,7 @@ export class AudioWebSocketHandler {
             // AppStorage.setOrCreate('audioToText_res', res.data.text)
             let audioToText_res: string = res.data.text
             if (!audioToText_res) {
+              AppStorage.setOrCreate('voiceInputText', '未识别到语音')
               return;
             }
             try {
@@ -176,7 +171,7 @@ export class AudioWebSocketHandler {
                     console.error(JSON.stringify(pasteData.getRecordCount()))
                     let text: string = pasteData.getPrimaryText();
                     // console.log('111111111111111', text, this.state)
-                    if (this.state === 0 && this.wending) { //:语音输入
+                    if (this.state === 0&&this.wending) { //:语音输入
                       Communication.getDeviceInfo([0x20, 0x01, 0x19])
                         .then(() => {
                           setTimeout(() => {
@@ -200,7 +195,7 @@ export class AudioWebSocketHandler {
                         console.log('翻译请求成功————翻译结果：' + res.data?.transText)
                         if (res.data) {
                           let dataArray = AppStorage.get('voiceTranslationText') as translate_Response
-                          dataArray = {
+                          dataArray= {
                             transText: res.data?.transText as string,
                             text: res.data?.text as string,
                           }
@@ -312,6 +307,7 @@ export class AudioWebSocketHandler {
       console.error("未知错误：", e)
       return false;
     }
+
   }
 
   private arrayBufferToString(buffer: ArrayBuffer): string {

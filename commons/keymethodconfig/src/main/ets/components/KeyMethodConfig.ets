@@ -114,6 +114,34 @@ export class _KeyMethodConfig {
    */
   static voiceInput_long(state: number = 0, isAI_assistant: boolean = false) {
     Communication.audioData = []
+    /**
+     * 语音数据处理
+     */
+    //保存本地PCM文件
+    // const context = AppStorage.get('context') as common.UIAbilityContext;
+    // let a: AudioFileManager = new AudioFileManager(Communication.audioData, context)
+    // console.log(Communication.audioData.length.toString(), '语音数据结束*****模拟')
+
+    //WebSocket  语音数据处理
+    let inputMessage: inputMessageModel = {
+      start: false,
+      "clientId": "clientId1751968608",
+      "ptt": AppStorage.get('isPunctuationRecognition') ? '1' : '0',
+      "serialNo": Communication.deviceInfo.sn,
+      "phrases": "",
+      "format": "pcm",
+      "apiKey": "ebb72c9db60147febd2ccd50a705de57",
+      "language": state ? AppStorage.get('from_languages') as string :
+        AppStorage.get('speech_Recognition_languages') as string,
+      "end": false,
+      "rate": "16k",
+      "deviceNo": "6c:b1:33:9f:b9:8b",
+      content: ''
+    }
+    let audioToText: AudioWebSocketHandler =
+      new AudioWebSocketHandler(WebSocket_serverUrl.audioToText, Communication.audioData, state,
+        inputMessage) //语音转文字 websocket
+    audioToText.connect()
     if (Communication.audioDataState) { //若开始长按时，有通过0x62命令开启的语音输入等，先进行关闭 ...否则改变audioDataState 采集状态，确保1b数据被放到语音数据里 ——————手动发起0x62收集录音数据
       Communication.getDeviceInfo([0x62])
     } else {
@@ -167,34 +195,6 @@ export class _KeyMethodConfig {
         }
       }, 2000)
     }
-    /**
-     * 语音数据处理
-     */
-    //保存本地PCM文件
-    // const context = AppStorage.get('context') as common.UIAbilityContext;
-    // let a: AudioFileManager = new AudioFileManager(Communication.audioData, context)
-    // console.log(Communication.audioData.length.toString(), '语音数据结束*****模拟')
-
-    //WebSocket  语音数据处理
-    let inputMessage: inputMessageModel = {
-      start: false,
-      "clientId": "clientId1751968608",
-      "ptt": AppStorage.get('isPunctuationRecognition') ? '1' : '0',
-      "serialNo": Communication.deviceInfo.sn,
-      "phrases": "",
-      "format": "pcm",
-      "apiKey": "ebb72c9db60147febd2ccd50a705de57",
-      "language": state ? AppStorage.get('from_languages') as string :
-        AppStorage.get('speech_Recognition_languages') as string,
-      "end": false,
-      "rate": "16k",
-      "deviceNo": "6c:b1:33:9f:b9:8b",
-      content: ''
-    }
-    let audioToText: AudioWebSocketHandler =
-      new AudioWebSocketHandler(WebSocket_serverUrl.audioToText, Communication.audioData, state,
-        inputMessage) //语音转文字 websocket
-    audioToText.connect()
 
     if (state) {
       if (AppStorage.get('voiceInputState')) {

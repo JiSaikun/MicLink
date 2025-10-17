@@ -89,12 +89,9 @@ export class AudioWebSocketHandler {
     this.audioData = audioData;
     this.state = state;
     this.inputMessage = inputMessage;
-    AppStorage.setOrCreate('voiceInputText', '')
-    AppStorage.setOrCreate('voiceTranslationText', {
-      transText: '',
-      text: ''
-    })
-    this.wending = false
+    this.wending=false
+    AppStorage.setOrCreate('voiceInputText','')
+    AppStorage.setOrCreate('voiceInputText',null)
   }
 
 
@@ -114,17 +111,18 @@ export class AudioWebSocketHandler {
           this.isConnected = true;
           console.error("连接已打开，状态:" + JSON.stringify(value));
           console.error('*******************************语音数据长度：', this.audioData.length)
-          let flax = Communication.audioData.length
-          let a = setInterval(() => {
-            console.error('语音长度', Communication.audioData.length)
-            if (Communication.audioData.length === flax) {
-              console.error('信息停止发送')
-              clearInterval(a)
-              this.wending = true
-            }
-            flax = Communication.audioData.length
+          // let flax= Communication.audioData.length
+          setTimeout(() => {
+            //    console.error('语音长度',Communication.audioData.length)
+            //    if (Communication.audioData.length===flax) {
+            //      console.error('信息停止发送')
+            //      clearInterval(a)
+            //      this.wending=true
+            //    }
+            //    flax= Communication.audioData.length
             this.sendAudioData(Communication.audioData)
-          }, 500)
+          }, 1000)
+
         } else {
           console.error("连接错误:" + JSON.stringify(err));
         }
@@ -140,13 +138,11 @@ export class AudioWebSocketHandler {
           }
           console.error("收到消息，内容:" + message);
           let res: res_moudel = JSON.parse(message)
-          if (res.status === 200 && this.state === 0 && (res.data.type === 'LAST' || res.data.type === "FIN")) {
+          if (res.status === 200 && this.state === 0) {
             if (AppStorage.get('isAI_assistant')) {
-              if (this.wending) {
+              if (res.data.type === 'LAST' || res.data.type === "FIN") {
                 AppStorage.setOrCreate('voiceInputText', res.data.text)
                 return
-              }else {
-                AppStorage.setOrCreate('linshi', res.data.text)
               }
             } else {
               AppStorage.setOrCreate('voiceInputText', res.data.text)
@@ -312,6 +308,7 @@ export class AudioWebSocketHandler {
       console.error("未知错误：", e)
       return false;
     }
+
   }
 
   private arrayBufferToString(buffer: ArrayBuffer): string {
@@ -373,7 +370,8 @@ export class AudioWebSocketHandler {
   }
 
   private sendAudioData(audioData: Int16Array[]) {
-    console.error('dsahkjdljas')
+
+    console.error('eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
     for (let a = 0; a < audioData.length; a++) {
       const isStart: boolean = a === 0;
       const isEnd: boolean = a === audioData.length - 1;
@@ -381,6 +379,11 @@ export class AudioWebSocketHandler {
       // 将Int16Array转换为Base64编码的音频数据
       const base64Audio = this.int16ToBase64(audioData[a]);
       // console.log(`第${a+1}帧音频数据Base64长度:`, base64Audio.length);
+      // 验证Base64编码结果
+      if (!base64Audio || base64Audio.length === 0) {
+        console.warn(`第 ${a + 1} 段音频Base64编码失败，跳过`);
+        continue;
+      }
 
       // 显式创建对象
       const inputMessage: inputMessageModel = {
@@ -417,6 +420,25 @@ export class AudioWebSocketHandler {
           "content": inputMessage.content.substring(0, 50) + "...[省略部分内容]"
         };
         console.log('最后一帧数据信息：', a.toString(), JSON.stringify(logMessage));
+        if (audioData.length<= Communication.audioData.length) {
+          // let flax= Communication.audioData.length
+          // let a= setInterval(()=>{
+          //    console.error('语音长度',Communication.audioData.length)
+          //    if (Communication.audioData.length===flax) {
+          //      console.error('信息停止发送')
+          //      clearInterval(a)
+          //      this.wending=true
+          //    }
+          //    flax= Communication.audioData.length
+          //    this.sendAudioData(Communication.audioData)
+          //  },1000)
+          setTimeout(() => {
+            this.sendAudioData(Communication.audioData)
+          }, 1000)
+        } else {
+          console.error('粘贴')
+          this.wending = true
+        }
       }
     }
   }

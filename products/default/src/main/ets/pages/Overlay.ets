@@ -4,8 +4,10 @@ import { AI_Assistant } from '../common/AI_Assistant'
 @Component
 export struct Overlay {
   @Watch('changeText') @StorageLink('voiceInputText') voiceInputText: string = ''
+  @StorageLink('linshi') linshi: string = ''
   @StorageLink('voiceInputState') voiceInputState: boolean = true
   @StorageLink('isAI_assistant') isAI_assistant: boolean = false
+  @StorageLink('assistant') assistant: boolean = false
 
   /**
    * 处理语音指令
@@ -13,6 +15,7 @@ export struct Overlay {
   changeText(): void {
     if (this.isAI_assistant && this.voiceInputText) {
       new AI_Assistant().changeText()
+      this.linshi=''
     }
   }
 
@@ -37,7 +40,7 @@ export struct Overlay {
         .width(100)
 
         Scroll() {
-          Text(this.voiceInputText)
+          Text(this.voiceInputText?this.voiceInputText:this.linshi)
             .textAlign(TextAlign.Start)
             .padding({ right: 8, left: 8 })
             .fontSize(14)
