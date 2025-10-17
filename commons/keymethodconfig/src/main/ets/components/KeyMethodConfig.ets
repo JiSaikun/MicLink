@@ -21,6 +21,7 @@ export class _KeyMethodConfig {
    * 1：语音翻译
    */
   static voiceInput(state: number = 0, isAI_assistant: boolean = false) {
+
     if (!Communication.audioDataState) {
       Communication.getDeviceInfo([0x62])
         .then(() => {
@@ -51,23 +52,6 @@ export class _KeyMethodConfig {
         }
         Float_Window.showVoiceInput += 1
       }
-
-    } else {
-      Communication.getDeviceInfo([0x63]).then(() => {
-        Communication.audioDataState = !Communication.audioDataState
-      })
-      if (!state) {
-        let flax = Float_Window.showVoiceInput
-        setTimeout(() => {
-          if (Float_Window.showVoiceInput === flax) {
-            // Float_Window.showVoiceInput = 0
-            Float_Window.minimize_float_window()
-            // Float_Window.destroyWindow() //在悬浮窗关闭后清空语音输入文本状态变量，文本显示：如果文本变量不为空，在后面拼接，如果为空则直接将新数据赋值即可
-          }
-        }, 2000)
-      }
-
-
       /**
        * 语音数据处理
        */
@@ -95,6 +79,22 @@ export class _KeyMethodConfig {
         new AudioWebSocketHandler(WebSocket_serverUrl.audioToText, Communication.audioData, state,
           inputMessage) //语音转文字 websocket  //0：语音输入
       audioToText.connect()
+    } else {
+      Communication.getDeviceInfo([0x63]).then(() => {
+        Communication.audioDataState = !Communication.audioDataState
+      })
+      if (!state) {
+        let flax = Float_Window.showVoiceInput
+        setTimeout(() => {
+          if (Float_Window.showVoiceInput === flax) {
+            // Float_Window.showVoiceInput = 0
+            Float_Window.minimize_float_window()
+            // Float_Window.destroyWindow() //在悬浮窗关闭后清空语音输入文本状态变量，文本显示：如果文本变量不为空，在后面拼接，如果为空则直接将新数据赋值即可
+          }
+        }, 2000)
+      }
+
+
     }
     if (state) {
       if (AppStorage.get('voiceInputState')) {

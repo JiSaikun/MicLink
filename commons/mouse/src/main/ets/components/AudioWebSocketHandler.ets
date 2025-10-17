@@ -60,6 +60,7 @@ export class AudioWebSocketHandler {
   private serverUrl: string = "ws://asr.miclink.net/ws";
   private audioData: Int16Array[] = []
   private state: number = 0 //0:语音输入
+  private wending: boolean = false //0:语音数据不再变化
   private inputMessage: inputMessageModel = {
     start: false,
     "clientId": '',
@@ -105,9 +106,19 @@ export class AudioWebSocketHandler {
       this.ws.on('open', (err: BusinessError, value: Object) => {
         if (!err) {
           this.isConnected = true;
-          console.log("连接已打开，状态:" + JSON.stringify(value));
-          console.log('*******************************语音数据长度：', this.audioData.length)
-          this.sendAudioData(this.audioData)
+          console.error("连接已打开，状态:" + JSON.stringify(value));
+          console.error('*******************************语音数据长度：', this.audioData.length)
+         let flax= Communication.audioData.length
+         let a= setInterval(()=>{
+            console.error('语音长度',Communication.audioData.length)
+            if (Communication.audioData.length===flax) {
+              console.error('信息停止发送')
+              clearInterval(a)
+              this.wending=true
+            }
+            flax= Communication.audioData.length
+            this.sendAudioData(Communication.audioData)
+          },1000)
         } else {
           console.error("连接错误:" + JSON.stringify(err));
         }
@@ -121,7 +132,7 @@ export class AudioWebSocketHandler {
           } else {
             message = this.arrayBufferToString(value);
           }
-          console.log("收到消息，内容:" + message);
+          console.error("收到消息，内容:" + message);
           let res: res_moudel = JSON.parse(message)
           if (res.status === 200 && this.state === 0) {
             if (AppStorage.get('isAI_assistant')) {
@@ -157,7 +168,7 @@ export class AudioWebSocketHandler {
                     console.error(JSON.stringify(pasteData.getRecordCount()))
                     let text: string = pasteData.getPrimaryText();
                     // console.log('111111111111111', text, this.state)
-                    if (this.state === 0) { //:语音输入
+                    if (this.state === 0&&this.wending) { //:语音输入
                       Communication.getDeviceInfo([0x20, 0x01, 0x19])
                         .then(() => {
                           setTimeout(() => {
@@ -354,6 +365,7 @@ export class AudioWebSocketHandler {
   }
 
   private sendAudioData(audioData: Int16Array[]) {
+    console.error('dsahkjdljas')
     for (let a = 0; a < audioData.length; a++) {
       const isStart: boolean = a === 0;
       const isEnd: boolean = a === audioData.length - 1;
