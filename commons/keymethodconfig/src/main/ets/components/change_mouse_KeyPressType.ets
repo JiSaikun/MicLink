@@ -32,29 +32,7 @@ export function _change_mouse_KeyPressType() {
       }
     }
     // console.error(JSON.stringify(getModelInfo.keyInfos))
-    switch ((_keyInfos_childsModel as keyInfos_childsModel).childs[KeymethodConfig[1].currIndex].cmd) {
-      case 'Action_VI':
-        //语音输入
-        console.warn('语音输入+长按按下')
-        // _KeyMethodConfig.voiceInput()
-        _KeyMethodConfig.voiceInput_long()
-        break
-      case "Action_VT":
-        //语音翻译
-        console.warn('语音翻译+长按按下')
-        _KeyMethodConfig.voiceInput_long(1)
-        break
-      case "Action_VS":
-        //语音助手
-        console.warn('语音助手+')
-        _KeyMethodConfig.voiceInput_long(0, true)
-        break
-      case "DEL_OPT":
-        //删除
-        console.warn('删除+')
-        _KeyMethodConfig.delete()
-        break
-    }
+    lk_down((_keyInfos_childsModel as keyInfos_childsModel).childs[KeymethodConfig[1].currIndex].cmd)
   }
   if (mouse_KeyPressType === 14) {
     for (let item of getModelInfo.keyInfos) {
@@ -63,29 +41,7 @@ export function _change_mouse_KeyPressType() {
       }
     }
     // console.error(JSON.stringify(getModelInfo.keyInfos))
-    switch ((_keyInfos_childsModel as keyInfos_childsModel).childs[KeymethodConfig[1].currIndex].cmd) {
-      case 'Action_VI':
-        //语音输入
-        console.warn('语音输入+长按抬起')
-        // _KeyMethodConfig.voiceInput()
-        _KeyMethodConfig.endvoiceInput_long()
-        break
-      case "Action_VT":
-        //语音翻译
-        console.warn('语音翻译+长按抬起')
-        _KeyMethodConfig.endvoiceInput_long(1)
-        break
-      case "Action_VS":
-        //语音助手
-        console.warn('语音助手+')
-        _KeyMethodConfig.endvoiceInput_long()
-        break
-      case "DEL_OPT":
-        //删除
-        console.warn('删除+') //**避免按下可抬起都执行一次
-        // _KeyMethodConfig.delete()
-        break
-    }
+    lk_up((_keyInfos_childsModel as keyInfos_childsModel).childs[KeymethodConfig[1].currIndex].cmd)
   }
   if (mouse_KeyPressType === 21) {
     for (let item of getModelInfo.keyInfos) {
@@ -103,28 +59,7 @@ export function _change_mouse_KeyPressType() {
       }
     }
     // console.error(JSON.stringify(getModelInfo.keyInfos))
-    switch ((_keyInfos_childsModel as keyInfos_childsModel).childs[KeymethodConfig[3].currIndex].cmd) {
-      case "Action_VS":
-        //语音助手
-        console.warn('语音助手+')
-        _KeyMethodConfig.voiceInput_long(0, true)
-        break
-      case "Action_VT":
-        //语音翻译
-        console.warn('语音翻译+长按按下')
-        _KeyMethodConfig.voiceInput_long(1)
-        break
-      case "Action_VI":
-        //语音输入
-        console.warn('语音输入+长按按下')
-        _KeyMethodConfig.voiceInput_long()
-        break
-      case "DEL_OPT":
-        //删除
-        console.warn('删除+')
-        _KeyMethodConfig.delete()
-        break
-    }
+    lk_down((_keyInfos_childsModel as keyInfos_childsModel).childs[KeymethodConfig[3].currIndex].cmd)
   }
   if (mouse_KeyPressType === 24) {
     for (let item of getModelInfo.keyInfos) {
@@ -133,29 +68,7 @@ export function _change_mouse_KeyPressType() {
       }
     }
     // console.error(JSON.stringify(getModelInfo.keyInfos))
-    switch ((_keyInfos_childsModel as keyInfos_childsModel).childs[KeymethodConfig[3].currIndex].cmd) {
-      case "Action_VS":
-        //语音助手
-        console.warn('语音助手+')
-        _KeyMethodConfig.endvoiceInput_long()
-        break
-      case "Action_VT":
-        //语音翻译
-        console.warn('语音翻译+长按抬起')
-        _KeyMethodConfig.endvoiceInput_long(1)
-        break
-      case "Action_VI":
-        //语音输入
-        console.warn('语音输入+长按抬起')
-        // _KeyMethodConfig.voiceInput()
-        _KeyMethodConfig.endvoiceInput_long()
-        break
-      case "DEL_OPT":
-        //删除
-        console.warn('删除+') //**避免按下可抬起都执行一次
-        // _KeyMethodConfig.delete()
-        break
-    }
+    lk_up((_keyInfos_childsModel as keyInfos_childsModel).childs[KeymethodConfig[3].currIndex].cmd)
   }
   if (mouse_KeyPressType === 31) {
     for (let item of getModelInfo.keyInfos) {
@@ -176,23 +89,7 @@ export function _change_mouse_KeyPressType() {
       }
     }
     // console.error(JSON.stringify(getModelInfo.keyInfos))
-    switch ((_keyInfos_childsModel as keyInfos_childsModel).childs[KeymethodConfig[5].currIndex].cmd) {
-      case "DEL_OPT":
-        //删除
-        console.warn('删除+')
-        _KeyMethodConfig.delete()
-        break
-      case "Action_VT":
-        //语音翻译
-        console.warn('语音翻译+')
-        _KeyMethodConfig.voiceInput_long(1)
-        break
-      case "Action_VS":
-        //语音助手
-        console.warn('语音助手+')
-        _KeyMethodConfig.voiceInput_long(0, true)
-        break
-    }
+    lk_down((_keyInfos_childsModel as keyInfos_childsModel).childs[KeymethodConfig[5].currIndex].cmd)
   }
   if (mouse_KeyPressType === 34) {
     for (let item of getModelInfo.keyInfos) {
@@ -201,23 +98,8 @@ export function _change_mouse_KeyPressType() {
       }
     }
     // console.error(JSON.stringify(getModelInfo.keyInfos))
-    switch ((_keyInfos_childsModel as keyInfos_childsModel).childs[KeymethodConfig[5].currIndex].cmd) {
-      case "DEL_OPT":
-        //删除
-        console.warn('删除+')
-        // _KeyMethodConfig.delete()
-        break
-      case "Action_VT":
-        //语音翻译
-        console.warn('语音翻译+长按抬起')
-        _KeyMethodConfig.endvoiceInput_long(1)
-        break
-      case "Action_VS":
-        //语音助手
-        console.warn('语音助手+长按抬起')
-        _KeyMethodConfig.endvoiceInput_long()
-        break
-    }
+    lk_up((_keyInfos_childsModel as keyInfos_childsModel).childs[KeymethodConfig[5].currIndex].cmd)
+
   }
   if (mouse_KeyPressType === 41) {
   }
@@ -225,7 +107,7 @@ export function _change_mouse_KeyPressType() {
   }
   if (mouse_KeyPressType === 51) {
     for (let item of getModelInfo.keyInfos) {
-      if (item.names['ZH_CN'] === "AI键") {
+      if (item.key === "AI_key") {
         _keyInfos_childsModel = item.childs[0]
       }
     }
@@ -235,22 +117,27 @@ export function _change_mouse_KeyPressType() {
   }
   if (mouse_KeyPressType === 53) {
     for (let item of getModelInfo.keyInfos) {
-      if (item.names['ZH_CN'] === "AI键") {
+      if (item.key === "AI_key") {
         _keyInfos_childsModel = item.childs[1]
       }
     }
     // console.error(JSON.stringify(getModelInfo.keyInfos))
-    switch ((_keyInfos_childsModel as keyInfos_childsModel).childs[KeymethodConfig[7].currIndex].cmd) {
-      case "Action_GPT":
-        _KeyMethodConfig.openChatGPT()
-        break
+    lk_down((_keyInfos_childsModel as keyInfos_childsModel).childs[KeymethodConfig[7].currIndex].cmd)
+  }
+  if (mouse_KeyPressType === 54) {
+    for (let item of getModelInfo.keyInfos) {
+      if (item.key === "AI_key") {
+        _keyInfos_childsModel = item.childs[1]
+      }
     }
-
+    // console.error(JSON.stringify(getModelInfo.keyInfos))
+    lk_down((_keyInfos_childsModel as keyInfos_childsModel).childs[KeymethodConfig[7].currIndex].cmd)
   }
   AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DEFAULT)
 }
+
 function sk(cmd: string) {
-  console.error("命令",cmd)
+  console.error("命令", cmd)
   switch (cmd) {
     case 'Action_VI': //语音输入
       console.warn('语音输入+')
@@ -339,13 +226,77 @@ function sk(cmd: string) {
       //无功能
       console.warn('无功能+')
       break
+    case "Action_copy":
+      //复制
+      console.warn('复制+')
+      _KeyMethodConfig.copyContent()
+      break
+    case "Action_paste":
+      //粘贴
+      console.warn('粘贴+')
+      _KeyMethodConfig.pasteTarget()
+      break
     case "Action_GPT":
-      //ChatGPT
-      console.warn('ChatGPT+')
+      //AI智能创作
+      console.warn('AI智能创作+')
       _KeyMethodConfig.openChatGPT()
       break
   }
 }
 
-function lk() {
+function lk_down(cmd: string) {
+  console.error("命令", cmd)
+  switch (cmd) {
+    case 'Action_VI':
+      //语音输入
+      console.warn('语音输入+长按按下')
+      // _KeyMethodConfig.voiceInput()
+      _KeyMethodConfig.voiceInput_long()
+      break
+    case "Action_VT":
+      //语音翻译
+      console.warn('语音翻译+长按按下')
+      _KeyMethodConfig.voiceInput_long(1)
+      break
+    case "Action_VS":
+      //语音助手
+      console.warn('语音助手+')
+      _KeyMethodConfig.voiceInput_long(0, true)
+      break
+    case "DEL_OPT":
+      //删除
+      console.warn('删除+')
+      _KeyMethodConfig.delete()
+      break
+    case "Action_GPT":
+      _KeyMethodConfig.openChatGPT()
+      break
+  }
+}
+
+function lk_up(cmd: string) {
+  console.error("命令", cmd)
+  switch (cmd) {
+    case 'Action_VI':
+      //语音输入
+      console.warn('语音输入+长按抬起')
+      // _KeyMethodConfig.voiceInput()
+      _KeyMethodConfig.endvoiceInput_long()
+      break
+    case "Action_VT":
+      //语音翻译
+      console.warn('语音翻译+长按抬起')
+      _KeyMethodConfig.endvoiceInput_long(1)
+      break
+    case "Action_VS":
+      //语音助手
+      console.warn('语音助手+')
+      _KeyMethodConfig.endvoiceInput_long()
+      break
+    case "DEL_OPT":
+      //删除
+      console.warn('删除+') //**避免按下可抬起都执行一次
+      // _KeyMethodConfig.delete()
+      break
+  }
 }

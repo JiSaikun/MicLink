@@ -179,13 +179,11 @@ export class AudioWebSocketHandler {
                       _translate(params).then((res) => {
                         console.log('翻译请求成功————翻译结果：' + res.data?.transText)
                         if (res.data) {
-                          let dataArray = AppStorage.get('voiceTranslationText') as translate_Response[]
-                          let data: translate_Response = {
+                          let dataArray = AppStorage.get('voiceTranslationText') as translate_Response
+                          dataArray= {
                             transText: res.data?.transText as string,
                             text: res.data?.text as string,
-                            index: dataArray.length
                           }
-                          dataArray.push(data)
                           AppStorage.setOrCreate('voiceTranslationText', dataArray)
                           // const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, res.data?.transText);
                           // systemPasteboard.setData(pasteData).then(() => {

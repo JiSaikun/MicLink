@@ -120,9 +120,10 @@ export class _KeyMethodConfig {
       Communication.audioDataState = !Communication.audioDataState
     }
     if (state) {
-      if (!AppStorage.get('voiceOrText')) {
-        AppStorage.setOrCreate('voiceTranslationText', [])
-      }
+      AppStorage.setOrCreate('voiceTranslationText', {
+        transText: '',
+        text: ''
+      })
       AppStorage.setOrCreate('voiceOrText', true)
       if (Float_Window.windowClass) {
         Float_Window.minimize_float_window()
@@ -219,8 +220,9 @@ export class _KeyMethodConfig {
    *删除
    */
   static delete() {
-    Communication.getDeviceInfo([0x20, 0, 0x2A])
+    Communication.getDeviceInfo([0x20, 0, 0x4C])
   }
+
   /**
    *打开网页 __百度
    */
@@ -289,6 +291,26 @@ export class _KeyMethodConfig {
   }
 
   /**
+   *复制
+   */
+  static copyContent() {
+    Communication.getDeviceInfo([0x20, 0x01, 0x06])
+  }
+
+  /**
+   *粘贴
+   */
+  static pasteTarget() {
+    Communication.getDeviceInfo([0x20, 0x01, 0x19])
+  }
+
+  // /**
+  //  *AI智能创作
+  //  */
+  // static aiGeneratedText() {
+  //   // Communication.getDeviceInfo([0x20, 0x04, 0x4F])
+  // }
+  /**
    *后退
    */
   static back() {
@@ -334,9 +356,10 @@ export class _KeyMethodConfig {
         let text: string = pasteData.getPrimaryText();
         console.log('111111111111111', text)
         if (text) {
-          // if (AppStorage.get('voiceOrText')) {
-          AppStorage.setOrCreate('voiceTranslationText', [])
-          // }
+          AppStorage.setOrCreate('voiceTranslationText', {
+            transText: '',
+            text: ''
+          })
           AppStorage.setOrCreate('voiceOrText', false)
           let params: translate_Params = {
             appkey: (AppStorage.get('getModelInfo') as getModelInfoModel).appkey, //获取用户按键模式详情中得到
@@ -356,13 +379,11 @@ export class _KeyMethodConfig {
             console.log('翻译请求成功————翻译结果：' + res.data?.transText)
             systemPasteboard.clearData() //清空剪贴板
             if (res.data) {
-              let dataArray = AppStorage.get('voiceTranslationText') as translate_Response[]
-              let data: translate_Response = {
+              let dataArray = AppStorage.get('voiceTranslationText') as translate_Response
+              dataArray = {
                 transText: res.data?.transText as string,
                 text: res.data?.text as string,
-                index: dataArray.length
               }
-              dataArray.push(data)
               AppStorage.setOrCreate('voiceTranslationText', dataArray)
             } else {
               AppStorage.setOrCreate('flax_yuyinfanyi_chachaobudaoyuyan',

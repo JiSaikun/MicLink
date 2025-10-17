@@ -154,7 +154,7 @@ export struct ConfigPage1 {
         .fontSize($r('app.float.default_text_font_size_14'))
         .fontWeight(400)
         .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-      Select(this.convert_ttsLanguagesToOptions())
+      Select(this.convert_LanguagesToOptions())
         .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.languages[this.getDefaultSelectedIndex_from(this.speech_Recognition_languages)]))
         .onSelect((index: number) => {
           this.speech_Recognition_languages = this.getModelInfo.languages[index].code
@@ -629,8 +629,7 @@ export struct ConfigPage1 {
         return item.name;
     }
   }
-
-  convert_ttsLanguagesToOptions(): SelectOption[] {
+  convert_LanguagesToOptions(): SelectOption[] {
     return ((this.getModelInfo.languages).map((item, index) => {
       // 多语言适配：优先取当前语言文本，无则按顺序兜底
       let languageField: string = item.name; // 默认使用中文简体
@@ -712,11 +711,93 @@ export struct ConfigPage1 {
     }));
   }
 
+  convert_ttsLanguagesToOptions(): SelectOption[] {
+    return ((this.getModelInfo.transLanguages).map((item, index) => {
+      // 多语言适配：优先取当前语言文本，无则按顺序兜底
+      let languageField: string = item.name; // 默认使用中文简体
+
+      switch (AppStorage.get('languages') as string) {
+        case "FIL_PH":
+          languageField = item.nameFil_ph;
+          break;
+        case "ES_ES":
+          languageField = item.nameEs_es;
+          break;
+        case "JA_JP":
+          languageField = item.nameJp;
+          break;
+        case "ZH_TW":
+          languageField = item.nameTw;
+          break;
+        case "UYGUR":
+          languageField = item.nameUygur;
+          break;
+        case "MO_MO":
+          languageField = item.nameMo_mo;
+          break;
+        case "RU_RU":
+          languageField = item.nameRu_ru;
+          break;
+        case "IT_IT":
+          languageField = item.nameIt_it;
+          break;
+        case "ZH_TI":
+          languageField = item.nameZh_ti;
+          break;
+        case "EN_US":
+          languageField = item.nameEn;
+          break;
+        case "MAY_MAY":
+          languageField = item.nameMay_may;
+          break;
+        case "AR_SA":
+          languageField = item.nameAr_sa;
+          break;
+        case "DE_DE":
+          languageField = item.nameDe_de;
+          break;
+        case "KO_KR":
+          languageField = item.nameKo_kr;
+          break;
+        case "ID_ID":
+          languageField = item.nameId_id;
+          break;
+        case "TR_TR":
+          languageField = item.nameTr_tr;
+          break;
+        case "KA_KA":
+          languageField = item.nameKa_ka;
+          break;
+        case "FR_FR":
+          languageField = item.nameFr_fr;
+          break;
+        case "MN_MN":
+          languageField = item.nameMn_mn;
+          break;
+        case "TH_TH":
+          languageField = item.nameTh_th;
+          break;
+        case "VI_VN":
+          languageField = item.nameVi_vn;
+          break;
+        // 默认使用中文简体
+        default:
+          languageField = item.name;
+          break;
+      }
+
+      // 使用方括号表示法动态访问属性
+      return {
+        value: languageField // 正确的属性访问方式
+      } as SelectOption;
+    }));
+  }
+
   shortcut_change() {
-    console.error('asdjkai:1',AppStorage.get('voice_recognition_shortcut'))
-    console.error('asdjkai:2',AppStorage.get('screenshot_recognition_shortcut'))
-    console.error('asdjkai:3',JSON.stringify(AppStorage.get('screenshot_recognition_shortcut')))
-    console.error('asdjkai:4',JSON.stringify(AppStorage.get('custom_shortcut')))
+    // console.error('asdjkai:1',AppStorage.get('voice_recognition_shortcut'))
+    // console.error('asdjkai:2',AppStorage.get('screenshot_recognition_shortcut'))
+    // console.error('asdjkai:3',JSON.stringify(AppStorage.get('screenshot_recognition_shortcut')))
+    // console.error('asdjkai:4',JSON.stringify(AppStorage.get('custom_shortcut')))
     this.voice_recognition_shortcut=(AppStorage.get('voice_recognition_shortcut') as shortcutType).keyPreview
     this.voice_translation_shortcut=(AppStorage.get('voice_translation_shortcut') as shortcutType).keyPreview
     this.screenshot_recognition_shortcut=(AppStorage.get('screenshot_recognition_shortcut') as shortcutType).keyPreview

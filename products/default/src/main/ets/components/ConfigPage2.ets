@@ -1,5 +1,7 @@
-import { KeyPressType } from 'mouse'
+import { DeviceInfo, KeyPressType } from 'mouse'
 import { LengthMetrics } from "@kit.ArkUI"
+import {addCustomerKey_Params}from '../model/UserModel'
+import {_addCustomerKey}from '../viewmodel/UserViewModel'
 import {
   getModelInfoModel,
   keyInfosModel,
@@ -20,6 +22,7 @@ export interface KeymethodConfig {
 export struct ConfigPage2 {
   @Watch('Watch_null') @StorageLink('getModelInfo') getModelInfo: getModelInfoModel =
     AppStorage.get('getModelInfo') as getModelInfoModel
+  @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null //鼠标信息
   @StorageLink('languages') languages: string = 'ZH_CN'
   @StorageLink('KeymethodConfig') KeymethodConfig: KeymethodConfig[] = []
   @StorageLink("shortcut") shortcut: number = 0 //改变该值弹出对应快捷键悬浮窗口 1：语音识别 2：语音翻译 3:截图识别 4：自定义快捷键
@@ -56,30 +59,60 @@ export struct ConfigPage2 {
             { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
             { key: KeyPressType.AI_CLICK, currIndex: 0 }, { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
           ])
+          switch (this.getModelInfo.keyInfos[index1].key) {
+            case 'voice_key':
+              if (index2) {
+                this.KeymethodConfig[1].currIndex = i
+              } else {
+                this.KeymethodConfig[0].currIndex = i
+              }
+              break
+            case 'search_key':
+              if (index2) {
+                this.KeymethodConfig[3].currIndex = i
+              } else {
+                this.KeymethodConfig[2].currIndex = i
+              }
+              break
+            case 'translate_key':
+              if (index2) {
+                this.KeymethodConfig[5].currIndex = i
+              } else {
+                this.KeymethodConfig[4].currIndex = i
+              }
+              break
+            case 'AI_key':
+              if (index2) {
+                this.KeymethodConfig[7].currIndex = i
+              } else {
+                this.KeymethodConfig[6].currIndex = i
+              }
+              break
+          }
           // console.log('*/*/*/*/*', JSON.stringify(AppStorage.get('KeymethodConfig')))
           AppStorage.setOrCreate('KeymethodConfig', this.KeymethodConfig)
           return i;
         }
-        switch (this.getModelInfo.keyInfos[index1].names['ZH_CN']) {
-          case '语音键':
+        switch (this.getModelInfo.keyInfos[index1].key) {
+          case 'voice_key':
             if (index2) {
               return this.KeymethodConfig[1].currIndex
             } else {
               return this.KeymethodConfig[0].currIndex
             }
-          case '搜索键':
+          case 'search_key':
             if (index2) {
               return this.KeymethodConfig[3].currIndex
             } else {
               return this.KeymethodConfig[2].currIndex
             }
-          case '翻译键':
+          case 'translate_key':
             if (index2) {
               return this.KeymethodConfig[5].currIndex
             } else {
               return this.KeymethodConfig[4].currIndex
             }
-          case 'AI键':
+          case 'AI_key':
             if (index2) {
               return this.KeymethodConfig[7].currIndex
             } else {
@@ -118,34 +151,42 @@ export struct ConfigPage2 {
                 index2)] as keyInfos_childs_childsModel).names as LanguageNames)[this.languages
               ])
               .onSelect((index: number, value) => {
+                let params:addCustomerKey_Params={
+                  cmdId: this.getModelInfo.keyInfos[index1].childs[index2].childs[index].cmdId,
+                  keyId: this.getModelInfo.keyInfos[index1].childs[index2].childs[index].keyId, //按键ID
+                  opId: this.getModelInfo.keyInfos[index1].childs[index2].childs[index].opId,//操作ID
+                  sno: this.mouseconfig?.sn as string,//设备号
+                  userModelId: this.getModelInfo.id//按鍵模式ID
+                }
+                _addCustomerKey(params)
                 this.getModelInfo.keyInfos[index1].childs[index2].childs[this.getDefaultSelectedIndex(item.childs || [],
                   index1, index2)].first = 0
                 this.getModelInfo.keyInfos[index1].childs[index2].childs[index].first = 1
                 // this.KeymethodConfig[index1 * 2+index2].currIndex = index
                 console.error('11', this.getModelInfo.keyInfos[index1].names['ZH_CN'], index2, index)
-                switch (this.getModelInfo.keyInfos[index1].names['ZH_CN']) {
-                  case '语音键':
+                switch (this.getModelInfo.keyInfos[index1].key) {
+                  case 'voice_key':
                     if (index2) {
                       this.KeymethodConfig[1].currIndex = index
                     } else {
                       this.KeymethodConfig[0].currIndex = index
                     }
                     break
-                  case '搜索键':
+                  case 'search_key':
                     if (index2) {
                       this.KeymethodConfig[3].currIndex = index
                     } else {
                       this.KeymethodConfig[2].currIndex = index
                     }
                     break
-                  case '翻译键':
+                  case 'translate_key':
                     if (index2) {
                       this.KeymethodConfig[5].currIndex = index
                     } else {
                       this.KeymethodConfig[4].currIndex = index
                     }
                     break
-                  case 'AI键':
+                  case 'AI_key':
                     if (index2) {
                       this.KeymethodConfig[7].currIndex = index
                     } else {
@@ -210,7 +251,7 @@ export struct ConfigPage2 {
   }
 
   Watch_null() {
-    if (JSON.stringify(this.getModelInfo.keyInfos)==='[]') {
+    if (JSON.stringify(this.getModelInfo.keyInfos) === '[]') {
       this.isShowConfig = false
       // AppStorage.setOrCreate('isShowConfig', false)
     }
