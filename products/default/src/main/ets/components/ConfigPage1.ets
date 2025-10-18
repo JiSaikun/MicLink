@@ -214,9 +214,9 @@ export struct ConfigPage1 {
         .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
       Flex({ alignItems: ItemAlign.Center, justifyContent: FlexAlign.SpaceBetween }) {
         Select(this.convert_ttsLanguagesToOptions())
-          .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.languages[this.getDefaultSelectedIndex_from(this.from_languages)]))
+          .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.from_languages)]))
           .onSelect((index: number) => {
-            this.from_languages = this.getModelInfo.languages[index].code
+            this.from_languages = this.getModelInfo.transLanguages[index].code
           })
           .selected(this.getDefaultSelectedIndex_from(this.from_languages))
           .width(200)
@@ -235,9 +235,9 @@ export struct ConfigPage1 {
           .margin({ left: 20, right: 20 })
           .flexShrink(1)
         Select(this.convert_ttsLanguagesToOptions())
-          .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.languages[this.getDefaultSelectedIndex_from(this.to_languages)]))
+          .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.to_languages)]))
           .onSelect((index: number) => {
-            this.to_languages = this.getModelInfo.languages[index].code
+            this.to_languages = this.getModelInfo.transLanguages[index].code
           })
           .selected(this.getDefaultSelectedIndex_from(this.to_languages))
           .width(200)
@@ -331,9 +331,9 @@ export struct ConfigPage1 {
         .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
       Flex({ alignItems: ItemAlign.Center, justifyContent: FlexAlign.SpaceBetween }) {
         Select(this.convert_ttsLanguagesToOptions())
-          .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.languages[this.getDefaultSelectedIndex_from(this.wordScan_from_languages)]))
+          .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.wordScan_from_languages)]))
           .onSelect((index: number) => {
-            this.wordScan_from_languages = this.getModelInfo.languages[index].code
+            this.wordScan_from_languages = this.getModelInfo.transLanguages[index].code
           })
           .selected(this.getDefaultSelectedIndex_from(this.wordScan_from_languages))
           .width(200)
@@ -352,9 +352,9 @@ export struct ConfigPage1 {
           .margin({ left: 20, right: 20 })
           .flexShrink(1)
         Select(this.convert_ttsLanguagesToOptions())
-          .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.languages[this.getDefaultSelectedIndex_from(this.wordScan_to_languages)]))
+          .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.wordScan_to_languages)]))
           .onSelect((index: number) => {
-            this.wordScan_to_languages = this.getModelInfo.languages[index].code
+            this.wordScan_to_languages = this.getModelInfo.transLanguages[index].code
           })
           .selected(this.getDefaultSelectedIndex_from(this.wordScan_to_languages))
           .width(200)
@@ -434,9 +434,9 @@ export struct ConfigPage1 {
         .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
       Flex({ alignItems: ItemAlign.Center, justifyContent: FlexAlign.SpaceBetween }) {
         Select(this.convert_ttsLanguagesToOptions())
-          .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.languages[this.getDefaultSelectedIndex_from(this.screenshotOCR_from_languages)]))
+          .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.screenshotOCR_from_languages)]))
           .onSelect((index: number) => {
-            this.screenshotOCR_from_languages = this.getModelInfo.languages[index].code
+            this.screenshotOCR_from_languages = this.getModelInfo.transLanguages[index].code
           })
           .selected(this.getDefaultSelectedIndex_from(this.screenshotOCR_from_languages))
           .width(200)
@@ -455,9 +455,9 @@ export struct ConfigPage1 {
           .margin({ left: 20, right: 20 })
           .flexShrink(1)
         Select(this.convert_ttsLanguagesToOptions())
-          .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.languages[this.getDefaultSelectedIndex_from(this.screenshotOCR_to_languages)]))
+          .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.screenshotOCR_to_languages)]))
           .onSelect((index: number) => {
-            this.screenshotOCR_to_languages = this.getModelInfo.languages[index].code
+            this.screenshotOCR_to_languages = this.getModelInfo.transLanguages[index].code
           })
           .selected(this.getDefaultSelectedIndex_from(this.screenshotOCR_to_languages))
           .width(200)

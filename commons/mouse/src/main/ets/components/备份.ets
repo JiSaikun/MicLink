@@ -96,6 +96,10 @@ export class AudioWebSocketHandler {
 
   public connect(): void {
     try {
+      // 添加内存使用检查
+      if (this.audioData && this.audioData.length > 1000) {
+        console.warn('音频数据量较大，可能存在内存风险:', this.audioData.length);
+      }
       // 添加连接状态检查
       if (this.ws && this.isConnected) {
         console.warn('WebSocket已经连接');
@@ -231,13 +235,10 @@ export class AudioWebSocketHandler {
         // setTimeout(() => {
         //   Float_Window.minimize_float_window()
         // }, 2000)
-        this.wending=false
         // 语音输入模式
         Communication.getDeviceInfo([0x20, 0x01, 0x19])
           .then(() => {
-            setTimeout(() => {
-              systemPasteboard.clearData();
-            }, 2000);
+            this.wending=false
           });
         return;
       }
@@ -395,20 +396,47 @@ export class AudioWebSocketHandler {
 
   // 将Int16Array转换为Base64编码
   private int16ToBase64(int16Array: Int16Array): string {
-    // 添加输入验证
+    // 添加更严格的输入验证
     if (!int16Array || int16Array.length === 0) {
       console.warn('提供了空的或无效的Int16Array');
       return '';
     }
 
     try {
-      const byteArray = new Uint8Array(int16Array.length * 2);
+      // 添加长度限制，防止内存溢出
+      const maxLength = 48000; // 根据实际需求调整最大长度
+      const safeLength = Math.min(int16Array.length, maxLength);
 
-      for (let i = 0; i < int16Array.length; i++) {
-        // 确保值在Int16范围内
-        const value = Math.max(-32768, Math.min(32767, int16Array[i]));
-        byteArray[i * 2] = value & 0xFF;
-        byteArray[i * 2 + 1] = (value >> 8) & 0xFF;
+      // 使用更安全的方式创建 ArrayBuffer
+      let buffer: ArrayBuffer;
+      try {
+        buffer = new ArrayBuffer(safeLength * 2);
+      } catch (memoryError) {
+        console.error('内存分配失败:', memoryError);
+        return '';
+      }
+
+      const byteArray = new Uint8Array(buffer);
+
+      // 使用更安全的循环，添加边界检查
+      for (let i = 0; i < safeLength; i++) {
+        try {
+          // 确保值在Int16范围内并进行安全转换
+          const value = Math.max(-32768, Math.min(32767, int16Array[i]));
+
+          // 安全地计算字节位置
+          const byteIndex = i * 2;
+          if (byteIndex + 1 < byteArray.length) {
+            byteArray[byteIndex] = value & 0xFF;
+            byteArray[byteIndex + 1] = (value >> 8) & 0xFF;
+          } else {
+            console.warn(`字节索引越界: i=${i}, byteIndex=${byteIndex}`);
+            break;
+          }
+        } catch (valueError) {
+          console.warn(`处理第 ${i} 个值时出错:`, valueError);
+          continue;
+        }
       }
 
       return this.base64Encode(byteArray);
@@ -443,7 +471,7 @@ export class AudioWebSocketHandler {
         if (stableCount >= maxStableCount) {
           setTimeout(() => {
             this.wending = true;
-          }, 50)
+          }, 500)
           if (this.sendIntervalId) {
             clearInterval(this.sendIntervalId);
             this.sendIntervalId = null;
@@ -459,21 +487,41 @@ export class AudioWebSocketHandler {
   }
 
   private sendAudioDataSafe(audioData: Int16Array[]): void {
+    if (!audioData || audioData.length === 0) {
+      console.warn('音频数据为空，跳过发送');
+      return;
+    }
+
     // 创建数据副本，避免竞争条件
     const dataCopy = this.createAudioDataCopy(audioData);
 
     for (let a = 0; a < dataCopy.length; a++) {
       try {
+        // 添加数据验证
+        if (!dataCopy[a] || !(dataCopy[a] instanceof Int16Array)) {
+          console.warn(`无效的音频数据在索引: ${a}`);
+          continue;
+        }
+
         const isStart = a === 0;
         const isEnd = a === dataCopy.length - 1;
 
         // 添加空数组检查
-        if (!dataCopy[a] || dataCopy[a].length === 0) {
+        if (dataCopy[a].length === 0) {
           console.warn('空音频数据在索引:', a);
           continue;
         }
 
-        const base64Audio = this.int16ToBase64(dataCopy[a]);
+        // 限制单次发送的数据大小
+        const maxChunkSize = 16000; // 根据服务器限制调整
+        let audioChunk = dataCopy[a];
+
+        if (audioChunk.length > maxChunkSize) {
+          console.warn(`音频块过大: ${audioChunk.length}, 将被截断`);
+          audioChunk = audioChunk.slice(0, maxChunkSize);
+        }
+
+        const base64Audio = this.int16ToBase64(audioChunk);
 
         if (!base64Audio) {
           console.warn('Base64编码失败，跳过帧:', a);
@@ -498,6 +546,7 @@ export class AudioWebSocketHandler {
         const success = this.sendMessage(inputMessage);
         if (!success) {
           console.error('发送音频数据失败，帧:', a);
+          // 不立即退出，继续尝试发送其他帧
         }
 
         if (isEnd) {
@@ -517,26 +566,47 @@ export class AudioWebSocketHandler {
           };
           console.log('最后一帧数据信息：', a.toString(), JSON.stringify(logMessage));
         }
+
+        // 添加小的延迟，避免快速连续发送导致内存压力
+        if (a % 10 === 0) {
+          this.delay(1);
+        }
       } catch (error) {
         console.error(`处理音频帧 ${a} 错误:`, error);
+        // 继续处理下一帧而不是停止整个发送过程
+        continue;
       }
     }
   }
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
 
   private createAudioDataCopy(audioData: Int16Array[]): Int16Array[] {
-    try {
-      return audioData.map(arr => {
-        if (arr && arr.length > 0) {
-          return new Int16Array(arr);
-        } else {
-          console.warn('遇到空的Int16Array，创建空数组');
-          return new Int16Array(0);
-        }
-      });
-    } catch (error) {
-      console.error('创建音频数据副本失败:', error);
+    if (!audioData || !Array.isArray(audioData)) {
+      console.warn('无效的音频数据输入');
       return [];
     }
+
+    const result: Int16Array[] = [];
+
+    try {
+      for (let i = 0; i < audioData.length; i++) {
+        const arr = audioData[i];
+        if (arr && arr instanceof Int16Array && arr.length > 0) {
+          // 限制单个数组的最大长度
+          const maxSubArrayLength = 48000;
+          const safeLength = Math.min(arr.length, maxSubArrayLength);
+          result.push(new Int16Array(arr.buffer, 0, safeLength));
+        } else {
+          console.warn(`跳过无效的音频数据索引 ${i}`);
+        }
+      }
+    } catch (error) {
+      console.error('创建音频数据副本失败:', error);
+    }
+
+    return result;
   }
 
   // 清理资源

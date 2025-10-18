@@ -1,5 +1,6 @@
 import { LengthMetrics } from "@kit.ArkUI"
 import { it } from "@ohos/hypium"
+import { getModelInfoModel } from "config"
 import { DeviceInfo, MouseICType } from 'mouse'
 import { DevicesConfig } from './DevicesConfig'
 
@@ -51,6 +52,8 @@ export struct DeviceSettings {
   }
   ]
   @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null //鼠标信息
+  @StorageLink('getModelInfo') getModelInfo: getModelInfoModel =
+    AppStorage.get('getModelInfo') as getModelInfoModel
 
   build() {
     Stack() {
@@ -165,7 +168,7 @@ export struct DeviceSettings {
             })
             .onClick(() => {
               // if (item.ConnectionStatus) {
-              if (this.mouseconfig?.sn && item.ConnectionStatus) {
+              if (this.mouseconfig?.sn && item.ConnectionStatus&&this.getModelInfo?.images.length) {
                 //设备连接————点击进入配置页面
                 this.isShowConfig = true
               }
