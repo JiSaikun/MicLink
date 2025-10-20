@@ -81,17 +81,15 @@ export class AudioWebSocketHandler {
   private pendingChunks: Int16Array[][] = [];
   private lastSentIndex: number = 0; // 记录已发送的位置
   private completionCheckId: number | null = null;
-  private isClosing: boolean = false; // 新增：标记是否正在关闭
-
-  // 优化配置 - 1008字节分片
-  private readonly CHUNK_SIZE_BYTES = 1008; // 目标分片大小
-  private readonly SAMPLES_PER_CHUNK = 504; // 1008字节 / 2字节每采样点 = 504个采样点
-  private readonly SEND_INTERVAL_MS = 5; // 发送间隔
-  private readonly CHECK_INTERVAL_MS = 10; // 检查间隔
+  // 优化后的配置常量
+  private readonly MAX_CHUNK_SIZE = 1024 * 8; // 8KB 每片（减少）
+  private readonly MAX_FRAME_SIZE = 1024; // 最大帧大小
+  private readonly SEND_DELAY_MS = 3; // 发送延迟（减少）
+  private readonly FRAME_DELAY_MS = 2; // 帧间延迟（减少）
+  private readonly CHECK_INTERVAL_MS = 50; // 检查间隔（减少）
   private readonly COMPLETION_CHECK_MS = 100; // 完成检查间隔
-  private readonly MAX_BUFFER_SIZE = 50; // 最大缓冲分片数
 
-  // Base64编码表
+  // Base64编码表，用于自定义Base64编码实现
   private base64Chars: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
   constructor(serverUrl: string, audioData: Int16Array[], state: number, inputMessage: inputMessageModel) {
@@ -108,7 +106,6 @@ export class AudioWebSocketHandler {
     this.wending = false
     this.isSending = false;
     this.lastSentIndex = 0;
-    this.isClosing = false;
   }
 
   public connect(): void {
@@ -129,7 +126,6 @@ export class AudioWebSocketHandler {
       this.ws.on('open', (err: BusinessError, value: Object) => {
         if (!err) {
           this.isConnected = true;
-          this.isClosing = false;
           console.log("连接已打开，状态:" + JSON.stringify(value));
           console.log('*******************************语音数据长度：', this.audioData.length);
 
@@ -137,7 +133,6 @@ export class AudioWebSocketHandler {
           this.startRealTimeAudioSending();
         } else {
           console.error("连接错误:" + JSON.stringify(err));
-          this.isConnected = false;
         }
       });
 
@@ -158,7 +153,6 @@ export class AudioWebSocketHandler {
 
       this.ws.on('close', (err: BusinessError, value: webSocket.CloseResult) => {
         this.isConnected = false;
-        this.isClosing = false;
         this.cleanupIntervals();
         console.log(`连接已关闭，状态码: ${value.code}, 原因: ${value.reason}`);
       });
@@ -166,7 +160,6 @@ export class AudioWebSocketHandler {
       this.ws.on('error', (err: BusinessError) => {
         console.error("发生错误: " + err.message);
         this.cleanupIntervals();
-        this.isConnected = false;
       });
 
       console.warn('正在连接到服务器...')
@@ -176,13 +169,11 @@ export class AudioWebSocketHandler {
         } else {
           console.error("连接失败。错误信息:" + err.message);
           this.cleanupIntervals();
-          this.isConnected = false;
         }
       });
     } catch (error) {
       console.error('连接异常:', error);
       this.cleanupIntervals();
-      this.isConnected = false;
     }
   }
 
@@ -194,7 +185,7 @@ export class AudioWebSocketHandler {
       }
       if (res.status === 200 && this.state === 0) {
         if (AppStorage.get('isAI_assistant')) {
-          if (this.wending && (res.data.type === 'LAST' || res.data.type === "FIN")) {
+          if (this.wending) {
             AppStorage.setOrCreate('voiceInputText', res.data.text);
             return;
           } else {
@@ -212,9 +203,7 @@ export class AudioWebSocketHandler {
         if (!audioToText_res) {
           return;
         }
-        if (this.state || this.wending) {
-          this.handleTextResult(audioToText_res);
-        }
+        this.handleTextResult(audioToText_res);
       } else {
         console.error('响应异常:', res.message);
       }
@@ -253,7 +242,7 @@ export class AudioWebSocketHandler {
       console.log('剪贴板记录数量:', pasteData.getRecordCount());
       let clipboardText: string = pasteData.getPrimaryText();
 
-      if (this.state === 0 && this.wending && !AppStorage.get('isAI_assistant')) {
+      if (this.state === 0 && this.wending) {
         this.wending = false
         // 语音输入模式
         Communication.getDeviceInfo([0x20, 0x01, 0x19])
@@ -305,126 +294,29 @@ export class AudioWebSocketHandler {
   }
 
   public disconnect(): void {
-    console.log('开始断开WebSocket连接');
-
-    // 立即清理定时器和状态
     this.cleanupIntervals();
     this.isSending = false;
-    this.isClosing = true;
-
-    if (this.ws && this.isConnected) {
-      try {
-        console.log('正在关闭WebSocket连接...');
-
-        // 先发送结束标记
-        this.sendEndMarker();
-
-        // 延迟一段时间确保结束标记发送完成
-        setTimeout(() => {
-          this.ws!.close({
-            code: 1000,
-            reason: "客户端主动关闭"
-          }, (err: BusinessError, value: boolean) => {
-            if (!err) {
-              console.log("连接已成功关闭");
-            } else {
-              console.error("关闭连接失败。错误信息: " + JSON.stringify(err));
-            }
-            this.ws = null;
-            this.isConnected = false;
-            this.isClosing = false;
-          });
-        }, 100);
-
-      } catch (error) {
-        console.error('断开连接异常:', error);
-        this.ws = null;
-        this.isConnected = false;
-        this.isClosing = false;
-      }
-    } else {
-      console.log('WebSocket实例不存在或未连接，直接清理');
-      this.ws = null;
-      this.isConnected = false;
-      this.isClosing = false;
-    }
-  }
-
-  // 强制断开连接（用于超时等情况）
-  private forceDisconnect(): void {
-    console.log('强制断开WebSocket连接');
-    this.cleanupIntervals();
-    this.isSending = false;
-    this.isConnected = false;
-    this.isClosing = false;
 
     if (this.ws) {
       try {
         this.ws.close({
           code: 1000,
-          reason: "强制关闭"
+          reason: "客户端主动关闭"
+        }, (err: BusinessError, value: boolean) => {
+          if (!err) {
+            console.log("连接已成功关闭");
+          } else {
+            console.error("关闭连接失败。错误信息: " + JSON.stringify(err));
+          }
+          this.ws = null;
+          this.isConnected = false;
         });
       } catch (error) {
-        console.error('强制关闭异常:', error);
-      } finally {
+        console.error('断开连接异常:', error);
         this.ws = null;
+        this.isConnected = false;
       }
     }
-  }
-
-  // 异步断开连接方法
-  public async disconnectAsync(): Promise<void> {
-    return new Promise((resolve) => {
-      console.log('开始异步断开WebSocket连接');
-
-      this.cleanupIntervals();
-      this.isSending = false;
-      this.isClosing = true;
-
-      if (!this.ws || !this.isConnected) {
-        console.log('WebSocket未连接，直接完成');
-        this.isConnected = false;
-        this.isClosing = false;
-        resolve();
-        return;
-      }
-
-      // 设置超时保护
-      const timeoutId = setTimeout(() => {
-        console.warn('WebSocket关闭超时，强制断开');
-        this.forceDisconnect();
-        resolve();
-      }, 5000);
-
-      try {
-        // 发送结束标记
-        this.sendEndMarker();
-
-        setTimeout(() => {
-          this.ws!.close({
-            code: 1000,
-            reason: "客户端主动关闭"
-          }, (err: BusinessError, value: boolean) => {
-            clearTimeout(timeoutId);
-            if (!err) {
-              console.log("连接已成功关闭");
-            } else {
-              console.error("关闭连接失败。错误信息: " + JSON.stringify(err));
-            }
-            this.ws = null;
-            this.isConnected = false;
-            this.isClosing = false;
-            resolve();
-          });
-        }, 100);
-
-      } catch (error) {
-        console.error('断开连接异常:', error);
-        clearTimeout(timeoutId);
-        this.forceDisconnect();
-        resolve();
-      }
-    });
   }
 
   private cleanupIntervals(): void {
@@ -439,12 +331,12 @@ export class AudioWebSocketHandler {
   }
 
   public sendMessage(inputMessage: inputMessageModel): boolean {
-    if (!this.isConnected || !this.ws || this.isClosing) {
-      console.error("未连接到服务器或正在关闭，无法发送消息");
+    if (!this.isConnected || !this.ws) {
+      console.error("未连接到服务器，无法发送消息");
       return false;
     }
 
-    if (!inputMessage.content.trim() && !inputMessage.end) {
+    if (!inputMessage.content.trim()) {
       console.error("消息不能为空");
       return false;
     }
@@ -454,7 +346,7 @@ export class AudioWebSocketHandler {
         if (err) {
           console.error("消息发送失败: " + err.message);
         } else {
-          console.log("消息发送成功");
+          // console.log("消息发送成功");
         }
       });
       return true;
@@ -480,12 +372,13 @@ export class AudioWebSocketHandler {
     }
   }
 
-  // Base64编码实现
+  // 优化的Base64编码实现
   private base64Encode(uint8Array: Uint8Array): string {
     if (!uint8Array || uint8Array.length === 0) {
       return '';
     }
 
+    // 预分配足够的空间，避免频繁的字符串拼接
     const outputLength = Math.ceil(uint8Array.length / 3) * 4;
     const output = new Array<string>(outputLength);
     let outputIndex = 0;
@@ -516,42 +409,56 @@ export class AudioWebSocketHandler {
 
   // 将Int16Array转换为Base64编码
   private int16ToBase64(int16Array: Int16Array): string {
+    // 创建一个Uint8Array来存储转换后的字节
     const byteArray = new Uint8Array(int16Array.length * 2);
 
+    // 将16位整数转换为两个8位字节
     for (let i = 0; i < int16Array.length; i++) {
       const value = int16Array[i];
+      // 低8位
       byteArray[i * 2] = value & 0xFF;
+      // 高8位
       byteArray[i * 2 + 1] = (value >> 8) & 0xFF;
     }
 
+    // 使用自定义的Base64编码方法
     return this.base64Encode(byteArray);
   }
 
-  // 将音频数据分片为1008字节的块
-  private chunkAudioData(audioData: Int16Array[]): Int16Array[] {
-    const chunks: Int16Array[] = [];
+  // 分片处理音频数据
+  private processAudioInChunks(audioData: Int16Array[]): Int16Array[][] {
+    const chunks: Int16Array[][] = [];
+    let currentChunk: Int16Array[] = [];
+    let currentSize = 0;
 
-    // 将所有音频数据合并为一个大的Int16Array
-    let totalLength = 0;
     for (const frame of audioData) {
-      totalLength += frame.length;
+      const frameSize = frame.length * 2; // 每个Int16占2字节
+
+      if (currentSize + frameSize > this.MAX_CHUNK_SIZE && currentChunk.length > 0) {
+        chunks.push(currentChunk);
+        currentChunk = [];
+        currentSize = 0;
+      }
+
+      currentChunk.push(frame);
+      currentSize += frameSize;
     }
 
-    const combinedData = new Int16Array(totalLength);
-    let offset = 0;
-    for (const frame of audioData) {
-      combinedData.set(frame, offset);
-      offset += frame.length;
-    }
-
-    // 按504个采样点（1008字节）分块
-    for (let i = 0; i < combinedData.length; i += this.SAMPLES_PER_CHUNK) {
-      const endIndex = Math.min(i + this.SAMPLES_PER_CHUNK, combinedData.length);
-      const chunk = combinedData.slice(i, endIndex);
-      chunks.push(chunk);
+    if (currentChunk.length > 0) {
+      chunks.push(currentChunk);
     }
 
     return chunks;
+  }
+
+  // 限制单帧数据大小
+  private limitFrameSize(frame: Int16Array): Int16Array {
+    if (frame.length <= this.MAX_FRAME_SIZE) {
+      return frame;
+    }
+
+    // 如果帧太大，进行截断
+    return frame.subarray(0, this.MAX_FRAME_SIZE);
   }
 
   // 延迟函数
@@ -559,10 +466,10 @@ export class AudioWebSocketHandler {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  // ========== 优化的1008字节分片发送方法 ==========
+  // ========== 优化的实时发送方法 ==========
 
   private startRealTimeAudioSending(): void {
-    console.log('开始实时音频发送 - 1008字节分片');
+    console.log('开始实时音频发送');
 
     // 立即发送现有数据
     this.sendExistingDataImmediately();
@@ -584,21 +491,18 @@ export class AudioWebSocketHandler {
     try {
       this.isSending = true;
 
-      // 分片处理现有数据为1008字节块
-      const chunks = this.chunkAudioData(this.audioData);
-      console.log(`生成 ${chunks.length} 个1008字节分片`);
+      // 分片处理现有数据
+      const chunks = this.processAudioInChunks(this.audioData);
 
       for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
-        if (this.isClosing) {
-          break;
-        }
-
         const chunk = chunks[chunkIndex];
-        await this.sendAudioChunk(chunk, chunkIndex, chunks.length);
 
-        // 控制发送速率
+        // 快速发送分片
+        await this.sendAudioChunkFast(chunk, chunkIndex, chunks.length);
+
+        // 减少分片间延迟
         if (chunkIndex < chunks.length - 1) {
-          await this.delay(this.SEND_INTERVAL_MS);
+          await this.delay(this.SEND_DELAY_MS);
         }
       }
 
@@ -616,8 +520,8 @@ export class AudioWebSocketHandler {
     console.log('设置实时监听器');
 
     this.sendIntervalId = setInterval(async () => {
-      if (this.isSending || this.isClosing) {
-        return;
+      if (this.isSending) {
+        return; // 避免并发发送
       }
 
       // 检查是否有新数据
@@ -629,35 +533,31 @@ export class AudioWebSocketHandler {
 
   private async sendNewDataImmediately(): Promise<void> {
     const newDataCount = this.audioData.length - this.lastSentIndex;
-    if (newDataCount <= 0 || this.isSending || this.isClosing) {
+    if (newDataCount <= 0 || this.isSending) {
       return;
     }
+
+    console.log(`发现新数据: ${newDataCount} 帧`);
 
     try {
       this.isSending = true;
 
       const newData = this.audioData.slice(this.lastSentIndex);
-      const chunks = this.chunkAudioData(newData);
+      const chunks = this.processAudioInChunks(newData);
 
-      if (chunks.length > 0) {
-        console.log(`发送 ${chunks.length} 个新数据分片`);
+      for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
+        const chunk = chunks[chunkIndex];
 
-        for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
-          if (this.isClosing) {
-            break;
-          }
+        await this.sendAudioChunkFast(chunk, chunkIndex, chunks.length);
 
-          const chunk = chunks[chunkIndex];
-          await this.sendAudioChunk(chunk, chunkIndex, chunks.length);
-
-          // 最小延迟
-          if (chunkIndex < chunks.length - 1) {
-            await this.delay(this.SEND_INTERVAL_MS);
-          }
+        // 最小延迟
+        if (chunkIndex < chunks.length - 1) {
+          await this.delay(1);
         }
       }
 
       this.lastSentIndex = this.audioData.length;
+      console.log(`新数据发送完成，当前位置: ${this.lastSentIndex}`);
 
     } catch (error) {
       console.error('发送新数据错误:', error);
@@ -671,14 +571,9 @@ export class AudioWebSocketHandler {
 
     let lastDataLength = this.audioData.length;
     let stableCount = 0;
-    const maxStableCount = 5; // 100ms无新数据 (20ms * 5)
+    const maxStableCount = 6; // 300ms无新数据 (50ms * 6)
 
     this.completionCheckId = setInterval(() => {
-      if (this.isClosing) {
-        this.cleanupIntervals();
-        return;
-      }
-
       const currentLength = this.audioData.length;
 
       if (currentLength === lastDataLength) {
@@ -693,50 +588,58 @@ export class AudioWebSocketHandler {
         stableCount = 0;
         lastDataLength = currentLength;
       }
-    }, this.CHECK_INTERVAL_MS) as number;
+    }, this.COMPLETION_CHECK_MS) as number;
   }
 
-  private async sendAudioChunk(chunk: Int16Array, chunkIndex: number, totalChunks: number): Promise<void> {
-    try {
-      if (this.isClosing) {
-        return;
+  private async sendAudioChunkFast(chunk: Int16Array[], chunkIndex: number, totalChunks: number): Promise<void> {
+    for (let frameIndex = 0; frameIndex < chunk.length; frameIndex++) {
+      try {
+        const frame = chunk[frameIndex];
+
+        if (!frame || frame.length === 0) {
+          continue;
+        }
+
+        // 限制单帧数据大小
+        const limitedFrame = this.limitFrameSize(frame);
+        const base64Audio = this.int16ToBase64(limitedFrame);
+
+        if (!base64Audio) {
+          continue;
+        }
+
+        const isStart = (chunkIndex === 0 && frameIndex === 0 && this.lastSentIndex === 0);
+        const isEnd = false; // 不在分片内发送结束标记
+
+        const inputMessage: inputMessageModel = {
+          "start": isStart,
+          "clientId": this.inputMessage.clientId,
+          "ptt": this.inputMessage.ptt,
+          "serialNo": this.inputMessage.serialNo,
+          "phrases": this.inputMessage.phrases,
+          "format": this.inputMessage.format || "pcm",
+          "apiKey": this.inputMessage.apiKey,
+          "language": this.inputMessage.language,
+          "end": isEnd,
+          "rate": this.inputMessage.rate,
+          "deviceNo": this.inputMessage.deviceNo,
+          "content": base64Audio
+        };
+
+        const success = this.sendMessage(inputMessage);
+        if (!success) {
+          console.error('发送音频数据失败');
+          break;
+        }
+
+        // 减少帧间延迟，每15帧延迟一次
+        if (frameIndex % 15 === 0) {
+          await this.delay(this.FRAME_DELAY_MS);
+        }
+
+      } catch (error) {
+        console.error(`发送音频帧错误:`, error);
       }
-
-      if (!chunk || chunk.length === 0) {
-        return;
-      }
-
-      const base64Audio = this.int16ToBase64(chunk);
-
-      if (!base64Audio) {
-        return;
-      }
-
-      const isStart = (chunkIndex === 0 && this.lastSentIndex === 0);
-      const isEnd = false;
-
-      const inputMessage: inputMessageModel = {
-        "start": isStart,
-        "clientId": this.inputMessage.clientId,
-        "ptt": this.inputMessage.ptt,
-        "serialNo": this.inputMessage.serialNo,
-        "phrases": this.inputMessage.phrases,
-        "format": this.inputMessage.format || "pcm",
-        "apiKey": this.inputMessage.apiKey,
-        "language": this.inputMessage.language,
-        "end": isEnd,
-        "rate": this.inputMessage.rate,
-        "deviceNo": this.inputMessage.deviceNo,
-        "content": base64Audio
-      };
-
-      const success = this.sendMessage(inputMessage);
-      if (!success) {
-        console.error('发送音频数据失败');
-      }
-
-    } catch (error) {
-      console.error(`发送音频分片错误:`, error);
     }
   }
 
@@ -757,23 +660,36 @@ export class AudioWebSocketHandler {
       "deviceNo": this.inputMessage.deviceNo,
       "content": ""
     };
-
     this.sendMessage(endMessage);
     this.wending = true;
   }
 
+  // 添加内存监控
+  private checkMemoryUsage(): void {
+    // 定期检查音频数据大小，避免内存泄漏
+    const totalSize = this.audioData.reduce((total, frame) => total + (frame ? frame.length : 0), 0) * 2;
+    console.log(`当前音频数据大小: ${(totalSize / 1024 / 1024).toFixed(2)} MB`);
+
+    // 如果数据过大，清理旧数据
+    if (totalSize > 50 * 1024 * 1024) { // 50MB限制
+      console.warn('音频数据过大，清理部分数据');
+      this.audioData = this.audioData.slice(-1000); // 保留最近1000帧
+      this.lastSentIndex = Math.max(0, this.lastSentIndex - (this.audioData.length - 1000));
+    }
+  }
+
   // 清理资源
   public destroy(): void {
-    console.log('开始销毁AudioWebSocketHandler');
-    this.disconnectAsync().then(() => {
-      // 清理音频数据
-      this.audioData = [];
-      this.pendingChunks = [];
-      this.isSending = false;
-      this.ws = null;
-      this.lastSentIndex = 0;
-      this.isClosing = false;
-      console.log('AudioWebSocketHandler资源已完全清理');
-    });
+    this.disconnect();
+    this.cleanupIntervals();
+
+    // 清理音频数据
+    this.audioData = [];
+    this.pendingChunks = [];
+    this.isSending = false;
+    this.ws = null;
+    this.lastSentIndex = 0;
+
+    console.log('AudioWebSocketHandler资源已清理');
   }
 }

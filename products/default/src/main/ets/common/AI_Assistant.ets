@@ -62,6 +62,9 @@ export class AI_Assistant {
   /**
    * 计算字符串相似度
    */
+  /**
+   * 计算字符串相似度
+   */
   private calculateSimilarity(str1: string, str2: string): number {
     if (!str1 || !str2) {
       return 0;
@@ -75,24 +78,22 @@ export class AI_Assistant {
       return 1.0;
     }
 
-    // 包含关系
-    if (processedA.includes(processedB) || processedB.includes(processedA)) {
-      return 0.8;
-    }
-
-    // 计算字符编辑距离相似度
+    // 改进的包含关系判断：考虑长度比例
     const longer = processedA.length > processedB.length ? processedA : processedB;
     const shorter = processedA.length > processedB.length ? processedB : processedA;
 
-    if (longer.length === 0) {
-      return 1.0;
+    if (longer.includes(shorter)) {
+      // 根据包含比例调整相似度
+      const containmentRatio = shorter.length / longer.length;
+      return 0.5 + 0.3 * containmentRatio; // 基础0.5 + 比例调整
     }
 
+    // 计算字符编辑距离相似度
     const charEditDistance = this.calculateEditDistance(processedA, processedB);
     const charMaxLength = Math.max(processedA.length, processedB.length);
     const charSimilarity = charMaxLength === 0 ? 1.0 : 1.0 - (charEditDistance / charMaxLength);
 
-    // 计算拼音相似度
+    // 计算拼音相似度 - 修复：添加变量声明和计算逻辑
     const pinyinA = this.toPinyin(processedA);
     const pinyinB = this.toPinyin(processedB);
     let pinyinSimilarity = 0.0;
@@ -100,7 +101,7 @@ export class AI_Assistant {
     if (pinyinA && pinyinB && pinyinA.length > 0 && pinyinB.length > 0) {
       const pinyinEditDistance = this.calculateEditDistance(pinyinA, pinyinB);
       const pinyinMaxLength = Math.max(pinyinA.length, pinyinB.length);
-      pinyinSimilarity = 1.0 - (pinyinEditDistance / pinyinMaxLength);
+      pinyinSimilarity = pinyinMaxLength === 0 ? 1.0 : 1.0 - (pinyinEditDistance / pinyinMaxLength);
     } else if (!pinyinA && !pinyinB) {
       pinyinSimilarity = 1.0;
     }

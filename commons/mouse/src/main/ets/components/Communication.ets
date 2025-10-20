@@ -4,6 +4,7 @@ import { SmartMouseAudioProcessor } from './SmartMouseAudioProcessor'
 import { getModelInfo_Params } from '../model/MouseInfoModel'
 import { _getModelInfo } from '../viewmodel/UserViewModel'
 import { getModelInfoModel } from 'config'
+import { AudioWebSocketHandler } from 'api';
 
 // 按键类型枚举
 export enum KeyPressType {
@@ -824,6 +825,9 @@ export class Communication {
         console.log(`解码得到PCM数据: ${pcmData.length}个样本`, '\n', '具体数据：', pcmData);
         // 这里可以添加播放或保存PCM数据的逻辑
         Communication.audioData.push(pcmData)
+        if (Communication.audioData.length===1008) {
+
+        }
       }
     } catch (error) {
       console.error('处理音频数据失败:', error);

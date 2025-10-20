@@ -60,6 +60,7 @@ export class AudioWebSocketHandler {
   private serverUrl: string = "ws://asr.miclink.net/ws";
   private audioData: Int16Array[] = []
   private state: number = 0 //0:语音输入
+  private length: number = 0 //0:语音输入
   private wending: boolean = false //0:语音数据不再变化
   private inputMessage: inputMessageModel = {
     start: false,
@@ -89,8 +90,14 @@ export class AudioWebSocketHandler {
     this.audioData = audioData;
     this.state = state;
     this.inputMessage = inputMessage;
-    AppStorage.setOrCreate('voiceInputText','')
-    AppStorage.setOrCreate('voiceInputText',null)
+    AppStorage.setOrCreate('voiceInputText', '')
+    AppStorage.setOrCreate('linshi', '')
+    AppStorage.setOrCreate('voiceTranslationText', {
+      transText: '',
+      text: ''
+    })
+    this.wending = false
+    this.length = 0
   }
 
 
@@ -110,17 +117,21 @@ export class AudioWebSocketHandler {
           this.isConnected = true;
           console.error("连接已打开，状态:" + JSON.stringify(value));
           console.error('*******************************语音数据长度：', this.audioData.length)
-          let flax= Communication.audioData.length
-          let a= setInterval(()=>{
-            console.error('语音长度',Communication.audioData.length)
-            if (Communication.audioData.length===flax) {
+          let a = setInterval(() => {
+            console.error('语音长度', Communication.audioData.length)
+            if (Communication.audioData.length === this.length) {
               console.error('信息停止发送')
               clearInterval(a)
-              this.wending=true
+              this.wending = true
             }
-            flax= Communication.audioData.length
-            this.sendAudioData(Communication.audioData)
-          },2000)
+            if (this.length === 0) {
+              this.length = Communication.audioData.length
+              this.sendAudioData(Communication.audioData)
+            } else {
+              this.length = Communication.audioData.length
+              this.sendAudioData(Communication.audioData, this.length)
+            }
+          }, 2000)
         } else {
           console.error("连接错误:" + JSON.stringify(err));
         }
@@ -171,7 +182,7 @@ export class AudioWebSocketHandler {
                     console.error(JSON.stringify(pasteData.getRecordCount()))
                     let text: string = pasteData.getPrimaryText();
                     // console.log('111111111111111', text, this.state)
-                    if (this.state === 0&&this.wending) { //:语音输入
+                    if (this.state === 0 && this.wending) { //:语音输入
                       Communication.getDeviceInfo([0x20, 0x01, 0x19])
                         .then(() => {
                           setTimeout(() => {
@@ -195,7 +206,7 @@ export class AudioWebSocketHandler {
                         console.log('翻译请求成功————翻译结果：' + res.data?.transText)
                         if (res.data) {
                           let dataArray = AppStorage.get('voiceTranslationText') as translate_Response
-                          dataArray= {
+                          dataArray = {
                             transText: res.data?.transText as string,
                             text: res.data?.text as string,
                           }
@@ -239,8 +250,7 @@ export class AudioWebSocketHandler {
           console.error("消息错误:" + JSON.stringify(err));
         }
       }
-      )
-      ;
+      );
 
       this.ws.on('close', (err: BusinessError, value: webSocket.CloseResult) => {
         this.isConnected = false;
@@ -368,9 +378,9 @@ export class AudioWebSocketHandler {
     return this.base64Encode(byteArray);
   }
 
-  private sendAudioData(audioData: Int16Array[]) {
+  private sendAudioData(audioData: Int16Array[], a: number = 0) {
     console.error('dsahkjdljas')
-    for (let a = 0; a < audioData.length; a++) {
+    for (; a < this.length; a++) {
       const isStart: boolean = a === 0;
       const isEnd: boolean = a === audioData.length - 1;
 
@@ -388,7 +398,7 @@ export class AudioWebSocketHandler {
         "format": this.inputMessage.format || "pcm",
         "apiKey": this.inputMessage.apiKey,
         "language": this.inputMessage.language,
-        "end": isEnd,
+        "end": isEnd && !Communication.audioDataState,
         "rate": this.inputMessage.rate,
         "deviceNo": this.inputMessage.deviceNo,
         "content": base64Audio
