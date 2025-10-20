@@ -777,7 +777,7 @@ export class Communication {
         Communication.getDeviceInfo()
       }
     } else {
-      if (!AppStorage.get('getModelInfo')) {
+      if (!AppStorage.get('getModelInfo')||!(AppStorage.get('getModelInfo')as getModelInfoModel)?.images.length) {
         const params: getModelInfo_Params = {
           languageCode: '',
           productCode: Communication.deviceInfo.productType.toString(),

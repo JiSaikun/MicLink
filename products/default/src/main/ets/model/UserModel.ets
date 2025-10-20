@@ -4,11 +4,11 @@ import { BaseParams } from 'api'
  * 获取用户按键模式详情
  */
 export interface addCustomerKey_Params extends BaseParams {
-  cmdId: number //指令ID
-  keyId: number //按键ID
-  opId: number //操作ID
+  cmdId: string //指令ID
+  keyId: string //按键ID
+  opId: string //操作ID
   sno: string //设备号
-  userModelId: number //按鍵模式ID
+  userModelId: string //按鍵模式ID
 }
 
 /**

@@ -1,7 +1,7 @@
 import { DeviceInfo, KeyPressType } from 'mouse'
-import { LengthMetrics } from "@kit.ArkUI"
-import {addCustomerKey_Params}from '../model/UserModel'
-import {_addCustomerKey}from '../viewmodel/UserViewModel'
+import { LengthMetrics, promptAction } from "@kit.ArkUI"
+import { addCustomerKey_Params } from '../model/UserModel'
+import { _addCustomerKey } from '../viewmodel/UserViewModel'
 import {
   getModelInfoModel,
   keyInfosModel,
@@ -9,6 +9,9 @@ import {
   keyInfos_childsModel,
   keyInfos_childs_childsModel
 } from 'config' //获取设备按键信息
+import { picker } from '@kit.CoreFileKit'
+import { common } from '@kit.AbilityKit'
+import { BusinessError } from '@kit.BasicServicesKit'
 
 export interface KeymethodConfig {
   key: KeyPressType
@@ -27,6 +30,7 @@ export struct ConfigPage2 {
   @StorageLink('KeymethodConfig') KeymethodConfig: KeymethodConfig[] = []
   @StorageLink("shortcut") shortcut: number = 0 //改变该值弹出对应快捷键悬浮窗口 1：语音识别 2：语音翻译 3:截图识别 4：自定义快捷键
   @Link isShowConfig: boolean
+  @State isLoading: boolean = false;
 
   /**
    * 将子项转换为ArkUI官方SelectOption数组
@@ -151,12 +155,12 @@ export struct ConfigPage2 {
                 index2)] as keyInfos_childs_childsModel).names as LanguageNames)[this.languages
               ])
               .onSelect((index: number, value) => {
-                let params:addCustomerKey_Params={
-                  cmdId: this.getModelInfo.keyInfos[index1].childs[index2].childs[index].cmdId,
-                  keyId: this.getModelInfo.keyInfos[index1].childs[index2].childs[index].keyId, //按键ID
-                  opId: this.getModelInfo.keyInfos[index1].childs[index2].childs[index].opId,//操作ID
-                  sno: this.mouseconfig?.sn as string,//设备号
-                  userModelId: this.getModelInfo.id//按鍵模式ID
+                let params: addCustomerKey_Params = {
+                  cmdId: this.getModelInfo.keyInfos[index1].childs[index2].childs[index].cmdId.toString(),
+                  keyId: this.getModelInfo.keyInfos[index1].childs[index2].childs[index].keyId.toString(), //按键ID
+                  opId: this.getModelInfo.keyInfos[index1].childs[index2].childs[index].opId.toString(), //操作ID
+                  sno: this.mouseconfig?.sn as string, //设备号
+                  userModelId: this.getModelInfo.id.toString()//按鍵模式ID
                 }
                 _addCustomerKey(params)
                 this.getModelInfo.keyInfos[index1].childs[index2].childs[this.getDefaultSelectedIndex(item.childs || [],
@@ -197,40 +201,23 @@ export struct ConfigPage2 {
                 // console.log('*/*/*/*/*', JSON.stringify(AppStorage.get('KeymethodConfig')))
                 AppStorage.setOrCreate('KeymethodConfig', this.KeymethodConfig)
                 console.log('*/*/*/*/*', JSON.stringify(AppStorage.get('KeymethodConfig')))
-
-                const shortcutKeywords = [
-                  '快捷按键', 'Tasten für Verknüpfungen', "كنوپكا", "快捷按鍵", "단축키",
-                  "Shortcut key", "زر الاختصار", "Botones de acceso directo", "མྱུར་མཐེབ་",
-                  "Tasto di scorciatoia", "Kekunci pintasan", "تېز كۇنۇپكىسى", "Kısayol tuşları",
-                  "Tombol pintasan", "Phím tắt", "ᠲᠦᠷᠭᠡᠨ ᠳᠠᠷᠤᠭᠤᠯ", "Boutons de raccourci",
-                  "Торчлолын товчлуур", "ปุ่มทางลัด", "ショートカットキー"
-                ];
-                if (shortcutKeywords.includes(value)) {
+                console.error('11', this.getModelInfo.keyInfos[index1].childs[index2].childs[index].cmd)
+                //快捷键
+                if (this.getModelInfo.keyInfos[index1].childs[index2].childs[index].cmd === 'Action_SK') {
                   this.shortcut = 4;
                 }
-
-                const fixedText = [
-                  "Feste Textverfassung", "تۇراقتى دەلو", "固定文案", "고정 카피라이팅", "Fixed copy", "كتابة نسخة ثابتة",
-                  "固定文案", "Redacción fija", "གཏན་འཇགས་ཡིག་ཆ་", "Copywriting fisso", "Fixed copy",
-                  "nakapirming copywriting", "Copywriting tetap", "مۇقىم دەپتەردار", "Sabit metin yazarlığı",
-                  "Copywriting tetap", "Bản sao cố định", "ᠲᠣᠭᠲᠠᠮᠠᠯ ᠠᠯᠪᠠᠨ ᠪᠢᠴᠢᠭ", "Rédaction fixe", "Тогтмол бичих",
-                  "การเขียนคำโฆษณาคงที่", "修正されたコピー"
-                ];
-                if (fixedText.includes(value)) {
+                //固定文案
+                if (this.getModelInfo.keyInfos[index1].childs[index2].childs[index].cmd === 'Action_FT') {
                   AppStorage.setOrCreate('isShowFixedText_pop', true)
                 }
-                const webUrlToOpen = [
-                  "Öffnen Sie die Webseite", "تور جايىلۋ", "打開網頁", "웹 페이지 열기", "Open web page", "فتح صفحة الويب",
-                  "打开网页", "Abra la página web", "དྲ་ངོས་ཁ་ཕྱེ་།", "Apri una pagina web", "Open web page",
-                  "Magbukas ng web page", "Buka halaman web", "تور بەتنى ئېچىش", "Web sayfasını açın",
-                  "Buka halaman web",
-                  "mở trang web", "ᠰᠦᠯᠵᠢᠶᠡᠨ\u202fᠦ ᠬᠠᠭᠤᠳᠠᠰᠤ\u202fᠶᠢ ᠨᠡᠭᠡᠭᠡᠬᠦ", "Ouvrir la page Web", "Вэб хуудсыг нээх",
-                  "เปิดหน้าเว็บ", "Webページを開く"
-                ];
-                if (webUrlToOpen.includes(value)) {
+                //打开网页
+                if (this.getModelInfo.keyInfos[index1].childs[index2].childs[index].cmd === 'Action_OW') {
                   AppStorage.setOrCreate('isShow_webUrlToOpen_pop', true)
                 }
-
+                //文件夹
+                // if (this.getModelInfo.keyInfos[index1].childs[index2].childs[index].cmd === 'Action_OFJ') {
+                //   this.selectFolder()
+                // }
               })
               .selected(this.getDefaultSelectedIndex(item.childs || [], index1, index2))
               .width('100%')
@@ -254,6 +241,71 @@ export struct ConfigPage2 {
     if (JSON.stringify(this.getModelInfo.keyInfos) === '[]') {
       this.isShowConfig = false
       // AppStorage.setOrCreate('isShowConfig', false)
+    }
+  }
+
+  selectFolder(): void {
+    this.isLoading = true;
+    try {
+      promptAction.showToast({ message: '请选择目标文件夹中的任意一个文件', duration: 3000 });
+
+      const documentSelectOptions = new picker.DocumentSelectOptions();
+      documentSelectOptions.maxSelectNumber = 1;
+
+      const context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext;
+      const documentViewPicker = new picker.DocumentViewPicker(context);
+
+      documentViewPicker.select(documentSelectOptions)
+        .then((result: string[]) => {
+          if (!result || result.length === 0) {
+            promptAction.showToast({ message: '未选择任何文件', duration: 2000 });
+            return;
+          }
+
+          const filePath = result[0];
+          const lastSlashIndex = filePath.lastIndexOf('/');
+
+          if (lastSlashIndex !== -1) {
+            const folderPath = filePath.substring(0, lastSlashIndex);
+            // 直接赋值而不是使用展开操作符
+            AppStorage.setOrCreate('folderPath', folderPath)
+
+            console.log('提取的文件夹路径:', folderPath);
+            const folderName = folderPath.substring(folderPath.lastIndexOf('/') + 1);
+            promptAction.showToast({ message: `已选择文件夹: ${folderName}`, duration: 2500 });
+          } else {
+            promptAction.showToast({ message: '无法解析文件夹路径', duration: 2000 });
+          }
+        })
+        .catch((err: BusinessError) => {
+          const errorMsg = this.getFolderSelectErrorMsg(err.code);
+          console.error('文件夹选择失败:', errorMsg, '错误码:', err.code);
+          promptAction.showToast({ message: errorMsg, duration: 3000 });
+        })
+        .finally(() => {
+          this.isLoading = false;
+        });
+
+    } catch (err) {
+      console.error('文件夹选择代码异常:', (err as Error).message);
+      promptAction.showToast({ message: '文件夹选择功能异常', duration: 3000 });
+      this.isLoading = false;
+    }
+  }
+
+  /**
+   * 辅助函数：根据错误码返回文件夹选择的友好提示
+   */
+  getFolderSelectErrorMsg(errorCode: number): string {
+    switch (errorCode) {
+      case 1001:
+        return '需要文件访问权限，请在设置中开启';
+      case 1002:
+        return '已取消文件夹选择';
+      case 1003:
+        return '无文件夹访问权限，请授权后重试';
+      default:
+        return `选择失败（错误码: ${errorCode}）`;
     }
   }
 }

@@ -167,6 +167,7 @@ export struct DeviceSettings {
               }
             })
             .onClick(() => {
+              // console.error(this.mouseconfig?.sn,'\n',item.ConnectionStatus,'\n',this.getModelInfo?.images.length)
               // if (item.ConnectionStatus) {
               if (this.mouseconfig?.sn && item.ConnectionStatus&&this.getModelInfo?.images.length) {
                 //设备连接————点击进入配置页面

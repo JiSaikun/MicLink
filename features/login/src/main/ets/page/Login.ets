@@ -13,7 +13,7 @@ export function LoginBuilder() {
 struct Login {
   @StorageLink('languages') languages: string = 'ZH_CN'
   @State longin_operation: number = 0 //0:登录页 1：验证登录页 2：注册页 3：修改密码
-  @State phone: string = '2847714478@qq.com' //手机号
+  @State phone: string = '' //手机号
   @State captcha: string = '' //验证码
   @State loginPassword: string = '' //登陆密码
   @State confirmPasswordTwice: string = '' //二次确认密码

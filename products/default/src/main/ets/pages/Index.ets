@@ -30,8 +30,9 @@ PersistentStorage.persistProp("isWordScan_Translation", true) //是否开启划�
 PersistentStorage.persistProp("isOCR_Translate_Toggle", true) //是否开启截图识别/翻译
 PersistentStorage.persistProp("isAutoCloseVoiceTransPop", false) //是否开启语音翻译弹窗自动关闭
 PersistentStorage.persistProp("fixedText", '') //输入固定文本
+// PersistentStorage.persistProp("folderPath", '') //打开文件夹记录文件夹路径  暂不做更改
 PersistentStorage.persistProp("webUrlToOpen", '') //输入打开网页的具体网址
-PersistentStorage.persistProp("EnhancedBrowserSearch", 0) //输入打开网页的具体网址
+PersistentStorage.persistProp("EnhancedBrowserSearch", 0) //搜索引擎
 
 @Entry
 @Component

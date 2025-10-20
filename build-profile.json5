@@ -6,9 +6,9 @@
         "type": "HarmonyOS",
         "material": {
           "storeFile": "E:/jisaikun/Projects/miclink.p12",
-          "storePassword": "0000001B4BCA0EA9CA6E32D1CB6AE4898D904FEE1738A2616EE9BB8B46A3748FF811C34FA7918D1690E20D",
+          "storePassword": "0000001B171333DB201580AF7205471E8D3566F98DC37C4B1797A37C9BEBA2E385F9EA41E6C48BA0C28763",
           "keyAlias": "MicLink",
-          "keyPassword": "0000001B9BDBD44BAA624B4AE4F4CA104921D58CB15162EDB9C3D4DED46F45D179C82704272EB7F5808609",
+          "keyPassword": "0000001BBFC9C7E03B0028CA528F4840C81BD7995B758CA0BE43D13C7230F6FE43567E412085961EEC51D6",
           "signAlg": "SHA256withECDSA",
           "profile": "E:/jisaikun/Projects/system_float_windowDebug.p7b",
           "certpath": "E:/jisaikun/Projects/MicLink.cer"
