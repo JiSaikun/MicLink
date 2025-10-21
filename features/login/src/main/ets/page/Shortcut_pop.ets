@@ -1,6 +1,6 @@
 import { KeyCode } from '@kit.InputKit'
 import { LengthMetrics } from '@kit.ArkUI'
-import { globalShortcutService } from 'utils'
+import { Languages } from 'config'
 
 @Builder
 export function Shortcut_popBuilder() {
@@ -37,6 +37,7 @@ interface shortcutType {
 
 @Component
 struct Shortcut_pop {
+  @StorageLink('languages') languages: string = 'ZH_CN'
   // 快捷键组列表
   @State shortcutGroups: ShortcutConfig[] = []
   // 预览按键信息
@@ -55,19 +56,19 @@ struct Shortcut_pop {
   @Consume('pageInfo') pageInfo: NavPathStack
   @StorageLink("shortcut") shortcut: number = 0 //标记快捷键功能
   @StorageLink("voice_recognition_shortcut") voice_recognition_shortcut: shortcutType = {
-    keyPreview: '无',
+    keyPreview:Languages.voice_recognition_settings[this.languages],//无
     pressedKeys: []
   } //语音识别快捷键
   @StorageLink("voice_translation_shortcut") voice_translation_shortcut: shortcutType = {
-    keyPreview: '无',
+    keyPreview: Languages.voice_recognition_settings[this.languages],//无
     pressedKeys: []
   } //语音翻译快捷键
   @StorageLink("screenshot_recognition_shortcut") screenshot_recognition_shortcut: shortcutType = {
-    keyPreview: '无',
+    keyPreview: Languages.voice_recognition_settings[this.languages],//无
     pressedKeys: []
   } //截图识别快捷键
   @StorageLink("custom_shortcut") custom_shortcut: shortcutType = {
-    keyPreview: '无',
+    keyPreview: Languages.voice_recognition_settings[this.languages],//无
     pressedKeys: []
   } //自定义快捷键
 
@@ -76,24 +77,24 @@ struct Shortcut_pop {
       case 1:
         //语音识别
         this.keyPreview_old =
-          this.voice_recognition_shortcut.keyPreview ? this.voice_recognition_shortcut.keyPreview : '无'
+          this.voice_recognition_shortcut.keyPreview ? this.voice_recognition_shortcut.keyPreview :  Languages.voice_recognition_settings[this.languages]//无
         break
       case 2:
         //语音翻译
         this.keyPreview_old =
-          this.voice_translation_shortcut.keyPreview ? this.voice_translation_shortcut.keyPreview : '无'
+          this.voice_translation_shortcut.keyPreview ? this.voice_translation_shortcut.keyPreview :  Languages.voice_recognition_settings[this.languages]//无
         break
       case 3:
         //截图识别
         this.keyPreview_old =
-          this.screenshot_recognition_shortcut.keyPreview ? this.screenshot_recognition_shortcut.keyPreview : '无'
+          this.screenshot_recognition_shortcut.keyPreview ? this.screenshot_recognition_shortcut.keyPreview :  Languages.voice_recognition_settings[this.languages]//无
         break
       case 4:
         //自定义快捷键
-        this.keyPreview_old = this.custom_shortcut.keyPreview ? this.custom_shortcut.keyPreview : '无'
+        this.keyPreview_old = this.custom_shortcut.keyPreview ? this.custom_shortcut.keyPreview :  Languages.voice_recognition_settings[this.languages]//无
         break
       default:
-        this.keyPreview_old = '无'
+        this.keyPreview_old = Languages.voice_recognition_settings[this.languages]//无
     }
   }
 
@@ -102,7 +103,8 @@ struct Shortcut_pop {
       Stack() {
         Column() {
           Row() {
-            Text('按键盘设置快捷键')
+            // Text('按键盘设置快捷键')
+            Text(Languages.set_shortcut_by_keyboard[this.languages])
               .fontSize(16)
               .fontWeight(400)
               .fontColor(Color.White)
@@ -129,7 +131,8 @@ struct Shortcut_pop {
           }
 
           Flex({ space: { main: LengthMetrics.px(30) }, justifyContent: FlexAlign.Center }) {
-            Text('确定')
+            // Text('确定')
+            Text(Languages.confirm_btn[this.languages])
               .fontSize(16)
               .fontWeight(400)
               .fontColor(Color.White)
@@ -147,7 +150,8 @@ struct Shortcut_pop {
                   // 检查快捷键是否重复（对于shortcut=1,2,3）
                   if (this.shortcut >= 1 && this.shortcut <= 3) {
                     if (this.isShortcutDuplicate(this.getNormalizedPressedKeys())) {
-                      this.feedback = '该快捷键已被其他功能使用，请重新设置'
+                      // this.feedback = '该快捷键已被其他功能使用，请重新设置'
+                      this.feedback = Languages.shortcut_duplicate_error[this.languages]
                       return
                     }
                   }
@@ -191,7 +195,8 @@ struct Shortcut_pop {
                 this.shortcut = 1000
                 this.pageInfo.pop()
               })
-            Text('取消')
+            // Text('取消')
+            Text(Languages.cancel[this.languages])
               .fontSize(16)
               .fontWeight(400)
               .fontColor(Color.White)
@@ -291,7 +296,8 @@ struct Shortcut_pop {
   // 保存快捷键
   private SaveShortcut() {
     if (this.currentKeys.modifiers.length === 0 && !this.currentKeys.mainKey) {
-      this.feedback = '请先按下一些按键再保存'
+      // this.feedback = '请先按下一些按键再保存'
+      this.feedback = Languages.press_keys_before_save[this.languages]
       return
     }
 
@@ -305,7 +311,8 @@ struct Shortcut_pop {
     )
 
     if (isDuplicate) {
-      this.feedback = '该按键组合已存在'
+      // this.feedback = '该按键组合已存在'
+      this.feedback =Languages.shortcut_combination_exists[this.languages]
       return
     }
 
@@ -317,7 +324,8 @@ struct Shortcut_pop {
       this.currentKeys.displayText
     ))
 
-    this.feedback = `按键组合已保存: ${this.currentKeys.displayText}`
+    // this.feedback = `按键组合已保存: ${this.currentKeys.displayText}`
+    this.feedback = `${Languages.shortcut_saved_prefix[this.languages]}${this.currentKeys.displayText}`
   }
 
   // 比较两个数组是否相等
@@ -728,7 +736,8 @@ struct Shortcut_pop {
         const mainKeyMatch = normalizedGroupKeyCode === normalizedPressedKeyCode;
 
         if (modifiersMatch && mainKeyMatch) {
-          this.feedback = `触发已保存组合: ${group.displayText}`;
+          // this.feedback = `触发已保存组合: ${group.displayText}`;
+          this.feedback = `${Languages.triggered_shortcut_prefix[this.languages]} ${group.displayText}`;
           return;
         }
       }

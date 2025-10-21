@@ -1,5 +1,8 @@
+import { Languages } from "config"
+
 @Component
 export struct WebUrlToOpen_pop {
+  @StorageLink('languages') languages: string = 'ZH_CN'
   @State webUrlToOpen: string = '' //打开网页：输入网址
   @Link isShow_webUrlToOpen_pop: boolean
 
@@ -13,7 +16,8 @@ export struct WebUrlToOpen_pop {
     Stack() {
       Column() {
         Row() {
-          Text('输入网页网址')
+          // Text('输入网页网址')
+          Text(Languages.input_web_url[this.languages])
             .fontSize(16)
             .fontWeight(400)
             .fontColor(Color.White)
@@ -24,7 +28,8 @@ export struct WebUrlToOpen_pop {
         .padding(10)
         .backgroundColor('#00afcc')
 
-        TextInput({ placeholder: '请输入打开网页的网址', text: $$this.webUrlToOpen })
+        // TextInput({ placeholder: '请输入打开网页的网址', text: $$this.webUrlToOpen })
+        TextInput({ placeholder: Languages.confirm_btn[this.languages], text: $$this.webUrlToOpen })
           .backgroundColor('#fff')
           .placeholderColor('#bbbdbf')
           .margin({
@@ -38,7 +43,8 @@ export struct WebUrlToOpen_pop {
           .borderRadius(5)
 
         Flex({ justifyContent: FlexAlign.Center }) {
-          Text('确定')
+          // Text('确定')
+          Text(Languages.confirm_btn[this.languages])
             .fontSize(16)
             .fontWeight(400)
             .fontColor(Color.White)

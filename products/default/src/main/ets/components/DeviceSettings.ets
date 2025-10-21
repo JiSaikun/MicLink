@@ -1,7 +1,6 @@
 import { LengthMetrics } from "@kit.ArkUI"
-import { it } from "@ohos/hypium"
-import { getModelInfoModel } from "config"
-import { DeviceInfo, MouseICType } from 'mouse'
+import { getModelInfoModel, imagesDataModel, imagesModel } from "config"
+import { DeviceArrayType, DeviceInfo, MouseICType, ConnectDevice } from 'mouse'
 import { DevicesConfig } from './DevicesConfig'
 
 interface DeviceInfo_Model {
@@ -20,38 +19,9 @@ interface connectionmethod_Model {
 
 @Component
 export struct DeviceSettings {
+  @StorageLink('languages') languages: string = 'ZH_CN'
   @State isShowConfig: boolean = false
-  @State deviesList: DeviceInfo_Model[] = [
-    {
-      deviceModel: 'GM009',
-      ConnectionStatus: true,
-      icon: 'HM_001_white',
-      connectionmethod: {
-        Cloud: true,
-        USB: true,
-        Bluetooth: false
-      }
-    }, {
-    deviceModel: 'GM009',
-    ConnectionStatus: false,
-    icon: 'N95',
-    connectionmethod: {
-      Cloud: false,
-      USB: false,
-      Bluetooth: false
-    }
-  }, {
-    deviceModel: 'GM009',
-    ConnectionStatus: false,
-    icon: 'dockingStation',
-    connectionmethod: {
-      Cloud: false,
-      USB: false,
-      Bluetooth: false
-    }
-  }
-  ]
-  @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null //鼠标信息
+  // @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null //鼠标信息
   @StorageLink('getModelInfo') getModelInfo: getModelInfoModel =
     AppStorage.get('getModelInfo') as getModelInfoModel
 
@@ -76,104 +46,129 @@ export struct DeviceSettings {
         // .borderWidth(1)
 
         Flex({ wrap: FlexWrap.Wrap, space: { main: LengthMetrics.px(30), cross: LengthMetrics.px(30) } }) {
-          ForEach(this.deviesList, (item: DeviceInfo_Model) => {
-            Column() {
-              Row() {
-                Text(item.deviceModel)
-                  .fontSize(18)
-                  .fontWeight(500)
-                  .lineHeight(18)
-                  .fontColor('#31373d')
-                Blank()
+          ForEach(ConnectDevice.Communication, (item: DeviceArrayType, index) => {
+            if (item.getModelInfo) {
+              Column() {
                 Row() {
-                  if (this.mouseconfig?.batteryLevel as number >= 80) {
-                    Image($r('app.media.power_level_full'))
-                      .width(20).height(10)
-                  } else if (this.mouseconfig?.batteryLevel as number >= 60) {
-                    Image($r('app.media.power_level_80'))
-                      .width(20).height(10)
-                  } else if (this.mouseconfig?.batteryLevel as number >= 40) {
-                    Image($r('app.media.power_level_60'))
-                      .width(20).height(10)
-                  } else if (this.mouseconfig?.batteryLevel as number >= 20) {
-                    Image($r('app.media.power_level_40'))
-                      .width(20).height(10)
-                  } else {
-                    Image($r('app.media.power_level_20'))
-                      .width(20).height(10)
-                  }
-                  Text("MIFI-无线")
-                    .margin({ left: 5 })
+                  Text('')
                     .fontSize(18)
                     .fontWeight(500)
                     .lineHeight(18)
                     .fontColor('#31373d')
+                  Blank()
+                  Row() {
+                    if (item.mouseconfig?.batteryLevel as number >= 80) {
+                      Image($r('app.media.power_level_full'))
+                        .width(20).height(10)
+                    } else if (item.mouseconfig?.batteryLevel as number >= 60) {
+                      Image($r('app.media.power_level_80'))
+                        .width(20).height(10)
+                    } else if (item.mouseconfig?.batteryLevel as number >= 40) {
+                      Image($r('app.media.power_level_60'))
+                        .width(20).height(10)
+                    } else if (item.mouseconfig?.batteryLevel as number >= 20) {
+                      Image($r('app.media.power_level_40'))
+                        .width(20).height(10)
+                    } else {
+                      Image($r('app.media.power_level_20'))
+                        .width(20).height(10)
+                    }
+                    Text("MIFI-无线")
+                      .margin({ left: 5 })
+                      .fontSize(18)
+                      .fontWeight(500)
+                      .lineHeight(18)
+                      .fontColor('#31373d')
+                  }
+                  .visibility(item.getModelInfo?.id ? Visibility.Visible : Visibility.None)
+
+                  Text('未连接')
+                    .fontSize(14)
+                    .fontWeight(400)
+                    .lineHeight(14)
+                    .fontColor('#eb5e12')
+                    .visibility(item.getModelInfo?.id ? Visibility.None : Visibility.Visible)
                 }
-                .visibility(item.ConnectionStatus ? Visibility.Visible : Visibility.None)
-
-                Text('未连接')
-                  .fontSize(14)
-                  .fontWeight(400)
-                  .lineHeight(14)
-                  .fontColor('#eb5e12')
-                  .visibility(item.ConnectionStatus ? Visibility.None : Visibility.Visible)
-              }
-              .width('100%')
-
-              Image($r(`app.media.${item.icon}`))
                 .width('100%')
-                .margin({ bottom: 15, top: 15 })
-              Row() {
-                Image($r('app.media.Cloud_true'))
-                  .visibility(item.connectionmethod.Cloud ? Visibility.Visible : Visibility.None)
-                  .margin({ left: 10 }).width(24)
-                Image($r('app.media.Cloud_false'))
-                  .visibility(item.connectionmethod.Cloud ? Visibility.None : Visibility.Visible)
-                  .margin({ left: 10 }).width(24)
-                Image($r('app.media.USB_true'))
-                  .visibility(item.connectionmethod.USB ? Visibility.Visible : Visibility.None)
-                  .margin({ left: 10 }).width(24)
-                Image($r('app.media.USB_false'))
-                  .visibility(item.connectionmethod.USB ? Visibility.None : Visibility.Visible)
-                  .margin({ left: 10 }).width(24)
-                Image($r('app.media.Bluetooth_true'))
-                  .visibility(item.connectionmethod.Bluetooth ? Visibility.Visible : Visibility.None)
-                  .margin({ left: 10 }).width(24)
-                Image($r('app.media.Bluetooth_false'))
-                  .visibility(item.connectionmethod.Bluetooth ? Visibility.None : Visibility.Visible)
-                  .margin({ left: 10 }).width(24)
-              }
-              .justifyContent(FlexAlign.End)
-              .width('100%')
 
-            }
-            .padding(24)
-            .borderRadius(16)
-            .flexGrow(1)
-            .flexShrink(1)
-            .width(230)
-            .border({ width: 2, color: '#e6e8eb' })
-            .onMouse((event?: MouseEvent) => { // 设置Button的onMouse回调
-              if (event && !item.ConnectionStatus) {
-                if (event.stopPropagation) {
-                  event.stopPropagation(); // 在Button的onMouse事件中设置阻止冒泡
+                Image(this.getdeviesImage(item.getModelInfo as getModelInfoModel))
+                // Image($r('app.media.HM_001_white'))
+                  .width('100%')
+                  .margin({ bottom: 15, top: 15 })
+                Row() {
+                  Image($r('app.media.Cloud_true'))
+                    .visibility(item.connectionmethod === 0 ? Visibility.Visible : Visibility.None)
+                    .margin({ left: 10 }).width(24)
+                  Image($r('app.media.Cloud_false'))
+                    .visibility(item.connectionmethod === 0 ? Visibility.None : Visibility.Visible)
+                    .margin({ left: 10 }).width(24)
+                  Image($r('app.media.USB_true'))
+                    .visibility(item.connectionmethod === 1 ? Visibility.Visible : Visibility.None)
+                    .margin({ left: 10 }).width(24)
+                  Image($r('app.media.USB_false'))
+                    .visibility(item.connectionmethod === 1 ? Visibility.None : Visibility.Visible)
+                    .margin({ left: 10 }).width(24)
+                  Image($r('app.media.Bluetooth_true'))
+                    .visibility(item.connectionmethod === 2 ? Visibility.Visible : Visibility.None)
+                    .margin({ left: 10 }).width(24)
+                  Image($r('app.media.Bluetooth_false'))
+                    .visibility(item.connectionmethod === 2 ? Visibility.None : Visibility.Visible)
+                    .margin({ left: 10 }).width(24)
                 }
-                // console.log('============',JSON.stringify(event))
-                // if (event.button===1) {
-                //   /**
-                //    * 单击左键
-                //    */
-                // }
+                .justifyContent(FlexAlign.End)
+                .width('100%')
+
               }
-            })
-            .onClick(() => {
-              // console.error(this.mouseconfig?.sn,'\n',item.ConnectionStatus,'\n',this.getModelInfo?.images.length)
-              // if (item.ConnectionStatus) {
-              if (this.mouseconfig?.sn && item.ConnectionStatus&&this.getModelInfo?.images.length) {
-                //设备连接————点击进入配置页面
-                this.isShowConfig = true
+              .padding(24)
+              .borderRadius(16)
+              .flexGrow(1)
+              .flexShrink(1)
+              .width(230)
+              .border({ width: 2, color: '#e6e8eb' })
+              .onMouse((event?: MouseEvent) => { // 设置Button的onMouse回调
+                if (event && !item.getModelInfo?.images) {
+                  if (event.stopPropagation) {
+                    event.stopPropagation(); // 在Button的onMouse事件中设置阻止冒泡
+                  }
+                  // console.log('============',JSON.stringify(event))
+                  // if (event.button===1) {
+                  //   /**
+                  //    * 单击左键
+                  //    */
+                  // }
+                }
+              })
+              .onClick(() => {
+                // console.error(this.mouseconfig?.sn,'\n',item.ConnectionStatus,'\n',this.getModelInfo?.images.length)
+                // if (item.ConnectionStatus) {
+                if (item.mouseconfig?.sn && item.getModelInfo && item.getModelInfo?.images.length) {
+                  AppStorage.setOrCreate('device_show_currIndex', index)
+                  AppStorage.setOrCreate('getModelInfo',
+                    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo)
+                  //设备连接————点击进入配置页面
+                  this.isShowConfig = true
+                }
+              })
+
+              if (ConnectDevice.Communication.length % 3 !== 0) {
+                Column()
+                // .padding(24)
+                // .borderRadius(16)
+                  .flexGrow(1)
+                  .flexShrink(1)
+                  .width(230)
+                // .border({ width: 2, color: '#e6e8eb' })
               }
-            })
+              if (ConnectDevice.Communication.length % 3 === 1) {
+                Column()
+                // .padding(24)
+                // .borderRadius(16)
+                  .flexGrow(1)
+                  .flexShrink(1)
+                  .width(230)
+              }
+            }
+
           }, (item: DeviceInfo_Model) => item.icon)
         }
         .width('100%')
@@ -208,5 +203,15 @@ export struct DeviceSettings {
       // .visibility(this.isShowConfig?Visibility.Visible:Visibility.None)
     }
 
+  }
+
+  getdeviesImage(getModelInfo: getModelInfoModel): string {
+    for (let item of getModelInfo.images) {
+      if ((item as imagesModel)[this.languages]) {
+        // console.log('****************************************1', JSON.stringify(item))
+        return ((item as imagesModel)[this.languages][0] as imagesDataModel)['img']
+      }
+    }
+    return ''
   }
 }

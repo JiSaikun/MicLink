@@ -3,7 +3,7 @@ import { pasteboard } from '@kit.BasicServicesKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 // import { inputMethodEngine } from '@kit.IMEKit';
 import { getModelInfoModel } from 'config'
-import { Communication } from './Communication'
+import { Communication, ConnectDevice } from './Communication'
 import { _translate } from '../viewmodel/UserViewModel'
 import { translate_Params, translate_Response } from '../model/MouseInfoModel'
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
@@ -99,12 +99,15 @@ export class AudioWebSocketHandler {
     this.audioData = audioData;
     this.state = state;
     this.inputMessage = inputMessage;
-    AppStorage.setOrCreate('voiceInputText', '')
-    AppStorage.setOrCreate('linshi', '')
-    AppStorage.setOrCreate('voiceTranslationText', {
-      transText: '',
-      text: ''
-    })
+    if (state) {
+      AppStorage.setOrCreate('voiceTranslationText', {
+        transText: '',
+        text: ''
+      })
+    } else {
+      AppStorage.setOrCreate('voiceInputText', '')
+      AppStorage.setOrCreate('linshi', '')
+    }
     this.wending = false
     this.isSending = false;
     this.lastSentIndex = 0;
@@ -256,7 +259,8 @@ export class AudioWebSocketHandler {
       if (this.state === 0 && this.wending && !AppStorage.get('isAI_assistant')) {
         this.wending = false
         // 语音输入模式
-        Communication.getDeviceInfo([0x20, 0x01, 0x19])
+        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20,
+          0x01, 0x19])
           .then(() => {
             setTimeout(() => {
               systemPasteboard.clearData();
@@ -279,8 +283,9 @@ export class AudioWebSocketHandler {
     let params: translate_Params = {
       appkey: (AppStorage.get('getModelInfo') as getModelInfoModel).appkey,
       from: AppStorage.get('from_languages') ? AppStorage.get('from_languages') as string : 'ZH_CN',
-      productCode: Communication.deviceInfo.productType.toString(),
-      sno: Communication.deviceInfo.sn,
+      productCode: ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+        0].Communication.deviceInfo.productType.toString(),
+      sno: ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.deviceInfo.sn,
       text: text,
       to: AppStorage.get('to_languages') ? AppStorage.get('to_languages') as string : 'EN_US'
     };

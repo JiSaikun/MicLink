@@ -5,7 +5,7 @@ import { tableDataModel } from 'command_ai'
 import { common, OpenLinkOptions, Want } from '@kit.AbilityKit';
 import { BusinessError, pasteboard } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
-import { Communication } from 'mouse';
+import { Communication, ConnectDevice } from 'mouse';
 import { OpenFileWithSystemApp } from 'api';
 
 export class AI_Assistant {
@@ -267,7 +267,7 @@ export class AI_Assistant {
 
     const isValidUrl = (url: string): boolean => {
       try {
-        const urlRegex =  /^(https?:\/\/)?[\w.-]+\.[a-z]{2,}.*$/i;
+        const urlRegex = /^(https?:\/\/)?[\w.-]+\.[a-z]{2,}.*$/i;
         return urlRegex.test(url);
       } catch (error) { // 修复错误1：明确指定error类型
         return false;
@@ -305,7 +305,8 @@ export class AI_Assistant {
       systemPasteboard.setData(pasteData)
         .then(() => {
           console.info('文本已复制到剪贴板:', execute);
-          Communication.getDeviceInfo([0x20, 0x01, 0x19]);
+          ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20, 0x01,
+            0x19]);
 
           setTimeout(() => {
             systemPasteboard.clearData().catch((err: BusinessError) => {

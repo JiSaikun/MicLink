@@ -1,6 +1,12 @@
 import { http } from 'api'
 import { getModelInfoModel } from 'config'
-import { getModelInfo_Params, translate_Params, translate_Response } from '../model/MouseInfoModel'
+import {
+  getModelInfo_Params,
+  translate_Params,
+  translate_Response,
+  productImg_Params,
+  productImg_Response
+} from '../model/MouseInfoModel'
 
 
 // getCode_Params为参数的类型声明，之后在页面中传入参数时，TS能够正确推断并代码提示
@@ -19,4 +25,11 @@ export function _getModelInfo(params: getModelInfo_Params) {
  */
 export function _translate(params: translate_Params) {
   return http.post<translate_Response, translate_Params>('/api/v1/translate', params);
+}
+
+/**
+ * 产品图片
+ */
+export function _productImg(params: productImg_Params) {
+  return http.get<productImg_Response, productImg_Params>('/api/productImg', params);
 }

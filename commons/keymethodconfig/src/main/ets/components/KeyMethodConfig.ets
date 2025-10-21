@@ -1,5 +1,11 @@
 import {
-  Communication, DeviceInfo, AudioFileManager, AudioWebSocketHandler, inputMessageModel
+  Communication,
+  DeviceInfo,
+  AudioFileManager,
+  AudioWebSocketHandler,
+  inputMessageModel,
+  ConnectDevice,
+  DPI_currInfoModel
 } from 'mouse' //语音输入
 import { WebSocket_serverUrl, getModelInfoModel } from 'config'; //语音输入
 import window from '@ohos.window'; //一键回到桌面————应用最小化
@@ -21,12 +27,12 @@ export class _KeyMethodConfig {
    * 1：语音翻译
    */
   static voiceInput(state: number = 0, isAI_assistant: boolean = false) {
-
-    if (!Communication.audioDataState) {
-      Communication.getDeviceInfo([0x62])
+    if (!ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState) {
+      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x62])
         .then(() => {
           Communication.audioData = []
-          Communication.audioDataState = !Communication.audioDataState
+          ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState =
+            !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState
           /**
            * 语音数据处理
            */
@@ -38,13 +44,15 @@ export class _KeyMethodConfig {
           let inputMessage: inputMessageModel = {
             start: false,
             "clientId": "clientId1751968608",
-            "ptt": AppStorage.get('isPunctuationRecognition') ? '1' : '0',
-            "serialNo": Communication.deviceInfo.sn,
+            "ptt": ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].isPunctuationRecognition ?
+              '1' : '0',
+            "serialNo": ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+              0].Communication.deviceInfo.sn,
             "phrases": "",
             "format": "pcm",
             "apiKey": "ebb72c9db60147febd2ccd50a705de57",
             "language": state ? AppStorage.get('from_languages') as string :
-              AppStorage.get('speech_Recognition_languages') as string,
+            ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages,
             "end": false,
             "rate": "16k",
             "deviceNo": "6c:b1:33:9f:b9:8b",
@@ -81,9 +89,11 @@ export class _KeyMethodConfig {
       }
 
     } else {
-      Communication.getDeviceInfo([0x63]).then(() => {
-        Communication.audioDataState = !Communication.audioDataState
-      })
+      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x63])
+        .then(() => {
+          ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState =
+            !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState
+        })
       if (!state) {
         let flax = Float_Window.showVoiceInput
         setTimeout(() => {
@@ -101,12 +111,16 @@ export class _KeyMethodConfig {
       if (AppStorage.get('voiceInputState')) {
         AppStorage.setOrCreate('voiceInputState', false) //语音状态
       }
-      AppStorage.setOrCreate('voiceTranslationState', !Communication.audioDataState) //语音状态
+      AppStorage.setOrCreate('voiceTranslationState',
+        !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+          0].Communication.audioDataState) //语音状态
     } else {
       if (AppStorage.get('voiceTranslationState')) {
         AppStorage.setOrCreate('voiceTranslationState', false) //语音状态
       }
-      AppStorage.setOrCreate('voiceInputState', !Communication.audioDataState) //语音状态
+      AppStorage.setOrCreate('voiceInputState',
+        !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+          0].Communication.audioDataState) //语音状态
     }
   }
 
@@ -127,13 +141,15 @@ export class _KeyMethodConfig {
     let inputMessage: inputMessageModel = {
       start: false,
       "clientId": "clientId1751968608",
-      "ptt": AppStorage.get('isPunctuationRecognition') ? '1' : '0',
-      "serialNo": Communication.deviceInfo.sn,
+      "ptt": ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].isPunctuationRecognition ? '1' :
+        '0',
+      "serialNo": ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+        0].Communication.deviceInfo.sn,
       "phrases": "",
       "format": "pcm",
       "apiKey": "ebb72c9db60147febd2ccd50a705de57",
       "language": state ? AppStorage.get('from_languages') as string :
-        AppStorage.get('speech_Recognition_languages') as string,
+      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages,
       "end": false,
       "rate": "16k",
       "deviceNo": "6c:b1:33:9f:b9:8b",
@@ -143,10 +159,12 @@ export class _KeyMethodConfig {
       new AudioWebSocketHandler(WebSocket_serverUrl.audioToText, Communication.audioData, state,
         inputMessage) //语音转文字 websocket
     audioToText.connect()
-    if (Communication.audioDataState) { //若开始长按时，有通过0x62命令开启的语音输入等，先进行关闭 ...否则改变audioDataState 采集状态，确保1b数据被放到语音数据里 ——————手动发起0x62收集录音数据
-      Communication.getDeviceInfo([0x62])
+    if (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+      0].Communication.audioDataState) { //若开始长按时，有通过0x62命令开启的语音输入等，先进行关闭 ...否则改变audioDataState 采集状态，确保1b数据被放到语音数据里 ——————手动发起0x62收集录音数据
+      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x62])
     } else {
-      Communication.audioDataState = !Communication.audioDataState
+      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState =
+        !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState
     }
     if (state) {
       AppStorage.setOrCreate('voiceTranslationText', {
@@ -164,7 +182,9 @@ export class _KeyMethodConfig {
       if (AppStorage.get('voiceInputState')) {
         AppStorage.setOrCreate('voiceInputState', false) //语音状态
       }
-      AppStorage.setOrCreate('voiceTranslationState', Communication.audioDataState) //语音状态
+      AppStorage.setOrCreate('voiceTranslationState',
+        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+          0].Communication.audioDataState) //语音状态
     } else {
       AppStorage.setOrCreate('isAI_assistant', isAI_assistant)
       if (!Float_Window.showVoiceInput) { //窗口没有显示时创建窗口
@@ -176,7 +196,9 @@ export class _KeyMethodConfig {
       if (AppStorage.get('voiceTranslationState')) {
         AppStorage.setOrCreate('voiceTranslationState', false) //语音状态
       }
-      AppStorage.setOrCreate('voiceInputState', Communication.audioDataState) //语音状态
+      AppStorage.setOrCreate('voiceInputState',
+        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+          0].Communication.audioDataState) //语音状态
     }
   }
 
@@ -184,8 +206,9 @@ export class _KeyMethodConfig {
    * 语音输入_长按抬起
    */
   static endvoiceInput_long(state: number = 0) {
-    Communication.audioDataState = !Communication.audioDataState
-    Communication.getDeviceInfo([0x63])
+    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState =
+      !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState
+    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x63])
     if (!state) {
       let flax = Float_Window.showVoiceInput
       setTimeout(() => {
@@ -201,12 +224,16 @@ export class _KeyMethodConfig {
       if (AppStorage.get('voiceInputState')) {
         AppStorage.setOrCreate('voiceInputState', false) //语音状态
       }
-      AppStorage.setOrCreate('voiceTranslationState', Communication.audioDataState) //语音状态
+      AppStorage.setOrCreate('voiceTranslationState',
+        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+          0].Communication.audioDataState) //语音状态
     } else {
       if (AppStorage.get('voiceTranslationState')) {
         AppStorage.setOrCreate('voiceTranslationState', false) //语音状态
       }
-      AppStorage.setOrCreate('voiceInputState', Communication.audioDataState) //语音状态
+      AppStorage.setOrCreate('voiceInputState',
+        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+          0].Communication.audioDataState) //语音状态
     }
   }
 
@@ -214,14 +241,16 @@ export class _KeyMethodConfig {
    *回车/发送
    */
   static entry() {
-    Communication.getDeviceInfo([0x20, 0, 0x28])
+    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20, 0,
+      0x28])
   }
 
   /**
    *删除
    */
   static delete() {
-    Communication.getDeviceInfo([0x20, 0, 0x4C])
+    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20, 0,
+      0x4C])
   }
 
   /**
@@ -273,7 +302,8 @@ export class _KeyMethodConfig {
    *回到桌面
    */
   static desktop() {
-    Communication.getDeviceInfo([0x20, 0x08, 0x07])
+    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20,
+      0x08, 0x07])
   }
 
   /**
@@ -281,28 +311,32 @@ export class _KeyMethodConfig {
    */
   static triggerShortcut() {
     console.log(JSON.stringify(AppStorage.get('custom_shortcut')))
-    Communication.getDeviceInfo((AppStorage.get('custom_shortcut') as shortcutType).pressedKeys)
+    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+      0].Communication.getDeviceInfo((AppStorage.get('custom_shortcut') as shortcutType).pressedKeys)
   }
 
   /**
    *前进
    */
   static forward() {
-    Communication.getDeviceInfo([0x20, 0x04, 0x4F])
+    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20,
+      0x04, 0x4F])
   }
 
   /**
    *复制
    */
   static copyContent() {
-    Communication.getDeviceInfo([0x20, 0x01, 0x06])
+    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20,
+      0x01, 0x06])
   }
 
   /**
    *粘贴
    */
   static pasteTarget() {
-    Communication.getDeviceInfo([0x20, 0x01, 0x19])
+    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20,
+      0x01, 0x19])
   }
 
   // /**
@@ -315,14 +349,16 @@ export class _KeyMethodConfig {
    *后退
    */
   static back() {
-    Communication.getDeviceInfo([0x20, 0x04, 0x50])
+    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20,
+      0x04, 0x50])
   }
 
   /**
    *一键锁屏
    */
   static lockNow() {
-    Communication.getDeviceInfo([0x20, 0x08, 0x0F])
+    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20,
+      0x08, 0x0F])
   }
 
   /**
@@ -337,7 +373,8 @@ export class _KeyMethodConfig {
     }
     let systemPasteboard: pasteboard.SystemPasteboard = pasteboard.getSystemPasteboard(); //获取系统剪贴板对象。
     systemPasteboard.clearData() //清空剪贴板
-    Communication.getDeviceInfo([0x20, 0x01, 0x06]) //Ctrl+C
+    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20,
+      0x01, 0x06]) //Ctrl+C
     let atManager = abilityAccessCtrl.createAtManager();
     try {
       // 向用户申请读取剪贴板的权限
@@ -366,8 +403,10 @@ export class _KeyMethodConfig {
             appkey: (AppStorage.get('getModelInfo') as getModelInfoModel).appkey, //获取用户按键模式详情中得到
             from: AppStorage.get('wordScan_from_languages') ? AppStorage.get('wordScan_from_languages') as string :
               'ZH_CN', //源语言___后面配置
-            productCode: Communication.deviceInfo.productType.toString(), //产品编码
-            sno: Communication.deviceInfo.sn, //设备号
+            productCode: ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+              0].Communication.deviceInfo.productType.toString(), //产品编码
+            sno: ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+              0].Communication.deviceInfo.sn, //设备号
             text: text, //翻译内容
             to: AppStorage.get('wordScan_to_languages') ? AppStorage.get('wordScan_to_languages') as string :
               'EN_US' //翻译语言___后面配置
@@ -415,18 +454,20 @@ export class _KeyMethodConfig {
    *DPI切换
    */
   static DPI_Switch() {
-    let DPI_currInfo: DPI_currInfoModel = AppStorage.get('DPI_currInfo') as DPI_currInfoModel
+    let DPI_currInfo: DPI_currInfoModel =
+      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].DPI_currInfo as DPI_currInfoModel
     console.log(JSON.stringify(DPI_currInfo))
     if (DPI_currInfo.curr === DPI_currInfo.length - 1) {
       DPI_currInfo.curr = 0
     } else {
       DPI_currInfo.curr += 1
     }
-    AppStorage.setOrCreate('DPI_currInfo', DPI_currInfo)
-    Communication.getDeviceInfo([0x68, DPI_currInfo.curr]).then(() => {
-      let mouseconfig: DeviceInfo = AppStorage.get('mouseconfig') as DeviceInfo
-      mouseconfig.dpiLevel = DPI_currInfo.curr + 1
-      AppStorage.setOrCreate("mouseconfig", mouseconfig);
+    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].DPI_currInfo = DPI_currInfo
+    // AppStorage.setOrCreate('DPI_currInfo', DPI_currInfo)
+    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].Communication.getDeviceInfo([0x68,
+      DPI_currInfo.curr]).then(() => {
+      (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].mouseconfig as DeviceInfo).dpiLevel =
+        DPI_currInfo.curr + 1
     })
   }
 
@@ -442,7 +483,7 @@ export class _KeyMethodConfig {
       // 配置打开链接的选项
       parameters: {
         // 参数设置
-        'fileUri': '' // 文件URI参数，这里为空
+        'fileUri': AppStorage.get('folderPath') as string // 文件URI参数，这里为空
         // 'fileUri': 'file://docs/storage/Users/currentUser/Desktop/%E6%96%B0%E5%BB%BA%20DWG%20%E6%96%87%E4%BB%B6.dwg' // 文件URI参数，这里为空
         // 'fileUri': 'file://docs/storage/Users/currentUser/Documents/test.txt' // 文件URI参数，这里为空
       }
@@ -459,6 +500,31 @@ export class _KeyMethodConfig {
       hilog.error(DOMAIN_NUMBER, TAG,
         `Failed to start link. Code is ${paramError.code}, message is ${paramError.message}`); // 记录参数错误日志
     }
+    // const TAG: string = '[UIAbilityComponentsOpenLink]'; // 定义日志标签
+    // const DOMAIN_NUMBER: number = 0xFF00; // 定义日志域编号
+    // let context: common.UIAbilityContext = AppStorage.get('context') as common.UIAbilityContext; // 获取当前UIAbility上下文
+    // let link: string = 'filemanager://openDirectory'; // 定义要打开的链接，这里是文件管理的URI
+    // let openLinkOptions: OpenLinkOptions = {
+    //   // 配置打开链接的选项
+    //   parameters: {
+    //     // 参数设置
+    //     'fileUri': '' // 文件URI参数，这里为空
+    //     // 'fileUri': 'file://docs/storage/Users/currentUser/Desktop/%E6%96%B0%E5%BB%BA%20DWG%20%E6%96%87%E4%BB%B6.dwg' // 文件URI参数，这里为空
+    //     // 'fileUri': 'file://docs/storage/Users/currentUser/Documents/test.txt' // 文件URI参数，这里为空
+    //   }
+    // };
+    // try { // 异常处理
+    //   context.openLink(link, openLinkOptions) // 调用打开链接方法
+    //     .then(() => { // 成功回调
+    //       hilog.info(DOMAIN_NUMBER, TAG, 'open link success.'); // 记录成功日志
+    //     }).catch((err: BusinessError) => { // 失败回调
+    //     hilog.error(DOMAIN_NUMBER, TAG,
+    //       `open link failed. Code is ${err.code}, message is ${err.message}`); // 记录错误日志
+    //   });
+    // } catch (paramError) { // 捕获参数错误
+    //   hilog.error(DOMAIN_NUMBER, TAG,
+    //     `Failed to start link. Code is ${paramError.code}, message is ${paramError.message}`); // 记录参数错误日志
+    // }
   }
 
 
@@ -492,7 +558,8 @@ export class _KeyMethodConfig {
       systemPasteboard.setData(pasteData)
         .then(() => {
           // console.info('文本已复制到剪贴板: ' + audioToText_res);
-          Communication.getDeviceInfo([0x20, 0x01, 0x19]) //Ctrl+V
+          ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+            0].Communication.getDeviceInfo([0x20, 0x01, 0x19]) //Ctrl+V
           setTimeout(() =>
           systemPasteboard.clearData() //清空剪贴板
             , 2000)
@@ -505,11 +572,6 @@ export class _KeyMethodConfig {
     }
 
   }
-}
-
-interface DPI_currInfoModel { //切换DPI 记录当前DPI挡位
-  length: number
-  curr: number
 }
 
 interface shortcutType {

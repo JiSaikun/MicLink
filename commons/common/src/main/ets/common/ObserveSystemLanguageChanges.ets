@@ -8,15 +8,17 @@ export function observeSystemLanguageChanges() {
   // 获取系统语言
   let systemLanguage: string = i18n.System.getSystemLanguage();
   console.log('系统语言：', systemLanguage)
-  switch (systemLanguage) {
-    case 'zh-Hans':
-      AppStorage.setOrCreate('languages', 'ZH_CN')
-      break
-    case 'zh-Hant':
-      AppStorage.setOrCreate('languages', 'ZH_TW')
-      break
-    default:
-      AppStorage.setOrCreate('languages', 'EN_US')
+  if (AppStorage.get('languages') === 'ZH_CN') {
+    switch (systemLanguage) {
+      case 'zh-Hans':
+        AppStorage.setOrCreate('languages', 'ZH_CN')
+        break
+      case 'zh-Hant':
+        AppStorage.setOrCreate('languages', 'ZH_TW')
+        break
+      default:
+        AppStorage.setOrCreate('languages', 'EN_US')
+    }
   }
   // 创建订阅者
   let subscriber: commonEventManager.CommonEventSubscriber;
@@ -36,15 +38,17 @@ export function observeSystemLanguageChanges() {
         // 获取系统语言
         let systemLanguage: string = i18n.System.getSystemLanguage();
         console.log('系统语言：', systemLanguage)
-        switch (systemLanguage) {
-          case 'zh-Hans':
-            AppStorage.setOrCreate('languages', 'ZH_CN')
-            break
-          case 'zh-Hant':
-            AppStorage.setOrCreate('languages', 'ZH_TW')
-            break
-          default:
-            AppStorage.setOrCreate('languages', 'EN_US')
+        if (AppStorage.get('languages') === 'ZH_CN'||AppStorage.get('languages') === 'ZH_TW'||AppStorage.get('languages') === 'EN_US') {
+          switch (systemLanguage) {
+            case 'zh-Hans':
+              AppStorage.setOrCreate('languages', 'ZH_CN')
+              break
+            case 'zh-Hant':
+              AppStorage.setOrCreate('languages', 'ZH_TW')
+              break
+            default:
+              AppStorage.setOrCreate('languages', 'EN_US')
+          }
         }
       });
     })

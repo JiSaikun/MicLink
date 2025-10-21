@@ -1,7 +1,9 @@
-import {Communication}from'mouse'
+import {Communication,ConnectDevice}from'mouse'
 export function Reset(){
   // (AppStorage.get('pageInfo') as NavPathStack).clear()
-  Communication.deviceInfo.sn=''
+  for (let item of ConnectDevice.Communication){
+    item.Communication.deviceInfo.sn=''
+  }
   AppStorage.setOrCreate("KeymethodConfig", null) //按键设置方法执行记录
   AppStorage.setOrCreate("mouseconfig", null) //鼠标实时数据
   AppStorage.setOrCreate("getModelInfo", {

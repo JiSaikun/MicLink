@@ -1,4 +1,4 @@
-import { KeyPressType } from 'mouse' //语音输入
+import { KeyPressType, ConnectDevice } from 'mouse' //语音输入
 import { _KeyMethodConfig } from './KeyMethodConfig'
 import { fileGuard } from '@kit.EnterpriseDataGuardKit';
 import { BusinessError } from '@kit.BasicServicesKit';
@@ -12,7 +12,7 @@ export interface KeymethodConfig {
 
 export function _change_mouse_KeyPressType() {
   // console.log('77777777777777777777777777777', AppStorage.get('mouse_KeyPressType'))
-  let KeymethodConfig = AppStorage.get('KeymethodConfig') as KeymethodConfig []
+  let KeymethodConfig = ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].KeymethodConfig
   let mouse_KeyPressType: KeyPressType = AppStorage.get('mouse_KeyPressType') as KeyPressType //鼠标按键事件监听
   let getModelInfo = AppStorage.get('getModelInfo') as getModelInfoModel
   let _keyInfos_childsModel: keyInfos_childsModel | null = null

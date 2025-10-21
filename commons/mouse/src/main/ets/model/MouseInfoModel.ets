@@ -26,3 +26,15 @@ export interface translate_Response {
   text: string
   // index: number //自己加的，用于ForEach遍历
 }
+/**
+ * 产品图片
+ */
+export interface productImg_Params extends BaseParams {
+  productCode: string //产品唯一编码
+}
+
+export interface productImg_Response {
+  transText: string
+  text: string
+  // index: number //自己加的，用于ForEach遍历
+}

@@ -1,5 +1,8 @@
+import { Languages } from "config"
+
 @Component
 export struct FixedText_pop {
+  @StorageLink('languages') languages: string = 'ZH_CN'
   @StorageLink('fixedText') fixedText: string = '' //输入固定文本
   @Link isShowFixedText_pop: boolean
 
@@ -7,7 +10,8 @@ export struct FixedText_pop {
     Stack() {
       Column() {
         Row() {
-          Text('输入固定文本')
+          // Text('输入固定文本')
+          Text(Languages.input_fixed_text[this.languages])
             .fontSize(16)
             .fontWeight(400)
             .fontColor(Color.White)
@@ -18,7 +22,8 @@ export struct FixedText_pop {
         .padding(10)
         .backgroundColor('#00afcc')
 
-        TextInput({ placeholder: '请输入固定文本', text: $$this.fixedText })
+        // TextInput({ placeholder: '请输入固定文本', text: $$this.fixedText })
+        TextInput({ placeholder: Languages.enter_fixed_text_placeholder[this.languages], text: $$this.fixedText })
           .backgroundColor('#fff')
           .placeholderColor('#bbbdbf')
           .margin({ top: 50, bottom: 50 ,left:20,right:20})
@@ -27,7 +32,8 @@ export struct FixedText_pop {
           .borderRadius(5)
 
         Flex({ justifyContent: FlexAlign.Center }) {
-          Text('确定')
+          // Text('确定')
+          Text(Languages.confirm_btn[this.languages])
             .fontSize(16)
             .fontWeight(400)
             .fontColor(Color.White)

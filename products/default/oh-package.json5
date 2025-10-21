@@ -11,7 +11,7 @@
     "config": 'file:../../commons/config',
     "common": 'file:../../commons/common',
     "login": "file:../../features/login",
-    "usb_hid": 'file:../../commons/usb_hid',
+//    "usb_hid": 'file:../../commons/usb_hid',
     "bluetooth": 'file:../../commons/bluetooth',
     "mouse": 'file:../../commons/mouse',
     "keymethodconfig": 'file:../../commons/keymethodconfig',

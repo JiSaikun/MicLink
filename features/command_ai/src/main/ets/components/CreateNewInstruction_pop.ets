@@ -1,4 +1,4 @@
-import { CommonConstants_pop } from "config"
+import { CommonConstants_pop, Languages } from "config"
 import CommonConstants from '../common/CommonConstants'
 import { tableDataModel } from './Command_Ai'
 // 拉起资源管理器
@@ -18,42 +18,55 @@ interface response_interface {
 
 @Component
 export struct CreateNewInstruction_pop {
+  @StorageLink('languages') languages: string = 'ZH_CN'
   @Consume('pageInfo') pageInfo: NavPathStack
   @State array: SelectOption[] = [
-    { value: '文件' },
-    { value: '网址' },
-    { value: '生成文本' },
-    { value: '文件夹' },
+    // { value: '文件' },
+    { value:Languages.file_option[this.languages] },
+    // { value: '网址' },
+    { value: Languages.website_option[this.languages] },
+    // { value: '生成文本' },
+    { value: Languages.generate_text_option[this.languages] },
+    // { value: '文件夹' },
+    { value: Languages.folder_option[this.languages] },
   ]
   @State response_: response_interface[] = [
     {
-      title: '执行路径：',
+      // title: '执行路径：',
+      title: `${Languages.execution_path[this.languages]}：`,
       isShow: true,
-      response_: '执行路径',
+      // response_: '执行路径',
+      response_: Languages.execution_path[this.languages],
       showFilePicker: true,
       showFolderPicker: false,
       showAppPicker: false
     },
     {
-      title: '网址：',
+      // title: '网址：',
+      title: Languages.website_text[this.languages],
       isShow: false,
-      response_: '输入网址',
+      // response_: '输入网址',
+      response_: Languages.enter_website[this.languages],
       showFilePicker: false,
       showFolderPicker: false,
       showAppPicker: false
     },
     {
-      title: '生成文本：',
+      // title: '生成文本：',
+      title: Languages.generate_text[this.languages],
       isShow: false,
-      response_: '输入要一键生成的文本',
+      // response_: '输入要一键生成的文本',
+      response_: Languages.enter_one_click_text[this.languages],
       showFilePicker: false,
       showFolderPicker: false,
       showAppPicker: false
     },
     {
-      title: '文件夹路径：',
+      // title: '文件夹路径：',
+      title: Languages.folder_path[this.languages],
       isShow: true,
-      response_: '选择目标文件夹中的任意文件',
+      // response_: '选择目标文件夹中的任意文件',
+      response_: Languages.select_any_file_in_folder[this.languages],
       showFilePicker: false,
       showFolderPicker: true,
       showAppPicker: false
@@ -66,7 +79,8 @@ export struct CreateNewInstruction_pop {
   @Prop isParam: boolean = false
   @Prop currIndexParam: number
   @State currtableDataModel_data: tableDataModel = {
-    category: '文件',
+    // category: '文件',
+    category: Languages.file_option[this.languages],
     voice: '',
     execute: '',
   }
@@ -102,15 +116,18 @@ export struct CreateNewInstruction_pop {
           // 直接赋值而不是使用展开操作符
           this.currtableDataModel_data.execute = result[0];
           console.log('文件信息', JSON.stringify(this.currtableDataModel_data.execute));
-          promptAction.showToast({ message: '文件选择成功', duration: 2000 });
+          // promptAction.showToast({ message: '文件选择成功', duration: 2000 });
+          promptAction.showToast({ message: Languages.file_selection_success[this.languages], duration: 2000 });
         }
       }).catch((err: BusinessError) => {
         console.error('文件选择失败: ' + err.message);
-        promptAction.showToast({ message: '文件选择失败', duration: 2000 });
+        // promptAction.showToast({ message: '文件选择失败', duration: 2000 });
+        promptAction.showToast({ message: Languages.file_selection_failed[this.languages], duration: 2000 });
       });
     } catch (err) {
       console.error('Failed to select file. Cause: ' + (err as BusinessError).message);
-      promptAction.showToast({ message: '文件选择失败', duration: 2000 });
+      // promptAction.showToast({ message: '文件选择失败', duration: 2000 });
+      promptAction.showToast({ message: Languages.file_selection_failed[this.languages], duration: 2000 });
     } finally {
       this.isLoading = false;
     }
@@ -122,7 +139,8 @@ export struct CreateNewInstruction_pop {
   private selectFolder(): void {
     this.isLoading = true;
     try {
-      promptAction.showToast({ message: '请选择目标文件夹中的任意一个文件', duration: 3000 });
+      // promptAction.showToast({ message: '请选择目标文件夹中的任意一个文件', duration: 3000 });
+      promptAction.showToast({ message: Languages.please_select_any_file_in_target_folder[this.languages], duration: 3000 });
 
       const documentSelectOptions = new picker.DocumentSelectOptions();
       documentSelectOptions.maxSelectNumber = 1;
@@ -133,7 +151,8 @@ export struct CreateNewInstruction_pop {
       documentViewPicker.select(documentSelectOptions)
         .then((result: string[]) => {
           if (!result || result.length === 0) {
-            promptAction.showToast({ message: '未选择任何文件', duration: 2000 });
+            // promptAction.showToast({ message: '未选择任何文件', duration: 2000 });
+            promptAction.showToast({ message: Languages.no_file_selected[this.languages], duration: 2000 });
             return;
           }
 
@@ -147,9 +166,11 @@ export struct CreateNewInstruction_pop {
 
             console.log('提取的文件夹路径:', folderPath);
             const folderName = folderPath.substring(folderPath.lastIndexOf('/') + 1);
-            promptAction.showToast({ message: `已选择文件夹: ${folderName}`, duration: 2500 });
+            // promptAction.showToast({ message: `已选择文件夹: ${folderName}`, duration: 2500 });
+            promptAction.showToast({ message: `${Languages.folder_selected[this.languages]} ${folderName}`, duration: 2500 });
           } else {
-            promptAction.showToast({ message: '无法解析文件夹路径', duration: 2000 });
+            // promptAction.showToast({ message: '无法解析文件夹路径', duration: 2000 });
+            promptAction.showToast({ message: Languages.cannot_parse_folder_path[this.languages], duration: 2000 });
           }
         })
         .catch((err: BusinessError) => {
@@ -163,7 +184,11 @@ export struct CreateNewInstruction_pop {
 
     } catch (err) {
       console.error('文件夹选择代码异常:', (err as Error).message);
-      promptAction.showToast({ message: '文件夹选择功能异常', duration: 3000 });
+      // promptAction.showToast({ message: '文件夹选择功能异常', duration: 3000 });
+      promptAction.showToast({
+        message: Languages.folder_selection_function_exception[this.languages],
+        duration: 3000
+      });
       this.isLoading = false;
     }
   }
@@ -174,13 +199,17 @@ export struct CreateNewInstruction_pop {
   private getFolderSelectErrorMsg(errorCode: number): string {
     switch (errorCode) {
       case 1001:
+        return Languages.need_file_access_permission[this.languages];
         return '需要文件访问权限，请在设置中开启';
       case 1002:
+        return Languages.folder_selection_canceled[this.languages];
         return '已取消文件夹选择';
       case 1003:
+        return Languages.no_folder_access_permission[this.languages];
         return '无文件夹访问权限，请授权后重试';
       default:
-        return `选择失败（错误码: ${errorCode}）`;
+        return `${Languages.folder_selection_failed_with_code[this.languages]} ${errorCode})`;
+        return `选择失败（错误码: ${errorCode})`;
     }
   }
 
@@ -254,12 +283,14 @@ export struct CreateNewInstruction_pop {
    */
   private validateInput(): boolean {
     if (!this.currtableDataModel_data.voice || this.currtableDataModel_data.voice.trim() === '') {
-      promptAction.showToast({ message: '请输入指令词', duration: 2000 });
+      // promptAction.showToast({ message: '请输入指令词', duration: 2000 });
+      promptAction.showToast({ message: Languages.please_enter_instruction_word[this.languages], duration: 2000 });
       return false;
     }
 
     if (!this.currtableDataModel_data.execute || this.currtableDataModel_data.execute.trim() === '') {
-      promptAction.showToast({ message: '请设置执行目标', duration: 2000 });
+      // promptAction.showToast({ message: '请设置执行目标', duration: 2000 });
+      promptAction.showToast({ message: Languages.please_set_execution_target[this.languages], duration: 2000 });
       return false;
     }
 
@@ -267,7 +298,8 @@ export struct CreateNewInstruction_pop {
     if (this.currentindex === 1) {
       const urlRegex = /^(https?:\/\/)?[\w.-]+\.[a-z]{2,}.*$/i;
       if (!urlRegex.test(this.currtableDataModel_data.execute)) {
-        promptAction.showToast({ message: '请输入有效的网址', duration: 2000 });
+        // promptAction.showToast({ message: '请输入有效的网址', duration: 2000 });
+        promptAction.showToast({ message: Languages.please_enter_valid_website[this.languages], duration: 2000 });
         return false;
       }
     }
@@ -315,7 +347,8 @@ export struct CreateNewInstruction_pop {
       this.isShow_CreateNewInstruction_pop = false;
     }
 
-    promptAction.showToast({ message: '保存成功', duration: 2000 });
+    // promptAction.showToast({ message: '保存成功', duration: 2000 });
+    promptAction.showToast({ message: Languages.save_success[this.languages], duration: 2000 });
   }
 
   /**
@@ -357,7 +390,8 @@ export struct CreateNewInstruction_pop {
       Column() {
         // 标题栏
         Row() {
-          Text('AI 指令')
+          // Text('AI 指令')
+          Text(Languages.ai_instruction[this.languages])
             .fontWeight(CommonConstants_pop.login_dafault_text_font_weight)
             .fontSize(CommonConstants_pop.login_dafault_text_font_size)
             .fontColor(CommonConstants_pop.login_dafault_text_font_color)
@@ -378,7 +412,8 @@ export struct CreateNewInstruction_pop {
         Column() {
           // 功能选择
           Row() {
-            Text('功能：')
+            // Text('功能：')
+            Text(Languages.function_text[this.languages])
               .fontSize(CommonConstants.CreateNewInstruction_pop_DEFAULT_FONT_SIZE)
               .fontColor(CommonConstants.COMMAND_DEFAULT_FONT_COLOR)
               .fontWeight(CommonConstants.CreateNewInstruction_pop_DEFAULT_FONT_WEIGHT)
@@ -402,12 +437,17 @@ export struct CreateNewInstruction_pop {
 
           // 指令词输入
           Row() {
-            Text('指令词：')
+            // Text('指令词：')
+            Text(Languages.instruction_word[this.languages])
               .fontSize(CommonConstants.CreateNewInstruction_pop_DEFAULT_FONT_SIZE)
               .fontColor(CommonConstants.COMMAND_DEFAULT_FONT_COLOR)
               .fontWeight(CommonConstants.CreateNewInstruction_pop_DEFAULT_FONT_WEIGHT)
 
-            TextInput({ placeholder: '输入触发文字', text: this.currtableDataModel_data.voice })
+            // TextInput({ placeholder: '输入触发文字', text: this.currtableDataModel_data.voice })
+            TextInput({
+              placeholder: Languages.enter_trigger_text[this.languages],
+              text: this.currtableDataModel_data.voice
+            })
               .placeholderColor('#bbbdbf')
               .borderRadius(0)
               .backgroundColor('#fff')
@@ -475,7 +515,8 @@ export struct CreateNewInstruction_pop {
 
         // 确认按钮
         Row() {
-          Text('确认')
+          // Text('确认')
+          Text(Languages.confirm[this.languages])
             .fontSize(14)
             .fontColor('#00aecc')
             .borderRadius(4)

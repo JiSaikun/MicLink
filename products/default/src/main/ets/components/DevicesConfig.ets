@@ -1,4 +1,4 @@
-import { Communication, DeviceInfo, KeyPressType } from 'mouse'
+import { ConnectDevice,Communication, DeviceInfo, KeyPressType } from 'mouse'
 import { ConfigPage1 } from './ConfigPage1'
 import { ConfigPage2 } from './ConfigPage2'
 import { ConfigPage3 } from './ConfigPage3'
@@ -10,15 +10,14 @@ import {
 @Component
 export struct DevicesConfig {
   @Link isShowConfig: boolean //控制显隐状态
-  @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null //鼠标信息
+  @State mouseconfig: DeviceInfo = ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo //鼠标信息
   @State currIndex: number = 0
   @StorageLink('languages') languages: string = 'ZH_CN'
-  @State configsList: string[] =
-    [Languages.smartSetup[this.languages], Languages.keySetup[this.languages], Languages.deviceSetup[this.languages]]
+  @State configsList: string[] = [Languages.smartSetup[this.languages], Languages.keySetup[this.languages], Languages.deviceSetup[this.languages]]
   @State reportRate_currIndex: number = 0
   @State DPI_currIndex: number = 0
   @State currLED: boolean = true
-  @State getModelInfo: getModelInfoModel = AppStorage.get('getModelInfo') as getModelInfoModel
+  @State getModelInfo: getModelInfoModel = ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo as getModelInfoModel
 
   onDidBuild(): void {
     this.data_init()

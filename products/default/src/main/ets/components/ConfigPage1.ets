@@ -1,5 +1,6 @@
 import { LengthMetrics } from "@kit.ArkUI"
 import { Languages, getModelInfoModel, languagesModel } from 'config'
+import { ConnectDevice } from "mouse"
 
 interface shortcutType {
   keyPreview: string
@@ -14,14 +15,17 @@ export struct ConfigPage1 {
   aboutToAppear(): void {
     this.shortcut_change()
   }
+
   @StorageLink('languages') languages: string = 'ZH_CN'
   @State getModelInfo: getModelInfoModel = AppStorage.get('getModelInfo') as getModelInfoModel
-  @StorageLink('isPunctuationRecognition') isPunctuationRecognition: boolean = true //语音识别是否带标点
+  @State isPunctuationRecognition: boolean =
+    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition //语音识别是否带标点
   @StorageLink('isEnableLongVoiceRecog') isEnableLongVoiceRecog: boolean = true //是否开启长语音识别
   @StorageLink('isWordScan_Translation') isWordScan_Translation: boolean = true //是否开启划词翻译功能
   @StorageLink('isOCR_Translate_Toggle') isOCR_Translate_Toggle: boolean = true //是否开启截图识别/翻译
   @StorageLink('isAutoCloseVoiceTransPop') isAutoCloseVoiceTransPop: boolean = true //是否开启语音翻译弹窗自动关闭
-  @StorageLink('speech_Recognition_languages') speech_Recognition_languages: string = 'ZH_CN' //语音识别语种
+  @State speech_Recognition_languages: string =
+    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages //语音识别语种
   @State keystroke: SelectOption[] = [{ value: '动态打字模式' }, { value: '兼容打字模式' }] //打字输入模式选项
   @State searchEngine: SelectOption[] = [{ value: '百度' }, { value: 'Google' }] //搜索引擎
   @StorageLink('from_languages') from_languages: string = 'ZH_CN' //语音翻译源语言
@@ -30,21 +34,24 @@ export struct ConfigPage1 {
   @StorageLink('wordScan_to_languages') wordScan_to_languages: string = 'EN_US' //划词翻译目标语言
   @StorageLink('screenshotOCR_from_languages') screenshotOCR_from_languages: string = 'ZH_CN' //截图识别/翻译源语言
   @StorageLink('screenshotOCR_to_languages') screenshotOCR_to_languages: string = 'EN_US' //截图识别/翻译目标语言
-  @Watch('shortcut_change') @StorageLink("shortcut") shortcut: number = 0 //改变该值弹出对应快捷键悬浮窗口 1：语音识别 2：语音翻译 3:截图识别 4：自定义快捷键
-  @State voice_recognition_shortcut: string = ''//语音识别快捷键
-  @State voice_translation_shortcut: string = ''//语音翻译快捷键
-  @State screenshot_recognition_shortcut: string = ''//截图识别快捷键
+  @Watch('shortcut_change') @StorageLink("shortcut") shortcut: number =
+    0 //改变该值弹出对应快捷键悬浮窗口 1：语音识别 2：语音翻译 3:截图识别 4：自定义快捷键
+  @State voice_recognition_shortcut: string = '' //语音识别快捷键
+  @State voice_translation_shortcut: string = '' //语音翻译快捷键
+  @State screenshot_recognition_shortcut: string = '' //截图识别快捷键
 
   build() {
     Flex({ space: { main: LengthMetrics.px(15) }, direction: FlexDirection.Column }) {
-      Text('语音识别设置')
+      // Text('语音识别设置')
+      Text(Languages.voice_recognition_settings[this.languages])
         .fontSize(14)
         .lineHeight(14)
         .fontWeight(400)
         .fontColor('#a4aab2')
         .margin({ bottom: 5 })
       Row() {
-        Text('识别带标点')
+        // Text('识别带标点')
+        Text(Languages.punctuation_recognition[this.languages])
           .fontSize($r('app.float.default_text_font_size_14'))
           .fontWeight(400)
           .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
@@ -59,7 +66,8 @@ export struct ConfigPage1 {
             .onChange((isChecked: boolean) => {
               if (isChecked) {
                 console.log('*****************************打开识别带标点****************************************')
-                this.isPunctuationRecognition = true
+                ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition =
+                  true
               }
             })
           Text(Languages.on_common[this.languages])
@@ -68,7 +76,7 @@ export struct ConfigPage1 {
             .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
         }
         .onClick(() => {
-          this.isPunctuationRecognition = true
+          ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition = true
         })
 
         Row() {
@@ -81,7 +89,8 @@ export struct ConfigPage1 {
             .onChange((isChecked: boolean) => {
               if (isChecked) {
                 console.log('*****************************关闭识别带标点****************************************')
-                this.isPunctuationRecognition = false
+                ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition =
+                  false
 
               }
             })
@@ -91,13 +100,15 @@ export struct ConfigPage1 {
             .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
         }
         .onClick(() => {
-          this.isPunctuationRecognition = false
+          ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition =
+            false
         })
       }
       .width('100%')
 
       Row() {
-        Text('长语音识别')
+        // Text('长语音识别')
+        Text(Languages.long_voice_recognition[this.languages])
           .fontSize($r('app.float.default_text_font_size_14'))
           .fontWeight(400)
           .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
@@ -149,7 +160,8 @@ export struct ConfigPage1 {
       }
       .width('100%')
 
-      Text("识别语音")
+      // Text("识别语音")
+      Text(Languages.recognize_speech[this.languages])
         .margin({ top: 5 })
         .fontSize($r('app.float.default_text_font_size_14'))
         .fontWeight(400)
@@ -157,7 +169,8 @@ export struct ConfigPage1 {
       Select(this.convert_LanguagesToOptions())
         .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.languages[this.getDefaultSelectedIndex_from(this.speech_Recognition_languages)]))
         .onSelect((index: number) => {
-          this.speech_Recognition_languages = this.getModelInfo.languages[index].code
+          ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages =
+            this.getModelInfo.languages[index].code
         })
         .selected(this.getDefaultSelectedIndex_from(this.speech_Recognition_languages))
         .width('100%')
@@ -168,7 +181,8 @@ export struct ConfigPage1 {
         .backgroundColor(Color.White)
         .width('100%')
         .optionHeight(200)
-      Text("打字输入模式")
+      // Text("打字输入模式")
+      Text(Languages.typing_input_mode[this.languages])
         .margin({ top: 5 })
         .fontSize($r('app.float.default_text_font_size_14'))
         .fontWeight(400)
@@ -187,12 +201,13 @@ export struct ConfigPage1 {
         .borderRadius(4)
         .border({ width: 1, color: $r('app.string.DEFAULT_BORDER_COLOR') })
         .backgroundColor(Color.White)
-      Text("快捷键")
+      // Text("快捷键")
+      Text(Languages.shortcut_key[this.languages])
         .margin({ top: 5 })
         .fontSize($r('app.float.default_text_font_size_14'))
         .fontWeight(400)
         .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-      TextInput({ placeholder: '点击后输入目标按键即可', text:this.voice_recognition_shortcut })
+      TextInput({ placeholder: Languages.click_to_input_keys[this.languages], text: this.voice_recognition_shortcut })
         .backgroundColor('#fff')
         .placeholderColor('#bbbdbf')
         .placeholderFont({ size: 14, weight: 400 })
@@ -201,13 +216,15 @@ export struct ConfigPage1 {
         .borderRadius(5)
         .onClick(() => this.shortcut = 1)
       //======================================================语音翻译设置
-      Text('语音翻译设置')
+      // Text('语音翻译设置')
+      Text(Languages.voice_translation_settings[this.languages])
         .fontSize(14)
         .lineHeight(14)
         .fontWeight(400)
         .fontColor('#a4aab2')
         .margin({ bottom: 5, top: 10 })
-      Text("识别语音")
+      // Text("翻译语言")
+      Text(Languages.translation_language[this.languages])
         .margin({ top: 5 })
         .fontSize($r('app.float.default_text_font_size_14'))
         .fontWeight(400)
@@ -228,7 +245,8 @@ export struct ConfigPage1 {
           .optionHeight(180)
           .flexGrow(1)
           .flexShrink(1)
-        Text('至')
+        // Text('至')
+        Text(Languages.to[this.languages])
           .fontSize(12)
           .fontWeight(400)
           .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
@@ -251,12 +269,13 @@ export struct ConfigPage1 {
           .flexShrink(1)
       }
 
-      Text("快捷键")
+      // Text("快捷键")
+      Text(Languages.shortcut_key[this.languages])
         .margin({ top: 5 })
         .fontSize($r('app.float.default_text_font_size_14'))
         .fontWeight(400)
         .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-      TextInput({ placeholder: '点击后输入目标按键即可', text:this.voice_translation_shortcut})
+      TextInput({ placeholder:  Languages.click_to_input_keys[this.languages], text: this.voice_translation_shortcut })//点击后输入目标按键即可
         .backgroundColor('#fff')
         .placeholderColor('#bbbdbf')
         .placeholderFont({ size: 14, weight: 400 })
@@ -265,14 +284,16 @@ export struct ConfigPage1 {
         .borderRadius(5)
         .onClick(() => this.shortcut = 2)
       //======================================================划词翻译
-      Text('划词翻译')
+      // Text('划词翻译')
+      Text(Languages.word_scan_translation[this.languages])
         .fontSize(14)
         .lineHeight(14)
         .fontWeight(400)
         .fontColor('#a4aab2')
         .margin({ bottom: 5, top: 10 })
       Row() {
-        Text('启动功能')
+        // Text('启动功能')
+        Text(Languages.enable_function[this.languages])
           .fontSize($r('app.float.default_text_font_size_14'))
           .fontWeight(400)
           .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
@@ -324,7 +345,8 @@ export struct ConfigPage1 {
       }
       .width('100%')
 
-      Text("翻译语言")
+      // Text("翻译语言")
+      Text(Languages.translation_language[this.languages])
         .margin({ top: 5 })
         .fontSize($r('app.float.default_text_font_size_14'))
         .fontWeight(400)
@@ -345,7 +367,7 @@ export struct ConfigPage1 {
           .optionHeight(180)
           .flexGrow(1)
           .flexShrink(1)
-        Text('至')
+        Text(Languages.to[this.languages])
           .fontSize(12)
           .fontWeight(400)
           .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
@@ -369,14 +391,16 @@ export struct ConfigPage1 {
       }
 
       //======================================================截图识别/翻译
-      Text('截图识别/翻译')
+      // Text('截图识别/翻译')
+      Text(Languages.screenshot_ocr_translation[this.languages])
         .fontSize(14)
         .lineHeight(14)
         .fontWeight(400)
         .fontColor('#a4aab2')
         .margin({ bottom: 5, top: 10 })
       Row() {
-        Text('启动功能')
+        // Text('启动功能')
+        Text(Languages.enable_function[this.languages])
           .fontSize($r('app.float.default_text_font_size_14'))
           .fontWeight(400)
           .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
@@ -427,7 +451,8 @@ export struct ConfigPage1 {
       }
       .width('100%')
 
-      Text("翻译语言")
+      // Text("翻译语言")
+      Text(Languages.translation_language[this.languages])
         .margin({ top: 5 })
         .fontSize($r('app.float.default_text_font_size_14'))
         .fontWeight(400)
@@ -448,7 +473,8 @@ export struct ConfigPage1 {
           .optionHeight(180)
           .flexGrow(1)
           .flexShrink(1)
-        Text('至')
+        // Text('至')
+        Text(Languages.to[this.languages])
           .fontSize(12)
           .fontWeight(400)
           .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
@@ -471,12 +497,13 @@ export struct ConfigPage1 {
           .flexShrink(1)
       }
 
-      Text("快捷键")
+      // Text("快捷键")
+      Text(Languages.shortcut_key[this.languages])
         .margin({ top: 5 })
         .fontSize($r('app.float.default_text_font_size_14'))
         .fontWeight(400)
         .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-      TextInput({ placeholder: '点击后输入目标按键即可', text:this.screenshot_recognition_shortcut })
+      TextInput({ placeholder:Languages.click_to_input_keys[this.languages], text: this.screenshot_recognition_shortcut })
         .backgroundColor('#fff')
         .placeholderColor('#bbbdbf')
         .placeholderFont({ size: 14, weight: 400 })
@@ -486,21 +513,23 @@ export struct ConfigPage1 {
         .onClick(() => this.shortcut = 3)
 
       //======================================================语音搜索设置
-      Text('语音搜索设置')
+      // Text('语音搜索设置')
+      Text(Languages.voice_search_settings[this.languages])
         .fontSize(14)
         .lineHeight(14)
         .fontWeight(400)
         .fontColor('#a4aab2')
         .margin({ bottom: 5, top: 10 })
-      Text("语音搜索")
+      // Text("语音搜索")
+      Text(Languages.voice_search[this.languages])
         .margin({ top: 5 })
         .fontSize($r('app.float.default_text_font_size_14'))
         .fontWeight(400)
         .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
       Select(this.searchEngine)
         .value(this.searchEngine[AppStorage.get('EnhancedBrowserSearch') as number].value)
-        .onSelect((index: number,value) => {
-          AppStorage.setOrCreate('EnhancedBrowserSearch',index)
+        .onSelect((index: number, value) => {
+          AppStorage.setOrCreate('EnhancedBrowserSearch', index)
         })
         .selected(AppStorage.get('EnhancedBrowserSearch') as number)
         .width('100%')
@@ -511,14 +540,16 @@ export struct ConfigPage1 {
         .backgroundColor(Color.White)
 
       //======================================================外部弹窗设置
-      Text('外部弹窗设置')
+      // Text('外部弹窗设置')
+      Text(Languages.external_popup_settings[this.languages])
         .fontSize(14)
         .lineHeight(14)
         .fontWeight(400)
         .fontColor('#a4aab2')
         .margin({ bottom: 5, top: 10 })
       Row() {
-        Text('语音翻译弹窗自动关闭')
+        // Text('语音翻译弹窗自动关闭')
+        Text(Languages.auto_close_voice_translation_popup[this.languages])
           .fontSize($r('app.float.default_text_font_size_14'))
           .fontWeight(400)
           .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
@@ -629,6 +660,7 @@ export struct ConfigPage1 {
         return item.name;
     }
   }
+
   convert_LanguagesToOptions(): SelectOption[] {
     return ((this.getModelInfo.languages).map((item, index) => {
       // 多语言适配：优先取当前语言文本，无则按顺序兜底
@@ -798,8 +830,9 @@ export struct ConfigPage1 {
     // console.error('asdjkai:2',AppStorage.get('screenshot_recognition_shortcut'))
     // console.error('asdjkai:3',JSON.stringify(AppStorage.get('screenshot_recognition_shortcut')))
     // console.error('asdjkai:4',JSON.stringify(AppStorage.get('custom_shortcut')))
-    this.voice_recognition_shortcut=(AppStorage.get('voice_recognition_shortcut') as shortcutType).keyPreview
-    this.voice_translation_shortcut=(AppStorage.get('voice_translation_shortcut') as shortcutType).keyPreview
-    this.screenshot_recognition_shortcut=(AppStorage.get('screenshot_recognition_shortcut') as shortcutType).keyPreview
+    this.voice_recognition_shortcut = (AppStorage.get('voice_recognition_shortcut') as shortcutType).keyPreview
+    this.voice_translation_shortcut = (AppStorage.get('voice_translation_shortcut') as shortcutType).keyPreview
+    this.screenshot_recognition_shortcut =
+      (AppStorage.get('screenshot_recognition_shortcut') as shortcutType).keyPreview
   }
 }

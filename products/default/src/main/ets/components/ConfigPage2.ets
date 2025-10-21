@@ -1,4 +1,4 @@
-import { DeviceInfo, KeyPressType } from 'mouse'
+import { ConnectDevice, DeviceInfo, KeyPressType } from 'mouse'
 import { LengthMetrics, promptAction } from "@kit.ArkUI"
 import { addCustomerKey_Params } from '../model/UserModel'
 import { _addCustomerKey } from '../viewmodel/UserViewModel'
@@ -23,11 +23,10 @@ export interface KeymethodConfig {
  */
 @Component
 export struct ConfigPage2 {
-  @Watch('Watch_null') @StorageLink('getModelInfo') getModelInfo: getModelInfoModel =
-    AppStorage.get('getModelInfo') as getModelInfoModel
-  @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null //鼠标信息
+  @Watch('Watch_null') @StorageLink('getModelInfo') getModelInfo: getModelInfoModel =ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo as getModelInfoModel
+  @State mouseconfig: DeviceInfo  = ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo //鼠标信息
   @StorageLink('languages') languages: string = 'ZH_CN'
-  @StorageLink('KeymethodConfig') KeymethodConfig: KeymethodConfig[] = []
+  @State KeymethodConfig: KeymethodConfig[] = ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].KeymethodConfig
   @StorageLink("shortcut") shortcut: number = 0 //改变该值弹出对应快捷键悬浮窗口 1：语音识别 2：语音翻译 3:截图识别 4：自定义快捷键
   @Link isShowConfig: boolean
   @State isLoading: boolean = false;
@@ -54,84 +53,84 @@ export struct ConfigPage2 {
   private getDefaultSelectedIndex(childs: keyInfos_childs_childsModel[], index1: number, index2: number): number {
     for (let i = 0; i < childs.length; i++) {
       if (childs[i].first === 1) {
-        if (!AppStorage.get('KeymethodConfig')) {
-          AppStorage.setOrCreate('KeymethodConfig', [
-            { key: KeyPressType.VOICE_CLICK, currIndex: 0 }, { key: KeyPressType.VOICE_LONG_PRESS_DOWN, currIndex: 1 },
+        if (!this.KeymethodConfig.length) {
+          // console.error('*****************************************************************',JSON.stringify(this.getModelInfo))
+          this.KeymethodConfig=[
+            { key: KeyPressType.VOICE_CLICK, currIndex: 0 }, { key: KeyPressType.VOICE_LONG_PRESS_DOWN, currIndex: 0 },
             { key: KeyPressType.SEARCH_CLICK, currIndex: 0 },
             { key: KeyPressType.SEARCH_LONG_PRESS_DOWN, currIndex: 0 },
             { key: KeyPressType.TRANSLATE_CLICK, currIndex: 0 },
             { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
             { key: KeyPressType.AI_CLICK, currIndex: 0 }, { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
-          ])
-          switch (this.getModelInfo.keyInfos[index1].key) {
-            case 'voice_key':
-              if (index2) {
-                this.KeymethodConfig[1].currIndex = i
-              } else {
-                this.KeymethodConfig[0].currIndex = i
-              }
-              break
-            case 'search_key':
-              if (index2) {
-                this.KeymethodConfig[3].currIndex = i
-              } else {
-                this.KeymethodConfig[2].currIndex = i
-              }
-              break
-            case 'translate_key':
-              if (index2) {
-                this.KeymethodConfig[5].currIndex = i
-              } else {
-                this.KeymethodConfig[4].currIndex = i
-              }
-              break
-            case 'AI_key':
-              if (index2) {
-                this.KeymethodConfig[7].currIndex = i
-              } else {
-                this.KeymethodConfig[6].currIndex = i
-              }
-              break
-          }
-          // console.log('*/*/*/*/*', JSON.stringify(AppStorage.get('KeymethodConfig')))
-          AppStorage.setOrCreate('KeymethodConfig', this.KeymethodConfig)
-          return i;
+          ]
         }
         switch (this.getModelInfo.keyInfos[index1].key) {
           case 'voice_key':
             if (index2) {
-              return this.KeymethodConfig[1].currIndex
+              this.KeymethodConfig[1].currIndex = i
             } else {
-              return this.KeymethodConfig[0].currIndex
+              this.KeymethodConfig[0].currIndex = i
             }
+            break
           case 'search_key':
             if (index2) {
-              return this.KeymethodConfig[3].currIndex
+              this.KeymethodConfig[3].currIndex = i
             } else {
-              return this.KeymethodConfig[2].currIndex
+              this.KeymethodConfig[2].currIndex = i
             }
+            break
           case 'translate_key':
             if (index2) {
-              return this.KeymethodConfig[5].currIndex
+              this.KeymethodConfig[5].currIndex = i
             } else {
-              return this.KeymethodConfig[4].currIndex
+              this.KeymethodConfig[4].currIndex = i
             }
+            break
           case 'AI_key':
             if (index2) {
-              return this.KeymethodConfig[7].currIndex
+              this.KeymethodConfig[7].currIndex = i
             } else {
-              return this.KeymethodConfig[6].currIndex
+              this.KeymethodConfig[6].currIndex = i
             }
+            break
         }
+        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].KeymethodConfig=this.KeymethodConfig
+        // console.log('*/*/*/*/*', JSON.stringify(AppStorage.get('KeymethodConfig')))
+        // AppStorage.setOrCreate('KeymethodConfig', this.KeymethodConfig)
+
+        return i;
+        // switch (this.getModelInfo.keyInfos[index1].key) {
+        //   case 'voice_key':
+        //     if (index2) {
+        //       return this.KeymethodConfig[1].currIndex
+        //     } else {
+        //       return this.KeymethodConfig[0].currIndex
+        //     }
+        //   case 'search_key':
+        //     if (index2) {
+        //       return this.KeymethodConfig[3].currIndex
+        //     } else {
+        //       return this.KeymethodConfig[2].currIndex
+        //     }
+        //   case 'translate_key':
+        //     if (index2) {
+        //       return this.KeymethodConfig[5].currIndex
+        //     } else {
+        //       return this.KeymethodConfig[4].currIndex
+        //     }
+        //   case 'AI_key':
+        //     if (index2) {
+        //       return this.KeymethodConfig[7].currIndex
+        //     } else {
+        //       return this.KeymethodConfig[6].currIndex
+        //     }
+        // }
       }
     }
     return 0; // 无默认项时选中第一个
   }
 
   aboutToAppear(): void {
-    if (!AppStorage.get('languages')) {
-      AppStorage.setOrCreate('languages', 'ZH_CN')
-    }
   }
 
   build() {
@@ -167,7 +166,7 @@ export struct ConfigPage2 {
                   index1, index2)].first = 0
                 this.getModelInfo.keyInfos[index1].childs[index2].childs[index].first = 1
                 // this.KeymethodConfig[index1 * 2+index2].currIndex = index
-                console.error('11', this.getModelInfo.keyInfos[index1].names['ZH_CN'], index2, index)
+                // console.error('11', this.getModelInfo.keyInfos[index1].names['ZH_CN'], index2, index)
                 switch (this.getModelInfo.keyInfos[index1].key) {
                   case 'voice_key':
                     if (index2) {
@@ -199,8 +198,9 @@ export struct ConfigPage2 {
                     break
                 }
                 // console.log('*/*/*/*/*', JSON.stringify(AppStorage.get('KeymethodConfig')))
-                AppStorage.setOrCreate('KeymethodConfig', this.KeymethodConfig)
-                console.log('*/*/*/*/*', JSON.stringify(AppStorage.get('KeymethodConfig')))
+                // AppStorage.setOrCreate('KeymethodConfig', this.KeymethodConfig)
+                // console.log('*/*/*/*/*', JSON.stringify(AppStorage.get('KeymethodConfig')))
+                ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].KeymethodConfig=this.KeymethodConfig
                 console.error('11', this.getModelInfo.keyInfos[index1].childs[index2].childs[index].cmd)
                 //快捷键
                 if (this.getModelInfo.keyInfos[index1].childs[index2].childs[index].cmd === 'Action_SK') {
@@ -214,10 +214,10 @@ export struct ConfigPage2 {
                 if (this.getModelInfo.keyInfos[index1].childs[index2].childs[index].cmd === 'Action_OW') {
                   AppStorage.setOrCreate('isShow_webUrlToOpen_pop', true)
                 }
-                //文件夹
-                // if (this.getModelInfo.keyInfos[index1].childs[index2].childs[index].cmd === 'Action_OFJ') {
-                //   this.selectFolder()
-                // }
+                // 文件夹————让用户选择一个目录文件夹中的文件，记录该文件目录
+                if (this.getModelInfo.keyInfos[index1].childs[index2].childs[index].cmd === 'Action_OFJ') {
+                  this.selectFolder()
+                }
               })
               .selected(this.getDefaultSelectedIndex(item.childs || [], index1, index2))
               .width('100%')

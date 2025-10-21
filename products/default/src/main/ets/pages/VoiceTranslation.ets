@@ -1,5 +1,5 @@
 import { Float_Window } from 'float_window'
-import { translate_Response, Communication, _translate, translate_Params } from "mouse"
+import { ConnectDevice,translate_Response, Communication, _translate, translate_Params } from "mouse"
 import { getModelInfoModel, languagesModel } from 'config'
 import { promptAction } from '@kit.ArkUI'
 import { pasteboard } from '@kit.BasicServicesKit'; //复制
@@ -31,8 +31,8 @@ struct VoiceTranslation {
       appkey: (AppStorage.get('getModelInfo') as getModelInfoModel).appkey, //获取用户按键模式详情中得到
       from: this.voiceOrText ? AppStorage.get('from_languages') as string :
         AppStorage.get('wordScan_from_languages') as string, //源语言___后面配置
-      productCode: Communication.deviceInfo.productType.toString(), //产品编码
-      sno: Communication.deviceInfo.sn, //设备号
+      productCode: ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.deviceInfo.productType.toString(), //产品编码
+      sno: ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.deviceInfo.sn, //设备号
       text: this.voiceTranslationText.text, //翻译内容
       to: this.voiceOrText ? AppStorage.get('to_languages') as string :
         AppStorage.get('wordScan_to_languages') as string //翻译语言___后面配置
@@ -85,9 +85,9 @@ struct VoiceTranslation {
               transText: '',
               text: ''
             }
-            if (Communication.audioDataState) {
-              Communication.getDeviceInfo([0x63])
-              Communication.audioDataState = !Communication.audioDataState
+            if (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState) {
+              ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x63])
+              ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState = !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState
             }
           })
       }
