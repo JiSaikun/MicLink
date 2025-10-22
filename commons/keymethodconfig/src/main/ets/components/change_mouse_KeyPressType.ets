@@ -1,7 +1,5 @@
 import { KeyPressType, ConnectDevice } from 'mouse' //语音输入
 import { _KeyMethodConfig } from './KeyMethodConfig'
-import { fileGuard } from '@kit.EnterpriseDataGuardKit';
-import { BusinessError } from '@kit.BasicServicesKit';
 import { OpenFileWithSystemApp } from 'api';
 import { getModelInfoModel, keyInfos_childsModel } from 'config'
 
@@ -11,10 +9,10 @@ export interface KeymethodConfig {
 }
 
 export function _change_mouse_KeyPressType() {
-  // console.log('77777777777777777777777777777', AppStorage.get('mouse_KeyPressType'))
   let KeymethodConfig = ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].KeymethodConfig
+  // console.error('77777777777777777777777777777', JSON.stringify(KeymethodConfig))
   let mouse_KeyPressType: KeyPressType = AppStorage.get('mouse_KeyPressType') as KeyPressType //鼠标按键事件监听
-  let getModelInfo = AppStorage.get('getModelInfo') as getModelInfoModel
+  let getModelInfo = ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].getModelInfo as getModelInfoModel
   let _keyInfos_childsModel: keyInfos_childsModel | null = null
   if (mouse_KeyPressType === 11) {
     for (let item of getModelInfo.keyInfos) {

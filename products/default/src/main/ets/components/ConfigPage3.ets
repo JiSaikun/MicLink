@@ -16,37 +16,43 @@ PersistentStorage.persistProp("DPI_currInfo", null)
 @Component
 export struct ConfigPage3 {
   // @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null //鼠标信息
-  @State DPI_currInfo: DPI_currInfoModel  = ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].DPI_currInfo as DPI_currInfoModel //DPI信息
+  @StorageLink('DPI_currInfo') DPI_currInfo: DPI_currInfoModel | null = null //DPI信息
   @StorageLink("lowPowerAlertEnabled") lowPowerAlertEnabled: boolean = true //是否开启低电量提醒
-  @State getModelInfo: getModelInfoModel =ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo as getModelInfoModel
+  @State getModelInfo: getModelInfoModel =
+    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo as getModelInfoModel
   @StorageLink('languages') languages: string = 'ZH_CN'
   @State reportRate: SelectOption[] = [{ value: '125' }, { value: '250' }, { value: '500' }, { value: '1000' }]
   @State DPI: SelectOption[] =
     [{ value: '1000' }, { value: '1200' }, { value: '1600' }, { value: '2400' }, { value: '4000' }, { value: '4800' },
       { value: '6000' }]
   @Prop currportRate: number
-  @Watch('change_LEDstate') @State currLED: boolean = ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].currLED
+  @Watch('change_LEDstate') @State currLED: boolean =
+    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].currLED
   @Watch('change_reportRate') @State reportRate_currIndex: number = 0
   @Watch('change_DPI') @State DPI_currIndex: number = 0
 
   // @Link pageshow:boolean
   change_reportRate() {
     setTimeout(() => {
-      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number||0].Communication.getDeviceInfo([0x13, this.reportRate_currIndex])
+      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number||
+        0].Communication.getDeviceInfo([0x13, this.reportRate_currIndex])
     }, 50)
   }
 
   change_DPI() {
     setTimeout(() => {
-      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.getDeviceInfo([0x68, this.DPI_currIndex + 1]).then(() => {
-        (ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo).dpiLevel = this.DPI_currIndex
+      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.getDeviceInfo([0x68,
+        this.DPI_currIndex + 1]).then(() => {
+        (ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo).dpiLevel =
+          this.DPI_currIndex
       })
     }, 50)
     let currDPI_Info: DPI_currInfoModel = {
       length: this.DPI.length,
       curr: this.DPI_currIndex
     }
-    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].DPI_currInfo=currDPI_Info
+    this.DPI_currInfo = currDPI_Info
+    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].DPI_currInfo = currDPI_Info
     // console.error(JSON.stringify(currDPI_Info), '00000000000000000000000000000000000000000000000000')
   }
 
@@ -57,7 +63,7 @@ export struct ConfigPage3 {
       } else {
         ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.getDeviceInfo([0x84])
       }
-      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].currLED=this.currLED
+      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].currLED = this.currLED
     }, 50)
 
   }
@@ -309,15 +315,20 @@ export struct ConfigPage3 {
         this.reportRate_currIndex = 3
         break
     }
-    this.DPI_currIndex = ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].DPI_currInfo as DPI_currInfoModel? ( ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].DPI_currInfo as DPI_currInfoModel).curr :
-      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number||0].mouseconfig?.dpiLevel as number - 1
-    this.currLED = ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number||0].mouseconfig?.atmosphereLight as boolean
+    this.DPI_currIndex =
+      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].DPI_currInfo as DPI_currInfoModel ?
+      (ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].DPI_currInfo as DPI_currInfoModel).curr :
+        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number||
+          0].mouseconfig?.dpiLevel as number - 1
+    this.currLED = ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number||
+      0].mouseconfig?.atmosphereLight as boolean
 
     let currDPI_Info: DPI_currInfoModel = {
       length: this.DPI.length,
       curr: this.DPI_currIndex
     }
-    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].DPI_currInfo=currDPI_Info
+    this.DPI_currInfo = currDPI_Info
+    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].DPI_currInfo = currDPI_Info
     // console.error(JSON.stringify(currDPI_Info), '00000000000000000000000000000000000000000000000000')
 
   }

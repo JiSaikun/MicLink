@@ -135,10 +135,10 @@ class GlobalShortcutService {
     }
 
     try {
-      prompt.showToast({
-        message: message,
-        duration: 2000
-      })
+      // prompt.showToast({
+      //   message: message,
+      //   duration: 2000
+      // })
     } catch (error) {
       console.error('显示提示失败:', error)
     }

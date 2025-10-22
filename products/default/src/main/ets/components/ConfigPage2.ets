@@ -66,31 +66,35 @@ export struct ConfigPage2 {
         }
         switch (this.getModelInfo.keyInfos[index1].key) {
           case 'voice_key':
-            if (index2) {
-              this.KeymethodConfig[1].currIndex = i
-            } else {
+            if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='sk') {
               this.KeymethodConfig[0].currIndex = i
+            }
+            if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='lk') {
+              this.KeymethodConfig[1].currIndex = i
             }
             break
           case 'search_key':
-            if (index2) {
-              this.KeymethodConfig[3].currIndex = i
-            } else {
+            if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='sk') {
               this.KeymethodConfig[2].currIndex = i
+            }
+            if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='lk') {
+              this.KeymethodConfig[3].currIndex = i
             }
             break
           case 'translate_key':
-            if (index2) {
-              this.KeymethodConfig[5].currIndex = i
-            } else {
+            if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='sk') {
               this.KeymethodConfig[4].currIndex = i
+            }
+            if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='lk') {
+              this.KeymethodConfig[5].currIndex = i
             }
             break
           case 'AI_key':
-            if (index2) {
-              this.KeymethodConfig[7].currIndex = i
-            } else {
+            if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='sk') {
               this.KeymethodConfig[6].currIndex = i
+            }
+            if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='lk') {
+              this.KeymethodConfig[7].currIndex = i
             }
             break
         }
@@ -169,31 +173,35 @@ export struct ConfigPage2 {
                 // console.error('11', this.getModelInfo.keyInfos[index1].names['ZH_CN'], index2, index)
                 switch (this.getModelInfo.keyInfos[index1].key) {
                   case 'voice_key':
-                    if (index2) {
-                      this.KeymethodConfig[1].currIndex = index
-                    } else {
+                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='sk') {
                       this.KeymethodConfig[0].currIndex = index
+                    }
+                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='lk') {
+                      this.KeymethodConfig[1].currIndex = index
                     }
                     break
                   case 'search_key':
-                    if (index2) {
-                      this.KeymethodConfig[3].currIndex = index
-                    } else {
+                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='sk') {
                       this.KeymethodConfig[2].currIndex = index
+                    }
+                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='lk') {
+                      this.KeymethodConfig[3].currIndex = index
                     }
                     break
                   case 'translate_key':
-                    if (index2) {
-                      this.KeymethodConfig[5].currIndex = index
-                    } else {
+                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='sk') {
                       this.KeymethodConfig[4].currIndex = index
+                    }
+                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='lk') {
+                      this.KeymethodConfig[5].currIndex = index
                     }
                     break
                   case 'AI_key':
-                    if (index2) {
-                      this.KeymethodConfig[7].currIndex = index
-                    } else {
+                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='sk') {
                       this.KeymethodConfig[6].currIndex = index
+                    }
+                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='lk') {
+                      this.KeymethodConfig[7].currIndex = index
                     }
                     break
                 }

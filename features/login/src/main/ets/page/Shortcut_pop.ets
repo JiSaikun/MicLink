@@ -56,19 +56,19 @@ struct Shortcut_pop {
   @Consume('pageInfo') pageInfo: NavPathStack
   @StorageLink("shortcut") shortcut: number = 0 //标记快捷键功能
   @StorageLink("voice_recognition_shortcut") voice_recognition_shortcut: shortcutType = {
-    keyPreview:Languages.voice_recognition_settings[this.languages],//无
+    keyPreview:Languages.none[this.languages],//无
     pressedKeys: []
   } //语音识别快捷键
   @StorageLink("voice_translation_shortcut") voice_translation_shortcut: shortcutType = {
-    keyPreview: Languages.voice_recognition_settings[this.languages],//无
+    keyPreview: Languages.none[this.languages],//无
     pressedKeys: []
   } //语音翻译快捷键
   @StorageLink("screenshot_recognition_shortcut") screenshot_recognition_shortcut: shortcutType = {
-    keyPreview: Languages.voice_recognition_settings[this.languages],//无
+    keyPreview: Languages.none[this.languages],//无
     pressedKeys: []
   } //截图识别快捷键
   @StorageLink("custom_shortcut") custom_shortcut: shortcutType = {
-    keyPreview: Languages.voice_recognition_settings[this.languages],//无
+    keyPreview: Languages.none[this.languages],//无
     pressedKeys: []
   } //自定义快捷键
 
@@ -77,24 +77,24 @@ struct Shortcut_pop {
       case 1:
         //语音识别
         this.keyPreview_old =
-          this.voice_recognition_shortcut.keyPreview ? this.voice_recognition_shortcut.keyPreview :  Languages.voice_recognition_settings[this.languages]//无
+          this.voice_recognition_shortcut.keyPreview ? this.voice_recognition_shortcut.keyPreview :  Languages.none[this.languages]//无
         break
       case 2:
         //语音翻译
         this.keyPreview_old =
-          this.voice_translation_shortcut.keyPreview ? this.voice_translation_shortcut.keyPreview :  Languages.voice_recognition_settings[this.languages]//无
+          this.voice_translation_shortcut.keyPreview ? this.voice_translation_shortcut.keyPreview :  Languages.none[this.languages]//无
         break
       case 3:
         //截图识别
         this.keyPreview_old =
-          this.screenshot_recognition_shortcut.keyPreview ? this.screenshot_recognition_shortcut.keyPreview :  Languages.voice_recognition_settings[this.languages]//无
+          this.screenshot_recognition_shortcut.keyPreview ? this.screenshot_recognition_shortcut.keyPreview :  Languages.none[this.languages]//无
         break
       case 4:
         //自定义快捷键
-        this.keyPreview_old = this.custom_shortcut.keyPreview ? this.custom_shortcut.keyPreview :  Languages.voice_recognition_settings[this.languages]//无
+        this.keyPreview_old = this.custom_shortcut.keyPreview ? this.custom_shortcut.keyPreview :  Languages.none[this.languages]//无
         break
       default:
-        this.keyPreview_old = Languages.voice_recognition_settings[this.languages]//无
+        this.keyPreview_old = Languages.none[this.languages]//无
     }
   }
 

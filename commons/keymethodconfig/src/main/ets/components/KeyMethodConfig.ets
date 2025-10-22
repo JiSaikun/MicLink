@@ -462,6 +462,7 @@ export class _KeyMethodConfig {
     } else {
       DPI_currInfo.curr += 1
     }
+    AppStorage.setOrCreate('DPI_currInfo',DPI_currInfo)
     ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].DPI_currInfo = DPI_currInfo
     // AppStorage.setOrCreate('DPI_currInfo', DPI_currInfo)
     ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].Communication.getDeviceInfo([0x68,

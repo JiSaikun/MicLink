@@ -3,7 +3,7 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { SmartMouseAudioProcessor } from './SmartMouseAudioProcessor'
 import { getModelInfo_Params, productImg_Params } from '../model/MouseInfoModel'
 import { _getModelInfo, _productImg } from '../viewmodel/UserViewModel'
-import { getModelInfoModel } from 'config'
+import { getModelInfoModel, keyInfosModel } from 'config'
 import { AudioWebSocketHandler } from 'api';
 
 // 按键类型枚举
@@ -711,6 +711,64 @@ export class Communication {
             AppStorage.setOrCreate('devicesList', null)
             const newList: DeviceArrayType[] = JSON.parse(JSON.stringify(ConnectDevice.Communication));
             AppStorage.setOrCreate('devicesList', newList)
+          } else {
+            // console.error('asdjkalkdja',ConnectDevice.Communication[this.device_currIndex].KeymethodConfig.length)
+            if (!ConnectDevice.Communication[this.device_currIndex].KeymethodConfig.length) {
+              // console.error('*****************************************************************',JSON.stringify(this.getModelInfo))
+              ConnectDevice.Communication[this.device_currIndex].KeymethodConfig = [
+                { key: KeyPressType.VOICE_CLICK, currIndex: 0 },
+                { key: KeyPressType.VOICE_LONG_PRESS_DOWN, currIndex: 0 },
+                { key: KeyPressType.SEARCH_CLICK, currIndex: 0 },
+                { key: KeyPressType.SEARCH_LONG_PRESS_DOWN, currIndex: 0 },
+                { key: KeyPressType.TRANSLATE_CLICK, currIndex: 0 },
+                { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
+                { key: KeyPressType.AI_CLICK, currIndex: 0 },
+                { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
+              ]
+              for (let item
+                of (AppStorage.get('devicesList') as DeviceArrayType[])[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[]) {
+                for (let childs of item.childs) {
+                  childs.childs.forEach((keyInfos_childs_childsModel, index) => {
+                    if (keyInfos_childs_childsModel.first === 1) {
+                      switch (item.key) {
+                        case 'voice_key': //语音键
+                          if (childs.operation === 'sk') { //单击
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[0].currIndex = index
+                          }
+                          if (childs.operation === 'lk') { //长按
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[1].currIndex = index
+                          }
+                          break
+                        case 'search_key': //搜索键
+                          if (childs.operation === 'sk') {
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[2].currIndex = index
+                          }
+                          if (childs.operation === 'lk') { //长按
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[3].currIndex = index
+                          }
+                          break
+                        case 'translate_key': //翻译键
+                          if (childs.operation === 'sk') {
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[4].currIndex = index
+                          }
+                          if (childs.operation === 'lk') { //长按
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[5].currIndex = index
+                          }
+                          break
+                        case 'AI_key': //翻译键
+                          if (childs.operation === 'sk') {
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[6].currIndex = index
+                          }
+                          if (childs.operation === 'lk') { //长按
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[7].currIndex = index
+                          }
+                          break
+                      }
+                    }
+                  })
+                }
+              }
+            }
           }
 
         }
@@ -754,6 +812,64 @@ export class Communication {
             AppStorage.setOrCreate('devicesList', null)
             const newList: DeviceArrayType[] = JSON.parse(JSON.stringify(ConnectDevice.Communication));
             AppStorage.setOrCreate('devicesList', newList)
+          } else {
+            // console.error('asdjkalkdja',ConnectDevice.Communication[this.device_currIndex].KeymethodConfig.length)
+            if (!ConnectDevice.Communication[this.device_currIndex].KeymethodConfig.length) {
+              // console.error('*****************************************************************',JSON.stringify(this.getModelInfo))
+              ConnectDevice.Communication[this.device_currIndex].KeymethodConfig = [
+                { key: KeyPressType.VOICE_CLICK, currIndex: 0 },
+                { key: KeyPressType.VOICE_LONG_PRESS_DOWN, currIndex: 0 },
+                { key: KeyPressType.SEARCH_CLICK, currIndex: 0 },
+                { key: KeyPressType.SEARCH_LONG_PRESS_DOWN, currIndex: 0 },
+                { key: KeyPressType.TRANSLATE_CLICK, currIndex: 0 },
+                { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
+                { key: KeyPressType.AI_CLICK, currIndex: 0 },
+                { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
+              ]
+              for (let item
+                of (AppStorage.get('devicesList') as DeviceArrayType[])[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[]) {
+                for (let childs of item.childs) {
+                  childs.childs.forEach((keyInfos_childs_childsModel, index) => {
+                    if (keyInfos_childs_childsModel.first === 1) {
+                      switch (item.key) {
+                        case 'voice_key': //语音键
+                          if (childs.operation === 'sk') { //单击
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[0].currIndex = index
+                          }
+                          if (childs.operation === 'lk') { //长按
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[1].currIndex = index
+                          }
+                          break
+                        case 'search_key': //搜索键
+                          if (childs.operation === 'sk') {
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[2].currIndex = index
+                          }
+                          if (childs.operation === 'lk') { //长按
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[3].currIndex = index
+                          }
+                          break
+                        case 'translate_key': //翻译键
+                          if (childs.operation === 'sk') {
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[4].currIndex = index
+                          }
+                          if (childs.operation === 'lk') { //长按
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[5].currIndex = index
+                          }
+                          break
+                        case 'AI_key': //翻译键
+                          if (childs.operation === 'sk') {
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[6].currIndex = index
+                          }
+                          if (childs.operation === 'lk') { //长按
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[7].currIndex = index
+                          }
+                          break
+                      }
+                    }
+                  })
+                }
+              }
+            }
           }
           // console.log('设备信息解析成功:');
           // console.log('SN:', this.deviceInfo.sn);
@@ -886,6 +1002,7 @@ export class Communication {
 
 
     } catch (error) {
+      console.warn(JSON.stringify(ConnectDevice.Communication[this.device_currIndex].KeymethodConfig))
       console.error('解析设备信息错误:', error);
     }
 
@@ -898,10 +1015,7 @@ export class Communication {
         this.getDeviceInfo()
       }
     } else {
-      console.warn('w' + JSON.stringify(ConnectDevice.Communication[this.device_currIndex].getModelInfo))
       if (!ConnectDevice.Communication[this.device_currIndex].getModelInfo) {
-        console.error('w' + JSON.stringify(ConnectDevice.Communication[this.device_currIndex].getModelInfo))
-
         const params: getModelInfo_Params = {
           languageCode: '',
           productCode: this.deviceInfo.productType.toString(),
@@ -914,15 +1028,11 @@ export class Communication {
             ConnectDevice.Communication[this.device_currIndex].getModelInfo = getModelInfo
             const newList: DeviceArrayType[] = JSON.parse(JSON.stringify(ConnectDevice.Communication));
             AppStorage.setOrCreate('devicesList', newList)
-
-
-            // AppStorage.setOrCreate('getModelInfo', getModelInfo)
           }
         }).catch(() => {
           // console.log('请求失败')
         })
       } else {
-        // console.error('551215451564564121', JSON.stringify(AppStorage.get('getModelInfo')))
         if (this.flax_yuyin) {
           this.getDeviceInfo([0x63])
         }
