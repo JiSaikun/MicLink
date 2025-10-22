@@ -183,32 +183,32 @@ export struct LeftBar {
       })
 
       Scroll() {
-        Flex({ direction: FlexDirection.Column }) {
-          ForEach(this.bottom_data, (item: Ai_Model, index) => {
-            Flex({ alignItems: ItemAlign.Center }) {
-              Image(this.currentIndex === index ? $r(`app.media.${item.select}`) : $r(`app.media.${item.img}`))
-                .width(16).height(16)
-                .objectFit(ImageFit.Fill)
-                .margin({ right: 13 })
-              Text(item.title[this.languages])
-                .fontSize(14)
-                .fontWeight(400)
-                .lineHeight(14)
-                .fontColor(this.currentIndex === index ? '#00aecc' : '')
-            }
-            .backgroundColor(this.currentIndex === index ? "#e0f1f4" : '#f8f8f8')
-            .padding({ left: 13 })
-            .height(40)
-            .borderRadius(8)
-            .width('100%')
-            .onClick(() => {
-              this.currentIndex = index
-            })
-            .flexGS()
-          }, (item: Ai_Model) => item.img)
-        }
-        .width('100%')
-        .height('100%')
+        // Flex({ direction: FlexDirection.Column }) {
+        //   ForEach(this.bottom_data, (item: Ai_Model, index) => {
+        //     Flex({ alignItems: ItemAlign.Center }) {
+        //       Image(this.currentIndex === index ? $r(`app.media.${item.select}`) : $r(`app.media.${item.img}`))
+        //         .width(16).height(16)
+        //         .objectFit(ImageFit.Fill)
+        //         .margin({ right: 13 })
+        //       Text(item.title[this.languages])
+        //         .fontSize(14)
+        //         .fontWeight(400)
+        //         .lineHeight(14)
+        //         .fontColor(this.currentIndex === index ? '#00aecc' : '')
+        //     }
+        //     .backgroundColor(this.currentIndex === index ? "#e0f1f4" : '#f8f8f8')
+        //     .padding({ left: 13 })
+        //     .height(40)
+        //     .borderRadius(8)
+        //     .width('100%')
+        //     .onClick(() => {
+        //       this.currentIndex = index
+        //     })
+        //     .flexGS()
+        //   }, (item: Ai_Model) => item.img)
+        // }
+        // .width('100%')
+        // .height('100%')
       }
       .edgeEffect(EdgeEffect.Spring)
       .height(160)
