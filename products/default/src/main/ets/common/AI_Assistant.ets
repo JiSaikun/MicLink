@@ -193,20 +193,20 @@ export class AI_Assistant {
   private executeCommand(item: tableDataModel): void {
     try {
       switch (item.category) {
-        case CommandCategory.FILE:
+        case 0:
           this.openFileWithSystemApp(item.execute);
           break;
-        case CommandCategory.WEBSITE:
+        case 1:
           this.openTheWebpageDirect(item.execute);
           break;
-        case CommandCategory.EDIT:
+        case 2:
           this.inputFixedText(item.execute);
           break;
-        case CommandCategory.FOLDER:
+        case 3:
           console.log('打开文件夹功能待实现:', item.execute);
           this.explorer(item.execute);
           break;
-        case CommandCategory.APP:
+        case 4:
           console.log('打开应用功能待实现:', item.execute);
           break;
         default:

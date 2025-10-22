@@ -18,84 +18,116 @@ interface response_interface {
 
 @Component
 export struct CreateNewInstruction_pop {
-  @StorageLink('languages') languages: string = 'ZH_CN'
+  @StorageLink('languages') @Watch('onLanguagesChange') languages: string = 'ZH_CN'
   @Consume('pageInfo') pageInfo: NavPathStack
-  @State array: SelectOption[] = [
-    // { value: '文件' },
-    { value:Languages.file_option[this.languages] },
-    // { value: '网址' },
-    { value: Languages.website_option[this.languages] },
-    // { value: '生成文本' },
-    { value: Languages.generate_text_option[this.languages] },
-    // { value: '文件夹' },
-    { value: Languages.folder_option[this.languages] },
-  ]
-  @State response_: response_interface[] = [
-    {
-      // title: '执行路径：',
-      title: `${Languages.execution_path[this.languages]}：`,
-      isShow: true,
-      // response_: '执行路径',
-      response_: Languages.execution_path[this.languages],
-      showFilePicker: true,
-      showFolderPicker: false,
-      showAppPicker: false
-    },
-    {
-      // title: '网址：',
-      title: Languages.website_text[this.languages],
-      isShow: false,
-      // response_: '输入网址',
-      response_: Languages.enter_website[this.languages],
-      showFilePicker: false,
-      showFolderPicker: false,
-      showAppPicker: false
-    },
-    {
-      // title: '生成文本：',
-      title: Languages.generate_text[this.languages],
-      isShow: false,
-      // response_: '输入要一键生成的文本',
-      response_: Languages.enter_one_click_text[this.languages],
-      showFilePicker: false,
-      showFolderPicker: false,
-      showAppPicker: false
-    },
-    {
-      // title: '文件夹路径：',
-      title: Languages.folder_path[this.languages],
-      isShow: true,
-      // response_: '选择目标文件夹中的任意文件',
-      response_: Languages.select_any_file_in_folder[this.languages],
-      showFilePicker: false,
-      showFolderPicker: true,
-      showAppPicker: false
-    },
-  ]
+
+  // 使用 SelectOption[]
+  @State array: SelectOption[] = []
+  @State response_: response_interface[] = []
+
   @State currentindex: number = 0
   @Link isShow_CreateNewInstruction_pop: boolean
   @Link isShow_EditInstruction_pop: boolean
   @StorageLink('table_data') table_data: tableDataModel[] = []
   @Prop isParam: boolean = false
   @Prop currIndexParam: number
-  @State currtableDataModel_data: tableDataModel = {
-    // category: '文件',
-    category: Languages.file_option[this.languages],
-    voice: '',
-    execute: '',
-  }
+
+  // 关键修改：category 改为 number 类型，保存索引
+  @State category: number = 0
+  @State voice: string = ''
+  @State execute: string = ''
+
   @State isLoading: boolean = false;
 
   aboutToAppear(): void {
+    this.updateLanguageDependentData();
     if (this.isParam) {
-      // 使用显式赋值而不是展开操作符
       const originalData = this.table_data[this.currIndexParam];
-      this.currtableDataModel_data.category = originalData.category;
-      this.currtableDataModel_data.voice = originalData.voice;
-      this.currtableDataModel_data.execute = originalData.execute;
 
-      this.currentindex = this.array.findIndex(item => item.value === this.currtableDataModel_data.category);
-      console.log('编辑模式初始化:', JSON.stringify(this.currtableDataModel_data));
+      // 关键修改：category 现在直接保存索引值
+      this.category = originalData.category as number;
+      this.voice = originalData.voice;
+      this.execute = originalData.execute;
+
+      // 设置当前索引为 category 的值
+      this.currentindex = this.category;
+      console.log('编辑模式初始化:', JSON.stringify({
+        category: this.category,
+        voice: this.voice,
+        execute: this.execute
+      }));
+    }
+  }
+
+  /**
+   * 获取 SelectOption 的字符串值
+   */
+  private getSelectOptionValue(option: SelectOption): string {
+    if (typeof option.value === 'string') {
+      return option.value;
+    } else {
+      return String(option.value);
+    }
+  }
+
+  /**
+   * 监听语言变化
+   */
+  private onLanguagesChange(): void {
+    this.updateLanguageDependentData();
+  }
+
+  /**
+   * 更新语言相关的数据
+   */
+  private updateLanguageDependentData(): void {
+    // 更新 array - 确保 value 是字符串
+    this.array = [
+      { value: Languages.file_option[this.languages] as string },
+      { value: Languages.website_option[this.languages] as string },
+      { value: Languages.generate_text_option[this.languages] as string },
+      { value: Languages.folder_option[this.languages] as string },
+    ];
+
+    // 更新 response_
+    this.response_ = [
+      {
+        title: `${Languages.execution_path[this.languages]}：`,
+        isShow: true,
+        response_: Languages.execution_path[this.languages],
+        showFilePicker: true,
+        showFolderPicker: false,
+        showAppPicker: false
+      },
+      {
+        title: Languages.website_text[this.languages],
+        isShow: false,
+        response_: Languages.enter_website[this.languages],
+        showFilePicker: false,
+        showFolderPicker: false,
+        showAppPicker: false
+      },
+      {
+        title: Languages.generate_text[this.languages],
+        isShow: false,
+        response_: Languages.enter_one_click_text[this.languages],
+        showFilePicker: false,
+        showFolderPicker: false,
+        showAppPicker: false
+      },
+      {
+        title: Languages.folder_path[this.languages],
+        isShow: true,
+        response_: Languages.select_any_file_in_folder[this.languages],
+        showFilePicker: false,
+        showFolderPicker: true,
+        showAppPicker: false
+      },
+    ];
+
+    // 关键修改：category 保存索引值，不再设置为字符串
+    if (this.array.length > this.currentindex && !this.isParam) {
+      this.category = this.currentindex;
     }
   }
 
@@ -113,20 +145,16 @@ export struct CreateNewInstruction_pop {
 
       documentViewPicker.select(documentSelectOptions).then((result) => {
         if (result && result.length > 0) {
-          // 直接赋值而不是使用展开操作符
-          this.currtableDataModel_data.execute = result[0];
-          console.log('文件信息', JSON.stringify(this.currtableDataModel_data.execute));
-          // promptAction.showToast({ message: '文件选择成功', duration: 2000 });
+          this.execute = result[0];
+          console.log('文件信息', this.execute);
           promptAction.showToast({ message: Languages.file_selection_success[this.languages], duration: 2000 });
         }
       }).catch((err: BusinessError) => {
         console.error('文件选择失败: ' + err.message);
-        // promptAction.showToast({ message: '文件选择失败', duration: 2000 });
         promptAction.showToast({ message: Languages.file_selection_failed[this.languages], duration: 2000 });
       });
     } catch (err) {
       console.error('Failed to select file. Cause: ' + (err as BusinessError).message);
-      // promptAction.showToast({ message: '文件选择失败', duration: 2000 });
       promptAction.showToast({ message: Languages.file_selection_failed[this.languages], duration: 2000 });
     } finally {
       this.isLoading = false;
@@ -139,7 +167,6 @@ export struct CreateNewInstruction_pop {
   private selectFolder(): void {
     this.isLoading = true;
     try {
-      // promptAction.showToast({ message: '请选择目标文件夹中的任意一个文件', duration: 3000 });
       promptAction.showToast({ message: Languages.please_select_any_file_in_target_folder[this.languages], duration: 3000 });
 
       const documentSelectOptions = new picker.DocumentSelectOptions();
@@ -151,7 +178,6 @@ export struct CreateNewInstruction_pop {
       documentViewPicker.select(documentSelectOptions)
         .then((result: string[]) => {
           if (!result || result.length === 0) {
-            // promptAction.showToast({ message: '未选择任何文件', duration: 2000 });
             promptAction.showToast({ message: Languages.no_file_selected[this.languages], duration: 2000 });
             return;
           }
@@ -161,15 +187,12 @@ export struct CreateNewInstruction_pop {
 
           if (lastSlashIndex !== -1) {
             const folderPath = filePath.substring(0, lastSlashIndex);
-            // 直接赋值而不是使用展开操作符
-            this.currtableDataModel_data.execute = folderPath;
+            this.execute = folderPath;
 
             console.log('提取的文件夹路径:', folderPath);
             const folderName = folderPath.substring(folderPath.lastIndexOf('/') + 1);
-            // promptAction.showToast({ message: `已选择文件夹: ${folderName}`, duration: 2500 });
             promptAction.showToast({ message: `${Languages.folder_selected[this.languages]} ${folderName}`, duration: 2500 });
           } else {
-            // promptAction.showToast({ message: '无法解析文件夹路径', duration: 2000 });
             promptAction.showToast({ message: Languages.cannot_parse_folder_path[this.languages], duration: 2000 });
           }
         })
@@ -184,7 +207,6 @@ export struct CreateNewInstruction_pop {
 
     } catch (err) {
       console.error('文件夹选择代码异常:', (err as Error).message);
-      // promptAction.showToast({ message: '文件夹选择功能异常', duration: 3000 });
       promptAction.showToast({
         message: Languages.folder_selection_function_exception[this.languages],
         duration: 3000
@@ -200,16 +222,12 @@ export struct CreateNewInstruction_pop {
     switch (errorCode) {
       case 1001:
         return Languages.need_file_access_permission[this.languages];
-        return '需要文件访问权限，请在设置中开启';
       case 1002:
         return Languages.folder_selection_canceled[this.languages];
-        return '已取消文件夹选择';
       case 1003:
         return Languages.no_folder_access_permission[this.languages];
-        return '无文件夹访问权限，请授权后重试';
       default:
         return `${Languages.folder_selection_failed_with_code[this.languages]} ${errorCode})`;
-        return `选择失败（错误码: ${errorCode})`;
     }
   }
 
@@ -231,8 +249,7 @@ export struct CreateNewInstruction_pop {
       }).catch((err: BusinessError) => {
         console.error('启动应用选择器失败: ' + err.message);
         promptAction.showToast({ message: '暂不支持应用选择，请手动输入包名', duration: 3000 });
-        // 直接赋值而不是使用展开操作符
-        this.currtableDataModel_data.execute = 'com.example.app';
+        this.execute = 'com.example.app';
       });
     } catch (err) {
       console.error('应用选择失败: ' + (err as BusinessError).message);
@@ -282,14 +299,12 @@ export struct CreateNewInstruction_pop {
    * 验证输入数据
    */
   private validateInput(): boolean {
-    if (!this.currtableDataModel_data.voice || this.currtableDataModel_data.voice.trim() === '') {
-      // promptAction.showToast({ message: '请输入指令词', duration: 2000 });
+    if (!this.voice || this.voice.trim() === '') {
       promptAction.showToast({ message: Languages.please_enter_instruction_word[this.languages], duration: 2000 });
       return false;
     }
 
-    if (!this.currtableDataModel_data.execute || this.currtableDataModel_data.execute.trim() === '') {
-      // promptAction.showToast({ message: '请设置执行目标', duration: 2000 });
+    if (!this.execute || this.execute.trim() === '') {
       promptAction.showToast({ message: Languages.please_set_execution_target[this.languages], duration: 2000 });
       return false;
     }
@@ -297,8 +312,7 @@ export struct CreateNewInstruction_pop {
     // 网址验证
     if (this.currentindex === 1) {
       const urlRegex = /^(https?:\/\/)?[\w.-]+\.[a-z]{2,}.*$/i;
-      if (!urlRegex.test(this.currtableDataModel_data.execute)) {
-        // promptAction.showToast({ message: '请输入有效的网址', duration: 2000 });
+      if (!urlRegex.test(this.execute)) {
         promptAction.showToast({ message: Languages.please_enter_valid_website[this.languages], duration: 2000 });
         return false;
       }
@@ -315,11 +329,11 @@ export struct CreateNewInstruction_pop {
       return;
     }
 
-    // 创建新的 tableDataModel 对象而不是使用展开操作符
+    // 关键修改：category 现在保存的是索引值
     const newData: tableDataModel = {
-      category: this.currtableDataModel_data.category,
-      voice: this.currtableDataModel_data.voice,
-      execute: this.currtableDataModel_data.execute
+      category: this.category, // 保存索引值
+      voice: this.voice,
+      execute: this.execute
     };
 
     if (this.isParam) {
@@ -332,7 +346,12 @@ export struct CreateNewInstruction_pop {
           updatedData.push(this.table_data[i]);
         }
       }
-      this.table_data = updatedData;
+      AppStorage.setOrCreate('table_data',[])
+      console.log('err:'+JSON.stringify('table_data'))
+      setTimeout(()=>{
+        AppStorage.setOrCreate('table_data',updatedData)
+        console.log('err:'+JSON.stringify('table_data'))
+      },50)
       console.log('编辑指令完成:', JSON.stringify(newData));
       this.isShow_EditInstruction_pop = false;
     } else {
@@ -347,7 +366,6 @@ export struct CreateNewInstruction_pop {
       this.isShow_CreateNewInstruction_pop = false;
     }
 
-    // promptAction.showToast({ message: '保存成功', duration: 2000 });
     promptAction.showToast({ message: Languages.save_success[this.languages], duration: 2000 });
   }
 
@@ -357,40 +375,35 @@ export struct CreateNewInstruction_pop {
   private onCategorySelect(index: number, value: string): void {
     console.log('选择功能:', index, value);
     this.currentindex = index;
-
-    // 直接赋值而不是使用展开操作符
-    this.currtableDataModel_data.category = value;
-    this.currtableDataModel_data.execute = ''; // 重置执行目标
+    this.category = index; // 关键修改：保存索引值
+    this.execute = ''; // 重置执行目标
   }
 
   /**
    * 修改指令词输入处理
    */
   private onVoiceChange(value: string): void {
-    this.currtableDataModel_data.voice = value;
+    this.voice = value;
   }
 
   /**
    * 修改执行目标输入处理
    */
   private onExecuteChange(value: string): void {
-    this.currtableDataModel_data.execute = value;
+    this.execute = value;
   }
 
   build() {
     Stack() {
-      Column() {
-        // 背景蒙层
-      }
-      .width('100%')
-      .height('100%')
-      .backgroundColor('#000')
-      .opacity(0.2)
+      Column()// 背景蒙层
+        .width('100%')
+        .height('100%')
+        .backgroundColor('#000')
+        .opacity(0.2)
 
       Column() {
         // 标题栏
         Row() {
-          // Text('AI 指令')
           Text(Languages.ai_instruction[this.languages])
             .fontWeight(CommonConstants_pop.login_dafault_text_font_weight)
             .fontSize(CommonConstants_pop.login_dafault_text_font_size)
@@ -412,7 +425,6 @@ export struct CreateNewInstruction_pop {
         Column() {
           // 功能选择
           Row() {
-            // Text('功能：')
             Text(Languages.function_text[this.languages])
               .fontSize(CommonConstants.CreateNewInstruction_pop_DEFAULT_FONT_SIZE)
               .fontColor(CommonConstants.COMMAND_DEFAULT_FONT_COLOR)
@@ -420,7 +432,7 @@ export struct CreateNewInstruction_pop {
             Select(this.array)
               .selected(this.currentindex)
               .width(410)
-              .value(this.currtableDataModel_data.category)
+              .value(this.getSelectOptionValue(this.array[this.currentindex])) // 显示对应的文本值
               .height(32)
               .font({
                 weight: CommonConstants.CreateNewInstruction_pop_DEFAULT_FONT_WEIGHT,
@@ -437,16 +449,14 @@ export struct CreateNewInstruction_pop {
 
           // 指令词输入
           Row() {
-            // Text('指令词：')
             Text(Languages.instruction_word[this.languages])
               .fontSize(CommonConstants.CreateNewInstruction_pop_DEFAULT_FONT_SIZE)
               .fontColor(CommonConstants.COMMAND_DEFAULT_FONT_COLOR)
               .fontWeight(CommonConstants.CreateNewInstruction_pop_DEFAULT_FONT_WEIGHT)
 
-            // TextInput({ placeholder: '输入触发文字', text: this.currtableDataModel_data.voice })
             TextInput({
               placeholder: Languages.enter_trigger_text[this.languages],
-              text: this.currtableDataModel_data.voice
+              text: this.voice
             })
               .placeholderColor('#bbbdbf')
               .borderRadius(0)
@@ -467,14 +477,14 @@ export struct CreateNewInstruction_pop {
 
           // 执行目标输入
           Row() {
-            Text(this.response_[this.currentindex].title)
+            Text(this.response_[this.currentindex]?.title || '')
               .fontSize(CommonConstants.CreateNewInstruction_pop_DEFAULT_FONT_SIZE)
               .fontColor(CommonConstants.COMMAND_DEFAULT_FONT_COLOR)
               .fontWeight(CommonConstants.CreateNewInstruction_pop_DEFAULT_FONT_WEIGHT)
             Row() {
               TextInput({
-                placeholder: this.response_[this.currentindex].response_,
-                text: this.currtableDataModel_data.execute
+                placeholder: this.response_[this.currentindex]?.response_ || '',
+                text: this.execute
               })
                 .fontSize(CommonConstants.CreateNewInstruction_pop_DEFAULT_FONT_SIZE)
                 .placeholderColor('#bbbdbf')
@@ -493,9 +503,9 @@ export struct CreateNewInstruction_pop {
                 .width(24)
                 .height(24)
                 .visibility(
-                  this.response_[this.currentindex].showFilePicker ||
-                  this.response_[this.currentindex].showFolderPicker ||
-                  this.response_[this.currentindex].showAppPicker ?
+                  this.response_[this.currentindex]?.showFilePicker ||
+                    this.response_[this.currentindex]?.showFolderPicker ||
+                    this.response_[this.currentindex]?.showAppPicker ?
                   Visibility.Visible : Visibility.None
                 )
                 .onClick(() => {
@@ -515,7 +525,6 @@ export struct CreateNewInstruction_pop {
 
         // 确认按钮
         Row() {
-          // Text('确认')
           Text(Languages.confirm[this.languages])
             .fontSize(14)
             .fontColor('#00aecc')

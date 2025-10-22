@@ -26,7 +26,7 @@ interface videoModel {
 }
 
 export interface tableDataModel {
-  category: string, //指令类别
+  category: number, //指令类别
   voice: string, //语音指令
   execute: string, //执行目标
 }
@@ -51,35 +51,35 @@ export default struct Command_Ai {
   // 模拟表格数据：替换中文为多语言
   @StorageLink('table_data') table_data: tableDataModel[] = [
     {
-      category: Languages.file[this.languages],
+      category: 0,
       voice: Languages.custom_trigger_text[this.languages],
       execute: Languages.target_path[this.languages],
     }, {
-    category: Languages.folder[this.languages],
+    category: 3,
     voice: Languages.custom_trigger_text[this.languages],
     execute: Languages.target_path[this.languages],
   }, {
-    category: Languages.website[this.languages],
+    category: 1,
     voice: Languages.custom_trigger_text[this.languages],
     execute: Languages.target_url[this.languages],
   }, {
-    category: Languages.fixed_text[this.languages],
+    category: 2,
     voice: Languages.custom_trigger_text[this.languages],
     execute: Languages.set_text[this.languages],
   }, {
-    category: `${Languages.file[this.languages]}2`,
+    category: 0,
     voice: Languages.custom_trigger_text[this.languages],
     execute: Languages.target_path[this.languages],
   }, {
-    category: `${Languages.file[this.languages]}3`,
+    category: 0,
     voice: Languages.custom_trigger_text[this.languages],
     execute: Languages.target_path[this.languages],
   }, {
-    category: `${Languages.file[this.languages]}4`,
+    category: 0,
     voice: Languages.custom_trigger_text[this.languages],
     execute: Languages.target_path[this.languages],
   }, {
-    category: `${Languages.file[this.languages]}5`,
+    category: 0,
     voice: Languages.custom_trigger_text[this.languages],
     execute: Languages.target_path[this.languages],
   },
@@ -188,7 +188,7 @@ export default struct Command_Ai {
         ForEach(this.table_data, (item: tableDataModel, index: number) => {
           ListItem() {
             Flex({ alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center }) {
-              Text(item.category)
+              Text(this.yingshe(item.category))
                 .style1()
                 .fontWeight(400)
                 //设置行数
@@ -251,7 +251,7 @@ export default struct Command_Ai {
             })
             .border({ width: { bottom: 1 }, color: '#e6e8eb' })
           }
-        }, (item: tableDataModel) => item.category)
+        }, (item: tableDataModel) => item.category.toString())
       }
       .edgeEffect(EdgeEffect.Spring)
       .width('100%')
@@ -270,5 +270,19 @@ export default struct Command_Ai {
     .width('100%')
     .backgroundColor(Color.Transparent)
     .height('100%')
+  }
+
+  yingshe(category: number): string {
+    switch (category) {
+      case 0:
+        return Languages.file_option[this.languages]
+      case 1:
+        return Languages.website_option[this.languages]
+      case 2:
+        return Languages.generate_text_option[this.languages]
+      case 3:
+        return Languages.folder_option[this.languages]
+    }
+    return ''
   }
 }
