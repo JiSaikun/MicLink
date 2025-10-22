@@ -250,7 +250,7 @@ export class _KeyMethodConfig {
    */
   static delete() {
     ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20, 0,
-      0x4C])
+      0x2A])
   }
 
   /**
