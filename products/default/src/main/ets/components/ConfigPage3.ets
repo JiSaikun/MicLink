@@ -38,8 +38,8 @@ export struct ConfigPage3 {
 
   change_DPI() {
     setTimeout(() => {
-      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number||0].Communication.getDeviceInfo([0x68, this.DPI_currIndex + 1]).then(() => {
-        (ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number||0].mouseconfig as DeviceInfo).dpiLevel = this.DPI_currIndex
+      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.getDeviceInfo([0x68, this.DPI_currIndex + 1]).then(() => {
+        (ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo).dpiLevel = this.DPI_currIndex
       })
     }, 50)
     let currDPI_Info: DPI_currInfoModel = {
@@ -53,12 +53,12 @@ export struct ConfigPage3 {
   change_LEDstate() {
     setTimeout(() => {
       if (this.currLED) {
-        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number||0].Communication.getDeviceInfo([0x83])
+        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.getDeviceInfo([0x83])
       } else {
-        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number||0].Communication.getDeviceInfo([0x84])
+        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.getDeviceInfo([0x84])
       }
+      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].currLED=this.currLED
     }, 50)
-    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number||0].currLED=this.currLED
 
   }
 

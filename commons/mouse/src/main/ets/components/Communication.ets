@@ -707,6 +707,12 @@ export class Communication {
           // console.log('固件版本:', Communication.deviceInfo.firmwareVersion);
           // AppStorage.setOrCreate("mouseconfig", this.deviceInfo);
           ConnectDevice.Communication[this.device_currIndex].mouseconfig = this.deviceInfo
+          if (!(AppStorage.get('devicesList') as DeviceArrayType[])[this.device_currIndex].getModelInfo) {
+            AppStorage.setOrCreate('devicesList', null)
+            const newList: DeviceArrayType[] = JSON.parse(JSON.stringify(ConnectDevice.Communication));
+            AppStorage.setOrCreate('devicesList', newList)
+          }
+
         }
         if (command === 0x69) {
           // byte[4]:连接状态
@@ -744,6 +750,11 @@ export class Communication {
             this.deviceInfo.atmosphereLight = false;
           }
           ConnectDevice.Communication[this.device_currIndex].mouseconfig = this.deviceInfo
+          if (!(AppStorage.get('devicesList') as DeviceArrayType[])[this.device_currIndex].getModelInfo) {
+            AppStorage.setOrCreate('devicesList', null)
+            const newList: DeviceArrayType[] = JSON.parse(JSON.stringify(ConnectDevice.Communication));
+            AppStorage.setOrCreate('devicesList', newList)
+          }
           // console.log('设备信息解析成功:');
           // console.log('SN:', this.deviceInfo.sn);
           // console.log('麦克风状态:', this.deviceInfo.micStatus);
@@ -887,7 +898,10 @@ export class Communication {
         this.getDeviceInfo()
       }
     } else {
+      console.warn('w' + JSON.stringify(ConnectDevice.Communication[this.device_currIndex].getModelInfo))
       if (!ConnectDevice.Communication[this.device_currIndex].getModelInfo) {
+        console.error('w' + JSON.stringify(ConnectDevice.Communication[this.device_currIndex].getModelInfo))
+
         const params: getModelInfo_Params = {
           languageCode: '',
           productCode: this.deviceInfo.productType.toString(),
@@ -898,6 +912,10 @@ export class Communication {
           if (res.status === 200) {
             let getModelInfo: getModelInfoModel = res.data as getModelInfoModel
             ConnectDevice.Communication[this.device_currIndex].getModelInfo = getModelInfo
+            const newList: DeviceArrayType[] = JSON.parse(JSON.stringify(ConnectDevice.Communication));
+            AppStorage.setOrCreate('devicesList', newList)
+
+
             // AppStorage.setOrCreate('getModelInfo', getModelInfo)
           }
         }).catch(() => {

@@ -24,6 +24,14 @@ export struct DeviceSettings {
   // @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null //鼠标信息
   @StorageLink('getModelInfo') getModelInfo: getModelInfoModel =
     AppStorage.get('getModelInfo') as getModelInfoModel
+  @Watch('a') @StorageLink('devicesList') devicesList: DeviceArrayType[] = []
+
+  a() {
+    console.error('设备长度', this.devicesList.length)
+    if (this.devicesList.length) {
+      console.error('设备长度::', this.devicesList[0].getModelInfo)
+    }
+  }
 
   build() {
     Stack() {
@@ -46,7 +54,7 @@ export struct DeviceSettings {
         // .borderWidth(1)
 
         Flex({ wrap: FlexWrap.Wrap, space: { main: LengthMetrics.px(30), cross: LengthMetrics.px(30) } }) {
-          ForEach(ConnectDevice.Communication, (item: DeviceArrayType, index) => {
+          ForEach(this.devicesList, (item: DeviceArrayType, index) => {
             if (item.getModelInfo) {
               Column() {
                 Row() {
@@ -149,27 +157,26 @@ export struct DeviceSettings {
                   this.isShowConfig = true
                 }
               })
-
-              if (ConnectDevice.Communication.length % 3 !== 0) {
-                Column()
-                // .padding(24)
-                // .borderRadius(16)
-                  .flexGrow(1)
-                  .flexShrink(1)
-                  .width(230)
-                // .border({ width: 2, color: '#e6e8eb' })
-              }
-              if (ConnectDevice.Communication.length % 3 === 1) {
-                Column()
-                // .padding(24)
-                // .borderRadius(16)
-                  .flexGrow(1)
-                  .flexShrink(1)
-                  .width(230)
-              }
             }
 
           }, (item: DeviceInfo_Model) => item.icon)
+          if (ConnectDevice.Communication.length % 3 !== 0) {
+            Column()
+            // .padding(24)
+            // .borderRadius(16)
+              .flexGrow(1)
+              .flexShrink(1)
+              .width(230)
+            // .border({ width: 2, color: '#e6e8eb' })
+          }
+          if (ConnectDevice.Communication.length % 3 === 1) {
+            Column()
+            // .padding(24)
+            // .borderRadius(16)
+              .flexGrow(1)
+              .flexShrink(1)
+              .width(230)
+          }
         }
         .width('100%')
         .layoutWeight(1)
