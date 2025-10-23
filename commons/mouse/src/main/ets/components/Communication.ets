@@ -234,6 +234,13 @@ export class Communication {
   public audioDataState: boolean = false //是否录入开启
   private flax_yuyin: boolean = true //标记：防止鼠标上来直接开启了语音输入————先发送一次0x63命令
 
+  // 添加心跳相关属性
+  private heartbeatTimer: number = 0; // 心跳定时器
+  private lastReceivedTime: number = 0; // 最后接收消息时间
+  private readonly HEARTBEAT_INTERVAL: number = 5000; // 5秒检查一次
+  private readonly HEARTBEAT_TIMEOUT: number = 15000; // 15秒超时时间
+  private isHeartbeatRunning: boolean = false; // 心跳是否在运行
+
   // 构建命令帧的通用方法
   private buildCommandFrame(cmd: number[], length: number): Uint8Array {
     const frame = new Uint8Array(length);
@@ -306,25 +313,122 @@ export class Communication {
         }
       }
     }
+    this.getDeviceInfo()
   }
 
   constructor(device_currIndex: number, targetDevice: Readonly<usbManager.USBDevice> | null) {
     this.device_currIndex = device_currIndex;
     this.targetDevice = targetDevice;
+    this.lastReceivedTime = Date.now();
   }
 
+  // 启动心跳检测
+  private startHeartbeatCheck() {
+    if (this.isHeartbeatRunning) {
+      return;
+    }
+
+    this.isHeartbeatRunning = true;
+    this.lastReceivedTime = Date.now();
+
+    this.heartbeatTimer = setInterval(() => {
+      this.checkHeartbeat();
+    }, this.HEARTBEAT_INTERVAL) as number;
+
+    console.log('心跳检测已启动');
+  }
+
+  // 停止心跳检测
+  private stopHeartbeatCheck() {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = 0;
+    }
+    this.isHeartbeatRunning = false;
+    console.log('心跳检测已停止');
+  }
+
+  // 检查心跳 - 修改为直接重连
+  private async checkHeartbeat() {
+    const currentTime = Date.now();
+    const timeSinceLastReceive = currentTime - this.lastReceivedTime;
+
+    console.log(`心跳检查: 上次接收时间 ${timeSinceLastReceive}ms 前`);
+
+    if (timeSinceLastReceive > this.HEARTBEAT_TIMEOUT) {
+      console.log('心跳超时（超过15秒未收到消息），开始重新连接设备');
+      this.stopHeartbeatCheck();
+
+      // 直接重新连接设备，不发送测试命令
+      await this.reconnectDevice();
+    } else {
+      // 发送心跳包保持连接
+      await this.sendHeartbeat();
+    }
+  }
+
+  // 发送心跳包
+  private async sendHeartbeat() {
+    if (!this.devicePipe || !this.outputInterface || !this.outputEndpoint) {
+      return;
+    }
+
+    try {
+      // 发送一个简单的状态查询命令作为心跳包
+      const heartbeatCommand = [0x69]; // 状态查询命令
+
+      const claimResult = usbManager.claimInterface(this.devicePipe, this.outputInterface, true);
+      if (claimResult === 0) {
+        const cmdData = this.buildCommandFrame(heartbeatCommand, 33);
+        const result = await usbManager.bulkTransfer(
+          this.devicePipe,
+          this.outputEndpoint,
+          cmdData,
+          1000
+        );
+
+        if (result !== -1) {
+          console.log('心跳包发送成功');
+        } else {
+          console.log('心跳包发送失败');
+        }
+      }
+    } catch (error) {
+      console.error('发送心跳包失败:', error);
+    }
+  }
+
+  // 重新连接设备
+  private async reconnectDevice() {
+    console.log('开始重新连接设备...');
+
+    // 停止当前所有活动
+    this.stopHeartbeatCheck();
+
+    // 关闭现有连接
+    if (this.devicePipe) {
+      usbManager.closePipe(this.devicePipe);
+      this.devicePipe = null;
+    }
+
+    // 重新连接
+    await this.connectDevice();
+
+    console.log('设备重新连接完成');
+  }
 
   // 使用批量传输获取设备信息
   public async getDeviceInfo(command: number[] = [0x61]) {
     if (!this.devicePipe) {
       console.log('设备未连接------------------------');
-      // Communication.connectDevice().then(() => {
-      //   setTimeout(() => {
-      //     Communication.getDeviceInfo() //获取鼠标初始信息
-      //   }, 2000)
-      // })
       return;
     }
+
+    // 在成功建立连接后启动心跳检测
+    if (command[0] === 0x61) { // 初始连接命令
+      this.startHeartbeatCheck();
+    }
+
     this.isPhysicalKeyboardExist = false
     if (this.sendState && command[0] !== 0x61) {
       console.log('有消息正在发送------------------------');
@@ -343,44 +447,23 @@ export class Communication {
       this.sendDataList.push(command);
       command = this.sendDataList[0]
     }
-    // if (Communication.readState && command[0] !== 0x61) {
-    //   // console.log('有消息正在接收中------------------------');
-    //   setTimeout(() => {
-    //     Communication.getDeviceInfo(command)
-    //   }, 50)
-    //   return
-    // }
-    // // 释放接口
-    // if (Communication.devicePipe && Communication.inputInterface) {
-    //   // let a = usbManager.releaseInterface(Communication.devicePipe, Communication.inputInterface);
-    //   // console.log('hjdashdjiashuuahs', a)
-    // }
+
     console.log('开始获取设备信息');
     try {
-      // const devices = usbManager.getDevices();
-      // const targetDevice = devices.find(device => device.vendorId === 0x248A);
-
-
       if (this.outputEndpoint && this.outputInterface && this.inputEndpoint &&
       this.inputInterface) {
         console.log('找到合适的端点，开始通信', JSON.stringify(this.outputEndpoint), '+',
           JSON.stringify(this.outputInterface),);
-        // 1. 首先发送0x61命令
+        // 1. 首先发送命令
         let a = await this.sendCommand(this.outputInterface, this.outputEndpoint, command);
         console.log('================================', a)
-        // 发送命令完成后释放输出接口
-        // usbManager.releaseInterface(Communication.devicePipe, Communication.outputInterface);
+
         /**
          * 命令发送失败判断
          */
         if (a === -1) {
           console.log('****************************************************************发送命令失败：断开设备连接', a)
-          usbManager.closePipe(this.devicePipe)
-          this.devicePipe = null
-          console.log('****************************************************************发送命令失败：重新连接设备')
-          await this.connectDevice()
-          // console.log('****************************************************************发送命令失败：重新发送0x61，获取设备信息')
-          // await Communication.getDeviceInfo()
+          await this.reconnectDevice();
           console.log(`****************************************************************设备连接完成：重新发送断掉的命令:0x`,
             command[0].toString(16))
           this.getDeviceInfo(command)
@@ -403,32 +486,6 @@ export class Communication {
         // 开始持续读取数据
         this.startContinuousReading();
 
-        // let c = 0
-        // // if (command[0]===0x61){
-        // while (Communication.isPhysicalKeyboardExist) {
-        //   c++
-        //   console.log('循环读取鼠标数据-----', c, '---------------------', JSON.stringify(Communication.inputInterface),
-        //     JSON.stringify(Communication.inputEndpoint))
-        //   usbManager.releaseInterface(Communication.devicePipe, Communication.inputInterface)
-        //   let a = await Communication.readResponse(Communication.inputInterface as usbManager.USBInterface,
-        //     Communication.inputEndpoint as usbManager.USBEndpoint);
-        //   // Communication.readState = false
-        //   if (a === -1) {
-        //     let a = await Communication.readResponse(Communication.inputInterface as usbManager.USBInterface,
-        //       Communication.inputEndpoint as usbManager.USBEndpoint);
-        //     if (a === -1) {
-        //       usbManager.closePipe(Communication.devicePipe)
-        //       Communication.devicePipe = null
-        //       await Communication.connectDevice()
-        //       await Communication.getDeviceInfo()
-        //       await Communication.readResponse(Communication.inputInterface as usbManager.USBInterface,
-        //         Communication.inputEndpoint as usbManager.USBEndpoint);
-        //       break
-        //     }
-        //   }
-        // }
-        // // }
-
       } else {
         console.log('未找到合适的端点');
       }
@@ -450,23 +507,14 @@ export class Communication {
        * 没有与设备建立连接
        */
     }
-    //通信前先关闭可能未关闭的通信通道
-    // let a = usbManager.releaseInterface(Communication.devicePipe, iface);
-    // console.log('================================================发送信息前，关闭通道状态显示：', a, '验证起作用，保留')
+
     try {
       //建立信息发送通道
       const claimResult = usbManager.claimInterface(this.devicePipe, iface, true);
-      // console.log('发送信息----声明接口结果:', claimResult);
       console.log('================================================发送建立信息发送通道信息前，建立信息发送通道：',
         claimResult,)
 
       if (claimResult === 0) {
-        //   if (a === 0 && claimResult === 0) {
-        //     console.log('================================================移除了旧的信息发送通道,并建立起了新的通信通道：')
-        //   } else if (a !== 0 && claimResult === 0) {
-        //     console.log('================================================没有旧的信息发送通道,只建立起了新的通信通道：')
-        //   }
-
         // 构建命令帧
         const cmdData = this.buildCommandFrame(command, length);
         const cmdData_21 = this.buildCommandFrame(command, 21);
@@ -493,8 +541,7 @@ export class Communication {
         );
         console.log('发送命令成功:33-----usbManager.bulkTransfer()返回发送的数据的长度:', result);
         console.log('发送命令成功:21-----usbManager.bulkTransfer()返回发送的数据的长度:', result_21);
-        // let b = usbManager.releaseInterface(Communication.devicePipe, iface);
-        // console.log('发送命令完毕-----移除通信接口:', b);
+
         this.sendState = false
         if (result !== -1) {
           return result;
@@ -521,9 +568,7 @@ export class Communication {
       return;
     }
     this.readState = true
-    // let a = usbManager.releaseInterface(Communication.devicePipe, iface);
-    // console.log('***************************************************************************确保读取前关闭之前开辟的读取信息端口：',
-    //   a)
+
     try {
       const claimResult = usbManager.claimInterface(this.devicePipe, iface, true);
       console.log('声明接口结果:', claimResult);
@@ -552,12 +597,9 @@ export class Communication {
           console.log('未接收到数据');
         }
 
-        // usbManager.releaseInterface(Communication.devicePipe, iface);
         this.readState = false
         return result;
       } else {
-        // Communication.changPhysicalKeyboardExistState(false)
-        // usbManager.releaseInterface(Communication.devicePipe, iface);
         console.log('***************************************************************************创建通信接口失败：',
           claimResult)
       }
@@ -572,6 +614,10 @@ export class Communication {
     if (!this.devicePipe || !this.inputInterface || !this.inputEndpoint) {
       return;
     }
+
+    // 启动心跳检测
+    this.startHeartbeatCheck();
+
     // 使用异步循环持续读取数据
     (async () => {
       let c = 0
@@ -579,32 +625,23 @@ export class Communication {
         try {
           c++
           console.log('循环读取鼠标数据-----', c, '---------------------')
-          // console.log('循环读取鼠标数据-----', c, '---------------------',
-          //   JSON.stringify(Communication.inputEndpoint))
-          // usbManager.releaseInterface(Communication.devicePipe, Communication.inputInterface)
+
           let a = await this.readResponse(this.inputInterface as usbManager.USBInterface,
             this.inputEndpoint as usbManager.USBEndpoint);
+
           if (a === -1) {
+            console.log('第一次读取失败，尝试第二次读取');
             let a = await this.readResponse(this.inputInterface as usbManager.USBInterface,
               this.inputEndpoint as usbManager.USBEndpoint);
             if (a === -1) {
-              usbManager.closePipe(this.devicePipe)
-              this.devicePipe = null
-              await this.connectDevice()
-              await this.getDeviceInfo()
-              await this.readResponse(this.inputInterface as usbManager.USBInterface,
-                this.inputEndpoint as usbManager.USBEndpoint);
+              console.log('连续两次读取失败，重新连接设备');
+              await this.reconnectDevice();
               return
             }
           }
         } catch (error) {
           console.error('读取数据失败:', error);
-          // 如果读取失败，尝试重新连接
-          if (this.devicePipe) {
-            usbManager.closePipe(this.devicePipe);
-            this.devicePipe = null;
-          }
-          await this.connectDevice();
+          await this.reconnectDevice();
           break;
         }
       }
@@ -614,14 +651,29 @@ export class Communication {
   // 设备拔出变化
   public changPhysicalKeyboardExistState(state: boolean) {
     if (!state) {
-      usbManager.closePipe(this.devicePipe)
-      this.devicePipe = null
+      this.stopHeartbeatCheck();
+      if (this.devicePipe) {
+        usbManager.closePipe(this.devicePipe);
+        this.devicePipe = null;
+      }
     }
-    this.isPhysicalKeyboardExist = state
+    this.isPhysicalKeyboardExist = state;
+  }
+
+  // 添加销毁方法，在不再需要时清理资源
+  public destroy() {
+    this.stopHeartbeatCheck();
+    if (this.devicePipe) {
+      usbManager.closePipe(this.devicePipe);
+      this.devicePipe = null;
+    }
   }
 
   // 解析设备信息
   private parseDeviceInfo(data: Uint8Array) {
+    // 更新最后接收时间
+    this.lastReceivedTime = Date.now();
+
     if (data.length < 21) {
       console.log('数据长度不足，期望至少21字节，实际:', data.length);
       return;
@@ -871,20 +923,6 @@ export class Communication {
               }
             }
           }
-          // console.log('设备信息解析成功:');
-          // console.log('SN:', this.deviceInfo.sn);
-          // console.log('麦克风状态:', this.deviceInfo.micStatus);
-          // console.log('LED状态:', this.deviceInfo.ledStatus);
-          // console.log('采样率:', this.deviceInfo.sampleRate);
-          // console.log('光电类型:', this.deviceInfo.icType);
-          // console.log('DPI档位:', this.deviceInfo.dpiLevel);
-          // console.log('产品型号:', this.deviceInfo.productType);
-          // console.log('电量:', this.deviceInfo.batteryLevel);
-          // console.log('固件版本:', this.deviceInfo.firmwareVersion);
-          // console.log('鼠标连接状态:', this.deviceInfo.isConnected);
-          // console.log('当前回报率:', this.deviceInfo.reportRate, 'Hz/min');
-          // console.log('当前氛围灯状态:', this.deviceInfo.atmosphereLight);
-          // console.log(JSON.stringify(AppStorage.get('mouseconfig')),'===================================================================')
         }
         if (command === 0x11) {
 
@@ -1069,4 +1107,3 @@ export class Communication {
     }
   }
 }
-
