@@ -17,7 +17,7 @@ PersistentStorage.persistProp("table_data", []) //AI指令本地存储
 // PersistentStorage.persistProp("mouseconfig", null) //鼠标实时数据
 // PersistentStorage.persistProp("getModelInfo", null) //获取用户按键模式详情
 PersistentStorage.persistProp("languages", 'ZH_CN') //用户语言
-PersistentStorage.persistProp("speech_Recognition_languages", 'ZH_CN') //语音识别语言
+// PersistentStorage.persistProp("speech_Recognition_languages", 'ZH_CN') //语音识别语言
 PersistentStorage.persistProp("from_languages", 'ZH_CN') //语音翻译源语言
 PersistentStorage.persistProp("to_languages", 'EN_US') //语音翻译目标语言
 PersistentStorage.persistProp("wordScan_from_languages", 'ZH_CN') //划词翻译源语言
@@ -27,7 +27,7 @@ PersistentStorage.persistProp("screenshotOCR_to_languages", 'EN_US') //截图识
 PersistentStorage.persistProp("isPunctuationRecognition", true) //语音识别是否带标点
 PersistentStorage.persistProp("isEnableLongVoiceRecog", true) //是否开启长语音识别
 PersistentStorage.persistProp("isWordScan_Translation", true) //是否开启划词翻译功能
-PersistentStorage.persistProp("isOCR_Translate_Toggle", true) //是否开启截图识别/翻译
+PersistentStorage.persistProp("isOCR_Translate_Toggle", false) //是否开启截图识别/翻译
 PersistentStorage.persistProp("isAutoCloseVoiceTransPop", false) //是否开启语音翻译弹窗自动关闭
 PersistentStorage.persistProp("fixedText", '') //输入固定文本
 PersistentStorage.persistProp("folderPath", '') //打开文件夹记录文件夹路径  暂不做更改

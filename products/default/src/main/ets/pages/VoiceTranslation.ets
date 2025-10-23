@@ -117,7 +117,7 @@ struct VoiceTranslation {
               .fontWeight(400)
               .fontSize(14)
               .backgroundColor('#f8f8f8')
-              .focusable(false)
+              // .focusable(false)
           }
         }
         .padding({

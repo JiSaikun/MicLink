@@ -99,7 +99,7 @@ export struct DeviceSettings {
                 }
                 .width('100%')
 
-                Image(this.getdeviesImage(item.getModelInfo as getModelInfoModel))
+                Image((item.getModelInfo as getModelInfoModel).images.length?this.getdeviesImage(item.getModelInfo as getModelInfoModel):$r('app.media.HM_001_white'))
                 // Image($r('app.media.HM_001_white'))
                   .width('100%')
                   .margin({ bottom: 15, top: 15 })
@@ -149,7 +149,7 @@ export struct DeviceSettings {
               .onClick(() => {
                 // console.error(this.mouseconfig?.sn,'\n',item.ConnectionStatus,'\n',this.getModelInfo?.images.length)
                 // if (item.ConnectionStatus) {
-                if (item.mouseconfig?.sn && item.getModelInfo && item.getModelInfo?.images.length) {
+                if (item.mouseconfig?.sn && item.getModelInfo) {
                   AppStorage.setOrCreate('device_show_currIndex', index)
                   AppStorage.setOrCreate('getModelInfo',
                     ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo)
@@ -214,11 +214,13 @@ export struct DeviceSettings {
 
   getdeviesImage(getModelInfo: getModelInfoModel): string {
     for (let item of getModelInfo.images) {
+      console.error('设备图片',JSON.stringify((item as imagesModel)[this.languages]))
       if ((item as imagesModel)[this.languages]) {
         // console.log('****************************************1', JSON.stringify(item))
         return ((item as imagesModel)[this.languages][0] as imagesDataModel)['img']
       }
     }
     return ''
+    return ((getModelInfo.images[0] as imagesModel)["ZH_CN"][0] as imagesDataModel)['img']
   }
 }

@@ -4,6 +4,7 @@ import { globalShortcutService } from 'utils';
 @Component
 export struct Content {
   webviewController: webview.WebviewController = new webview.WebviewController();
+  delegate: webview.WebDownloadDelegate = new webview.WebDownloadDelegate();
   @Link web: string
   build() {
     Flex() {
