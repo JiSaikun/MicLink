@@ -12,7 +12,7 @@ import { globalShortcutService } from 'utils';
 @Entry
 @Component
 struct VoiceTranslation {
-  @State getModelInfo: getModelInfoModel = AppStorage.get('getModelInfo') as getModelInfoModel
+  @State getModelInfo: getModelInfoModel = ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].getModelInfo as getModelInfoModel
   @StorageLink('voiceTranslationText') voiceTranslationText: translate_Response = {
     transText: '',
     text: ''
@@ -117,7 +117,7 @@ struct VoiceTranslation {
               .fontWeight(400)
               .fontSize(14)
               .backgroundColor('#f8f8f8')
-              // .focusable(false)
+              .focusable(false)
           }
         }
         .padding({

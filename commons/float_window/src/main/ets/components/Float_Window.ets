@@ -82,7 +82,7 @@ export class Float_Window {
       console.info('Succeeded in creating the floatWindow. Data: ' + JSON.stringify(data));
       windowClass = data;
       Float_Window.window_VoiceTranslation = windowClass
-      // Float_Window.windowClass?.setWindowFocusable(false);
+      Float_Window.windowClass?.setWindowFocusable(false);
       // 2.悬浮窗窗口创建成功后，设置悬浮窗的位置、大小及相关属性等。
       windowClass.moveWindowTo(Float_Window.screen_width - float_window_width - 10,
         Float_Window.screen_height - float_window_height - 250, (err: BusinessError) => {

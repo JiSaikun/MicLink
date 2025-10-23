@@ -86,8 +86,8 @@ export class AudioWebSocketHandler {
   // 优化配置 - 1008字节分片
   private readonly CHUNK_SIZE_BYTES = 1008; // 目标分片大小
   private readonly SAMPLES_PER_CHUNK = 504; // 1008字节 / 2字节每采样点 = 504个采样点
-  private readonly SEND_INTERVAL_MS = 5; // 发送间隔
-  private readonly CHECK_INTERVAL_MS = 10; // 检查间隔
+  private readonly SEND_INTERVAL_MS = 2; // 发送间隔
+  private readonly CHECK_INTERVAL_MS = 5; // 检查间隔
   private readonly COMPLETION_CHECK_MS = 100; // 完成检查间隔
   private readonly MAX_BUFFER_SIZE = 50; // 最大缓冲分片数
 
@@ -215,9 +215,19 @@ export class AudioWebSocketHandler {
         if (!audioToText_res) {
           return;
         }
-        if (this.state || this.wending) {
-          this.handleTextResult(audioToText_res);
+        if (this.state) {
+          if (this.wending) {
+            if (res.data.type === 'LAST' || res.data.type === "FIN") {
+              this.handleTextResult(audioToText_res, res.data.type);
+            }
+           return
+          }
+          this.handleTextResult(audioToText_res, res.data.type);
         }
+        else {
+          this.handleTextResult(audioToText_res, res.data.type);
+        }
+
       } else {
         console.error('响应异常:', res.message);
       }
@@ -226,7 +236,7 @@ export class AudioWebSocketHandler {
     }
   }
 
-  private handleTextResult(text: string): void {
+  private handleTextResult(text: string, type: string): void {
     try {
       const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, text);
       let systemPasteboard: pasteboard.SystemPasteboard = pasteboard.getSystemPasteboard();
@@ -234,7 +244,7 @@ export class AudioWebSocketHandler {
       systemPasteboard.setData(pasteData)
         .then(() => {
           console.error('文本已复制到剪贴板: ' + text);
-          this.processClipboardText(text, systemPasteboard);
+          this.processClipboardText(text, systemPasteboard, type);
         })
         .catch((err: BusinessError) => {
           console.error('复制失败: ' + err.message);
@@ -244,7 +254,7 @@ export class AudioWebSocketHandler {
     }
   }
 
-  private processClipboardText(text: string, systemPasteboard: pasteboard.SystemPasteboard): void {
+  private processClipboardText(text: string, systemPasteboard: pasteboard.SystemPasteboard, type: string): void {
     let atManager = abilityAccessCtrl.createAtManager();
     try {
       atManager.requestPermissionsFromUser(AppStorage.get('context'), ['ohos.permission.READ_PASTEBOARD']);
@@ -271,7 +281,7 @@ export class AudioWebSocketHandler {
 
       if (this.state === 1) {
         // 语音翻译模式
-        this.handleTranslation(clipboardText, systemPasteboard);
+        this.handleTranslation(clipboardText, systemPasteboard, type);
       }
     })
       .catch((err: BusinessError) => {
@@ -279,9 +289,9 @@ export class AudioWebSocketHandler {
       });
   }
 
-  private handleTranslation(text: string, systemPasteboard: pasteboard.SystemPasteboard): void {
+  private handleTranslation(text: string, systemPasteboard: pasteboard.SystemPasteboard, type: string): void {
     let params: translate_Params = {
-      appkey: (AppStorage.get('getModelInfo') as getModelInfoModel).appkey,
+      appkey: (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].getModelInfo as getModelInfoModel).appkey,
       from: AppStorage.get('from_languages') ? AppStorage.get('from_languages') as string : 'ZH_CN',
       productCode: ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
         0].Communication.deviceInfo.productType.toString(),
@@ -291,7 +301,7 @@ export class AudioWebSocketHandler {
     };
 
     _translate(params).then((res) => {
-      console.log('翻译请求成功————翻译结果：' + res.data?.transText);
+      console.log('翻译请求成功————翻译结果：' + res.data?.transText,type);
       if (res.data) {
         let dataArray = AppStorage.get('voiceTranslationText') as translate_Response;
         dataArray = {
@@ -300,6 +310,43 @@ export class AudioWebSocketHandler {
         };
         AppStorage.setOrCreate('voiceTranslationText', dataArray);
         systemPasteboard.clearData();
+        // console.error('翻译文本已复制到剪贴板: ' + dataArray);
+        // console.error('翻译文本已复制到剪贴板: ' + AppStorage.get('isAutoCloseVoiceTransPop')+(type === 'LAST' || type === "FIN"));
+        if (AppStorage.get('isAutoCloseVoiceTransPop') && (type === 'LAST' || type === "FIN")) {
+          // console.error('翻译文本已复制到剪贴板1: ' + dataArray.transText);
+          try {
+            const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, dataArray.transText);
+            systemPasteboard.setData(pasteData)
+              .then(() => {
+                console.error('翻译文本已复制到剪贴板: ' + dataArray.transText);
+                this.wending = false
+                Float_Window.destroyWindow(Float_Window.window_VoiceTranslation)
+                setTimeout(() => {
+                  // 语音输入模式
+                  ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+                    0].Communication.getDeviceInfo([0x20,
+                    0x01, 0x19])
+                    .then(() => {
+                      console.error('执行粘贴操作: ' + dataArray.transText);
+                      Float_Window.showVoiceTranslation = false
+                      if (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState) {
+                        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x63])
+                        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState = !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState
+                      }
+                      setTimeout(() => {
+                        systemPasteboard.clearData();
+                      }, 2000);
+                    });
+                }, 50);
+              })
+              .catch((err: BusinessError) => {
+                console.error('翻译文本复制失败: ' + err.message);
+              });
+          } catch (error) {
+            console.error('复制操作异常: ' + error);
+          }
+        }
+
       } else {
         AppStorage.setOrCreate('flax_yuyinfanyi_chachaobudaoyuyan',
           !AppStorage.get('flax_yuyinfanyi_chachaobudaoyuyan'));
