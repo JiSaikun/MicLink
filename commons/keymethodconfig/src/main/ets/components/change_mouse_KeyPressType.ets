@@ -7,14 +7,17 @@ export interface KeymethodConfig {
   key: KeyPressType
   currIndex: number
 }
-class setInterval_curr{
-  static  setInterval_curr:number=0
+
+class setInterval_curr {
+  static setInterval_curr: number = 0
 }
+
 export function _change_mouse_KeyPressType() {
   let KeymethodConfig = ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].KeymethodConfig
   // console.error('77777777777777777777777777777', JSON.stringify(KeymethodConfig))
   let mouse_KeyPressType: KeyPressType = AppStorage.get('mouse_KeyPressType') as KeyPressType //鼠标按键事件监听
-  let getModelInfo = ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].getModelInfo as getModelInfoModel
+  let getModelInfo =
+    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].getModelInfo as getModelInfoModel
   let _keyInfos_childsModel: keyInfos_childsModel | null = null
   if (mouse_KeyPressType === 11) {
     for (let item of getModelInfo.keyInfos) {
@@ -266,9 +269,11 @@ function lk_down(cmd: string) {
     case "DEL_OPT":
       //删除
       console.warn('删除+')
-      setInterval_curr.setInterval_curr = setInterval(()=>{
-        _KeyMethodConfig.delete()
-      },100)
+      if (setInterval_curr.setInterval_curr === 0) {
+        setInterval_curr.setInterval_curr = setInterval(() => {
+          _KeyMethodConfig.delete()
+        }, 100)
+      }
       break
     case "Action_GPT":
       _KeyMethodConfig.openChatGPT()
@@ -299,6 +304,7 @@ function lk_up(cmd: string) {
       //删除
       console.warn('删除+') //**避免按下可抬起都执行一次
       clearInterval(setInterval_curr.setInterval_curr)
+      setInterval_curr.setInterval_curr = 0
       // _KeyMethodConfig.delete()
       break
   }
