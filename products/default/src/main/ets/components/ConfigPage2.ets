@@ -12,6 +12,7 @@ import {
 import { picker } from '@kit.CoreFileKit'
 import { common } from '@kit.AbilityKit'
 import { BusinessError } from '@kit.BasicServicesKit'
+import { OpenFileWithSystemApp } from 'api'
 
 export interface KeymethodConfig {
   key: KeyPressType
@@ -221,6 +222,10 @@ export struct ConfigPage2 {
                 //打开网页
                 if (this.getModelInfo.keyInfos[index1].childs[index2].childs[index].cmd === 'Action_OW') {
                   AppStorage.setOrCreate('isShow_webUrlToOpen_pop', true)
+                }
+                //打开文件
+                if (this.getModelInfo.keyInfos[index1].childs[index2].childs[index].cmd === 'Action_OF') {
+                  OpenFileWithSystemApp.openFileWithSystemApp()
                 }
                 // 文件夹————让用户选择一个目录文件夹中的文件，记录该文件目录
                 if (this.getModelInfo.keyInfos[index1].childs[index2].childs[index].cmd === 'Action_OFJ') {

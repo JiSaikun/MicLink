@@ -161,7 +161,7 @@ function sk(cmd: string) {
     case 'Action_OF':
       //文件
       console.warn('文件+')
-      OpenFileWithSystemApp.openFileWithSystemApp()
+      _KeyMethodConfig.openFileWithSystemApp()
       break
     case 'Action_OW':
       //打开网页

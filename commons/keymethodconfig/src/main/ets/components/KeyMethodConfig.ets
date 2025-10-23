@@ -19,6 +19,7 @@ import { pasteboard } from '@kit.BasicServicesKit'; //划词翻译————�
 import { _translate, translate_Params, translate_Response } from 'mouse'
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl'; //读取剪切板————主动获取权限
 import { Float_Window } from 'float_window'; //按键执行方法回调
+import { OpenFileWithSystemApp } from 'api';
 
 export class _KeyMethodConfig {
   /**
@@ -546,6 +547,27 @@ export class _KeyMethodConfig {
     }).catch((err: BusinessError) => {
       console.error(`获取窗口失败: ${err.message}`);
     });
+  }
+  /**
+   * 打开文件
+   */
+   static async openFileWithSystemApp() {
+    try {
+      const mimeType: string = OpenFileWithSystemApp.getMimeType(OpenFileWithSystemApp.getFileNameFromUri(AppStorage.get('foldPath') as string));
+      const want: Want = {
+        action: 'ohos.want.action.view',
+        uri: AppStorage.get('foldPath'),
+        type: mimeType
+      };
+      await OpenFileWithSystemApp.context.startAbility(want);
+      hilog.info(0x0000, 'FileOpener', 'System app launch request sent.');
+    } catch (error) { // 修复错误1：明确指定error类型
+      const err: BusinessError = error as BusinessError;
+      hilog.error(0x0000, 'FileOpener', 'Failed to open file: code=%{public}d, message=%{public}s', err.code,
+        err.message);
+    } finally {
+      OpenFileWithSystemApp.isProcessing = false;
+    }
   }
 
   /**

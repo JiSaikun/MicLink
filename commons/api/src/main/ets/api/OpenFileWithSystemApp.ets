@@ -3,10 +3,12 @@
  */
 // 1. 导入必要的模块
 import { common } from '@kit.AbilityKit';
+import { Languages } from 'config';
 import { Want } from '@kit.AbilityKit';
 import { picker } from '@kit.CoreFileKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
+import { promptAction } from '@kit.ArkUI';
 
 
 export class OpenFileWithSystemApp {
@@ -35,63 +37,86 @@ export class OpenFileWithSystemApp {
 
   // 核心方法：选择文件并用系统应用打开
   static async openFileWithSystemApp(): Promise<void> {
-    // 防止重复点击
-    if (OpenFileWithSystemApp.isProcessing) {
-      return;
+
+      try {
+      const documentSelectOptions = new picker.DocumentSelectOptions();
+      documentSelectOptions.maxSelectNumber = 1;
+
+      const context: common.UIAbilityContext = getContext(AppStorage.get('context')) as common.UIAbilityContext;
+      const documentViewPicker = new picker.DocumentViewPicker(context);
+
+      documentViewPicker.select(documentSelectOptions).then((result) => {
+      if (result && result.length > 0) {
+      AppStorage.setOrCreate('foldPath', result[0]);
+      console.log('文件信息', AppStorage.get('foldPath'));
+        promptAction.showToast({ message: Languages.file_selection_success[AppStorage.get('languages') as string], duration: 2000 });
     }
-
-    OpenFileWithSystemApp.isProcessing = true;
-    try {
-      // 步骤1: 创建文件选择器实例并选择文件（取消注释这部分）
-      const documentPicker: picker.DocumentViewPicker = new picker.DocumentViewPicker(OpenFileWithSystemApp.context);
-      const fileList: Array<string> = await documentPicker.select();
-
-      if (!fileList || fileList.length === 0) {
-        OpenFileWithSystemApp.isProcessing = false;
-        return;
-      }
-
-
-      const selectedFileUri: string = fileList[0];
-      // const selectedFileUri: string = 'file://docs/storage/Users/currentUser/Desktop/aa.txt';
-      hilog.info(0x0000, 'FileOpener', 'File selected: %{public}s', selectedFileUri);
-
-      // 步骤2: 准备文件信息
-      // this.selectedFileName = this.getFileNameFromUri(selectedFileUri);
-      const mimeType: string =
-        OpenFileWithSystemApp.getMimeType(OpenFileWithSystemApp.getFileNameFromUri(selectedFileUri));
-
-      // 步骤3: 构建Want意图，告诉系统"我要查看这个文件"
-      const want: Want = {
-        action: 'ohos.want.action.view', // 标准的查看动作
-        uri: selectedFileUri, // 使用选择的文件URI，而不是硬编码的路径
-        type: mimeType // 提供MIME类型有助于系统选择更合适的应用
-      };
-
-      // 步骤4: 启动系统能力
-      await OpenFileWithSystemApp.context.startAbility(want);
-      hilog.info(0x0000, 'FileOpener', 'System app launch request sent.');
-
-    } catch (error) {
-      // 步骤5: 详细的错误处理
-      const err: BusinessError = error as BusinessError;
-      hilog.error(0x0000, 'FileOpener', 'Failed to open file: code=%{public}d, message=%{public}s', err.code,
-        err.message);
-
-      // 根据错误码提供用户友好的提示
-      switch (err.code) {
-        case 13900002: // 文件不存在或无权限
-          console.error('文件可能已被移动或删除，或应用无权限访问。')
-          break;
-        case 202: // 能力未找到
-          console.error('未找到可以打开此文件类型的应用。')
-          break;
-        default:
-          console.error(`打开文件失败: ${err.message}`)
-      }
+    }).catch((err: BusinessError) => {
+      console.error('文件选择失败: ' + err.message);
+      promptAction.showToast({ message: Languages.file_selection_failed[AppStorage.get('languages') as string], duration: 2000 });
+    });
+    } catch (err) {
+      console.error('Failed to select file. Cause: ' + (err as BusinessError).message);
+      promptAction.showToast({ message: Languages.file_selection_failed[AppStorage.get('languages') as string], duration: 2000 });
     } finally {
-      OpenFileWithSystemApp.isProcessing = false;
     }
+    // // 防止重复点击
+    // if (OpenFileWithSystemApp.isProcessing) {
+    //   return;
+    // }
+    //
+    // OpenFileWithSystemApp.isProcessing = true;
+    // try {
+    //   // 步骤1: 创建文件选择器实例并选择文件（取消注释这部分）
+    //   const documentPicker: picker.DocumentViewPicker = new picker.DocumentViewPicker(OpenFileWithSystemApp.context);
+    //   const fileList: Array<string> = await documentPicker.select();
+    //
+    //   if (!fileList || fileList.length === 0) {
+    //     OpenFileWithSystemApp.isProcessing = false;
+    //     return;
+    //   }
+    //
+    //
+    //   const selectedFileUri: string = fileList[0];
+    //   // const selectedFileUri: string = 'file://docs/storage/Users/currentUser/Desktop/aa.txt';
+    //   hilog.info(0x0000, 'FileOpener', 'File selected: %{public}s', selectedFileUri);
+    //
+    //   // 步骤2: 准备文件信息
+    //   // this.selectedFileName = this.getFileNameFromUri(selectedFileUri);
+    //   const mimeType: string =
+    //     OpenFileWithSystemApp.getMimeType(OpenFileWithSystemApp.getFileNameFromUri(selectedFileUri));
+    //
+    //   // 步骤3: 构建Want意图，告诉系统"我要查看这个文件"
+    //   const want: Want = {
+    //     action: 'ohos.want.action.view', // 标准的查看动作
+    //     uri: selectedFileUri, // 使用选择的文件URI，而不是硬编码的路径
+    //     type: mimeType // 提供MIME类型有助于系统选择更合适的应用
+    //   };
+    //
+    //   // 步骤4: 启动系统能力
+    //   await OpenFileWithSystemApp.context.startAbility(want);
+    //   hilog.info(0x0000, 'FileOpener', 'System app launch request sent.');
+    //
+    // } catch (error) {
+    //   // 步骤5: 详细的错误处理
+    //   const err: BusinessError = error as BusinessError;
+    //   hilog.error(0x0000, 'FileOpener', 'Failed to open file: code=%{public}d, message=%{public}s', err.code,
+    //     err.message);
+    //
+    //   // 根据错误码提供用户友好的提示
+    //   switch (err.code) {
+    //     case 13900002: // 文件不存在或无权限
+    //       console.error('文件可能已被移动或删除，或应用无权限访问。')
+    //       break;
+    //     case 202: // 能力未找到
+    //       console.error('未找到可以打开此文件类型的应用。')
+    //       break;
+    //     default:
+    //       console.error(`打开文件失败: ${err.message}`)
+    //   }
+    // } finally {
+    //   OpenFileWithSystemApp.isProcessing = false;
+    // }
   }
 }
 
