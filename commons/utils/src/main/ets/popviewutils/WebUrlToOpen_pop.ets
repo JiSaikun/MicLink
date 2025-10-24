@@ -29,7 +29,7 @@ export struct WebUrlToOpen_pop {
         .backgroundColor('#00afcc')
 
         // TextInput({ placeholder: '请输入打开网页的网址', text: $$this.webUrlToOpen })
-        TextInput({ placeholder: Languages.confirm_btn[this.languages], text: $$this.webUrlToOpen })
+        TextInput({ placeholder: Languages.enter_web_url_placeholder[this.languages], text: $$this.webUrlToOpen })
           .backgroundColor('#fff')
           .placeholderColor('#bbbdbf')
           .margin({

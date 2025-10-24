@@ -168,14 +168,19 @@ export struct CreateNewInstruction_pop {
     this.isLoading = true;
     try {
       promptAction.showToast({ message: Languages.please_select_any_file_in_target_folder[this.languages], duration: 3000 });
+      //
+      // const documentSelectOptions = new picker.DocumentSelectOptions();
+      // documentSelectOptions.maxSelectNumber = 1;
+      //
+      // const context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext;
+      // const documentViewPicker = new picker.DocumentViewPicker(context);
+      //
+      // documentViewPicker.select(documentSelectOptions)
+      let documentPicker = new picker.DocumentViewPicker();
 
-      const documentSelectOptions = new picker.DocumentSelectOptions();
-      documentSelectOptions.maxSelectNumber = 1;
-
-      const context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext;
-      const documentViewPicker = new picker.DocumentViewPicker(context);
-
-      documentViewPicker.select(documentSelectOptions)
+      documentPicker.select({
+        selectMode: picker.DocumentSelectMode.FOLDER
+      })
         .then((result: string[]) => {
           if (!result || result.length === 0) {
             promptAction.showToast({ message: Languages.no_file_selected[this.languages], duration: 2000 });
@@ -186,12 +191,9 @@ export struct CreateNewInstruction_pop {
           const lastSlashIndex = filePath.lastIndexOf('/');
 
           if (lastSlashIndex !== -1) {
-            const folderPath = filePath.substring(0, lastSlashIndex);
-            this.execute = folderPath;
-
-            console.log('提取的文件夹路径:', folderPath);
-            const folderName = folderPath.substring(folderPath.lastIndexOf('/') + 1);
-            promptAction.showToast({ message: `${Languages.folder_selected[this.languages]} ${folderName}`, duration: 2500 });
+            this.execute = result[0];
+            console.log('提取的文件夹路径:', result[0]);
+            promptAction.showToast({ message: `${Languages.folder_selected[this.languages]} ${result[0]}`, duration: 2500 });
           } else {
             promptAction.showToast({ message: Languages.cannot_parse_folder_path[this.languages], duration: 2000 });
           }

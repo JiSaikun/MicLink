@@ -260,15 +260,20 @@ export struct ConfigPage2 {
   selectFolder(): void {
     this.isLoading = true;
     try {
-      promptAction.showToast({ message: '请选择目标文件夹中的任意一个文件', duration: 3000 });
+      // promptAction.showToast({ message: '请选择目标文件夹中的任意一个文件', duration: 3000 });
+      //
+      // const documentSelectOptions = new picker.DocumentSelectOptions();
+      // documentSelectOptions.maxSelectNumber = 1;
+      //
+      // const context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext;
+      // const documentViewPicker = new picker.DocumentViewPicker(context);
+      //
+      // documentViewPicker.select(documentSelectOptions)
+      let documentPicker = new picker.DocumentViewPicker();
 
-      const documentSelectOptions = new picker.DocumentSelectOptions();
-      documentSelectOptions.maxSelectNumber = 1;
-
-      const context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext;
-      const documentViewPicker = new picker.DocumentViewPicker(context);
-
-      documentViewPicker.select(documentSelectOptions)
+      documentPicker.select({
+        selectMode: picker.DocumentSelectMode.FOLDER
+      })
         .then((result: string[]) => {
           if (!result || result.length === 0) {
             promptAction.showToast({ message: '未选择任何文件', duration: 2000 });
@@ -281,11 +286,11 @@ export struct ConfigPage2 {
           if (lastSlashIndex !== -1) {
             const folderPath = filePath.substring(0, lastSlashIndex);
             // 直接赋值而不是使用展开操作符
-            AppStorage.setOrCreate('folderPath', folderPath)
+            AppStorage.setOrCreate('folderPath', result[0])
 
-            console.log('提取的文件夹路径:', folderPath);
+            console.log('提取的文件夹路径:', result[0]);
             const folderName = folderPath.substring(folderPath.lastIndexOf('/') + 1);
-            promptAction.showToast({ message: `已选择文件夹: ${folderName}`, duration: 2500 });
+            promptAction.showToast({ message: `已选择文件夹: ${result[0]}`, duration: 2500 });
           } else {
             promptAction.showToast({ message: '无法解析文件夹路径', duration: 2000 });
           }
