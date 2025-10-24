@@ -459,18 +459,20 @@ export class _KeyMethodConfig {
       ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].DPI_currInfo as DPI_currInfoModel
     console.log(JSON.stringify(DPI_currInfo))
     if (DPI_currInfo.curr === DPI_currInfo.length - 1) {
-      DPI_currInfo.curr = 0
+      DPI_currInfo.curr = 1
     } else {
-      DPI_currInfo.curr += 1
+      DPI_currInfo.curr += 2
     }
-    AppStorage.setOrCreate('DPI_currInfo',DPI_currInfo)
-    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].DPI_currInfo = DPI_currInfo
+
     // AppStorage.setOrCreate('DPI_currInfo', DPI_currInfo)
     ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].Communication.getDeviceInfo([0x68,
       DPI_currInfo.curr]).then(() => {
       (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].mouseconfig as DeviceInfo).dpiLevel =
-        DPI_currInfo.curr + 1
+        DPI_currInfo.curr === 1 ? DPI_currInfo.curr : DPI_currInfo.curr
     })
+    DPI_currInfo.curr -= 1
+    AppStorage.setOrCreate('DPI_currInfo', DPI_currInfo)
+    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].DPI_currInfo = DPI_currInfo
   }
 
   /**
@@ -548,12 +550,14 @@ export class _KeyMethodConfig {
       console.error(`获取窗口失败: ${err.message}`);
     });
   }
+
   /**
    * 打开文件
    */
-   static async openFileWithSystemApp() {
+  static async openFileWithSystemApp() {
     try {
-      const mimeType: string = OpenFileWithSystemApp.getMimeType(OpenFileWithSystemApp.getFileNameFromUri(AppStorage.get('foldPath') as string));
+      const mimeType: string =
+        OpenFileWithSystemApp.getMimeType(OpenFileWithSystemApp.getFileNameFromUri(AppStorage.get('foldPath') as string));
       const want: Want = {
         action: 'ohos.want.action.view',
         uri: AppStorage.get('foldPath'),
