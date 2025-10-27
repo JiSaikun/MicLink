@@ -29,6 +29,122 @@ export enum KeyPressType {
   AI_DOUBLE_CLICK = 52, //AI键-双击
   AI_LONG_PRESS_DOWN = 53, //AI键-长按按下
   AI_LONG_PRESS_UP = 54, //AI键-长按抬起
+//*************************************键盘按键******************************
+  // 新增按键类型
+  SCREENSHOT_TRANSLATE_CLICK = 61, //截图翻译键-单击
+  SCREENSHOT_TRANSLATE_DOUBLE_CLICK = 62, //截图翻译键-双击
+  SCREENSHOT_TRANSLATE_LONG_PRESS_DOWN = 63, //截图翻译键-长按按下
+  SCREENSHOT_TRANSLATE_LONG_PRESS_UP = 64, //截图翻译键-长按抬起
+
+  AI_PAINTING_CLICK = 65, //AI绘画键-单击
+  AI_PAINTING_DOUBLE_CLICK = 66, //AI绘画键-双击
+  AI_PAINTING_LONG_PRESS_DOWN = 67, //AI绘画键-长按按下
+  AI_PAINTING_LONG_PRESS_UP = 68, //AI绘画键-长按抬起
+
+  DOCUMENT_CONVERSION_CLICK = 69, //图片分析键改文档转换-单击
+  DOCUMENT_CONVERSION_DOUBLE_CLICK = 70, //图片分析键改文档转换-双击
+  DOCUMENT_CONVERSION_LONG_PRESS_DOWN = 71, //图片分析键改文档转换-长按按下
+  DOCUMENT_CONVERSION_LONG_PRESS_UP = 72, //图片分析键改文档转换-长按抬起
+
+  MIND_MAP_CLICK = 73, //思维导图键-单击
+  MIND_MAP_DOUBLE_CLICK = 74, //思维导图键-双击
+  MIND_MAP_LONG_PRESS_DOWN = 75, //思维导图键-长按按下
+  MIND_MAP_LONG_PRESS_UP = 76, //思维导图键-长按抬起
+
+  WORK_SUMMARY_CLICK = 77, //工作总结键-单击
+  WORK_SUMMARY_DOUBLE_CLICK = 78, //工作总结键-双击
+  WORK_SUMMARY_LONG_PRESS_DOWN = 79, //工作总结键-长按按下
+  WORK_SUMMARY_LONG_PRESS_UP = 80, //工作总结键-长按抬起
+
+  TEMPLATE_DOWNLOAD_CLICK = 81, //模版下载键-单击
+  TEMPLATE_DOWNLOAD_DOUBLE_CLICK = 82, //模版下载键-双击
+  TEMPLATE_DOWNLOAD_LONG_PRESS_DOWN = 83, //模版下载键-长按按下
+  TEMPLATE_DOWNLOAD_LONG_PRESS_UP = 84, //模版下载键-长按抬起
+
+  READING_COMPREHENSION_CLICK = 85, //阅读理解键-单击
+  READING_COMPREHENSION_DOUBLE_CLICK = 86, //阅读理解键-双击
+  READING_COMPREHENSION_LONG_PRESS_DOWN = 87, //阅读理解键-长按按下
+  READING_COMPREHENSION_LONG_PRESS_UP = 88, //阅读理解键-长按抬起
+
+  TABLE_CLICK = 89, //表格键-单击
+  TABLE_DOUBLE_CLICK = 90, //表格键-双击
+  TABLE_LONG_PRESS_DOWN = 91, //表格键-长按按下
+  TABLE_LONG_PRESS_UP = 92, //表格键-长按抬起
+
+  CODE_CLICK = 93, //代码键-单击
+  CODE_DOUBLE_CLICK = 94, //代码键-双击
+  CODE_LONG_PRESS_DOWN = 95, //代码键-长按按下
+  CODE_LONG_PRESS_UP = 96, //代码键-长按抬起
+
+  SPEECH_CLICK = 97, //演讲稿键-单击
+  SPEECH_DOUBLE_CLICK = 98, //演讲稿键-双击
+  SPEECH_LONG_PRESS_DOWN = 99, //演讲稿键-长按按下
+  SPEECH_LONG_PRESS_UP = 100, //演讲稿键-长按抬起
+
+  WRITING_CLICK = 101, //写作键-单击
+  WRITING_DOUBLE_CLICK = 102, //写作键-双击
+  WRITING_LONG_PRESS_DOWN = 103, //写作键-长按按下
+  WRITING_LONG_PRESS_UP = 104, //写作键-长按抬起
+
+  PPT_CLICK = 105, //PPT键-单击
+  PPT_DOUBLE_CLICK = 106, //PPT键-双击
+  PPT_LONG_PRESS_DOWN = 107, //PPT键-长按按下
+  PPT_LONG_PRESS_UP = 108, //PPT键-长按抬起
+
+  CUSTOM1_CLICK = 109, //自定义键1-单击
+  CUSTOM1_DOUBLE_CLICK = 110, //自定义键1-双击
+  CUSTOM1_LONG_PRESS_DOWN = 111, //自定义键1-长按按下
+  CUSTOM1_LONG_PRESS_UP = 112, //自定义键1-长按抬起
+
+  CUSTOM2_CLICK = 113, //自定义键2-单击
+  CUSTOM2_DOUBLE_CLICK = 114, //自定义键2-双击
+  CUSTOM2_LONG_PRESS_DOWN = 115, //自定义键2-长按按下
+  CUSTOM2_LONG_PRESS_UP = 116, //自定义键2-长按抬起
+
+  CUSTOM3_CLICK = 117, //自定义键3-单击
+  CUSTOM3_DOUBLE_CLICK = 118, //自定义键3-双击
+  CUSTOM3_LONG_PRESS_DOWN = 119, //自定义键3-长按按下
+  CUSTOM3_LONG_PRESS_UP = 120, //自定义键3-长按抬起
+
+  FRIENDS_MANUAL_CLICK = 121, //朋友圈手册-单击
+  FRIENDS_MANUAL_DOUBLE_CLICK = 122, //朋友圈手册-双击
+  FRIENDS_MANUAL_LONG_PRESS_DOWN = 123, //朋友圈手册-长按按下
+  FRIENDS_MANUAL_LONG_PRESS_UP = 124, //朋友圈手册-长按抬起
+
+  LONG_TEXT_TRANSLATION_CLICK = 125, //长文翻译-单击
+  LONG_TEXT_TRANSLATION_DOUBLE_CLICK = 126, //长文翻译-双击
+  LONG_TEXT_TRANSLATION_LONG_PRESS_DOWN = 127, //长文翻译-长按按下
+  LONG_TEXT_TRANSLATION_LONG_PRESS_UP = 128, //长文翻译-长按抬起
+
+  ONE_CLICK_CUTOUT_CLICK = 129, //一键抠图-单击
+  ONE_CLICK_CUTOUT_DOUBLE_CLICK = 130, //一键抠图-双击
+  ONE_CLICK_CUTOUT_LONG_PRESS_DOWN = 131, //一键抠图-长按按下
+  ONE_CLICK_CUTOUT_LONG_PRESS_UP = 132, //一键抠图-长按抬起
+
+  WEIBO_COPY_ASSISTANT_CLICK = 133, //微博文案小助手-单击
+  WEIBO_COPY_ASSISTANT_DOUBLE_CLICK = 134, //微博文案小助手-双击
+  WEIBO_COPY_ASSISTANT_LONG_PRESS_DOWN = 135, //微博文案小助手-长按按下
+  WEIBO_COPY_ASSISTANT_LONG_PRESS_UP = 136, //微博文案小助手-长按抬起
+
+  CUSTOM4_CLICK = 137, //自定义键4-单击
+  CUSTOM4_DOUBLE_CLICK = 138, //自定义键4-双击
+  CUSTOM4_LONG_PRESS_DOWN = 139, //自定义键4-长按按下
+  CUSTOM4_LONG_PRESS_UP = 140, //自定义键4-长按抬起
+
+  PHOTO_CLICK = 141, //拍照键-单击
+  PHOTO_DOUBLE_CLICK = 142, //拍照键-双击
+  PHOTO_LONG_PRESS_DOWN = 143, //拍照键-长按按下
+  PHOTO_LONG_PRESS_UP = 144, //拍照键-长按抬起
+
+  DOCUMENT_PROOFREADING_CLICK = 145, //文稿校对-单击
+  DOCUMENT_PROOFREADING_DOUBLE_CLICK = 146, //文稿校对-双击
+  DOCUMENT_PROOFREADING_LONG_PRESS_DOWN = 147, //文稿校对-长按按下
+  DOCUMENT_PROOFREADING_LONG_PRESS_UP = 148, //文稿校对-长按抬起
+}
+
+export enum PRODUCT_TYPE {
+  DEFAULT = 0,
+  keyboard = 1, //键盘
 }
 
 // USB设备类型枚举————鼠标光电类型
@@ -86,7 +202,8 @@ export interface DeviceArrayType {
   reportRate_currIndex: number
   isPunctuationRecognition: boolean //语音识别是否带标点
   speech_Recognition_languages: string //语音识别语种
-  productImg: string
+  productImg: string,
+  PRODUCT_TYPE: PRODUCT_TYPE //设备类型
 }
 
 export interface KeymethodConfig {
@@ -159,6 +276,7 @@ export class ConnectDevice {
                     isPunctuationRecognition: true,
                     speech_Recognition_languages: 'ZH_CN',
                     productImg: '',
+                    PRODUCT_TYPE: PRODUCT_TYPE.DEFAULT
                   }
                   ConnectDevice.Communication.push(device)
                   Communication_.connectDevice()
@@ -183,6 +301,7 @@ export class ConnectDevice {
             isPunctuationRecognition: true,
             speech_Recognition_languages: 'ZH_CN',
             productImg: '',
+            PRODUCT_TYPE: PRODUCT_TYPE.DEFAULT
           }
           ConnectDevice.Communication.push(device)
           Communication_.connectDevice()
@@ -297,24 +416,18 @@ export class Communication {
     for (const iface of (this.targetDevice as Readonly<usbManager.USBDevice>).configs[0].interfaces) {
       if (iface.endpoints) {
         for (const endpoint of iface.endpoints) {
-          console.error('测试:'+JSON.stringify(iface.endpoints))
-          console.error('测试:'+JSON.stringify(endpoint))
-          console.error(`端点 ${endpoint.address.toString(16)}: 类型=${endpoint.type}, 方向=${endpoint.direction}`);
+          // console.error('测试:' + JSON.stringify(iface.endpoints))
+          // console.error('测试:' + JSON.stringify(endpoint))
+          // console.error(`端点 ${endpoint.address.toString(16)}: 类型=${endpoint.type}, 方向=${endpoint.direction}`);
           if (endpoint.direction === 0) { // 输出端点
             this.outputEndpoint = endpoint
             this.outputInterface = iface
           } else if (endpoint.direction === 128) { // 输入端点
-            if (iface.endpoints.length>1) {
+            if (iface.endpoints.length > 1) {
               this.inputEndpoint = endpoint
-              // this.inputEndpoint = {"address":129,"attributes":3,"interval":1,"maxPacketSize":8,"direction":128,"number":1,"type":3,"interfaceId":1}
-              // this.inputEndpoint = {"address":132,"attributes":3,"interval":1,"maxPacketSize":64,"direction":128,"number":4,"type":3,"interfaceId":2}
-              // this.inputEndpoint = {"address":135,"attributes":13,"interval":1,"maxPacketSize":32,"direction":128,"number":7,"type":1,"interfaceId":4}
-              console.error('输入端点:'+JSON.stringify(this.inputInterface))
-              this.inputInterface =iface
-              // this.inputInterface = {"id":1,"protocol":1,"clazz":3,"subClass":1,"alternateSetting":0,"name":" ","endpoints":[{"address":129,"attributes":3,"interval":1,"maxPacketSize":8,"direction":128,"number":1,"type":3,"interfaceId":1}]}
-              // this.inputInterface = {"id":2,"protocol":0,"clazz":3,"subClass":0,"alternateSetting":0,"name":" ","endpoints":[{"address":132,"attributes":3,"interval":1,"maxPacketSize":64,"direction":128,"number":4,"type":3,"interfaceId":2},{"address":5,"attributes":3,"interval":1,"maxPacketSize":64,"direction":0,"number":5,"type":3,"interfaceId":2}]}
-              // this.inputInterface = {"id":4,"protocol":0,"clazz":1,"subClass":2,"alternateSetting":1,"name":" ","endpoints":[{"address":135,"attributes":13,"interval":1,"maxPacketSize":32,"direction":128,"number":7,"type":1,"interfaceId":4}]}
-              console.error('输入端点:'+JSON.stringify(this.inputInterface))
+              // console.error('输入端点:' + JSON.stringify(this.inputInterface))
+              this.inputInterface = iface
+              // console.error('输入端点:' + JSON.stringify(this.inputInterface))
             }
           }
         }
@@ -883,7 +996,9 @@ export class Communication {
                 { key: KeyPressType.TRANSLATE_CLICK, currIndex: 0 },
                 { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
                 { key: KeyPressType.AI_CLICK, currIndex: 0 },
-                { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
+                { key: KeyPressType.AI_LONG_PRESS_DOWN, currIndex: 0 },
+                { key: KeyPressType.CUSTOM_CLICK, currIndex: 0 },
+                { key: KeyPressType.CUSTOM_LONG_PRESS_DOWN, currIndex: 0 }
               ]
               for (let item
                 of (AppStorage.get('devicesList') as DeviceArrayType[])[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[]) {
@@ -921,6 +1036,14 @@ export class Communication {
                           }
                           if (childs.operation === 'lk') { //长按
                             ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[7].currIndex = index
+                          }
+                          break
+                        case 'M_key': //M键
+                          if (childs.operation === 'sk') {
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[8].currIndex = index
+                          }
+                          if (childs.operation === 'lk') { //长按
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[9].currIndex = index
                           }
                           break
                       }
@@ -1041,6 +1164,493 @@ export class Communication {
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_LONG_PRESS_UP)
         }
 
+        /**
+         * 键盘
+         */
+        // 截图翻译键
+        if (data[3] === 0x80) {
+          console.log('****************************截图翻译键单击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SCREENSHOT_TRANSLATE_CLICK)
+        }
+        if (data[3] === 0x81) {
+          console.log('****************************截图翻译键双击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SCREENSHOT_TRANSLATE_DOUBLE_CLICK)
+        }
+        if (data[3] === 0x82) {
+          console.log('****************************截图翻译键长按按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SCREENSHOT_TRANSLATE_LONG_PRESS_DOWN)
+        }
+        if (data[3] === 0x83) {
+          console.log('****************************截图翻译键长按抬起****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SCREENSHOT_TRANSLATE_LONG_PRESS_UP)
+        }
+
+        // AI绘画键
+        if (data[3] === 0x84) {
+          console.log('****************************AI绘画键单击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_PAINTING_CLICK)
+        }
+        if (data[3] === 0x85) {
+          console.log('****************************AI绘画键双击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_PAINTING_DOUBLE_CLICK)
+        }
+        if (data[3] === 0x86) {
+          console.log('****************************AI绘画键长按按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_PAINTING_LONG_PRESS_DOWN)
+        }
+        if (data[3] === 0x87) {
+          console.log('****************************AI绘画键长按抬起****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_PAINTING_LONG_PRESS_UP)
+        }
+
+        // 图片分析键改文档转换
+        if (data[3] === 0x88) {
+          console.log('****************************文档转换键单击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_CONVERSION_CLICK)
+        }
+        if (data[3] === 0x89) {
+          console.log('****************************文档转换键双击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_CONVERSION_DOUBLE_CLICK)
+        }
+        if (data[3] === 0x8A) {
+          console.log('****************************文档转换键长按按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_CONVERSION_LONG_PRESS_DOWN)
+        }
+        if (data[3] === 0x8B) {
+          console.log('****************************文档转换键长按抬起****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_CONVERSION_LONG_PRESS_UP)
+        }
+
+        // 思维导图键
+        if (data[3] === 0x8C) {
+          console.log('****************************思维导图键单击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.MIND_MAP_CLICK)
+        }
+        if (data[3] === 0x8D) {
+          console.log('****************************思维导图键双击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.MIND_MAP_DOUBLE_CLICK)
+        }
+        if (data[3] === 0x8E) {
+          console.log('****************************思维导图键长按按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.MIND_MAP_LONG_PRESS_DOWN)
+        }
+        if (data[3] === 0x8F) {
+          console.log('****************************思维导图键长按抬起****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.MIND_MAP_LONG_PRESS_UP)
+        }
+
+        // 工作总结键
+        if (data[3] === 0x90) {
+          console.log('****************************工作总结键单击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WORK_SUMMARY_CLICK)
+        }
+        if (data[3] === 0x91) {
+          console.log('****************************工作总结键双击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WORK_SUMMARY_DOUBLE_CLICK)
+        }
+        if (data[3] === 0x92) {
+          console.log('****************************工作总结键长按按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WORK_SUMMARY_LONG_PRESS_DOWN)
+        }
+        if (data[3] === 0x93) {
+          console.log('****************************工作总结键长按抬起****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WORK_SUMMARY_LONG_PRESS_UP)
+        }
+
+        // 模版下载键
+        if (data[3] === 0x94) {
+          console.log('****************************模版下载键单击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TEMPLATE_DOWNLOAD_CLICK)
+        }
+        if (data[3] === 0x95) {
+          console.log('****************************模版下载键双击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TEMPLATE_DOWNLOAD_DOUBLE_CLICK)
+        }
+        if (data[3] === 0x96) {
+          console.log('****************************模版下载键长按按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TEMPLATE_DOWNLOAD_LONG_PRESS_DOWN)
+        }
+        if (data[3] === 0x97) {
+          console.log('****************************模版下载键长按抬起****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TEMPLATE_DOWNLOAD_LONG_PRESS_UP)
+        }
+
+        // 阅读理解键
+        if (data[3] === 0x98) {
+          console.log('****************************阅读理解键单击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.READING_COMPREHENSION_CLICK)
+        }
+        if (data[3] === 0x99) {
+          console.log('****************************阅读理解键双击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.READING_COMPREHENSION_DOUBLE_CLICK)
+        }
+        if (data[3] === 0x9A) {
+          console.log('****************************阅读理解键长按按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.READING_COMPREHENSION_LONG_PRESS_DOWN)
+        }
+        if (data[3] === 0x9B) {
+          console.log('****************************阅读理解键长按抬起****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.READING_COMPREHENSION_LONG_PRESS_UP)
+        }
+
+        // 表格键
+        if (data[3] === 0x9C) {
+          console.log('****************************表格键单击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TABLE_CLICK)
+        }
+        if (data[3] === 0x9D) {
+          console.log('****************************表格键双击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TABLE_DOUBLE_CLICK)
+        }
+        if (data[3] === 0x9E) {
+          console.log('****************************表格键长按按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TABLE_LONG_PRESS_DOWN)
+        }
+        if (data[3] === 0x9F) {
+          console.log('****************************表格键长按抬起****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TABLE_LONG_PRESS_UP)
+        }
+
+        // 代码键
+        if (data[3] === 0xA0) {
+          console.log('****************************代码键单击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CODE_CLICK)
+        }
+        if (data[3] === 0xA1) {
+          console.log('****************************代码键双击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CODE_DOUBLE_CLICK)
+        }
+        if (data[3] === 0xA2) {
+          console.log('****************************代码键长按按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CODE_LONG_PRESS_DOWN)
+        }
+        if (data[3] === 0xA3) {
+          console.log('****************************代码键长按抬起****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CODE_LONG_PRESS_UP)
+        }
+
+        // 演讲稿键
+        if (data[3] === 0xA4) {
+          console.log('****************************演讲稿键单击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SPEECH_CLICK)
+        }
+        if (data[3] === 0xA5) {
+          console.log('****************************演讲稿键双击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SPEECH_DOUBLE_CLICK)
+        }
+        if (data[3] === 0xA6) {
+          console.log('****************************演讲稿键长按按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SPEECH_LONG_PRESS_DOWN)
+        }
+        if (data[3] === 0xA7) {
+          console.log('****************************演讲稿键长按抬起****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SPEECH_LONG_PRESS_UP)
+        }
+
+        // 写作键
+        if (data[3] === 0xA8) {
+          console.log('****************************写作键单击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WRITING_CLICK)
+        }
+        if (data[3] === 0xA9) {
+          console.log('****************************写作键双击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WRITING_DOUBLE_CLICK)
+        }
+        if (data[3] === 0xAA) {
+          console.log('****************************写作键长按按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WRITING_LONG_PRESS_DOWN)
+        }
+        if (data[3] === 0xAB) {
+          console.log('****************************写作键长按抬起****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WRITING_LONG_PRESS_UP)
+        }
+
+        // PPT键
+        if (data[3] === 0xAC) {
+          console.log('****************************PPT键单击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PPT_CLICK)
+        }
+        if (data[3] === 0xAD) {
+          console.log('****************************PPT键双击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PPT_DOUBLE_CLICK)
+        }
+        if (data[3] === 0xAE) {
+          console.log('****************************PPT键长按按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PPT_LONG_PRESS_DOWN)
+        }
+        if (data[3] === 0xAF) {
+          console.log('****************************PPT键长按抬起****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PPT_LONG_PRESS_UP)
+        }
+
+        // 自定义键1
+        if (data[3] === 0xB0) {
+          console.log('****************************自定义键1单击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM1_CLICK)
+        }
+        if (data[3] === 0xB1) {
+          console.log('****************************自定义键1双击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM1_DOUBLE_CLICK)
+        }
+        if (data[3] === 0xB2) {
+          console.log('****************************自定义键1长按按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM1_LONG_PRESS_DOWN)
+        }
+        if (data[3] === 0xB3) {
+          console.log('****************************自定义键1长按抬起****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM1_LONG_PRESS_UP)
+        }
+
+        // 自定义键2
+        if (data[3] === 0xB4) {
+          console.log('****************************自定义键2单击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM2_CLICK)
+        }
+        if (data[3] === 0xB5) {
+          console.log('****************************自定义键2双击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM2_DOUBLE_CLICK)
+        }
+        if (data[3] === 0xB6) {
+          console.log('****************************自定义键2长按按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM2_LONG_PRESS_DOWN)
+        }
+        if (data[3] === 0xB7) {
+          console.log('****************************自定义键2长按抬起****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM2_LONG_PRESS_UP)
+        }
+
+        // 自定义键3
+        if (data[3] === 0xB8) {
+          console.log('****************************自定义键3单击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM3_CLICK)
+        }
+        if (data[3] === 0xB9) {
+          console.log('****************************自定义键3双击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM3_DOUBLE_CLICK)
+        }
+        if (data[3] === 0xBA) {
+          console.log('****************************自定义键3长按按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM3_LONG_PRESS_DOWN)
+        }
+        if (data[3] === 0xBB) {
+          console.log('****************************自定义键3长按抬起****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM3_LONG_PRESS_UP)
+        }
+
+        // 朋友圈手册
+        if (data[3] === 0xC0) {
+          console.log('****************************朋友圈手册单击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.FRIENDS_MANUAL_CLICK)
+        }
+        if (data[3] === 0xC1) {
+          console.log('****************************朋友圈手册双击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.FRIENDS_MANUAL_DOUBLE_CLICK)
+        }
+        if (data[3] === 0xC2) {
+          console.log('****************************朋友圈手册长按按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.FRIENDS_MANUAL_LONG_PRESS_DOWN)
+        }
+        if (data[3] === 0xC3) {
+          console.log('****************************朋友圈手册长按抬起****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.FRIENDS_MANUAL_LONG_PRESS_UP)
+        }
+
+        // 长文翻译
+        if (data[3] === 0xC4) {
+          console.log('****************************长文翻译单击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.LONG_TEXT_TRANSLATION_CLICK)
+        }
+        if (data[3] === 0xC5) {
+          console.log('****************************长文翻译双击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.LONG_TEXT_TRANSLATION_DOUBLE_CLICK)
+        }
+        if (data[3] === 0xC6) {
+          console.log('****************************长文翻译长按按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.LONG_TEXT_TRANSLATION_LONG_PRESS_DOWN)
+        }
+        if (data[3] === 0xC7) {
+          console.log('****************************长文翻译长按抬起****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.LONG_TEXT_TRANSLATION_LONG_PRESS_UP)
+        }
+
+        // 一键抠图
+        if (data[3] === 0xC8) {
+          console.log('****************************一键抠图单击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.ONE_CLICK_CUTOUT_CLICK)
+        }
+        if (data[3] === 0xC9) {
+          console.log('****************************一键抠图双击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.ONE_CLICK_CUTOUT_DOUBLE_CLICK)
+        }
+        if (data[3] === 0xCA) {
+          console.log('****************************一键抠图长按按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.ONE_CLICK_CUTOUT_LONG_PRESS_DOWN)
+        }
+        if (data[3] === 0xCB) {
+          console.log('****************************一键抠图长按抬起****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.ONE_CLICK_CUTOUT_LONG_PRESS_UP)
+        }
+
+        // 微博文案小助手
+        if (data[3] === 0xCC) {
+          console.log('****************************微博文案小助手单击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WEIBO_COPY_ASSISTANT_CLICK)
+        }
+        if (data[3] === 0xCD) {
+          console.log('****************************微博文案小助手双击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WEIBO_COPY_ASSISTANT_DOUBLE_CLICK)
+        }
+        if (data[3] === 0xCE) {
+          console.log('****************************微博文案小助手长按按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WEIBO_COPY_ASSISTANT_LONG_PRESS_DOWN)
+        }
+        if (data[3] === 0xCF) {
+          console.log('****************************微博文案小助手长按抬起****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WEIBO_COPY_ASSISTANT_LONG_PRESS_UP)
+        }
+
+        // 自定义键4
+        if (data[3] === 0xE0) {
+          console.log('****************************自定义键4单击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM4_CLICK)
+        }
+        if (data[3] === 0xE1) {
+          console.log('****************************自定义键4双击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM4_DOUBLE_CLICK)
+        }
+        if (data[3] === 0xE2) {
+          console.log('****************************自定义键4长按按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM4_LONG_PRESS_DOWN)
+        }
+        if (data[3] === 0xE3) {
+          console.log('****************************自定义键4长按抬起****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM4_LONG_PRESS_UP)
+        }
+
+        // 拍照键
+        if (data[3] === 0xE5) {
+          console.log('****************************拍照键单击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PHOTO_CLICK)
+        }
+        if (data[3] === 0xE6) {
+          console.log('****************************拍照键双击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PHOTO_DOUBLE_CLICK)
+        }
+        if (data[3] === 0xE7) {
+          console.log('****************************拍照键长按按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PHOTO_LONG_PRESS_DOWN)
+        }
+        if (data[3] === 0xE8) {
+          console.log('****************************拍照键长按抬起****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PHOTO_LONG_PRESS_UP)
+        }
+
+        // 文稿校对
+        if (data[3] === 0xE9) {
+          console.log('****************************文稿校对单击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_PROOFREADING_CLICK)
+        }
+        if (data[3] === 0xEA) {
+          console.log('****************************文稿校对双击按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_PROOFREADING_DOUBLE_CLICK)
+        }
+        if (data[3] === 0xEB) {
+          console.log('****************************文稿校对长按按下****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_PROOFREADING_LONG_PRESS_DOWN)
+        }
+        if (data[3] === 0xEC) {
+          console.log('****************************文稿校对长按抬起****************************')
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_PROOFREADING_LONG_PRESS_UP)
+        }
+
       } else {
         console.log('无效的响应帧格式');
       }
@@ -1074,6 +1684,18 @@ export class Communication {
             ConnectDevice.Communication[this.device_currIndex].getModelInfo = getModelInfo
             const newList: DeviceArrayType[] = JSON.parse(JSON.stringify(ConnectDevice.Communication));
             AppStorage.setOrCreate('devicesList', newList)
+            /**
+             * 判断当前设备是否是键盘
+             */
+            if ((ConnectDevice.Communication[this.device_currIndex].getModelInfo as getModelInfoModel).functions.length !==
+              0) {
+              for (let item
+                of (ConnectDevice.Communication[this.device_currIndex].getModelInfo as getModelInfoModel).functions) {
+                if (item.code === 'keyboard') {
+                  ConnectDevice.Communication[this.device_currIndex].PRODUCT_TYPE = PRODUCT_TYPE.keyboard
+                }
+              }
+            }
           }
         }).catch(() => {
           // console.log('请求失败')

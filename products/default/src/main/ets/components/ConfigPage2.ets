@@ -24,10 +24,13 @@ export interface KeymethodConfig {
  */
 @Component
 export struct ConfigPage2 {
-  @Watch('Watch_null') @StorageLink('getModelInfo') getModelInfo: getModelInfoModel =ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo as getModelInfoModel
-  @State mouseconfig: DeviceInfo  = ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo //鼠标信息
+  @Watch('Watch_null') @StorageLink('getModelInfo') getModelInfo: getModelInfoModel =
+    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo as getModelInfoModel
+  @State mouseconfig: DeviceInfo =
+    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo //鼠标信息
   @StorageLink('languages') languages: string = 'ZH_CN'
-  @State KeymethodConfig: KeymethodConfig[] = ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].KeymethodConfig
+  @State KeymethodConfig: KeymethodConfig[] =
+    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].KeymethodConfig
   @StorageLink("shortcut") shortcut: number = 0 //改变该值弹出对应快捷键悬浮窗口 1：语音识别 2：语音翻译 3:截图识别 4：自定义快捷键
   @Link isShowConfig: boolean
   @State isLoading: boolean = false;
@@ -56,50 +59,61 @@ export struct ConfigPage2 {
       if (childs[i].first === 1) {
         if (!this.KeymethodConfig.length) {
           // console.error('*****************************************************************',JSON.stringify(this.getModelInfo))
-          this.KeymethodConfig=[
+          this.KeymethodConfig = [
             { key: KeyPressType.VOICE_CLICK, currIndex: 0 }, { key: KeyPressType.VOICE_LONG_PRESS_DOWN, currIndex: 0 },
             { key: KeyPressType.SEARCH_CLICK, currIndex: 0 },
             { key: KeyPressType.SEARCH_LONG_PRESS_DOWN, currIndex: 0 },
             { key: KeyPressType.TRANSLATE_CLICK, currIndex: 0 },
             { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
-            { key: KeyPressType.AI_CLICK, currIndex: 0 }, { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
+            { key: KeyPressType.AI_CLICK, currIndex: 0 }, { key: KeyPressType.AI_LONG_PRESS_DOWN, currIndex: 0 },
+            { key: KeyPressType.CUSTOM_CLICK, currIndex: 0 },
+            { key: KeyPressType.CUSTOM_LONG_PRESS_DOWN, currIndex: 0 }
           ]
         }
         switch (this.getModelInfo.keyInfos[index1].key) {
           case 'voice_key':
-            if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='sk') {
+            if (this.getModelInfo.keyInfos[index1].childs[index2].operation === 'sk') {
               this.KeymethodConfig[0].currIndex = i
             }
-            if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='lk') {
+            if (this.getModelInfo.keyInfos[index1].childs[index2].operation === 'lk') {
               this.KeymethodConfig[1].currIndex = i
             }
             break
           case 'search_key':
-            if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='sk') {
+            if (this.getModelInfo.keyInfos[index1].childs[index2].operation === 'sk') {
               this.KeymethodConfig[2].currIndex = i
             }
-            if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='lk') {
+            if (this.getModelInfo.keyInfos[index1].childs[index2].operation === 'lk') {
               this.KeymethodConfig[3].currIndex = i
             }
             break
           case 'translate_key':
-            if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='sk') {
+            if (this.getModelInfo.keyInfos[index1].childs[index2].operation === 'sk') {
               this.KeymethodConfig[4].currIndex = i
             }
-            if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='lk') {
+            if (this.getModelInfo.keyInfos[index1].childs[index2].operation === 'lk') {
               this.KeymethodConfig[5].currIndex = i
             }
             break
           case 'AI_key':
-            if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='sk') {
+            if (this.getModelInfo.keyInfos[index1].childs[index2].operation === 'sk') {
               this.KeymethodConfig[6].currIndex = i
             }
-            if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='lk') {
+            if (this.getModelInfo.keyInfos[index1].childs[index2].operation === 'lk') {
               this.KeymethodConfig[7].currIndex = i
             }
             break
+          case 'M_key':
+            if (this.getModelInfo.keyInfos[index1].childs[index2].operation === 'sk') {
+              this.KeymethodConfig[8].currIndex = i
+            }
+            if (this.getModelInfo.keyInfos[index1].childs[index2].operation === 'lk') {
+              this.KeymethodConfig[9].currIndex = i
+            }
+            break
         }
-        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].KeymethodConfig=this.KeymethodConfig
+        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].KeymethodConfig =
+          this.KeymethodConfig
         // console.log('*/*/*/*/*', JSON.stringify(AppStorage.get('KeymethodConfig')))
         // AppStorage.setOrCreate('KeymethodConfig', this.KeymethodConfig)
 
@@ -174,42 +188,51 @@ export struct ConfigPage2 {
                 // console.error('11', this.getModelInfo.keyInfos[index1].names['ZH_CN'], index2, index)
                 switch (this.getModelInfo.keyInfos[index1].key) {
                   case 'voice_key':
-                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='sk') {
+                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation === 'sk') {
                       this.KeymethodConfig[0].currIndex = index
                     }
-                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='lk') {
+                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation === 'lk') {
                       this.KeymethodConfig[1].currIndex = index
                     }
                     break
                   case 'search_key':
-                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='sk') {
+                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation === 'sk') {
                       this.KeymethodConfig[2].currIndex = index
                     }
-                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='lk') {
+                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation === 'lk') {
                       this.KeymethodConfig[3].currIndex = index
                     }
                     break
                   case 'translate_key':
-                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='sk') {
+                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation === 'sk') {
                       this.KeymethodConfig[4].currIndex = index
                     }
-                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='lk') {
+                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation === 'lk') {
                       this.KeymethodConfig[5].currIndex = index
                     }
                     break
                   case 'AI_key':
-                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='sk') {
+                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation === 'sk') {
                       this.KeymethodConfig[6].currIndex = index
                     }
-                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation==='lk') {
+                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation === 'lk') {
                       this.KeymethodConfig[7].currIndex = index
+                    }
+                    break
+                  case 'M_key':
+                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation === 'sk') {
+                      this.KeymethodConfig[8].currIndex = index
+                    }
+                    if (this.getModelInfo.keyInfos[index1].childs[index2].operation === 'lk') {
+                      this.KeymethodConfig[9].currIndex = index
                     }
                     break
                 }
                 // console.log('*/*/*/*/*', JSON.stringify(AppStorage.get('KeymethodConfig')))
                 // AppStorage.setOrCreate('KeymethodConfig', this.KeymethodConfig)
                 // console.log('*/*/*/*/*', JSON.stringify(AppStorage.get('KeymethodConfig')))
-                ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].KeymethodConfig=this.KeymethodConfig
+                ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].KeymethodConfig =
+                  this.KeymethodConfig
                 console.error('11', this.getModelInfo.keyInfos[index1].childs[index2].childs[index].cmd)
                 //快捷键
                 if (this.getModelInfo.keyInfos[index1].childs[index2].childs[index].cmd === 'Action_SK') {

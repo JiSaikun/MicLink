@@ -5,7 +5,9 @@ import {
   AudioWebSocketHandler,
   inputMessageModel,
   ConnectDevice,
-  DPI_currInfoModel
+  DPI_currInfoModel,
+  KeyPressType,
+  DeviceArrayType
 } from 'mouse' //语音输入
 import { WebSocket_serverUrl, getModelInfoModel } from 'config'; //语音输入
 import window from '@ohos.window'; //一键回到桌面————应用最小化
@@ -291,10 +293,80 @@ export class _KeyMethodConfig {
    */
   static openChatGPT() {
     let currpageIsAI: boolean = AppStorage.get('currpageIsAI') as boolean
+    switch ( AppStorage.get('mouse_KeyPressType') as KeyPressType){
+      case KeyPressType.WORK_SUMMARY_CLICK://工作总结键-单击
+        AppStorage.setOrCreate('chatIeUrl','og8n92sxc6jd_v1')
+        break
+      case KeyPressType.WORK_SUMMARY_LONG_PRESS_DOWN://工作总结键-长按按下
+        AppStorage.setOrCreate('chatIeUrl','og8n92sxc6jd_v1')
+        break
+      case KeyPressType.TEMPLATE_DOWNLOAD_CLICK://模版下载键-单击
+        AppStorage.setOrCreate('chatIeUrl','template')
+        break
+      case KeyPressType.TEMPLATE_DOWNLOAD_LONG_PRESS_DOWN://模版下载键-长按按下
+        AppStorage.setOrCreate('chatIeUrl','template')
+        break
+      case KeyPressType.MIND_MAP_CLICK://思维导图键-单击
+        AppStorage.setOrCreate('chatIeUrl','xml')
+        break
+      case KeyPressType.MIND_MAP_LONG_PRESS_DOWN://思维导图键-长按按下
+        AppStorage.setOrCreate('chatIeUrl','xml')
+        break
+      case KeyPressType.READING_COMPREHENSION_CLICK://阅读理解键-单击
+        AppStorage.setOrCreate('chatIeUrl','aiReading')
+        break
+      case KeyPressType.READING_COMPREHENSION_LONG_PRESS_DOWN://阅读理解键-长按按下
+        AppStorage.setOrCreate('chatIeUrl','aiReading')
+        break
+      case KeyPressType.DOCUMENT_CONVERSION_CLICK://文档转换键-单击
+        AppStorage.setOrCreate('chatIeUrl','fileChange')
+        break
+      case KeyPressType.DOCUMENT_CONVERSION_LONG_PRESS_DOWN://文档转换键-长按按下
+        AppStorage.setOrCreate('chatIeUrl','fileChange')
+        break
+      case KeyPressType.WRITING_CLICK://写作键-单击
+        AppStorage.setOrCreate('chatIeUrl','61l7lnzu9kot_v1')
+        break
+      case KeyPressType.WRITING_LONG_PRESS_DOWN://写作键-长按按下
+        AppStorage.setOrCreate('chatIeUrl','61l7lnzu9kot_v1')
+        break
+      case KeyPressType.TABLE_CLICK://表格键-单击
+        AppStorage.setOrCreate('chatIeUrl','table')
+        break
+      case KeyPressType.TABLE_LONG_PRESS_DOWN://表格键-长按按下
+        AppStorage.setOrCreate('chatIeUrl','table')
+        break
+      case KeyPressType.SPEECH_CLICK://演讲稿键-单击
+        AppStorage.setOrCreate('chatIeUrl','1ajruc2aglo3_v1')
+        break
+      case KeyPressType.SPEECH_LONG_PRESS_DOWN://演讲稿键-长按按下
+        AppStorage.setOrCreate('chatIeUrl','1ajruc2aglo3_v1')
+        break
+      case KeyPressType.AI_PAINTING_CLICK://AI绘画键-单击
+        AppStorage.setOrCreate('chatIeUrl','aiImg')
+        break
+      case KeyPressType.AI_PAINTING_LONG_PRESS_DOWN://AI绘画键-长按按下
+        AppStorage.setOrCreate('chatIeUrl','aiImg')
+        break
+      case KeyPressType.CODE_CLICK://代码键-单击
+        AppStorage.setOrCreate('chatIeUrl','g5wrtd2jx1s1_v1')
+        break
+      case KeyPressType.CODE_LONG_PRESS_DOWN://代码键-长按按下
+        AppStorage.setOrCreate('chatIeUrl','g5wrtd2jx1s1_v1')
+        break
+      case KeyPressType.PPT_CLICK://PPT键-单击
+        AppStorage.setOrCreate('chatIeUrl','ppt')
+        break
+      case KeyPressType.PPT_LONG_PRESS_DOWN://PPT键-长按按下
+        AppStorage.setOrCreate('chatIeUrl','ppt')
+        break
+      default :
+        AppStorage.setOrCreate('chatIeUrl','ai')
+    }
     if (currpageIsAI) {
       let pageInfo: NavPathStack = AppStorage.get('pageInfo') as NavPathStack
       pageInfo.clear()
-      pageInfo.pushPath({ name: 'aipage' })
+      pageInfo.pushPath({ name: 'aipage'})
       AppStorage.set('currpageIsAI', false)
     }
   }

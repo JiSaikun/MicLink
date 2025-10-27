@@ -1,11 +1,12 @@
 import { LeftBar, Topbar, Content, paramModel } from 'common'
 import { webview } from '@kit.ArkWeb';
-import { getModelInfoModel } from 'config'
+import { ConnectDevice, DeviceArrayType } from 'mouse'
 import { globalShortcutService } from 'utils';
 import { promptAction } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
 import { Want } from '@kit.AbilityKit';
 import { fileIo } from '@kit.CoreFileKit';
+import { getModelInfoModel } from 'config';
 
 // PersistentStorage.persistProp("login", false)
 
@@ -16,7 +17,10 @@ function AiPageBuilder() {
 
 @Component
 struct AiPage {
+  @State getModelInfo: getModelInfoModel =
+    (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number] as DeviceArrayType).getModelInfo as getModelInfoModel
   @StorageLink("login") login: boolean = true
+  @Watch('executeJSFunction')@StorageLink("chatIeUrl") chatIeUrl: string = 'ai'
   @Consume('pageInfo') pageInfo: NavPathStack
   @State web: string = ''
   @State currentIndex: number = 10000000
@@ -24,7 +28,6 @@ struct AiPage {
   @State extend: boolean = false //状态栏延申
   @State width_length: number = 88 //左侧选项卡样式宽度
   webviewController: webview.WebviewController = new webview.WebviewController();
-
   // 添加下载相关属性和委托
   delegate: webview.WebDownloadDelegate = new webview.WebDownloadDelegate();
   @State isWebViewReady: boolean = false
@@ -32,18 +35,48 @@ struct AiPage {
   @State isDownloading: boolean = false
   @State currentDownloadPath: string = ''
 
-  @State getModelInfo: getModelInfoModel = AppStorage.get('getModelInfo') as getModelInfoModel
 
   aboutToAppear(): void {
     if (!this.login) {
       this.pageInfo.pushPath({ 'name': 'login' })
     }
+    console.error(this.chatIeUrl)
+    // this.pageInfo.getParamByName('aipage')
     // 注册快捷键回调函数
     this.registerShortcutCallbacks();
   }
 
   aboutToDisappear(): void {
     AppStorage.setOrCreate('currpageIsAI', true)
+  }
+
+
+  // 执行JavaScript函数
+  private executeJSFunction(): void {
+    if (!this.isWebViewReady) {
+      console.error("WebView未就绪，无法执行JS");
+      return;
+    }
+
+    if (!this.chatIeUrl) {
+      console.warn("chatIeUrl为空，无法执行JS函数");
+      return;
+    }
+
+    try {
+      // 构建JS代码字符串
+      const jsCode = `handlHelperInput('${this.chatIeUrl}')`;
+
+      console.error("执行JS代码: " + jsCode);
+
+      this.webviewController.runJavaScript(jsCode).then((result: string) => {
+        console.error("JS执行成功，返回值: " + result);
+      }).catch((error: Error) => {
+        console.error("JS执行失败: " + error.message);
+      });
+    } catch (error) {
+      console.error("执行JS函数时出错: " + JSON.stringify(error));
+    }
   }
 
   // 设置下载委托和监听
@@ -108,20 +141,18 @@ struct AiPage {
     }
 
     // 简单验证URL格式
-    // 检查是否有有效的主机名部分（在 :// 之后至少有一个字符）
     const protocolIndex = url.indexOf('://');
     if (protocolIndex === -1) {
       return false;
     }
 
-    const hostPart = url.substring(protocolIndex + 3); // +3 跳过 "://"
+    const hostPart = url.substring(protocolIndex + 3);
     if (!hostPart || hostPart.length === 0) {
       return false;
     }
 
-    // 检查主机名部分是否包含至少一个点或有效字符
     if (hostPart.indexOf('/') === 0) {
-      return false; // 直接以斜杠开头，缺少主机名
+      return false;
     }
 
     return true;
@@ -134,14 +165,12 @@ struct AiPage {
 
       const context = getContext(this) as common.UIAbilityContext;
 
-      // 创建Want对象，使用系统浏览器打开链接
       const want: Want = {
         action: 'ohos.want.action.viewData',
         entities: ['entity.system.browsable'],
         uri: downloadUrl
       };
 
-      // 使用startAbility打开链接
       context.startAbility(want).then(() => {
         console.info("成功启动系统浏览器处理下载");
         promptAction.showToast({
@@ -150,13 +179,11 @@ struct AiPage {
         });
       }).catch(() => {
         console.error("启动系统浏览器失败: ");
-        // 浏览器下载失败，回退到应用内下载
         this.fallbackToInAppDownload(downloadUrl, fileName);
       });
 
     } catch (error) {
       console.error("打开系统浏览器失败: " + JSON.stringify(error));
-      // 浏览器下载失败，回退到应用内下载
       this.fallbackToInAppDownload(downloadUrl, fileName);
     }
   }
@@ -174,27 +201,21 @@ struct AiPage {
   // 启动应用内下载
   private startInAppDownload(webDownloadItem: webview.WebDownloadItem, fileName: string) {
     try {
-      // 设置下载路径
       const context = getContext(this) as common.UIAbilityContext;
       const downloadDir = context.filesDir + '/downloads/';
 
-      // 确保下载目录存在
       this.ensureDirectoryExists(downloadDir);
 
-      // 创建文件名（如果为空则使用时间戳）
       const finalFileName = fileName || `download_${new Date().getTime()}.bin`;
       const filePath = downloadDir + finalFileName;
 
-      // 记录当前下载路径
       this.currentDownloadPath = filePath;
 
-      // 开始下载
       webDownloadItem.start(filePath);
       this.isDownloading = true;
 
       console.info("开始应用内下载文件到: " + filePath);
 
-      // 设置下载进度和状态监听
       this.setupDownloadListeners();
 
       promptAction.showToast({
@@ -212,31 +233,23 @@ struct AiPage {
 
   // 设置下载监听器
   private setupDownloadListeners() {
-    // 监听下载进度更新
     this.delegate.onDownloadUpdated((webDownloadItem: webview.WebDownloadItem) => {
-      // 更新下载状态
       this.isDownloading = true;
-
-      // 获取下载进度百分比
       const progress = webDownloadItem.getPercentComplete();
       this.downloadProgress = progress;
-
       console.info(`下载进度: ${progress}%`);
 
-      // 获取下载速度（字节/秒）
       const speed = webDownloadItem.getCurrentSpeed();
       if (speed > 0) {
         console.info(`下载速度: ${this.formatSpeed(speed)}`);
       }
     });
 
-    // 监听下载完成事件
     this.delegate.onDownloadFinish(() => {
       console.info("下载完成");
       this.isDownloading = false;
       this.downloadProgress = 0;
 
-      // 显示下载完成提示和文件位置
       this.showDownloadCompleteDialog();
 
       promptAction.showToast({
@@ -245,7 +258,6 @@ struct AiPage {
       });
     });
 
-    // 监听下载失败事件
     this.delegate.onDownloadFailed(() => {
       console.error("下载失败");
       this.isDownloading = false;
@@ -261,7 +273,6 @@ struct AiPage {
   // 确保目录存在
   private ensureDirectoryExists(dirPath: string) {
     try {
-      // 检查目录是否存在，如果不存在则创建
       if (!fileIo.accessSync(dirPath)) {
         fileIo.mkdirSync(dirPath, true);
         console.info("创建下载目录: " + dirPath);
@@ -277,7 +288,6 @@ struct AiPage {
       return;
     }
 
-    // 从完整路径中提取文件名
     const fileName = this.getFileNameFromPath(this.currentDownloadPath);
 
     promptAction.showDialog({
@@ -290,7 +300,6 @@ struct AiPage {
         }
       ]
     }).then(() => {
-      // 清空当前下载路径
       this.currentDownloadPath = '';
     });
   }
@@ -303,7 +312,9 @@ struct AiPage {
 
   // 格式化下载速度显示
   private formatSpeed(bytesPerSecond: number): string {
-    if (bytesPerSecond === 0) return '0 B/s';
+    if (bytesPerSecond === 0) {
+      return '0 B/s';
+    }
 
     const k = 1024;
     const sizes = ['B/s', 'KB/s', 'MB/s', 'GB/s'];
@@ -316,20 +327,14 @@ struct AiPage {
   private registerShortcutCallbacks() {
     globalShortcutService.registerCallback(1, () => {
       console.log('执行语音识别功能')
-      // 这里可以调用您的语音识别方法
-      // this.startVoiceRecognition()
     })
 
     globalShortcutService.registerCallback(2, () => {
       console.log('执行语音翻译功能')
-      // 这里可以调用您的语音翻译方法
-      // this.startVoiceTranslation()
     })
 
     globalShortcutService.registerCallback(3, () => {
       console.log('执行截图识别功能')
-      // 这里可以调用您的截图识别方法
-      // this.startScreenshotRecognition()
     })
   }
 
@@ -349,7 +354,7 @@ struct AiPage {
               Topbar()
                 .zIndex(100)
               Flex() {
-                // 下载进度显示（仅应用内下载时显示）
+                // 下载进度显示
                 if (this.isDownloading) {
                   Column() {
                     Text('正在下载文件...')
@@ -375,27 +380,27 @@ struct AiPage {
                 }
 
                 Web({
-                  src: this.getModelInfo.chatChromeUrl,
+                  src: (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number] as DeviceArrayType).getModelInfo?.chatChromeUrl as string,
                   controller: this.webviewController
                 })
                   .onPageEnd(() => {
-                    // Web页面加载完成后设置下载委托
                     console.info("Web页面加载完成，设置下载委托");
                     this.isWebViewReady = true;
                     this.setupDownloadDelegate();
+
+                    // 页面加载完成后执行JS函数
+                    this.executeJSFunction();
                   })
                   .onPageBegin(() => {
-                    // 页面开始加载时重置状态
                     this.isWebViewReady = false;
                   })
                   .flexGrow(1)
                   .height('100%')
                   .flexShrink(1)
                   .domStorageAccess(true)
-                  .javaScriptAccess(true) // 启用JavaScript
-                  .fileAccess(true) // 启用文件访问
+                  .javaScriptAccess(true)
+                  .fileAccess(true)
                   .onInterceptKeyEvent((event: KeyEvent) => {
-                    // 将按键事件传递给全局监听服务
                     globalShortcutService.handleGlobalKeyEvent(event)
                     return false;
                   })

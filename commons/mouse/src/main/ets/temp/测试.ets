@@ -3,7 +3,7 @@ import { pasteboard } from '@kit.BasicServicesKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 // import { inputMethodEngine } from '@kit.IMEKit';
 import { getModelInfoModel } from 'config'
-import { Communication } from './Communication'
+import { Communication } from '../components/Communication'
 import { _translate } from '../viewmodel/UserViewModel'
 import { translate_Params, translate_Response } from '../model/MouseInfoModel'
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
@@ -194,15 +194,30 @@ export class AudioWebSocketHandler {
       }
       if (res.status === 200 && this.state === 0) {
         if (AppStorage.get('isAI_assistant')) {
-          if (this.wending) {
-            AppStorage.setOrCreate('voiceInputText', res.data.text);
-            return;
-          } else {
-            AppStorage.setOrCreate('linshi', res.data.text);
-          }
+          setTimeout(()=>{
+            if (this.wending) {
+              AppStorage.setOrCreate('voiceInputText', res.data.text);
+              return;
+            } else {
+              AppStorage.setOrCreate('linshi', res.data.text);
+            }
+          },50)
         } else {
           if (res.data.text.length > (AppStorage.get('voiceInputText') as string).length) {
             AppStorage.setOrCreate('voiceInputText', res.data.text);
+            setTimeout(()=>{
+              if (this.state === 0 && this.wending) {
+                this.wending = false
+                // 语音输入模式
+                Communication.getDeviceInfo([0x20, 0x01, 0x19])
+                  .then(() => {
+                    setTimeout(() => {
+                      // systemPasteboard.clearData();
+                    }, 2000);
+                  });
+                return;
+              }
+            },50)
           }
         }
       }

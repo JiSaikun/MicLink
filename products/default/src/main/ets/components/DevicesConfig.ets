@@ -40,6 +40,7 @@ export struct DevicesConfig {
         Image(this.getdeviesImage())
           .width('100%')
           .layoutWeight(1)
+          .objectFit(ImageFit.Contain)
         // .borderWidth(1)
         Text(Languages.keyReset[this.languages])
           .fontSize(12)

@@ -3,7 +3,7 @@ import { pasteboard } from '@kit.BasicServicesKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 // import { inputMethodEngine } from '@kit.IMEKit';
 import { getModelInfoModel } from 'config'
-import { Communication } from './Communication'
+import { Communication } from '../components/Communication'
 import { _translate } from '../viewmodel/UserViewModel'
 import { translate_Params, translate_Response } from '../model/MouseInfoModel'
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';

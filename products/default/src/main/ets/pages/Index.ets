@@ -2,9 +2,9 @@ import { LeftBar, Topbar, Content, Reset, observeSystemLanguageChanges } from 'c
 // import {Hid}from "usb_hid"
 // import { BlueTooth_api } from "bluetooth"
 import { inputDevice, KeyCode } from '@kit.InputKit';
-import { ConnectDevice, Communication, DeviceInfo, KeyPressType, } from 'mouse'
+import { ConnectDevice, Communication, DeviceInfo, KeyPressType, DeviceArrayType, PRODUCT_TYPE, } from 'mouse'
 import common from '@ohos.app.ability.common';
-import { _change_mouse_KeyPressType } from 'keymethodconfig'; //按键执行方法回调
+import { _change_keyboard_KeyPressType, _change_mouse_KeyPressType } from 'keymethodconfig'; //按键执行方法回调
 import { Float_Window } from 'float_window'; //按键执行方法回调
 import { window } from '@kit.ArkUI';
 import { BusinessError } from '@kit.BasicServicesKit';
@@ -55,7 +55,16 @@ struct Index {
 
   change_mouse_KeyPressType() {
     if (this.login) {
-      _change_mouse_KeyPressType()
+      switch ((ConnectDevice.Communication[AppStorage.get('device_currIndex')as number] as DeviceArrayType).PRODUCT_TYPE) {
+        case PRODUCT_TYPE.DEFAULT:
+          _change_mouse_KeyPressType()
+          break
+        case PRODUCT_TYPE.keyboard:
+          _change_keyboard_KeyPressType()
+          break
+      }
+
+
     }
 
   }
