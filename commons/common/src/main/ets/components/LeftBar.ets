@@ -18,7 +18,8 @@ export struct LeftBar {
   @State bottom_data: Ai_Model[] = bottom_data
 
   @Prop currentIndex: number = 0
-  @State bottomCurrIndex: number = 10000
+  @Prop bottomCurrIndex: number = 10000
+
   @State mark: boolean = false
   @State extend: boolean = true
   @State width_length: number = 248
@@ -33,7 +34,6 @@ export struct LeftBar {
   @Link web: string
 
   aboutToAppear(): void {
-    // 确保初始化时状态正确
     console.log('AiModel_data length:', this.AiModel_data.length)
   }
 
@@ -109,7 +109,7 @@ export struct LeftBar {
       .margin({ bottom: 20 })
       .flexGS()
 
-      // 修复：确保所有 AiModel_data 项都能正确显示
+      // 顶部选项
       ForEach(this.AiModel_data, (item: Ai_Model, index) => {
         Flex({ alignItems: ItemAlign.Center }) {
           Image(this.currentIndex === index ? $r(`app.media.${item.select}`) : $r(`app.media.${item.img}`))
@@ -129,7 +129,12 @@ export struct LeftBar {
         .borderRadius(8)
         .width('100%')
         .onClick(() => {
-          this.onTopItemClick(index, item)
+          console.log('Top item clicked:', index, item.title[this.languages])
+          this.web = item.web
+          this.tabsControllerIndex = index
+          setTimeout(() => {
+            this.pageInfo.clear()
+          }, 200)
         })
         .flexGS()
       }, (item: Ai_Model) => item.img)
@@ -185,7 +190,7 @@ export struct LeftBar {
         .margin(20)
         .flexGrow(50)
 
-      //底部选项
+      // 底部选项
       ForEach(this.bottom_data, (item: Ai_Model, index) => {
         Flex({ alignItems: ItemAlign.Center }) {
           Image(this.bottomCurrIndex === index ? $r(`app.media.${item.select}`) : $r(`app.media.${item.img}`))
@@ -205,7 +210,12 @@ export struct LeftBar {
         .borderRadius(8)
         .width('100%')
         .onClick(() => {
-          this.onBottomItemClick(index, item)
+          console.log('Bottom item clicked:', index, item.title[this.languages])
+          this.web = item.web
+          this.tabsControllerIndex = index + this.AiModel_data.length
+          setTimeout(() => {
+            this.pageInfo.clear()
+          }, 200)
         })
         .flexGS()
       }, (item: Ai_Model) => item.img)
@@ -215,26 +225,5 @@ export struct LeftBar {
     .height('100%')
     .backgroundColor('#f8f8f8')
     .padding(24)
-  }
-
-  // 顶部选项点击处理方法
-  private onTopItemClick(index: number, item: Ai_Model): void {
-    this.bottomCurrIndex = 10000
-    this.web = item.web
-    this.tabsControllerIndex = index
-    setTimeout(() => {
-      this.pageInfo.clear()
-    }, 200)
-  }
-
-  // 底部选项点击处理方法
-  private onBottomItemClick(index: number, item: Ai_Model): void {
-    this.bottomCurrIndex = index
-    this.web = item.web
-    // 修复：正确计算底部选项对应的 tabsControllerIndex
-    this.tabsControllerIndex = index + this.AiModel_data.length
-    setTimeout(() => {
-      this.pageInfo.clear()
-    }, 200)
   }
 }

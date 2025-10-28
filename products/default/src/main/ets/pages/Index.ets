@@ -1,4 +1,4 @@
-import { LeftBar, Topbar, Content, Reset, observeSystemLanguageChanges, AiModel_data } from 'common'
+import { LeftBar, Topbar, Content, Reset, observeSystemLanguageChanges, AiModel_data, bottom_data } from 'common'
 import Content_Ai from 'command_ai/src/main/ets/components/Command_Ai'
 import { inputDevice, KeyCode } from '@kit.InputKit';
 import { ConnectDevice, Communication, DeviceInfo, KeyPressType, DeviceArrayType, PRODUCT_TYPE, } from 'mouse'
@@ -10,7 +10,7 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { FixedText_pop, globalShortcutService, WebUrlToOpen_pop } from 'utils';
 import { CreateNewInstruction_pop } from 'command_ai';
 import { DeviceSettings } from '../components/DeviceSettings';
-// 导入实际的数据长度
+
 
 PersistentStorage.persistProp("login", false)
 PersistentStorage.persistProp("table_data", []) //AI指令本地存储
@@ -56,11 +56,13 @@ struct Index {
 
   @State web: string = 'https://asrai.miclink.net?sno=123&productCode=999999&config=configMiclink_B_1755079145452'
   @State currentIndex: number = 0
+  @State bottomCurrIndex: number = 10000
 
   private tabsController: TabsController = new TabsController()
 
   // 修复：使用动态的 AiModel_data 长度
   private aiModelDataLength: number = AiModel_data.length;
+  private bottomDataLength: number = bottom_data.length;
 
   @Watch('onTabsControllerIndexChange')
   @StorageLink('tabsControllerIndex') tabsControllerIndex: number = 0
@@ -78,21 +80,34 @@ struct Index {
 
   // TabsControllerIndex 变化监听
   onTabsControllerIndexChange(): void {
+    console.log('onTabsControllerIndexChange called:', this.tabsControllerIndex)
     if (this.tabsController) {
       this.tabsController.changeIndex(this.tabsControllerIndex)
     }
-    // 同步更新 currentIndex
+    // 同步更新 currentIndex 和 bottomCurrIndex
     this.syncCurrentIndexWithTabs()
   }
 
-  // 修复：使用动态的 aiModelDataLength
+  // 修复：同步 currentIndex 和 bottomCurrIndex
   private syncCurrentIndexWithTabs(): void {
+    console.log('syncCurrentIndexWithTabs - tabsControllerIndex:', this.tabsControllerIndex, 'aiModelDataLength:', this.aiModelDataLength)
+
     if (this.tabsControllerIndex < this.aiModelDataLength) {
+      // 选中顶部选项
       this.currentIndex = this.tabsControllerIndex
+      this.bottomCurrIndex = 10000
+      console.log('Selected top item:', this.currentIndex)
+    } else if (this.tabsControllerIndex < this.aiModelDataLength + this.bottomDataLength) {
+      // 选中底部选项
+      this.currentIndex = 10000
+      this.bottomCurrIndex = this.tabsControllerIndex - this.aiModelDataLength
+      console.log('Selected bottom item:', this.bottomCurrIndex)
     } else {
-      this.currentIndex = 10000 // 表示选中了底部选项
+      // 无效索引，重置状态
+      this.currentIndex = 10000
+      this.bottomCurrIndex = 10000
+      console.log('Invalid index, reset states')
     }
-    console.log('syncCurrentIndexWithTabs - tabsControllerIndex:', this.tabsControllerIndex, 'currentIndex:', this.currentIndex, 'aiModelDataLength:', this.aiModelDataLength)
   }
 
   change_mouse_KeyPressType() {
@@ -126,7 +141,9 @@ struct Index {
 
     // 修复：初始化时获取正确的数据长度
     this.aiModelDataLength = AiModel_data.length;
+    this.bottomDataLength = bottom_data.length;
     console.log('aiModelDataLength initialized:', this.aiModelDataLength)
+    console.log('bottomDataLength initialized:', this.bottomDataLength)
 
     let isPhysicalKeyboardExist = true;
     try {
@@ -199,14 +216,15 @@ struct Index {
             Column() {
               LeftBar({
                 web: $web,
-                currentIndex: this.currentIndex
+                currentIndex: this.currentIndex,
+                bottomCurrIndex: this.bottomCurrIndex
               })
             }
             .flexGrow(1)
             .flexShrink(1)
 
-            Tabs({ controller: this.tabsController }) {
-              // 修复：确保 TabContent 数量与 AiModel_data 匹配
+            Tabs({ controller: this.tabsController, index: this.tabsControllerIndex }) {
+              // 确保 TabContent 数量与 AiModel_data + bottom_data 匹配
               TabContent() { // AI-助手
                 Stack() {
                   Content({ web: this.web })
@@ -301,6 +319,10 @@ struct Index {
                 .align(Alignment.TopStart)
               }
             }
+            .onChange((index: number) => {
+              console.log('Tabs onChange:', index)
+              this.tabsControllerIndex = index
+            })
             .edgeEffect(EdgeEffect.Spring)
             .vertical(true)
             .barWidth(2)
