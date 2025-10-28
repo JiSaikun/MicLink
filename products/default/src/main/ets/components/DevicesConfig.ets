@@ -1,7 +1,9 @@
-import { ConnectDevice,Communication, DeviceInfo, KeyPressType } from 'mouse'
+import { ConnectDevice, _getModelInfo, DeviceInfo, KeyPressType, getModelInfo_Params, DeviceArrayType } from 'mouse'
 import { ConfigPage1 } from './ConfigPage1'
 import { ConfigPage2 } from './ConfigPage2'
 import { ConfigPage3 } from './ConfigPage3'
+import { resetCustomerKey_Params } from '../model/UserModel'
+import { _resetCustomerKey } from '../viewmodel/UserViewModel'
 
 import {
   getModelInfoModel, imagesModel, imagesDataModel, Languages
@@ -10,14 +12,17 @@ import {
 @Component
 export struct DevicesConfig {
   @Link isShowConfig: boolean //控制显隐状态
-  @State mouseconfig: DeviceInfo = ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo //鼠标信息
+  @State mouseconfig: DeviceInfo =
+    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo //鼠标信息
   @State currIndex: number = 0
   @StorageLink('languages') languages: string = 'ZH_CN'
-  @State configsList: string[] = [Languages.smartSetup[this.languages], Languages.keySetup[this.languages], Languages.deviceSetup[this.languages]]
+  @State configsList: string[] =
+    [Languages.smartSetup[this.languages], Languages.keySetup[this.languages], Languages.deviceSetup[this.languages]]
   @State reportRate_currIndex: number = 0
   @State DPI_currIndex: number = 0
   @State currLED: boolean = true
-  @State getModelInfo: getModelInfoModel = ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo as getModelInfoModel
+  @State getModelInfo: getModelInfoModel =
+    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo as getModelInfoModel
 
   onDidBuild(): void {
     this.data_init()
@@ -41,7 +46,6 @@ export struct DevicesConfig {
           .width('100%')
           .layoutWeight(1)
           .objectFit(ImageFit.Contain)
-        // .borderWidth(1)
         Text(Languages.keyReset[this.languages])
           .fontSize(12)
           .lineHeight(12)
@@ -57,25 +61,7 @@ export struct DevicesConfig {
           })
           .margin({ bottom: 20 })
           .onClick(() => {
-            // try {
-            //   Communication.getDeviceInfo([0x6f])
-            //   if (this.currIndex === 2) {
-            //     setTimeout(() => {
-            //       this.data_init()
-            //       this.currIndex = 11111
-            //       this.currIndex = 2
-            //     }, 20000)
-            //   }
-            // } catch (e) {
-            // }
-            AppStorage.setOrCreate('KeymethodConfig', [
-              { key: KeyPressType.VOICE_CLICK, currIndex: 0 }, { key: KeyPressType.VOICE_LONG_PRESS_DOWN, currIndex: 0 },
-              { key: KeyPressType.SEARCH_CLICK, currIndex: 0 },
-              { key: KeyPressType.SEARCH_LONG_PRESS_DOWN, currIndex: 0 },
-              { key: KeyPressType.TRANSLATE_CLICK, currIndex: 0 },
-              { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
-              { key: KeyPressType.AI_CLICK, currIndex: 0 }, { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
-            ])
+            this.handleKeyReset()
           })
         Row() {
           Text(Languages.firmwareVersion[this.languages])
@@ -149,7 +135,7 @@ export struct DevicesConfig {
           Column() {
             ConfigPage1()
               .visibility(this.currIndex === 0 ? Visibility.Visible : Visibility.None)
-            ConfigPage2({isShowConfig:this.isShowConfig})
+            ConfigPage2({ isShowConfig: this.isShowConfig })
               .visibility(this.currIndex === 1 ? Visibility.Visible : Visibility.None)
             if (this.currIndex === 2) {
               ConfigPage3({
@@ -177,7 +163,6 @@ export struct DevicesConfig {
       .flexShrink(1)
 
     }
-    // .borderWidth(1)
     .width('100%')
     .height('100%')
   }
@@ -185,7 +170,6 @@ export struct DevicesConfig {
   getdeviesImage(): string {
     for (let item of this.getModelInfo.images) {
       if ((item as imagesModel)[this.languages]) {
-        // console.log('****************************************1', JSON.stringify(item))
         return ((item as imagesModel)[this.languages][0] as imagesDataModel)['img']
       }
     }
@@ -207,7 +191,50 @@ export struct DevicesConfig {
         this.reportRate_currIndex = 3
         break
     }
-    this.DPI_currIndex = this.mouseconfig?.dpiLevel as number-1
+    this.DPI_currIndex = this.mouseconfig?.dpiLevel as number - 1
     this.currLED = this.mouseconfig?.atmosphereLight as boolean
+  }
+
+  // 新增：处理按键重置的独立方法
+  private handleKeyReset() {
+    let param: resetCustomerKey_Params = {
+      sno: this.mouseconfig?.sn as string, //设备号
+      userModelId: this.getModelInfo.id.toString()//按鍵模式ID
+    }
+
+    _resetCustomerKey(param)
+      .then(res => {
+        console.log('重设按键模式', JSON.stringify(res))
+        this.refreshModelInfo()
+      })
+      .catch(() => {
+        console.error('重设按键模式失败:')
+      })
+  }
+
+  // 新增：刷新模型信息的独立方法
+  private refreshModelInfo() {
+    const params: getModelInfo_Params = {
+      languageCode: '',
+      productCode: ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.deviceInfo.productType.toString(),
+      sno: ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.deviceInfo.sn
+    }
+
+    _getModelInfo(params).then((res) => {
+      console.log('获取用户按键模式详情数据', JSON.stringify(res.data))
+      if (res.status === 200) {
+        let getModelInfo: getModelInfoModel = res.data as getModelInfoModel
+        // 更新数据
+        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo = getModelInfo
+        AppStorage.setOrCreate('getModelInfo', getModelInfo)
+
+        // 重置 KeymethodConfig，让 ConfigPage2 重新初始化
+        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].KeymethodConfig = []
+
+        console.log('数据重置完成，ConfigPage2 将自动重新初始化')
+      }
+    }).catch(() => {
+      console.error('获取模型信息失败:', )
+    })
   }
 }

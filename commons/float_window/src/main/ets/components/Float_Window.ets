@@ -191,16 +191,25 @@ export class Float_Window {
   }
 
   static minimize_float_window(windowClass: window.Window | null = Float_Window.windowClass) {
-    // 调用最小化方法
-    (windowClass as window.Window).minimize((err: BusinessError) => {
-      if (err) {
-        console.error(`最小化窗口失败，错误码: ${err.code}, 信息: ${err.message}`);
-        AppStorage.setOrCreate('voiceInputText', '')
+    // 4.销毁悬浮窗。当不再需要悬浮窗时，可根据具体实现逻辑，使用destroy对其进行销毁。
+    (windowClass as window.Window).destroyWindow((err: BusinessError) => {
+      let errCode: number = err.code;
+      if (errCode) {
+        console.error('Failed to destroy the window. Cause: ' + JSON.stringify(err));
         return;
       }
-      console.info('窗口最小化成功');
-      AppStorage.setOrCreate('voiceInputText', '')
+      console.info('Succeeded in destroying the window.');
     });
+    // // 调用最小化方法
+    // (windowClass as window.Window).minimize((err: BusinessError) => {
+    //   if (err) {
+    //     console.error(`最小化窗口失败，错误码: ${err.code}, 信息: ${err.message}`);
+    //     AppStorage.setOrCreate('voiceInputText', '')
+    //     return;
+    //   }
+    //   console.info('窗口最小化成功');
+    //   AppStorage.setOrCreate('voiceInputText', '')
+    // });
   }
 
   static show_float_window(windowClass: window.Window | null = Float_Window.windowClass) {
