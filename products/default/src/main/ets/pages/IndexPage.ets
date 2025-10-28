@@ -55,77 +55,77 @@ struct IndexPage {
   }
 
   build() {
-    Column() {
-      NavDestination() {
-        Stack() {
-          Row() {
-            LeftBar({
-              currentIndex: this.currentIndex,
-              web: this.web,
-              bottomCurrIndex: this.bottomCurrIndex,
-              extend: this.extend
-            ,
-              width_length: this.width_length
-            })
-            Stack() {
-              Topbar()
-                .zIndex(100)
-              if (this.web) {
-                if (this.web === 'Command_Ai') {
-                  Content_Ai({
-                    isShow_CreateNewInstruction_pop: this.isShow_CreateNewInstruction_pop,
-                    isShow_EditInstruction_pop: this.isShow_EditInstruction_pop,
-                    EditInstruction_pop_currIndex: this.EditInstruction_pop_currIndex
-                  }) //AI--指令
-                } else if (this.web === 'DeviceSettings') {
-                  /*
-                    设备设置
-                   */
-                  DeviceSettings()
-                } else {
-                  Content({ web: this.web })
-                }
-              }
-            }
-            // .border({width:1})
-            .align(Alignment.TopStart)
-            .height('100%')
-            .layoutWeight(1)
-          }
-          // .backgroundColor(Color.Blue)
-          .width('100%')
-          .height('100%')
-
-          if (this.isShow_CreateNewInstruction_pop) {
-            CreateNewInstruction_pop({
-              isShow_CreateNewInstruction_pop: this.isShow_CreateNewInstruction_pop,
-              isShow_EditInstruction_pop: this.isShow_EditInstruction_pop
-            })
-          }
-          if (this.isShow_EditInstruction_pop) {
-            CreateNewInstruction_pop({
-              isShow_CreateNewInstruction_pop: this.isShow_CreateNewInstruction_pop,
-              isShow_EditInstruction_pop: this.isShow_EditInstruction_pop,
-              isParam: true,
-              currIndexParam: this.EditInstruction_pop_currIndex
-            })
-          }
-          if (this.isShowFixedText_pop) {
-            FixedText_pop({ isShowFixedText_pop: this.isShowFixedText_pop })
-          }
-          if (this.isShow_webUrlToOpen_pop) {
-            WebUrlToOpen_pop({ isShow_webUrlToOpen_pop: this.isShow_webUrlToOpen_pop })
-          }
-
-        }
-        .width('100%')
-        .height('100%')
-
-      }
-      .hideToolBar(true)
-      .hideTitleBar(true)
-
-    }
+    // Column() {
+    //   NavDestination() {
+    //     Stack() {
+    //       Row() {
+    //         LeftBar({
+    //           currentIndex: this.currentIndex,
+    //           web: this.web,
+    //           bottomCurrIndex: this.bottomCurrIndex,
+    //           extend: this.extend
+    //         ,
+    //           width_length: this.width_length
+    //         })
+    //         Stack() {
+    //           Topbar()
+    //             .zIndex(100)
+    //           if (this.web) {
+    //             if (this.web === 'Command_Ai') {
+    //               Content_Ai({
+    //                 isShow_CreateNewInstruction_pop: this.isShow_CreateNewInstruction_pop,
+    //                 isShow_EditInstruction_pop: this.isShow_EditInstruction_pop,
+    //                 EditInstruction_pop_currIndex: this.EditInstruction_pop_currIndex
+    //               }) //AI--指令
+    //             } else if (this.web === 'DeviceSettings') {
+    //               /*
+    //                 设备设置
+    //                */
+    //               DeviceSettings()
+    //             } else {
+    //               Content({ web: this.web })
+    //             }
+    //           }
+    //         }
+    //         // .border({width:1})
+    //         .align(Alignment.TopStart)
+    //         .height('100%')
+    //         .layoutWeight(1)
+    //       }
+    //       // .backgroundColor(Color.Blue)
+    //       .width('100%')
+    //       .height('100%')
+    //
+    //       if (this.isShow_CreateNewInstruction_pop) {
+    //         CreateNewInstruction_pop({
+    //           isShow_CreateNewInstruction_pop: this.isShow_CreateNewInstruction_pop,
+    //           isShow_EditInstruction_pop: this.isShow_EditInstruction_pop
+    //         })
+    //       }
+    //       if (this.isShow_EditInstruction_pop) {
+    //         CreateNewInstruction_pop({
+    //           isShow_CreateNewInstruction_pop: this.isShow_CreateNewInstruction_pop,
+    //           isShow_EditInstruction_pop: this.isShow_EditInstruction_pop,
+    //           isParam: true,
+    //           currIndexParam: this.EditInstruction_pop_currIndex
+    //         })
+    //       }
+    //       if (this.isShowFixedText_pop) {
+    //         FixedText_pop({ isShowFixedText_pop: this.isShowFixedText_pop })
+    //       }
+    //       if (this.isShow_webUrlToOpen_pop) {
+    //         WebUrlToOpen_pop({ isShow_webUrlToOpen_pop: this.isShow_webUrlToOpen_pop })
+    //       }
+    //
+    //     }
+    //     .width('100%')
+    //     .height('100%')
+    //
+    //   }
+    //   .hideToolBar(true)
+    //   .hideTitleBar(true)
+    //
+    // }
 
   }
 }

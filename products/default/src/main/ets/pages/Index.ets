@@ -1,15 +1,16 @@
-import { LeftBar, Topbar, Content, Reset, observeSystemLanguageChanges } from 'common'
-// import {Hid}from "usb_hid"
-// import { BlueTooth_api } from "bluetooth"
+import { LeftBar, Topbar, Content, Reset, observeSystemLanguageChanges, AiModel_data } from 'common'
+import Content_Ai from 'command_ai/src/main/ets/components/Command_Ai'
 import { inputDevice, KeyCode } from '@kit.InputKit';
 import { ConnectDevice, Communication, DeviceInfo, KeyPressType, DeviceArrayType, PRODUCT_TYPE, } from 'mouse'
 import common from '@ohos.app.ability.common';
-import { _change_keyboard_KeyPressType, _change_mouse_KeyPressType } from 'keymethodconfig'; //按键执行方法回调
-import { Float_Window } from 'float_window'; //按键执行方法回调
+import { _change_keyboard_KeyPressType, _change_mouse_KeyPressType } from 'keymethodconfig';
+import { Float_Window } from 'float_window';
 import { window } from '@kit.ArkUI';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { globalShortcutService } from 'utils';
-
+import { FixedText_pop, globalShortcutService, WebUrlToOpen_pop } from 'utils';
+import { CreateNewInstruction_pop } from 'command_ai';
+import { DeviceSettings } from '../components/DeviceSettings';
+// 导入实际的数据长度
 
 PersistentStorage.persistProp("login", false)
 PersistentStorage.persistProp("table_data", []) //AI指令本地存储
@@ -37,21 +38,62 @@ PersistentStorage.persistProp("EnhancedBrowserSearch", 0) //搜索引擎
 PersistentStorage.persistProp("device_currIndex", 0) //设备信息接收与发送
 PersistentStorage.persistProp("device_show_currIndex", 0) //设备信息展示
 
+PersistentStorage.persistProp("voice_recognition_shortcut", { keyPreview: '', pressedKeys: [] }) //语音识别快捷键
+PersistentStorage.persistProp("voice_translation_shortcut", { keyPreview: '', pressedKeys: [] }) //语音翻译快捷键
+PersistentStorage.persistProp("screenshot_recognition_shortcut", { keyPreview: '', pressedKeys: [] }) //截图识别快捷键
+PersistentStorage.persistProp("custom_shortcut", { keyPreview: '', pressedKeys: [] }) //自定义快捷键
+
 @Entry
 @Component
 struct Index {
-  @StorageLink("login") login: boolean = true //登录状态
-  @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null //鼠标信息
-  @StorageLink("currpageIsAI") currpageIsAI: boolean = false //鼠标信息
+  @StorageLink("login") login: boolean = true
+  @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null
+  @StorageLink("currpageIsAI") currpageIsAI: boolean = false
   @StorageLink('languages') languages: string = 'ZH_CN'
-  // @Watch('change_mouse_KeyPressType') @StorageLink("float_window") float_window: boolean = true //悬浮窗显示与隐藏
-  @Provide('pageInfo') pageInfo: NavPathStack = new NavPathStack() //页面跳转路由栈
+  @Provide('pageInfo') pageInfo: NavPathStack = new NavPathStack()
   @StorageLink("pageInfo") pageInfo_: NavPathStack = this.pageInfo
-  @Watch('change_mouse_KeyPressType') @StorageLink("mouse_KeyPressType") mouse_KeyPressType: KeyPressType =
-    KeyPressType.VOICE_CLICK //鼠标按键事件监听
-  @State web: string =
-    'https://asrai.miclink.net?sno=123&productCode=999999&config=configMiclink_B_1755079145452' //web组件链接
+  @Watch('change_mouse_KeyPressType') @StorageLink("mouse_KeyPressType") mouse_KeyPressType: KeyPressType = KeyPressType.VOICE_CLICK
+
+  @State web: string = 'https://asrai.miclink.net?sno=123&productCode=999999&config=configMiclink_B_1755079145452'
   @State currentIndex: number = 0
+
+  private tabsController: TabsController = new TabsController()
+
+  // 修复：使用动态的 AiModel_data 长度
+  private aiModelDataLength: number = AiModel_data.length;
+
+  @Watch('onTabsControllerIndexChange')
+  @StorageLink('tabsControllerIndex') tabsControllerIndex: number = 0
+
+  @State isShow_CreateNewInstruction_pop: boolean = false
+  @State isShow_EditInstruction_pop: boolean = false
+  @State EditInstruction_pop_currIndex: number = 0
+
+  @Watch('onShortcutChange')
+  @StorageLink("shortcut") shortcut: number = 0
+
+  @StorageLink("isShowFixedText_pop") isShowFixedText_pop: boolean = false
+  @StorageLink("isShow_webUrlToOpen_pop") isShow_webUrlToOpen_pop: boolean = false
+  @State shortcut_pop: boolean = false
+
+  // TabsControllerIndex 变化监听
+  onTabsControllerIndexChange(): void {
+    if (this.tabsController) {
+      this.tabsController.changeIndex(this.tabsControllerIndex)
+    }
+    // 同步更新 currentIndex
+    this.syncCurrentIndexWithTabs()
+  }
+
+  // 修复：使用动态的 aiModelDataLength
+  private syncCurrentIndexWithTabs(): void {
+    if (this.tabsControllerIndex < this.aiModelDataLength) {
+      this.currentIndex = this.tabsControllerIndex
+    } else {
+      this.currentIndex = 10000 // 表示选中了底部选项
+    }
+    console.log('syncCurrentIndexWithTabs - tabsControllerIndex:', this.tabsControllerIndex, 'currentIndex:', this.currentIndex, 'aiModelDataLength:', this.aiModelDataLength)
+  }
 
   change_mouse_KeyPressType() {
     if (this.login) {
@@ -63,21 +105,17 @@ struct Index {
           _change_keyboard_KeyPressType()
           break
       }
-
-
     }
-
   }
 
-  // watch_float_window() {
-  //   // if (this.float_window) {
-  //   //   Float_Window.creat()
-  //   // } else {
-  //   //   Float_Window.destroyWindow()
-  //   // }
-  // }
+  onShortcutChange() {
+    this.shortcut_pop = !this.shortcut_pop
+    if (this.shortcut_pop) {
+      this.pageInfo.pushPath({ 'name': 'shortcut_pop' })
+    }
+  }
+
   onPageHide(): void {
-    // console.log('应用最小化')
     Float_Window.creat_hide()
   }
 
@@ -85,10 +123,11 @@ struct Index {
     const context = getContext(this) as common.UIAbilityContext;
     AppStorage.setOrCreate('context', context);
     AppStorage.setOrCreate('currpageIsAI', true);
-    // AppStorage.setOrCreate('float_window', false);
-    /*
-    热插拔:检测鼠标的插入与拔出
-    */
+
+    // 修复：初始化时获取正确的数据长度
+    this.aiModelDataLength = AiModel_data.length;
+    console.log('aiModelDataLength initialized:', this.aiModelDataLength)
+
     let isPhysicalKeyboardExist = true;
     try {
       inputDevice.on("change", (data: inputDevice.DeviceListener) => {
@@ -97,22 +136,13 @@ struct Index {
         inputDevice.getKeyboardType(data.deviceId, (err: Error, type: inputDevice.KeyboardType) => {
           console.log("The keyboard type is: " + type);
           if (type == inputDevice.KeyboardType.ALPHABETIC_KEYBOARD && data.type == 'add') {
-            // 监听物理键盘已连接。
             isPhysicalKeyboardExist = true;
             ConnectDevice.connectDevice().then(() => {
               for (let item of ConnectDevice.Communication) {
                 item.Communication.changPhysicalKeyboardExistState(isPhysicalKeyboardExist)
               }
             })
-
-            // /**
-            //  * 检查鼠标设备，并建立连接
-            //  */
-            // Communication.connectDevice().then(() => {
-            //   Communication.getDeviceInfo()
-            // })
           } else if (type == inputDevice.KeyboardType.ALPHABETIC_KEYBOARD && data.type == 'remove') {
-            // 监听物理键盘已断开。
             isPhysicalKeyboardExist = false;
             for (let item of ConnectDevice.Communication) {
               item.Communication.changPhysicalKeyboardExistState(isPhysicalKeyboardExist)
@@ -122,26 +152,20 @@ struct Index {
                 item.Communication.changPhysicalKeyboardExistState(true)
               }
             })
-
-            // Communication.changPhysicalKeyboardExistState(isPhysicalKeyboardExist)
           }
         });
       });
-      // 根据isPhysicalKeyboardExist的值决定软键盘是否弹出。
     } catch (error) {
-      console.error(`Get device info failed, error: ${JSON.stringify(error, [`code`, `message`])}`);
+      console.error(`Get device info failed, error: ${JSON.stringify(error, ['code', 'message'])}`);
     }
   }
 
   onPageShow(): void {
-    // BlueTooth_api.init_bluetoothState()
-    // Hid.Hid_add()
-    if (!AppStorage.get('firstOpen')) { //确保最小化后重新进入页面时的再次执行——————只在最开始打开应用的时候调用一次即可
+    if (!AppStorage.get('firstOpen')) {
       try {
-        /**
-         * 检查鼠标设备，并建立连接
-         */
         ConnectDevice.connectDevice().then(() => {
+          // 初始化后同步状态
+          this.syncCurrentIndexWithTabs()
         })
       } catch (e) {
         console.log(e)
@@ -151,49 +175,170 @@ struct Index {
       Float_Window.destroyWindow(Float_Window.window_hide)
     }
     this.pageInfo.disableAnimation(true)
-    // console.log(JSON.stringify(this.login))
+
     if (!this.login) {
       this.pageInfo.pushPath({ 'name': 'login' })
     }
     AppStorage.setOrCreate('firstOpen', 1)
+
+    // 确保状态同步
+    this.syncCurrentIndexWithTabs()
   }
 
   aboutToDisappear(): void {
-    // console.log('应用关闭======================================')
-    // console.log(JSON.stringify(Communication.devicePipe))
     for (let item of ConnectDevice.Communication) {
       item.Communication.changPhysicalKeyboardExistState(false)
     }
-
   }
 
   build() {
     Column() {
       Navigation(this.pageInfo) {
-        Flex() {
-          Column() {
-            LeftBar({ web: this.web, currentIndex: this.currentIndex })
-          }
-          .flexGrow(1)
-          .flexShrink(1)
+        Stack() {
+          Flex() {
+            Column() {
+              LeftBar({
+                web: $web,
+                currentIndex: this.currentIndex
+              })
+            }
+            .flexGrow(1)
+            .flexShrink(1)
 
-          Stack() {
-            Content({ web: this.web })
-            Topbar()
+            Tabs({ controller: this.tabsController }) {
+              // 修复：确保 TabContent 数量与 AiModel_data 匹配
+              TabContent() { // AI-助手
+                Stack() {
+                  Content({ web: this.web })
+                  Topbar()
+                }
+                .height('100%')
+                .align(Alignment.TopStart)
+              }
+
+              TabContent() { // AI-办公
+                Stack() {
+                  Content({ web: this.web })
+                  Topbar()
+                }
+                .height('100%')
+                .align(Alignment.TopStart)
+              }
+
+              TabContent() { // AI-智能体
+                Stack() {
+                  Content({ web: this.web })
+                  Topbar()
+                }
+                .height('100%')
+                .align(Alignment.TopStart)
+              }
+
+              TabContent() { // AI-指令
+                Stack() {
+                  Content_Ai({
+                    isShow_CreateNewInstruction_pop: this.isShow_CreateNewInstruction_pop,
+                    isShow_EditInstruction_pop: this.isShow_EditInstruction_pop,
+                    EditInstruction_pop_currIndex: this.EditInstruction_pop_currIndex
+                  })
+                  Topbar()
+                }
+                .height('100%')
+                .align(Alignment.TopStart)
+              }
+
+              TabContent() { // 导航库
+                Stack() {
+                  Content({ web: this.web })
+                  Topbar()
+                }
+                .height('100%')
+                .align(Alignment.TopStart)
+              }
+
+              TabContent() { // 视频库
+                Stack() {
+                  Content({ web: this.web })
+                  Topbar()
+                }
+                .height('100%')
+                .align(Alignment.TopStart)
+              }
+
+              TabContent() { // 模板库
+                Stack() {
+                  Content({ web: this.web })
+                  Topbar()
+                }
+                .height('100%')
+                .align(Alignment.TopStart)
+              }
+
+              TabContent() { // 设备设置
+                Stack() {
+                  DeviceSettings()
+                  Topbar()
+                }
+                .height('100%')
+                .align(Alignment.TopStart)
+              }
+
+              TabContent() { // 企业中心
+                Stack() {
+                  Content({ web: this.web })
+                  Topbar()
+                }
+                .height('100%')
+                .align(Alignment.TopStart)
+              }
+
+              TabContent() { // 帮助中心
+                Stack() {
+                  Content({ web: this.web })
+                  Topbar()
+                }
+                .height('100%')
+                .align(Alignment.TopStart)
+              }
+            }
+            .edgeEffect(EdgeEffect.Spring)
+            .vertical(true)
+            .barWidth(2)
+            .flexGrow(1)
+            .flexShrink(1)
+            .scrollable(false)
+            .layoutWeight(1)
+            .barWidth(0)
+            .animationDuration(0)
           }
-          .flexGrow(1)
-          .flexShrink(1)
-          // .border({width:1})
-          .align(Alignment.TopStart)
+          .width('100%')
           .height('100%')
-          .layoutWeight(1)
+
+          if (this.isShow_CreateNewInstruction_pop) {
+            CreateNewInstruction_pop({
+              isShow_CreateNewInstruction_pop: this.isShow_CreateNewInstruction_pop,
+              isShow_EditInstruction_pop: this.isShow_EditInstruction_pop
+            })
+          }
+          if (this.isShow_EditInstruction_pop) {
+            CreateNewInstruction_pop({
+              isShow_CreateNewInstruction_pop: this.isShow_CreateNewInstruction_pop,
+              isShow_EditInstruction_pop: this.isShow_EditInstruction_pop,
+              isParam: true,
+              currIndexParam: this.EditInstruction_pop_currIndex
+            })
+          }
+          if (this.isShowFixedText_pop) {
+            FixedText_pop({ isShowFixedText_pop: this.isShowFixedText_pop })
+          }
+          if (this.isShow_webUrlToOpen_pop) {
+            WebUrlToOpen_pop({ isShow_webUrlToOpen_pop: this.isShow_webUrlToOpen_pop })
+          }
+
         }
-        // .backgroundColor(Color.Blue)
         .width('100%')
         .height('100%')
-        .onClick(() => {
-          // type Action = 'home'
-        })
+
       }
       .hideToolBar(true)
       .hideTitleBar(true)
@@ -201,16 +346,11 @@ struct Index {
 
       Image($r('app.media.create_Command_Ai'))
     }.onKeyEvent((event: KeyEvent) => {
-      // console.error('err：',JSON.stringify(event))
-      // 将按键事件传递给全局监听服务
       globalShortcutService.handleGlobalKeyEvent(event)
     })
-
   }
 
-  //锁定设备横屏，使得窗口不随屏幕旋转————平板适配：暂时不做处理
   fixWindowToLandscape() {
-    //1.Get the window instance object, use the createWindow method to create a new window, and use the findWindow method to obtain an existing window
     let windowClass: window.Window | undefined = undefined;
     let config: window.Configuration = {
       name: "alertWindow",
@@ -228,7 +368,7 @@ struct Index {
     } catch (exception) {
       console.error('Failed to create the window. Cause: ' + JSON.stringify(exception));
     }
-    //2.The window instance uses the setPreferred Orientation method to set the display orientation of the window. PORTRAIT is a fixed vertical screen, and other orientations can refer to the reference link
+
     let orientation = window.Orientation.LANDSCAPE;
     try {
       let windowClass: window.Window = window.findWindow("test");

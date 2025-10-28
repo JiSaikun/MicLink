@@ -12,13 +12,15 @@ export interface paramModel {
 @Component
 export struct LeftBar {
   @Consume('pageInfo') pageInfo: NavPathStack
-  @StorageLink('languages') languages: string = 'ZH_CN' //语言适配
+  @StorageLink('languages') languages: string = 'ZH_CN'
+  @StorageLink('tabsControllerIndex') tabsControllerIndex: number = 0
   @State AiModel_data: Ai_Model[] = AiModel_data
   @State bottom_data: Ai_Model[] = bottom_data
+
   @Prop currentIndex: number = 0
   @State bottomCurrIndex: number = 10000
-  @State mark: boolean = false //对话状态
-  @State extend: boolean = true //状态栏延申
+  @State mark: boolean = false
+  @State extend: boolean = true
   @State width_length: number = 248
 
   @Styles
@@ -28,23 +30,11 @@ export struct LeftBar {
     .flexShrink(1)
   }
 
-  @Watch('WebLinkChange') @Link web: string
-
-  WebLinkChange() {
-    // console.log('===============',this.web)
-    const param: paramModel = {
-      web: this.web,
-      currentIndex: this.currentIndex,
-      bottomCurrIndex: this.bottomCurrIndex,
-      extend: this.extend,
-      width_length: this.width_length
-    }
-    this.pageInfo.clear()
-    this.pageInfo.pushPath({ "name": 'indexPage', param })
-  }
+  @Link web: string
 
   aboutToAppear(): void {
-    // console.log('=========================0', this.extend)
+    // 确保初始化时状态正确
+    console.log('AiModel_data length:', this.AiModel_data.length)
   }
 
   build() {
@@ -61,7 +51,7 @@ export struct LeftBar {
               duration: 600,
               curve: Curve.Friction,
               delay: 500,
-              iterations: 1, // 设置-1表示动画无限循环  ,循环次数
+              iterations: 1,
               playMode: PlayMode.Alternate,
               expectedFrameRateRange: {
                 min: 10,
@@ -99,7 +89,7 @@ export struct LeftBar {
               duration: 500,
               curve: Curve.Friction,
               delay: 500,
-              iterations: 1, // 设置-1表示动画无限循环  ,循环次数
+              iterations: 1,
               playMode: PlayMode.Alternate,
               expectedFrameRateRange: {
                 min: 10,
@@ -115,12 +105,11 @@ export struct LeftBar {
           })
       }
       .visibility(this.extend ? Visibility.None : Visibility.Visible)
-      // .width(88)
       .height(35)
       .margin({ bottom: 20 })
       .flexGS()
 
-
+      // 修复：确保所有 AiModel_data 项都能正确显示
       ForEach(this.AiModel_data, (item: Ai_Model, index) => {
         Flex({ alignItems: ItemAlign.Center }) {
           Image(this.currentIndex === index ? $r(`app.media.${item.select}`) : $r(`app.media.${item.img}`))
@@ -140,20 +129,19 @@ export struct LeftBar {
         .borderRadius(8)
         .width('100%')
         .onClick(() => {
-          this.currentIndex = index
-          this.bottomCurrIndex = 10000
-          this.web = item.web
-
+          this.onTopItemClick(index, item)
         })
         .flexGS()
       }, (item: Ai_Model) => item.img)
+
       Divider()
         .width('100%')
         .height(1)
         .margin({ top: 5, bottom: 5 })
         .backgroundColor('#eaeaea')
+
       // 对话记录
-      Flex({alignItems:ItemAlign.Center}) {
+      Flex({ alignItems: ItemAlign.Center }) {
         Image($r(`app.media.sessionSecord`))
           .width(16).height(16)
           .objectFit(ImageFit.Fill)
@@ -183,32 +171,7 @@ export struct LeftBar {
       })
 
       Scroll() {
-        // Flex({ direction: FlexDirection.Column }) {
-        //   ForEach(this.bottom_data, (item: Ai_Model, index) => {
-        //     Flex({ alignItems: ItemAlign.Center }) {
-        //       Image(this.currentIndex === index ? $r(`app.media.${item.select}`) : $r(`app.media.${item.img}`))
-        //         .width(16).height(16)
-        //         .objectFit(ImageFit.Fill)
-        //         .margin({ right: 13 })
-        //       Text(item.title[this.languages])
-        //         .fontSize(14)
-        //         .fontWeight(400)
-        //         .lineHeight(14)
-        //         .fontColor(this.currentIndex === index ? '#00aecc' : '')
-        //     }
-        //     .backgroundColor(this.currentIndex === index ? "#e0f1f4" : '#f8f8f8')
-        //     .padding({ left: 13 })
-        //     .height(40)
-        //     .borderRadius(8)
-        //     .width('100%')
-        //     .onClick(() => {
-        //       this.currentIndex = index
-        //     })
-        //     .flexGS()
-        //   }, (item: Ai_Model) => item.img)
-        // }
-        // .width('100%')
-        // .height('100%')
+        // 对话记录内容可以在这里添加
       }
       .edgeEffect(EdgeEffect.Spring)
       .height(160)
@@ -221,7 +184,8 @@ export struct LeftBar {
         .height(1)
         .margin(20)
         .flexGrow(50)
-      //底部
+
+      //底部选项
       ForEach(this.bottom_data, (item: Ai_Model, index) => {
         Flex({ alignItems: ItemAlign.Center }) {
           Image(this.bottomCurrIndex === index ? $r(`app.media.${item.select}`) : $r(`app.media.${item.img}`))
@@ -241,9 +205,7 @@ export struct LeftBar {
         .borderRadius(8)
         .width('100%')
         .onClick(() => {
-          this.bottomCurrIndex = index
-          this.currentIndex = 10000
-          this.web = item.web
+          this.onBottomItemClick(index, item)
         })
         .flexGS()
       }, (item: Ai_Model) => item.img)
@@ -253,5 +215,26 @@ export struct LeftBar {
     .height('100%')
     .backgroundColor('#f8f8f8')
     .padding(24)
+  }
+
+  // 顶部选项点击处理方法
+  private onTopItemClick(index: number, item: Ai_Model): void {
+    this.bottomCurrIndex = 10000
+    this.web = item.web
+    this.tabsControllerIndex = index
+    setTimeout(() => {
+      this.pageInfo.clear()
+    }, 200)
+  }
+
+  // 底部选项点击处理方法
+  private onBottomItemClick(index: number, item: Ai_Model): void {
+    this.bottomCurrIndex = index
+    this.web = item.web
+    // 修复：正确计算底部选项对应的 tabsControllerIndex
+    this.tabsControllerIndex = index + this.AiModel_data.length
+    setTimeout(() => {
+      this.pageInfo.clear()
+    }, 200)
   }
 }
