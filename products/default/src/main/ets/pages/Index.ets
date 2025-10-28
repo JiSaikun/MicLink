@@ -52,36 +52,36 @@ struct Index {
   @StorageLink('languages') languages: string = 'ZH_CN'
   @Provide('pageInfo') pageInfo: NavPathStack = new NavPathStack()
   @StorageLink("pageInfo") pageInfo_: NavPathStack = this.pageInfo
-  @Watch('change_mouse_KeyPressType') @StorageLink("mouse_KeyPressType") mouse_KeyPressType: KeyPressType = KeyPressType.VOICE_CLICK
-
+  @Watch('change_mouse_KeyPressType') @StorageLink("mouse_KeyPressType") mouse_KeyPressType: KeyPressType =
+    KeyPressType.VOICE_CLICK
   @State web: string = 'https://asrai.miclink.net?sno=123&productCode=999999&config=configMiclink_B_1755079145452'
   @State currentIndex: number = 0
   @State bottomCurrIndex: number = 10000
-
   private tabsController: TabsController = new TabsController()
-
   // 修复：使用动态的 AiModel_data 长度
   private aiModelDataLength: number = AiModel_data.length;
   private bottomDataLength: number = bottom_data.length;
-
   @Watch('onTabsControllerIndexChange')
   @StorageLink('tabsControllerIndex') tabsControllerIndex: number = 0
-
   @State isShow_CreateNewInstruction_pop: boolean = false
   @State isShow_EditInstruction_pop: boolean = false
   @State EditInstruction_pop_currIndex: number = 0
-
   @Watch('onShortcutChange')
   @StorageLink("shortcut") shortcut: number = 0
-
   @StorageLink("isShowFixedText_pop") isShowFixedText_pop: boolean = false
   @StorageLink("isShow_webUrlToOpen_pop") isShow_webUrlToOpen_pop: boolean = false
   @State shortcut_pop: boolean = false
+  @State isNavigationLibActive: boolean = true//导航库重置
 
   // TabsControllerIndex 变化监听
   onTabsControllerIndexChange(): void {
     console.log('onTabsControllerIndexChange called:', this.tabsControllerIndex)
     if (this.tabsController) {
+      if (this.tabsControllerIndex===4) {
+        this.isNavigationLibActive=true
+      }else {
+        this.isNavigationLibActive=false
+      }
       this.tabsController.changeIndex(this.tabsControllerIndex)
     }
     // 同步更新 currentIndex 和 bottomCurrIndex
@@ -90,7 +90,8 @@ struct Index {
 
   // 修复：同步 currentIndex 和 bottomCurrIndex
   private syncCurrentIndexWithTabs(): void {
-    console.log('syncCurrentIndexWithTabs - tabsControllerIndex:', this.tabsControllerIndex, 'aiModelDataLength:', this.aiModelDataLength)
+    console.log('syncCurrentIndexWithTabs - tabsControllerIndex:', this.tabsControllerIndex, 'aiModelDataLength:',
+      this.aiModelDataLength)
 
     if (this.tabsControllerIndex < this.aiModelDataLength) {
       // 选中顶部选项
@@ -267,7 +268,9 @@ struct Index {
 
               TabContent() { // 导航库
                 Stack() {
-                  Content({ web: this.web })
+                  if (this.isNavigationLibActive) {
+                    Content({ web: this.web })
+                  }
                   Topbar()
                 }
                 .height('100%')
