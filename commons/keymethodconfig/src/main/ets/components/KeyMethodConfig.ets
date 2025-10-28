@@ -83,11 +83,11 @@ export class _KeyMethodConfig {
         // }
       } else {
         AppStorage.setOrCreate('isAI_assistant', isAI_assistant)
-        if (!Float_Window.showVoiceInput) { //窗口没有显示时创建窗口
+        // if (!Float_Window.showVoiceInput) { //窗口没有显示时创建窗口
           Float_Window.creat()
-        } else {
-          Float_Window.show_float_window()
-        }
+        // } else {
+        //   Float_Window.show_float_window()
+        // }
         Float_Window.showVoiceInput += 1
       }
 
@@ -190,11 +190,11 @@ export class _KeyMethodConfig {
           0].Communication.audioDataState) //语音状态
     } else {
       AppStorage.setOrCreate('isAI_assistant', isAI_assistant)
-      if (!Float_Window.showVoiceInput) { //窗口没有显示时创建窗口
+      // if (!Float_Window.showVoiceInput) { //窗口没有显示时创建窗口
         Float_Window.creat()
-      } else {
-        Float_Window.show_float_window()
-      }
+      // } else {
+      //   Float_Window.show_float_window()
+      // }
       Float_Window.showVoiceInput += 1
       if (AppStorage.get('voiceTranslationState')) {
         AppStorage.setOrCreate('voiceTranslationState', false) //语音状态

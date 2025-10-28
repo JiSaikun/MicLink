@@ -8,7 +8,7 @@ import {
   LanguageNames,
   keyInfos_childsModel,
   keyInfos_childs_childsModel
-} from 'config' //获取设备按键信息
+} from 'config'
 import { picker } from '@kit.CoreFileKit'
 import { BusinessError } from '@kit.BasicServicesKit'
 import { OpenFileWithSystemApp } from 'api'
@@ -25,37 +25,89 @@ export interface KeymethodConfig {
 export struct ConfigPage2 {
   @Watch('onGetModelInfoChange') @StorageLink('getModelInfo') getModelInfo: getModelInfoModel =
     ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo as getModelInfoModel
+
   @State mouseconfig: DeviceInfo =
-    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo //鼠标信息
+    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo
+
   @StorageLink('languages') languages: string = 'ZH_CN'
   @State KeymethodConfig: KeymethodConfig[] = []
-  @StorageLink("shortcut") shortcut: number = 0 //改变该值弹出对应快捷键悬浮窗口 1：语音识别 2：语音翻译 3:截图识别 4：自定义快捷键
+  @StorageLink("shortcut") shortcut: number = 0
   @Link isShowConfig: boolean
-  @State isLoading: boolean = false;
+  @State isLoading: boolean = false
   @State isDataReady: boolean = false
+  @State hasDeviceDisconnected: boolean = false
 
   // 监听 getModelInfo 变化
-  onGetModelInfoChange() {
+  onGetModelInfoChange(): void {
     console.log('getModelInfo 已更新，重新初始化 KeymethodConfig')
+
+    // 检查设备是否已断开连接
+    if (this.checkDeviceDisconnected()) {
+      console.log('检测到设备已断开连接，关闭配置页面')
+      this.isShowConfig = false
+      this.hasDeviceDisconnected = true
+      return
+    }
+
     this.initKeymethodConfig()
   }
 
   aboutToAppear(): void {
+    // 初始检查设备状态
+    if (this.checkDeviceDisconnected()) {
+      console.log('初始检测到设备已断开连接，关闭配置页面')
+      this.isShowConfig = false
+      this.hasDeviceDisconnected = true
+      return
+    }
+
     this.initKeymethodConfig()
+  }
+
+  /**
+   * 检查设备是否已断开连接
+   */
+  private checkDeviceDisconnected(): boolean {
+    try {
+      const currIndex = AppStorage.get('device_show_currIndex') as number
+      const communication = ConnectDevice.Communication[currIndex]
+
+      // 检查关键数据是否存在
+      if (!communication ||
+        !communication.getModelInfo ||
+        !communication.mouseconfig ||
+        !communication.Communication ||
+        !communication.Communication.deviceInfo) {
+        return true
+      }
+
+      // 检查关键数据是否为空
+      if (!this.getModelInfo ||
+        !this.getModelInfo.keyInfos ||
+        this.getModelInfo.keyInfos.length === 0) {
+        return true
+      }
+
+      return false
+    } catch (error) {
+      console.error('检查设备状态时出错:', error)
+      return true
+    }
   }
 
   /**
    * 初始化 KeymethodConfig
    */
-  private initKeymethodConfig() {
-    if (!this.getModelInfo?.keyInfos || this.getModelInfo.keyInfos.length === 0) {
-      console.log('keyInfos 为空，跳过初始化')
-      this.KeymethodConfig = []
-      this.isDataReady = false
+  private initKeymethodConfig(): void {
+    if (this.hasDeviceDisconnected) {
       return
     }
 
-    console.log('开始初始化 KeymethodConfig')
+    if (!this.getModelInfo?.keyInfos || this.getModelInfo.keyInfos.length === 0) {
+      this.isShowConfig = false
+      this.hasDeviceDisconnected = true
+      return
+    }
 
     // 创建默认配置
     const defaultConfig: KeymethodConfig[] = [
@@ -72,8 +124,8 @@ export struct ConfigPage2 {
     ]
 
     // 从 getModelInfo 中读取实际的配置
-    this.getModelInfo.keyInfos.forEach((item, index1) => {
-      item.childs.forEach((child, index2) => {
+    this.getModelInfo.keyInfos.forEach((item: keyInfosModel, index1: number) => {
+      item.childs.forEach((child: keyInfos_childsModel, index2: number) => {
         const childs = child.childs || []
         for (let i = 0; i < childs.length; i++) {
           if (childs[i].first === 1) {
@@ -87,14 +139,13 @@ export struct ConfigPage2 {
     this.KeymethodConfig = [...defaultConfig]
     ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].KeymethodConfig = [...defaultConfig]
     this.isDataReady = true
-
-    console.log('KeymethodConfig 初始化完成:', JSON.stringify(defaultConfig))
+    this.hasDeviceDisconnected = false
   }
 
   /**
    * 根据操作类型更新配置
    */
-  private updateKeymethodConfigByOperation(key: string, operation: string, index: number, config: KeymethodConfig[]) {
+  private updateKeymethodConfigByOperation(key: string, operation: string, index: number, config: KeymethodConfig[]): void {
     switch (key) {
       case 'voice_key':
         if (operation === 'sk') config[0].currIndex = index
@@ -123,12 +174,16 @@ export struct ConfigPage2 {
    * 将子项转换为ArkUI官方SelectOption数组
    */
   private convertChildsToOptions(childs: keyInfos_childs_childsModel[]): SelectOption[] {
-    return childs.map((child, index) => {
-      const displayText = (child.names as LanguageNames)[this.languages]
+    if (!childs || childs.length === 0) {
+      return []
+    }
+
+    return childs.map((child: keyInfos_childs_childsModel, index: number) => {
+      const displayText = (child.names as LanguageNames)[this.languages] || `选项${index + 1}`
       return {
         value: displayText
-      } as SelectOption;
-    });
+      } as SelectOption
+    })
   }
 
   /**
@@ -180,7 +235,14 @@ export struct ConfigPage2 {
   /**
    * 处理选项选择
    */
-  private handleSelect(index1: number, index2: number, index: number, childs: keyInfos_childs_childsModel[]) {
+  private handleSelect(index1: number, index2: number, index: number, childs: keyInfos_childs_childsModel[]): void {
+    // 再次检查设备状态
+    if (this.checkDeviceDisconnected()) {
+      promptAction.showToast({ message: '设备已断开连接', duration: 2000 })
+      this.isShowConfig = false
+      return
+    }
+
     let params: addCustomerKey_Params = {
       cmdId: this.getModelInfo.keyInfos[index1].childs[index2].childs[index].cmdId.toString(),
       keyId: this.getModelInfo.keyInfos[index1].childs[index2].childs[index].keyId.toString(),
@@ -214,7 +276,7 @@ export struct ConfigPage2 {
   /**
    * 处理特殊命令
    */
-  private handleSpecialCommand(cmd: string) {
+  private handleSpecialCommand(cmd: string): void {
     switch (cmd) {
       case 'Action_SK':
         this.shortcut = 4
@@ -235,93 +297,103 @@ export struct ConfigPage2 {
   }
 
   build() {
-    if (this.getModelInfo?.keyInfos && this.isDataReady) {
-      Flex({ space: { main: LengthMetrics.px(15) }, direction: FlexDirection.Column }) {
-        ForEach(this.getModelInfo.keyInfos, (item: keyInfosModel, index1) => {
-          Text((item.names as LanguageNames)[this.languages])
-            .fontSize(14)
-            .lineHeight(14)
-            .fontWeight(400)
-            .fontColor('#a4aab2')
-            .margin(index1 === 0 ? { bottom: 10 } : { bottom: 5, top: 10 })
-
-          ForEach(item.childs, (child: keyInfos_childsModel, index2) => {
-            Text((child.names as LanguageNames)[this.languages])
-              .fontSize($r('app.float.default_text_font_size_14'))
-              .fontWeight(400)
-              .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-
-            Select(this.convertChildsToOptions(child.childs || []))
-              .value(((child.childs[this.getDefaultSelectedIndex(child.childs, index1, index2)] as keyInfos_childs_childsModel).names as LanguageNames)[this.languages])
-              .onSelect((index: number, value) => {
-                this.handleSelect(index1, index2, index, child.childs || [])
-              })
-              .selected(this.getDefaultSelectedIndex(child.childs || [], index1, index2))
-              .width('100%')
-              .font({ size: $r('app.float.default_text_font_size_14'), weight: 400 })
-              .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-              .borderRadius(4)
-              .border({ width: 1, color: $r('app.string.DEFAULT_BORDER_COLOR') })
-              .backgroundColor(Color.White)
-          }, (item: keyInfos_childsModel) => item.name)
-
-        }, (item: keyInfosModel) => item.keyName)
-      }
-      .width('100%')
-    } else {
-      // 数据加载中的状态
+    // 使用条件渲染而不是条件返回
+    Scroll(){
       Column() {
-        Text('加载中...')
-          .fontSize(14)
-          .fontColor('#a4aab2')
+        if (this.hasDeviceDisconnected) {
+          // 设备断开时显示空白
+          Blank()
+        } else if (this.getModelInfo?.keyInfos && this.isDataReady) {
+          // 数据加载完成的情况
+          Flex({ space: { main: LengthMetrics.px(15) }, direction: FlexDirection.Column }) {
+            ForEach(this.getModelInfo.keyInfos, (item: keyInfosModel, index1: number) => {
+              Text((item.names as LanguageNames)[this.languages])
+                .fontSize(14)
+                .lineHeight(14)
+                .fontWeight(400)
+                .fontColor('#a4aab2')
+                .margin(index1 === 0 ? { bottom: 10 } : { bottom: 5, top: 10 })
+
+              ForEach(item.childs, (child: keyInfos_childsModel, index2: number) => {
+                Text((child.names as LanguageNames)[this.languages])
+                  .fontSize($r('app.float.default_text_font_size_14'))
+                  .fontWeight(400)
+                  .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
+
+                Select(this.convertChildsToOptions(child.childs || []))
+                  .value(((child.childs[this.getDefaultSelectedIndex(child.childs, index1, index2)] as keyInfos_childs_childsModel).names as LanguageNames)[this.languages])
+                  .onSelect((index: number) => {
+                    this.handleSelect(index1, index2, index, child.childs || [])
+                  })
+                  .selected(this.getDefaultSelectedIndex(child.childs || [], index1, index2))
+                  .width('100%')
+                  .font({ size: $r('app.float.default_text_font_size_14'), weight: 400 })
+                  .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
+                  .borderRadius(4)
+                  .border({ width: 1, color: $r('app.string.DEFAULT_BORDER_COLOR') })
+                  .backgroundColor(Color.White)
+              }, (item: keyInfos_childsModel) => item.name)
+
+            }, (item: keyInfosModel) => item.keyName)
+          }
+          .width('100%')
+        } else {
+          // 数据加载中的情况
+          Column() {
+            Text('加载中...')
+              .fontSize(14)
+              .fontColor('#a4aab2')
+          }
+          .width('100%')
+          .height(100)
+          .justifyContent(FlexAlign.Center)
+          .alignItems(HorizontalAlign.Center)
+        }
       }
       .width('100%')
-      .height(100)
-      .justifyContent(FlexAlign.Center)
-      .alignItems(HorizontalAlign.Center)
-    }
+    }.height('100%')
+
   }
 
-  Watch_null() {
+  // 保留原有的 Watch_null 方法用于兼容性
+  Watch_null(): void {
     if (!this.getModelInfo?.keyInfos || this.getModelInfo.keyInfos.length === 0) {
       this.isShowConfig = false
+      this.hasDeviceDisconnected = true
     }
   }
 
   selectFolder(): void {
-    this.isLoading = true;
+    this.isLoading = true
     try {
-      let documentPicker = new picker.DocumentViewPicker();
+      let documentPicker = new picker.DocumentViewPicker()
       documentPicker.select({
         selectMode: picker.DocumentSelectMode.FOLDER
       })
         .then((result: string[]) => {
           if (!result || result.length === 0) {
-            promptAction.showToast({ message: '未选择任何文件', duration: 2000 });
-            return;
+            promptAction.showToast({ message: '未选择任何文件', duration: 2000 })
+            return
           }
-          const filePath = result[0];
-          const lastSlashIndex = filePath.lastIndexOf('/');
+          const filePath = result[0]
+          const lastSlashIndex = filePath.lastIndexOf('/')
           if (lastSlashIndex !== -1) {
             AppStorage.setOrCreate('folderPath', result[0])
-            console.log('提取的文件夹路径:', result[0]);
-            promptAction.showToast({ message: `已选择文件夹: ${result[0]}`, duration: 2500 });
+            promptAction.showToast({ message: `已选择文件夹: ${result[0]}`, duration: 2500 })
           } else {
-            promptAction.showToast({ message: '无法解析文件夹路径', duration: 2000 });
+            promptAction.showToast({ message: '无法解析文件夹路径', duration: 2000 })
           }
         })
         .catch((err: BusinessError) => {
-          const errorMsg = this.getFolderSelectErrorMsg(err.code);
-          console.error('文件夹选择失败:', errorMsg, '错误码:', err.code);
-          promptAction.showToast({ message: errorMsg, duration: 3000 });
+          const errorMsg = this.getFolderSelectErrorMsg(err.code)
+          promptAction.showToast({ message: errorMsg, duration: 3000 })
         })
         .finally(() => {
-          this.isLoading = false;
-        });
+          this.isLoading = false
+        })
     } catch (err) {
-      console.error('文件夹选择代码异常:', (err as Error).message);
-      promptAction.showToast({ message: '文件夹选择功能异常', duration: 3000 });
-      this.isLoading = false;
+      promptAction.showToast({ message: '文件夹选择功能异常', duration: 3000 })
+      this.isLoading = false
     }
   }
 
@@ -331,13 +403,13 @@ export struct ConfigPage2 {
   getFolderSelectErrorMsg(errorCode: number): string {
     switch (errorCode) {
       case 1001:
-        return '需要文件访问权限，请在设置中开启';
+        return '需要文件访问权限，请在设置中开启'
       case 1002:
-        return '已取消文件夹选择';
+        return '已取消文件夹选择'
       case 1003:
-        return '无文件夹访问权限，请授权后重试';
+        return '无文件夹访问权限，请授权后重试'
       default:
-        return `选择失败（错误码: ${errorCode}）`;
+        return `选择失败（错误码: ${errorCode}）`
     }
   }
 }

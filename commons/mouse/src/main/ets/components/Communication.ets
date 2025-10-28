@@ -29,7 +29,7 @@ export enum KeyPressType {
   AI_DOUBLE_CLICK = 52, //AI键-双击
   AI_LONG_PRESS_DOWN = 53, //AI键-长按按下
   AI_LONG_PRESS_UP = 54, //AI键-长按抬起
-//*************************************键盘按键******************************
+  //*************************************键盘按键******************************
   // 新增按键类型
   SCREENSHOT_TRANSLATE_CLICK = 61, //截图翻译键-单击
   SCREENSHOT_TRANSLATE_DOUBLE_CLICK = 62, //截图翻译键-双击
@@ -234,7 +234,10 @@ export class ConnectDevice {
       console.log('设备列表长度:', devices?.length || 0);
       if (!devices || devices.length === 0) {
         hilog.error(0x0000, 'USB', 'No USB devices found=================没有找到设备');
-        ConnectDevice.connectDevice()
+        // 延迟后重试连接
+        setTimeout((): void => {
+          ConnectDevice.connectDevice()
+        }, 3000);
         return;
       }
       // 显示所有设备信息————遍历
@@ -242,15 +245,19 @@ export class ConnectDevice {
         console.log(`设备 ${index}: VID=0x${device.vendorId.toString(16)}, PID=0x${device.productId.toString(16)}, 名称=${device.name}`);
       });
 
-
       // 查找匹配的设备 (VID: 0x248A)————鼠标
       const targetDevice = devices.filter(device => device.vendorId === 0x248A);
       ConnectDevice.targetDevice = targetDevice
-      if (!targetDevice) {
+      if (!targetDevice || targetDevice.length === 0) {
         hilog.error(0x0000, 'USB', '没找到鼠标设备');
         console.log('未找到VID为0x248A的设备');
+        // 延迟后重试连接
+        setTimeout((): void => {
+          ConnectDevice.connectDevice()
+        }, 3000);
         return;
       }
+
       for (let index = 0; index < targetDevice.length; index++) {
         console.log('找到目标设备:', targetDevice[index].name);
         const hasRight = await usbManager.hasRight(targetDevice[index].name)
@@ -283,11 +290,14 @@ export class ConnectDevice {
                 })
             } else {
               hilog.warn(0x0000, 'USB', '用户拒绝了权限请求');
+              // 权限被拒绝，延迟后重试
+              setTimeout((): void => {
+                ConnectDevice.connectDevice()
+              }, 5000);
             }
           })
           return;
         } else {
-
           let Communication_ = new Communication(index, ConnectDevice.targetDevice[index])
           let device: DeviceArrayType = {
             Communication: Communication_,
@@ -311,16 +321,29 @@ export class ConnectDevice {
     } catch (error) {
       hilog.error(0x0000, 'USB', `Connection failed: ${error.message}`);
       console.error('连接失败:', error);
+      // 连接失败，延迟后重试
+      setTimeout((): void => {
+        ConnectDevice.connectDevice()
+      }, 5000);
     }
   }
-} // 扫描并连接设备
+
+  // 静态方法用于断开所有设备连接
+  static disconnectAllDevices(): void {
+    console.log('断开所有设备连接');
+    ConnectDevice.Communication.forEach(device => {
+      device.Communication.destroy();
+    });
+    ConnectDevice.Communication = [];
+    ConnectDevice.targetDevice = [];
+  }
+}
 
 export class Communication {
   private device_currIndex: number = 0
   private devicePipe: usbManager.USBDevicePipe | null = null;
   private targetDevice: Readonly<usbManager.USBDevice> | null = null;
   public deviceInfo: DeviceInfo = {
-    //设备信息
     sn: '', //SN
     micStatus: false, //麦克风状态
     ledStatus: false, //LED状态
@@ -349,12 +372,14 @@ export class Communication {
   public audioDataState: boolean = false //是否录入开启
   private flax_yuyin: boolean = true //标记：防止鼠标上来直接开启了语音输入————先发送一次0x63命令
 
-  // 添加心跳相关属性
-  private heartbeatTimer: number = 0; // 心跳定时器
-  private lastReceivedTime: number = 0; // 最后接收消息时间
-  private readonly HEARTBEAT_INTERVAL: number = 5000; // 5秒检查一次
-  private readonly HEARTBEAT_TIMEOUT: number = 15000; // 15秒超时时间
-  private isHeartbeatRunning: boolean = false; // 心跳是否在运行
+  // 心跳重连机制相关属性 - 使用 number 类型代替 NodeJS.Timeout
+  private heartbeatTimer: number | null = null;
+  private lastReceivedTime: number = 0;
+  private readonly HEARTBEAT_CHECK_INTERVAL: number = 5000; // 5秒检查一次
+  private readonly HEARTBEAT_TIMEOUT: number = 15000; // 15秒超时
+  private isHeartbeatRunning: boolean = false;
+  private reconnectAttempts: number = 0;
+  private readonly MAX_RECONNECT_ATTEMPTS: number = 5;
 
   // 构建命令帧的通用方法
   private buildCommandFrame(cmd: number[], length: number): Uint8Array {
@@ -390,11 +415,10 @@ export class Communication {
     for (let i = endFlagPosition + 1; i < length; i++) {
       frame[i] = 0x00;
     }
-    // console.log(JSON.stringify(frame), '*******************************************************************')
     return frame;
   }
 
-  public async connectDevice() {
+  public async connectDevice(): Promise<void> {
     /**
      * 与鼠标建立连接
      */
@@ -402,267 +426,287 @@ export class Communication {
       usbManager.closePipe(this.devicePipe)
       this.devicePipe = null
     }
-    this.devicePipe = usbManager.connectDevice(this.targetDevice);
-    console.log('设备连接成功', JSON.stringify(this.devicePipe));
-    hilog.info(0x0000, 'USB', 'Device connected successfully');
 
-    AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DEFAULT)
+    try {
+      this.devicePipe = usbManager.connectDevice(this.targetDevice);
+      console.log('设备连接成功', JSON.stringify(this.devicePipe));
+      hilog.info(0x0000, 'USB', 'Device connected successfully');
 
-    if (!(this.targetDevice as Readonly<usbManager.USBDevice>)?.configs?.[0]?.interfaces) {
-      console.log('无法获取设备接口信息');
-      return;
-    }
+      // 重置重连尝试次数
+      this.reconnectAttempts = 0;
 
-    for (const iface of (this.targetDevice as Readonly<usbManager.USBDevice>).configs[0].interfaces) {
-      if (iface.endpoints) {
-        for (const endpoint of iface.endpoints) {
-          // console.error('测试:' + JSON.stringify(iface.endpoints))
-          // console.error('测试:' + JSON.stringify(endpoint))
-          // console.error(`端点 ${endpoint.address.toString(16)}: 类型=${endpoint.type}, 方向=${endpoint.direction}`);
-          if (endpoint.direction === 0) { // 输出端点
-            this.outputEndpoint = endpoint
-            this.outputInterface = iface
-          } else if (endpoint.direction === 128) { // 输入端点
-            if (iface.endpoints.length > 1) {
-              this.inputEndpoint = endpoint
-              // console.error('输入端点:' + JSON.stringify(this.inputInterface))
-              this.inputInterface = iface
-              // console.error('输入端点:' + JSON.stringify(this.inputInterface))
+      AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DEFAULT)
+
+      if (!(this.targetDevice as Readonly<usbManager.USBDevice>)?.configs?.[0]?.interfaces) {
+        console.log('无法获取设备接口信息');
+        return;
+      }
+
+      for (const iface of (this.targetDevice as Readonly<usbManager.USBDevice>).configs[0].interfaces) {
+        if (iface.endpoints) {
+          for (const endpoint of iface.endpoints) {
+            if (endpoint.direction === 0) { // 输出端点
+              this.outputEndpoint = endpoint
+              this.outputInterface = iface
+            } else if (endpoint.direction === 128) { // 输入端点
+              if (iface.endpoints.length > 1) {
+                this.inputEndpoint = endpoint
+                this.inputInterface = iface
+              }
             }
           }
         }
       }
+
+      // 连接成功后启动心跳检测
+      this.startHeartbeatCheck();
+      this.getDeviceInfo()
+    } catch (error) {
+      console.error('设备连接失败:', error);
+      await this.handleConnectionError();
     }
-    this.getDeviceInfo()
   }
 
   constructor(device_currIndex: number, targetDevice: Readonly<usbManager.USBDevice> | null) {
     this.device_currIndex = device_currIndex;
     this.targetDevice = targetDevice;
-    this.lastReceivedTime = Date.now();
+    this.lastReceivedTime = Date.now(); // 初始化最后接收时间
   }
 
   // 启动心跳检测
-  private startHeartbeatCheck() {
+  private startHeartbeatCheck(): void {
     if (this.isHeartbeatRunning) {
+      console.log('心跳检测已经在运行中');
       return;
     }
 
-    this.isHeartbeatRunning = true;
     this.lastReceivedTime = Date.now();
+    this.isHeartbeatRunning = true;
 
-    this.heartbeatTimer = setInterval(() => {
+    // 清除现有的定时器
+    if (this.heartbeatTimer !== null) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
+
+    this.heartbeatTimer = setInterval((): void => {
       this.checkHeartbeat();
-    }, this.HEARTBEAT_INTERVAL) as number;
+    }, this.HEARTBEAT_CHECK_INTERVAL) as number;
 
     console.log('心跳检测已启动');
   }
 
   // 停止心跳检测
-  private stopHeartbeatCheck() {
-    if (this.heartbeatTimer) {
-      clearInterval(this.heartbeatTimer);
-      this.heartbeatTimer = 0;
-    }
+  private stopHeartbeatCheck(): void {
     this.isHeartbeatRunning = false;
+
+    if (this.heartbeatTimer !== null) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
     console.log('心跳检测已停止');
   }
 
-  // 检查心跳 - 修改为直接重连
-  private async checkHeartbeat() {
+  // 检查心跳
+  private async checkHeartbeat(): Promise<void> {
+    // 如果设备未连接，不进行检查
+    if (!this.devicePipe || !this.isPhysicalKeyboardExist) {
+      console.log('设备未连接，跳过心跳检查');
+      this.stopHeartbeatCheck();
+      return;
+    }
+
     const currentTime = Date.now();
     const timeSinceLastReceive = currentTime - this.lastReceivedTime;
 
     console.log(`心跳检查: 上次接收时间 ${timeSinceLastReceive}ms 前`);
 
     if (timeSinceLastReceive > this.HEARTBEAT_TIMEOUT) {
-      console.log('心跳超时（超过15秒未收到消息），开始重新连接设备');
+      console.log(`心跳超时（${timeSinceLastReceive}ms 未收到消息），开始重新连接设备`);
       this.stopHeartbeatCheck();
-
-      // 直接重新连接设备，不发送测试命令
       await this.reconnectDevice();
     } else {
-      // 发送心跳包保持连接
-      await this.sendHeartbeat();
+      // 可选：发送心跳包测试连接
+      console.log('连接正常，发送心跳测试包');
+      // this.sendHeartbeatTest();
     }
   }
 
-  // 发送心跳包
-  private async sendHeartbeat() {
-    if (!this.devicePipe || !this.outputInterface || !this.outputEndpoint) {
-      return;
+  // 发送心跳测试包
+  private sendHeartbeatTest(): void {
+    if (!this.sendState && this.devicePipe) {
+      this.getDeviceInfo([0x69]); // 使用查询设备状态作为心跳测试
     }
+  }
 
-    try {
-      // 发送一个简单的状态查询命令作为心跳包
-      const heartbeatCommand = [0x69]; // 状态查询命令
+  // 更新接收时间戳
+  private updateLastReceivedTime(): void {
+    this.lastReceivedTime = Date.now();
+    console.log(`更新最后接收时间: ${new Date(this.lastReceivedTime).toISOString()}`);
+  }
 
-      const claimResult = usbManager.claimInterface(this.devicePipe, this.outputInterface, true);
-      if (claimResult === 0) {
-        const cmdData = this.buildCommandFrame(heartbeatCommand, 33);
-        const result = await usbManager.bulkTransfer(
-          this.devicePipe,
-          this.outputEndpoint,
-          cmdData,
-          1000
-        );
+  // 处理连接错误
+  private async handleConnectionError(): Promise<void> {
+    this.reconnectAttempts++;
 
-        if (result !== -1) {
-          console.log('心跳包发送成功');
-        } else {
-          console.log('心跳包发送失败');
-        }
-      }
-    } catch (error) {
-      console.error('发送心跳包失败:', error);
+    if (this.reconnectAttempts <= this.MAX_RECONNECT_ATTEMPTS) {
+      console.log(`连接错误，尝试重新连接 (${this.reconnectAttempts}/${this.MAX_RECONNECT_ATTEMPTS})`);
+      const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000); // 指数退避，最大30秒
+
+      setTimeout(async (): Promise<void> => {
+        await this.reconnectDevice();
+      }, delay);
+    } else {
+      console.log('达到最大重连尝试次数，停止重连');
+      this.stopHeartbeatCheck();
     }
   }
 
   // 重新连接设备
-  private async reconnectDevice() {
+  private async reconnectDevice(): Promise<void> {
     console.log('开始重新连接设备...');
 
-    // 停止当前所有活动
+    // 停止心跳检测
     this.stopHeartbeatCheck();
 
     // 关闭现有连接
     if (this.devicePipe) {
-      usbManager.closePipe(this.devicePipe);
+      try {
+        usbManager.closePipe(this.devicePipe);
+        console.log('已关闭现有设备连接');
+      } catch (error) {
+        console.error('关闭设备连接时出错:', error);
+      }
       this.devicePipe = null;
     }
 
-    // 重新连接
-    await this.connectDevice();
+    // 等待一小段时间再重连
+    await new Promise<void>((resolve: () => void) => setTimeout(resolve, 1000));
 
-    console.log('设备重新连接完成');
+    try {
+      // 重新连接
+      await this.connectDevice();
+      console.log('设备重新连接完成');
+    } catch (error) {
+      console.error('设备重新连接失败:', error);
+      await this.handleConnectionError();
+    }
   }
 
   // 使用批量传输获取设备信息
-  public async getDeviceInfo(command: number[] = [0x61]) {
+  public async getDeviceInfo(command: number[] = [0x61]): Promise<void> {
     if (!this.devicePipe) {
       console.log('设备未连接------------------------');
+      await this.reconnectDevice();
       return;
     }
 
-    // 在成功建立连接后启动心跳检测
-    if (command[0] === 0x61) { // 初始连接命令
-      this.startHeartbeatCheck();
-    }
+    this.isPhysicalKeyboardExist = false;
 
-    this.isPhysicalKeyboardExist = false
     if (this.sendState && command[0] !== 0x61) {
       console.log('有消息正在发送------------------------');
       if (command !== this.sendDataList[0]) {
         this.sendDataList = this.sendDataList.filter(item => item[0] !== command[0]);
         this.sendDataList.push(command);
       }
-      setTimeout(() => {
+      setTimeout((): void => {
         this.getDeviceInfo(command)
-      }, 50)
-      return
+      }, 50);
+      return;
     }
+
     if (this.sendDataList.length && command !== this.sendDataList[0]) {
       console.log('前面消息命令还没发送完：排队------------------------');
       this.sendDataList = this.sendDataList.filter(item => item[0] !== command[0]);
       this.sendDataList.push(command);
-      command = this.sendDataList[0]
+      command = this.sendDataList[0];
     }
 
     console.log('开始获取设备信息');
     try {
-      if (this.outputEndpoint && this.outputInterface && this.inputEndpoint &&
-      this.inputInterface) {
-        console.log('找到合适的端点，开始通信', JSON.stringify(this.outputEndpoint), '+',
-          JSON.stringify(this.outputInterface),);
+      if (this.outputEndpoint && this.outputInterface && this.inputEndpoint && this.inputInterface) {
+        console.log('找到合适的端点，开始通信', JSON.stringify(this.outputEndpoint), '+', JSON.stringify(this.outputInterface));
+
         // 1. 首先发送命令
         let a = await this.sendCommand(this.outputInterface, this.outputEndpoint, command);
-        console.log('================================', a)
+        console.log('================================', a);
 
         /**
          * 命令发送失败判断
          */
         if (a === -1) {
-          console.log('****************************************************************发送命令失败：断开设备连接', a)
+          console.log('****************************************************************发送命令失败：断开设备连接', a);
           await this.reconnectDevice();
-          console.log(`****************************************************************设备连接完成：重新发送断掉的命令:0x`,
-            command[0].toString(16))
-          this.getDeviceInfo(command)
-          return
+          console.log(`****************************************************************设备连接完成：重新发送断掉的命令:0x`, command[0].toString(16));
+          this.getDeviceInfo(command);
+          return;
         }
+
         this.sendDataList.splice(0, 1);
         if (this.sendDataList.length) {
-          setTimeout(() => {
-            this.getDeviceInfo(this.sendDataList[0])
-          }, 1000)
-          return
+          setTimeout((): void => {
+            this.getDeviceInfo(this.sendDataList[0]);
+          }, 1000);
+          return;
         }
-        this.isPhysicalKeyboardExist = true
+
+        this.isPhysicalKeyboardExist = true;
+
         // 2. 然后读取响应数据
         let b = await this.readResponse(this.inputInterface, this.inputEndpoint);
-        console.log('==================b', b)
+        console.log('==================b', b);
 
-        console.log('=========================================命令发送成功，并成功读取一次数据，开始执行循环读取',
-          '发送的命令是：', JSON.stringify(command), JSON.stringify(this.isPhysicalKeyboardExist))
+        console.log('=========================================命令发送成功，并成功读取一次数据，开始执行循环读取', '发送的命令是：', JSON.stringify(command), JSON.stringify(this.isPhysicalKeyboardExist));
+
+        // 确保心跳检测在持续读取前启动
+        if (!this.isHeartbeatRunning) {
+          this.startHeartbeatCheck();
+        }
+
         // 开始持续读取数据
         this.startContinuousReading();
 
       } else {
         console.log('未找到合适的端点');
+        await this.reconnectDevice();
       }
 
     } catch (error) {
       console.error('获取设备信息失败:', error);
+      await this.handleConnectionError();
     }
   }
 
   // 发送命令到输出端点
-  private async sendCommand(iface: usbManager.USBInterface, endpoint: usbManager.USBEndpoint,
-    command: number[], length: number = 33) {
-    this.sendState = true
-    hilog.warn(0x00, 'send',
-      '*******************************************************************************向鼠标发送消息')
+  private async sendCommand(iface: usbManager.USBInterface, endpoint: usbManager.USBEndpoint, command: number[], length: number = 33): Promise<number> {
+    this.sendState = true;
+    hilog.warn(0x00, 'send', '*******************************************************************************向鼠标发送消息');
+
     if (!this.devicePipe) {
-      return;
-      /**
-       * 没有与设备建立连接
-       */
+      this.sendState = false;
+      return -1;
     }
 
     try {
-      //建立信息发送通道
       const claimResult = usbManager.claimInterface(this.devicePipe, iface, true);
-      console.log('================================================发送建立信息发送通道信息前，建立信息发送通道：',
-        claimResult,)
+      console.log('================================================发送建立信息发送通道信息前，建立信息发送通道：', claimResult);
 
       if (claimResult === 0) {
-        // 构建命令帧
         const cmdData = this.buildCommandFrame(command, length);
         const cmdData_21 = this.buildCommandFrame(command, 21);
         const hexString = Array.from(cmdData).map(b => b.toString(16).padStart(2, '0')).join(' ');
         const hexString_21 = Array.from(cmdData_21).map(b => b.toString(16).padStart(2, '0')).join(' ');
-        console.log('\n', `发送命令 0x${command[0].toString(16)}:`, hexString, '\n',
-          `发送命令 0x${command[0].toString(16)}:`,
-          hexString_21);
-        console.log('`````````````````````````````````````````````````````````````等待发送的命令:',
-          this.sendDataList.length)
+        console.log('\n', `发送命令 0x${command[0].toString(16)}:`, hexString, '\n', `发送命令 0x${command[0].toString(16)}:`, hexString_21);
+        console.log('`````````````````````````````````````````````````````````````等待发送的命令:', this.sendDataList.length);
 
-        // 发送命令
-        const result = await usbManager.bulkTransfer(
-          this.devicePipe,
-          endpoint,
-          cmdData,
-          2000
-        );
-        const result_21 = await usbManager.bulkTransfer(
-          this.devicePipe,
-          endpoint,
-          cmdData_21,
-          2000
-        );
+        const result = await usbManager.bulkTransfer(this.devicePipe, endpoint, cmdData, 2000);
+        const result_21 = await usbManager.bulkTransfer(this.devicePipe, endpoint, cmdData_21, 2000);
+
         console.log('发送命令成功:33-----usbManager.bulkTransfer()返回发送的数据的长度:', result);
         console.log('发送命令成功:21-----usbManager.bulkTransfer()返回发送的数据的长度:', result_21);
 
-        this.sendState = false
+        this.sendState = false;
+
         if (result !== -1) {
           return result;
         } else if (result_21 !== -1) {
@@ -670,39 +714,37 @@ export class Communication {
         }
         return result;
       }
-      console.log('命令未成功发送')
-      console.log('================================================发送建立信息发送通道信息前，建立信息发送通道不成功：',
-        claimResult)
+
+      console.log('命令未成功发送');
+      console.log('================================================发送建立信息发送通道信息前，建立信息发送通道不成功：', claimResult);
+      this.sendState = false;
 
     } catch (error) {
       console.error('发送命令失败:', error);
+      this.sendState = false;
     }
     return -1;
   }
 
   // 从输入端点读取响应数据
-  private async readResponse(iface: usbManager.USBInterface, endpoint: usbManager.USBEndpoint) {
-    hilog.warn(0x00, 'send',
-      '*******************************************************************************接收鼠标发送的消息')
+  private async readResponse(iface: usbManager.USBInterface, endpoint: usbManager.USBEndpoint): Promise<number> {
+    hilog.warn(0x00, 'send', '*******************************************************************************接收鼠标发送的消息');
+
     if (!this.devicePipe) {
-      return;
+      this.readState = false;
+      return -1;
     }
-    this.readState = true
+
+    this.readState = true;
 
     try {
       const claimResult = usbManager.claimInterface(this.devicePipe, iface, true);
       console.log('声明接口结果:', claimResult);
-      console.log('***************************************************************************创建通信接口：',
-        claimResult)
+      console.log('***************************************************************************创建通信接口：', claimResult);
+
       if (claimResult === 0) {
-        // 读取数据 - 使用足够大的缓冲区
         const buffer = new Uint8Array(64);
-        const result = await usbManager.bulkTransfer(
-          this.devicePipe,
-          endpoint,
-          buffer,
-          5000
-        );
+        const result = await usbManager.bulkTransfer(this.devicePipe, endpoint, buffer, 5000);
 
         console.log('读取数据结果,读取到的数据的长度:', result);
 
@@ -710,53 +752,57 @@ export class Communication {
           const hexData = Array.from(buffer.slice(0, result)).map(b => b.toString(16).padStart(2, '0')).join(' ');
           console.log('接收到的数据展示:', hexData);
 
+          // 更新最后接收时间 - 重要：每次成功接收数据都更新
+          this.updateLastReceivedTime();
+
           // 解析设备信息
           this.parseDeviceInfo(buffer.slice(0, result));
-
         } else {
           console.log('未接收到数据');
         }
 
-        this.readState = false
+        this.readState = false;
         return result;
       } else {
-        console.log('***************************************************************************创建通信接口失败：',
-          claimResult)
+        console.log('***************************************************************************创建通信接口失败：', claimResult);
+        this.readState = false;
       }
     } catch (error) {
       console.error('读取数据失败:', error);
+      this.readState = false;
     }
     return -1;
   }
 
   // 开始持续读取数据
-  private startContinuousReading() {
+  private startContinuousReading(): void {
     if (!this.devicePipe || !this.inputInterface || !this.inputEndpoint) {
+      console.log('无法开始持续读取：缺少必要的接口或端点');
       return;
     }
 
-    // 启动心跳检测
-    this.startHeartbeatCheck();
+    // 确保心跳检测在持续读取前启动
+    if (!this.isHeartbeatRunning) {
+      this.startHeartbeatCheck();
+    }
 
     // 使用异步循环持续读取数据
-    (async () => {
-      let c = 0
+    (async (): Promise<void> => {
+      let c = 0;
       while (this.isPhysicalKeyboardExist && this.devicePipe) {
         try {
-          c++
-          console.log('循环读取鼠标数据-----', c, '---------------------')
+          c++;
+          console.log('循环读取鼠标数据-----', c, '---------------------');
 
-          let a = await this.readResponse(this.inputInterface as usbManager.USBInterface,
-            this.inputEndpoint as usbManager.USBEndpoint);
+          let a = await this.readResponse(this.inputInterface as usbManager.USBInterface, this.inputEndpoint as usbManager.USBEndpoint);
 
           if (a === -1) {
             console.log('第一次读取失败，尝试第二次读取');
-            let a = await this.readResponse(this.inputInterface as usbManager.USBInterface,
-              this.inputEndpoint as usbManager.USBEndpoint);
+            let a = await this.readResponse(this.inputInterface as usbManager.USBInterface, this.inputEndpoint as usbManager.USBEndpoint);
             if (a === -1) {
               console.log('连续两次读取失败，重新连接设备');
               await this.reconnectDevice();
-              return
+              return;
             }
           }
         } catch (error) {
@@ -769,19 +815,24 @@ export class Communication {
   }
 
   // 设备拔出变化
-  public changPhysicalKeyboardExistState(state: boolean) {
+  public changPhysicalKeyboardExistState(state: boolean): void {
     if (!state) {
+      // 设备拔出时停止心跳检测
       this.stopHeartbeatCheck();
       if (this.devicePipe) {
         usbManager.closePipe(this.devicePipe);
         this.devicePipe = null;
       }
+    } else {
+      // 设备重新插入时重新启动心跳检测
+      this.startHeartbeatCheck();
     }
     this.isPhysicalKeyboardExist = state;
   }
 
   // 添加销毁方法，在不再需要时清理资源
-  public destroy() {
+  public destroy(): void {
+    console.log(`销毁设备通信实例: ${this.device_currIndex}`);
     this.stopHeartbeatCheck();
     if (this.devicePipe) {
       usbManager.closePipe(this.devicePipe);
@@ -790,51 +841,45 @@ export class Communication {
   }
 
   // 解析设备信息
-  private parseDeviceInfo(data: Uint8Array) {
-    // 更新最后接收时间
-    this.lastReceivedTime = Date.now();
-
+  private parseDeviceInfo(data: Uint8Array): void {
     if (data.length < 21) {
       console.log('数据长度不足，期望至少21字节，实际:', data.length);
       return;
     }
+
     const hexData = Array.from(data).map(b => b.toString(16).padStart(2, '0')).join(' ');
-    // console.log('解析设备数据:', hexData);
 
     try {
       // 检查帧头F
       if (data.length > 0 && data[0] === 0x1b) {
         if (this.audioDataState) {
-          console.log('****************************语音数据****************************')
+          console.log('****************************语音数据****************************');
           console.log('接收到音频数据');
           this.processAudioData(data);
         }
-        return
+        return;
       }
 
       if (data.length > 4 && data[0] === 0x0C && data[1] === 0x4D) {
-        // console.log(data.toString())
         const dataLength = data[2];
         const command = data[3];
 
         console.log(`响应帧: 长度=${dataLength}, 命令=0x${command.toString(16)}`);
-        // console.log(command.toString(),'=========================',command.toString(16))
-        if (command === 0x61) { // 设备信息响应
 
+        // 原有的设备信息解析逻辑保持不变
+        if (command === 0x61) { // 设备信息响应
           // SN解析 - 直接使用十六进制表示，不转换为十进制
           const snPrefix = String.fromCharCode(data[4], data[5]); // "ML"
-
           const snSuffixBytes = data.slice(6, 14);
           console.log('SN后缀原始字节:', Array.from(snSuffixBytes).map(b => b.toString(16).padStart(2, '0')).join(' '));
 
           let snSuffix = '';
           for (let i = 0; i < snSuffixBytes.length; i++) {
-            // 直接使用十六进制值，不转换为十进制
             snSuffix += snSuffixBytes[i].toString(16).padStart(2, '0');
           }
 
           this.deviceInfo.sn = snPrefix + snSuffix;
-          console.log('SN:', this.deviceInfo.sn); // 应该输出: ML2024012611000156
+          console.log('SN:', this.deviceInfo.sn);
 
           // 2. 状态字节（协议：byte14）
           const statusByte = data[14];
@@ -852,6 +897,7 @@ export class Communication {
           const productTypeLow = data[17]; // 低八位
           const productTypeHigh = data[20]; // 高八位
           this.deviceInfo.productType = (productTypeHigh << 8) | productTypeLow;
+
           if (ConnectDevice.Communication[this.device_currIndex].productImg === '') {
             // let param: productImg_Params = {}
             // _productImg(param)
@@ -867,26 +913,14 @@ export class Communication {
           // 7. 固件版本（协议：byte19）
           this.deviceInfo.firmwareVersion = data[19].toString();
 
-          // console.log('设备信息解析成功:');
-          // console.log('SN:', Communication.deviceInfo.sn);
-          // console.log('麦克风状态:', Communication.deviceInfo.micStatus);
-          // console.log('LED状态:', Communication.deviceInfo.ledStatus);
-          // console.log('采样率:', Communication.deviceInfo.sampleRate);
-          // console.log('光电类型:', Communication.deviceInfo.icType);
-          // console.log('DPI档位:', Communication.deviceInfo.dpiLevel);
-          // console.log('产品型号:', Communication.deviceInfo.productType);
-          // console.log('电量:', Communication.deviceInfo.batteryLevel); // 现在对应协议的byte18
-          // console.log('固件版本:', Communication.deviceInfo.firmwareVersion);
-          // AppStorage.setOrCreate("mouseconfig", this.deviceInfo);
-          ConnectDevice.Communication[this.device_currIndex].mouseconfig = this.deviceInfo
+          ConnectDevice.Communication[this.device_currIndex].mouseconfig = this.deviceInfo;
+
           if (!(AppStorage.get('devicesList') as DeviceArrayType[])[this.device_currIndex].getModelInfo) {
-            AppStorage.setOrCreate('devicesList', null)
+            AppStorage.setOrCreate('devicesList', null);
             const newList: DeviceArrayType[] = JSON.parse(JSON.stringify(ConnectDevice.Communication));
-            AppStorage.setOrCreate('devicesList', newList)
+            AppStorage.setOrCreate('devicesList', newList);
           } else {
-            // console.error('asdjkalkdja',ConnectDevice.Communication[this.device_currIndex].KeymethodConfig.length)
             if (!ConnectDevice.Communication[this.device_currIndex].KeymethodConfig.length) {
-              // console.error('*****************************************************************',JSON.stringify(this.getModelInfo))
               ConnectDevice.Communication[this.device_currIndex].KeymethodConfig = [
                 { key: KeyPressType.VOICE_CLICK, currIndex: 0 },
                 { key: KeyPressType.VOICE_LONG_PRESS_DOWN, currIndex: 0 },
@@ -896,54 +930,54 @@ export class Communication {
                 { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
                 { key: KeyPressType.AI_CLICK, currIndex: 0 },
                 { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
-              ]
-              for (let item
-                of (AppStorage.get('devicesList') as DeviceArrayType[])[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[]) {
+              ];
+
+              for (let item of (AppStorage.get('devicesList') as DeviceArrayType[])[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[]) {
                 for (let childs of item.childs) {
                   childs.childs.forEach((keyInfos_childs_childsModel, index) => {
                     if (keyInfos_childs_childsModel.first === 1) {
                       switch (item.key) {
                         case 'voice_key': //语音键
                           if (childs.operation === 'sk') { //单击
-                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[0].currIndex = index
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[0].currIndex = index;
                           }
                           if (childs.operation === 'lk') { //长按
-                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[1].currIndex = index
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[1].currIndex = index;
                           }
-                          break
+                          break;
                         case 'search_key': //搜索键
                           if (childs.operation === 'sk') {
-                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[2].currIndex = index
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[2].currIndex = index;
                           }
                           if (childs.operation === 'lk') { //长按
-                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[3].currIndex = index
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[3].currIndex = index;
                           }
-                          break
+                          break;
                         case 'translate_key': //翻译键
                           if (childs.operation === 'sk') {
-                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[4].currIndex = index
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[4].currIndex = index;
                           }
                           if (childs.operation === 'lk') { //长按
-                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[5].currIndex = index
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[5].currIndex = index;
                           }
-                          break
-                        case 'AI_key': //翻译键
+                          break;
+                        case 'AI_key': //AI键
                           if (childs.operation === 'sk') {
-                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[6].currIndex = index
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[6].currIndex = index;
                           }
                           if (childs.operation === 'lk') { //长按
-                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[7].currIndex = index
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[7].currIndex = index;
                           }
-                          break
+                          break;
                       }
                     }
-                  })
+                  });
                 }
               }
             }
           }
-
         }
+
         if (command === 0x69) {
           // byte[4]:连接状态
           if (data[4]) {
@@ -953,7 +987,6 @@ export class Communication {
           }
           // byte[5]: 电量
           this.deviceInfo.batteryLevel = data[5];
-          // console.log('***********************************************************', data[6].toString())
           // byte[6]: 当前回报率
           const reportRateCode = data[6];
           switch (reportRateCode) {
@@ -979,15 +1012,15 @@ export class Communication {
           } else {
             this.deviceInfo.atmosphereLight = false;
           }
-          ConnectDevice.Communication[this.device_currIndex].mouseconfig = this.deviceInfo
+
+          ConnectDevice.Communication[this.device_currIndex].mouseconfig = this.deviceInfo;
+
           if (!(AppStorage.get('devicesList') as DeviceArrayType[])[this.device_currIndex].getModelInfo) {
-            AppStorage.setOrCreate('devicesList', null)
+            AppStorage.setOrCreate('devicesList', null);
             const newList: DeviceArrayType[] = JSON.parse(JSON.stringify(ConnectDevice.Communication));
-            AppStorage.setOrCreate('devicesList', newList)
+            AppStorage.setOrCreate('devicesList', newList);
           } else {
-            // console.error('asdjkalkdja',ConnectDevice.Communication[this.device_currIndex].KeymethodConfig.length)
             if (!ConnectDevice.Communication[this.device_currIndex].KeymethodConfig.length) {
-              // console.error('*****************************************************************',JSON.stringify(this.getModelInfo))
               ConnectDevice.Communication[this.device_currIndex].KeymethodConfig = [
                 { key: KeyPressType.VOICE_CLICK, currIndex: 0 },
                 { key: KeyPressType.VOICE_LONG_PRESS_DOWN, currIndex: 0 },
@@ -996,70 +1029,63 @@ export class Communication {
                 { key: KeyPressType.TRANSLATE_CLICK, currIndex: 0 },
                 { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
                 { key: KeyPressType.AI_CLICK, currIndex: 0 },
-                { key: KeyPressType.AI_LONG_PRESS_DOWN, currIndex: 0 },
-                { key: KeyPressType.CUSTOM_CLICK, currIndex: 0 },
-                { key: KeyPressType.CUSTOM_LONG_PRESS_DOWN, currIndex: 0 }
-              ]
-              for (let item
-                of (AppStorage.get('devicesList') as DeviceArrayType[])[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[]) {
+                { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
+              ];
+
+              for (let item of (AppStorage.get('devicesList') as DeviceArrayType[])[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[]) {
                 for (let childs of item.childs) {
                   childs.childs.forEach((keyInfos_childs_childsModel, index) => {
                     if (keyInfos_childs_childsModel.first === 1) {
                       switch (item.key) {
                         case 'voice_key': //语音键
                           if (childs.operation === 'sk') { //单击
-                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[0].currIndex = index
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[0].currIndex = index;
                           }
                           if (childs.operation === 'lk') { //长按
-                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[1].currIndex = index
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[1].currIndex = index;
                           }
-                          break
+                          break;
                         case 'search_key': //搜索键
                           if (childs.operation === 'sk') {
-                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[2].currIndex = index
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[2].currIndex = index;
                           }
                           if (childs.operation === 'lk') { //长按
-                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[3].currIndex = index
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[3].currIndex = index;
                           }
-                          break
+                          break;
                         case 'translate_key': //翻译键
                           if (childs.operation === 'sk') {
-                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[4].currIndex = index
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[4].currIndex = index;
                           }
                           if (childs.operation === 'lk') { //长按
-                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[5].currIndex = index
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[5].currIndex = index;
                           }
-                          break
-                        case 'AI_key': //翻译键
+                          break;
+                        case 'AI_key': //AI键
                           if (childs.operation === 'sk') {
-                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[6].currIndex = index
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[6].currIndex = index;
                           }
                           if (childs.operation === 'lk') { //长按
-                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[7].currIndex = index
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[7].currIndex = index;
                           }
-                          break
-                        case 'M_key': //M键
-                          if (childs.operation === 'sk') {
-                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[8].currIndex = index
-                          }
-                          if (childs.operation === 'lk') { //长按
-                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[9].currIndex = index
-                          }
-                          break
+                          break;
                       }
                     }
-                  })
+                  });
                 }
               }
             }
           }
         }
-        if (command === 0x11) {
 
+        if (command === 0x11) {
+          // 处理0x11命令
         }
+
         if (command === 0x63) {
-          this.flax_yuyin = false
+          this.flax_yuyin = false;
         }
+
         if (data[3] === 0x33) {
           console.log('****************************语音键单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
@@ -1655,9 +1681,8 @@ export class Communication {
         console.log('无效的响应帧格式');
       }
 
-
     } catch (error) {
-      console.warn(JSON.stringify(ConnectDevice.Communication[this.device_currIndex].KeymethodConfig))
+      console.warn(JSON.stringify(ConnectDevice.Communication[this.device_currIndex].KeymethodConfig));
       console.error('解析设备信息错误:', error);
     }
 
@@ -1666,53 +1691,52 @@ export class Communication {
      */
     if (this.deviceInfo.sn === '') {
       if (this.devicePipe) {
-        console.log('没有收到0x61命令,重新获取设备信息')
-        this.getDeviceInfo()
+        console.log('没有收到0x61命令,重新获取设备信息');
+        this.getDeviceInfo();
       }
     } else {
       if (!ConnectDevice.Communication[this.device_currIndex].getModelInfo) {
-        console.warn(this.deviceInfo.productType.toString())
+        console.warn(this.deviceInfo.productType.toString());
         const params: getModelInfo_Params = {
           languageCode: '',
           productCode: this.deviceInfo.productType.toString(),
           sno: this.deviceInfo.sn
-        }
+        };
+
         _getModelInfo(params).then((res) => {
-          console.log('获取用户按键模式详情数据', JSON.stringify(res.data))
+          console.log('获取用户按键模式详情数据', JSON.stringify(res.data));
           if (res.status === 200) {
-            let getModelInfo: getModelInfoModel = res.data as getModelInfoModel
-            ConnectDevice.Communication[this.device_currIndex].getModelInfo = getModelInfo
+            let getModelInfo: getModelInfoModel = res.data as getModelInfoModel;
+            ConnectDevice.Communication[this.device_currIndex].getModelInfo = getModelInfo;
             const newList: DeviceArrayType[] = JSON.parse(JSON.stringify(ConnectDevice.Communication));
-            AppStorage.setOrCreate('devicesList', newList)
+            AppStorage.setOrCreate('devicesList', newList);
+
             /**
              * 判断当前设备是否是键盘
              */
-            if ((ConnectDevice.Communication[this.device_currIndex].getModelInfo as getModelInfoModel).functions.length !==
-              0) {
-              for (let item
-                of (ConnectDevice.Communication[this.device_currIndex].getModelInfo as getModelInfoModel).functions) {
+            if ((ConnectDevice.Communication[this.device_currIndex].getModelInfo as getModelInfoModel).functions.length !== 0) {
+              for (let item of (ConnectDevice.Communication[this.device_currIndex].getModelInfo as getModelInfoModel).functions) {
                 if (item.code === 'keyboard') {
-                  ConnectDevice.Communication[this.device_currIndex].PRODUCT_TYPE = PRODUCT_TYPE.keyboard
+                  ConnectDevice.Communication[this.device_currIndex].PRODUCT_TYPE = PRODUCT_TYPE.keyboard;
                 }
               }
             }
           }
         }).catch(() => {
-          // console.log('请求失败')
-        })
+          console.log('获取设备模型信息请求失败');
+        });
       } else {
         if (this.flax_yuyin) {
-          this.getDeviceInfo([0x63])
+          this.getDeviceInfo([0x63]);
         }
       }
-
     }
   }
 
   static audioData: Int16Array[] = []
 
   // 处理音频数据
-  private processAudioData(data: Uint8Array) {
+  private processAudioData(data: Uint8Array): void {
     try {
       // 移除帧头(0x1b)
       let audioFrame = data.subarray(1);
@@ -1720,7 +1744,7 @@ export class Communication {
         // 解密音频数据
         const decryptedData = this.audioProcessor.miclinkDecrypt(audioFrame);
         // 这里可以添加播放或保存PCM数据的逻辑
-        audioFrame = decryptedData
+        audioFrame = decryptedData;
       }
 
       // 解码为PCM
@@ -1730,7 +1754,7 @@ export class Communication {
         // 处理PCM数据（播放或保存）
         console.log(`解码得到PCM数据: ${pcmData.length}个样本`, '\n', '具体数据：', pcmData);
         // 这里可以添加播放或保存PCM数据的逻辑
-        Communication.audioData.push(pcmData)
+        Communication.audioData.push(pcmData);
       }
     } catch (error) {
       console.error('处理音频数据失败:', error);
