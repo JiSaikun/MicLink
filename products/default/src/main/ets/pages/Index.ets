@@ -61,6 +61,7 @@ PersistentStorage.persistProp("voice_translation_shortcut", { keyPreview: '', pr
 PersistentStorage.persistProp("screenshot_recognition_shortcut", { keyPreview: '', pressedKeys: [] }) //截图识别快捷键
 PersistentStorage.persistProp("custom_shortcut", { keyPreview: '', pressedKeys: [] }) //自定义快捷键
 PersistentStorage.persistProp("paletteTheme", ThemeConfig.PaletteTheme) //主题颜色
+PersistentStorage.persistProp("resolutionScale", 'followSystem') //分辨率缩放
 
 @Entry
 @Component
@@ -97,6 +98,8 @@ struct Index {
   @State isNavigationLibActive: boolean = true //导航库重置
   @StorageLink('devices') devices: DeviceArrayType_Ble[] = []
   @StorageLink("paletteTheme") paletteTheme: string = ThemeConfig.PaletteTheme
+  @StorageLink("resolutionScale") @Watch('onResolutionChange') resolutionScale: string = 'followSystem'
+  @State scaleValue: number = 1.0
 
   // TabsControllerIndex 变化监听
   onTabsControllerIndexChange(): void {
@@ -134,6 +137,21 @@ struct Index {
       this.bottomCurrIndex = 10000
       console.log('Invalid index, reset states')
     }
+  }
+
+  // 监听分辨率变化
+  onResolutionChange(): void {
+    this.updateScaleValue()
+  }
+
+  // 更新缩放值
+  updateScaleValue(): void {
+    if (this.resolutionScale === 'followSystem') {
+      this.scaleValue = 1.0
+    } else {
+      this.scaleValue = parseFloat(this.resolutionScale) / 100
+    }
+    console.info(`全局应用缩放比例: ${this.scaleValue}`)
   }
 
   change_mouse_KeyPressType() {
@@ -184,6 +202,9 @@ struct Index {
     this.bottomDataLength = bottom_data.length;
     console.log('aiModelDataLength initialized:', this.aiModelDataLength)
     console.log('bottomDataLength initialized:', this.bottomDataLength)
+
+    // 初始化缩放值
+    this.updateScaleValue()
 
     let isPhysicalKeyboardExist = true;
     try {
@@ -262,6 +283,7 @@ struct Index {
             }
             .flexGrow(1)
             .flexShrink(1)
+            .scale({ x: this.scaleValue, y: this.scaleValue })
 
             Tabs({ controller: this.tabsController, index: this.tabsControllerIndex }) {
               // 确保 TabContent 数量与 AiModel_data + bottom_data 匹配
@@ -374,6 +396,7 @@ struct Index {
             .layoutWeight(1)
             .barWidth(0)
             .animationDuration(0)
+            .scale({ x: this.scaleValue, y: this.scaleValue })
           }
           .width('100%')
           .height('100%')

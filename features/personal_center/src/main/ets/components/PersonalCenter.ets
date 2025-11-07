@@ -16,18 +16,36 @@ export struct PersonalCenter {
   @StorageLink("paletteTheme") paletteTheme: string = ThemeConfig.PaletteTheme
   @State userLoginInfo: UserLoginInfo = AppStorage.get('userLoginInfo') as UserLoginInfo
   @StorageLink('languages') @Watch('onLanguageChange') languages: string = 'ZH_CN'
+  @StorageLink("resolutionScale") @Watch('onResolutionChange') resolutionScale: string = 'followSystem'
   @Consume('pageInfo') pageInfo: NavPathStack
   @State tabBarList: string[] = []
   @State curr_Index: number = 0
   @State isShow_Rename_pop: boolean = false
+  @State scaleValue: number = 1.0
 
   aboutToAppear(): void {
     this.updateTabBarList()
+    this.updateScaleValue()
   }
 
   // 监听语言变化
   onLanguageChange(): void {
     this.updateTabBarList()
+  }
+
+  // 监听分辨率变化
+  onResolutionChange(): void {
+    this.updateScaleValue()
+  }
+
+  // 更新缩放值
+  updateScaleValue(): void {
+    if (this.resolutionScale === 'followSystem') {
+      this.scaleValue = 1.0
+    } else {
+      this.scaleValue = parseFloat(this.resolutionScale) / 100
+    }
+    console.info(`应用缩放比例: ${this.scaleValue}`)
   }
 
   // 更新标签栏列表
@@ -254,6 +272,7 @@ export struct PersonalCenter {
           }.padding({ left: 24, right: 24 })
 
         }
+        .scale({ x: this.scaleValue, y: this.scaleValue })
 
         if (this.isShow_Rename_pop && this.userLoginInfo?.token) {
           Rename_pop({ isShow_Rename_pop: this.isShow_Rename_pop, token: this.userLoginInfo.token })

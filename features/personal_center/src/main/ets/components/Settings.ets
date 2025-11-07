@@ -7,6 +7,7 @@ export struct Settings {
   // 监听语言变化，更新选项
   @Watch('updateOptions')@StorageLink('languages') languages: string = 'ZH_CN'
   @StorageLink("paletteTheme") paletteTheme: string = ThemeConfig.PaletteTheme
+  @StorageLink("resolutionScale") resolutionScale: string = 'followSystem'
 
   aboutToAppear(): void {
     this.paletteTheme = ThemeConfig.PaletteTheme
@@ -19,6 +20,7 @@ export struct Settings {
     'ZH_CN', 'EN_US', 'ZH_TW', 'JA_JP', 'VI_VN', 'KO_KR', 'ID_ID', 'TH_TH', 'FIL_PH', 'MAY_MAY',
     'RU_RU', 'TR_TR', 'FR_FR', 'DE_DE', 'IT_IT', 'ES_ES', 'MN_MN', 'AR_SA', 'KA_KA', 'UYGUR'
   ]
+  @State resolutionValues: string[] = ['followSystem', '100%', '125%', '150%', '175%', '200%']
 
 
   onLanguagesChange() {
@@ -79,9 +81,28 @@ export struct Settings {
   }
 
   init_resolution(): number {
-    // 这里应该根据实际存储的分辨率设置来返回索引
-    // 暂时返回0
+    for (let index = 0; index < this.resolutionValues.length; index++) {
+      if (this.resolutionValues[index] === this.resolutionScale) {
+        return index
+      }
+    }
     return 0
+  }
+
+  // 应用分辨率设置
+  applyResolution(scale: string): void {
+    console.info(`应用分辨率: ${scale}`)
+    // 这里可以添加实际应用分辨率的逻辑
+    // 例如调整窗口大小、字体大小等
+    if (scale === 'followSystem') {
+      // 跟随系统设置
+      console.info('使用系统默认分辨率')
+    } else {
+      // 应用指定的缩放比例
+      const scaleValue = parseFloat(scale) / 100
+      console.info(`应用缩放比例: ${scaleValue}`)
+      // 可以在这里设置全局缩放因子
+    }
   }
 
   build() {
@@ -102,7 +123,9 @@ export struct Settings {
           Select(this.resolution)
             .value(this.resolution[this.init_resolution()].value)
             .onSelect((index: number) => {
-              // 处理分辨率选择逻辑
+              const selectedScale = this.resolutionValues[index]
+              AppStorage.setOrCreate('resolutionScale', selectedScale)
+              this.applyResolution(selectedScale)
             })
             .selected(this.init_resolution())
             .width('100%')
