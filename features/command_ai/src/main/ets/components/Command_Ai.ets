@@ -33,22 +33,37 @@ export interface tableDataModel {
 
 @Component
 export default struct Command_Ai {
-  // 新增：当前语言状态
-  @StorageLink('languages') languages: string = 'ZH_CN'
+  // 新增：当前语言状态，使用@Watch监听语言变化
+  @StorageLink('languages') @Watch('onLanguageChange') languages: string = 'ZH_CN'
   @StorageLink("paletteTheme") paletteTheme: string = ThemeConfig.PaletteTheme
   // 模拟视频数据：替换中文标题为多语言
-  @State video_data: videoModel[] = [
-    { image: 'video_Command_Ai', title: Languages.create_certain_video_tutorial[this.languages] },
-    { image: 'video_Command_Ai', title: `${Languages.create_certain_video_tutorial[this.languages]}1` },
-    { image: 'video_Command_Ai', title: `${Languages.create_certain_video_tutorial[this.languages]}2` },
-    { image: 'video_Command_Ai', title: `${Languages.create_certain_video_tutorial[this.languages]}3` },
-    { image: 'video_Command_Ai', title: `${Languages.create_certain_video_tutorial[this.languages]}4` },
-    { image: 'video_Command_Ai', title: `${Languages.create_certain_video_tutorial[this.languages]}5` },
-    { image: 'video_Command_Ai', title: `${Languages.create_certain_video_tutorial[this.languages]}6` },
-    { image: 'video_Command_Ai', title: `${Languages.create_certain_video_tutorial[this.languages]}7` },
-    { image: 'video_Command_Ai', title: `${Languages.create_certain_video_tutorial[this.languages]}8` },
-    { image: 'video_Command_Ai', title: Languages.create_certain_video_tutorial[this.languages] }
-  ]
+  @State video_data: videoModel[] = []
+
+  // 监听语言变化，更新视频数据
+  onLanguageChange() {
+    this.updateVideoData()
+  }
+
+  // 更新视频数据的方法
+  updateVideoData() {
+    this.video_data = [
+      { image: 'video_Command_Ai', title: Languages.create_certain_video_tutorial[this.languages] },
+      { image: 'video_Command_Ai', title: `${Languages.create_certain_video_tutorial[this.languages]}1` },
+      { image: 'video_Command_Ai', title: `${Languages.create_certain_video_tutorial[this.languages]}2` },
+      { image: 'video_Command_Ai', title: `${Languages.create_certain_video_tutorial[this.languages]}3` },
+      { image: 'video_Command_Ai', title: `${Languages.create_certain_video_tutorial[this.languages]}4` },
+      { image: 'video_Command_Ai', title: `${Languages.create_certain_video_tutorial[this.languages]}5` },
+      { image: 'video_Command_Ai', title: `${Languages.create_certain_video_tutorial[this.languages]}6` },
+      { image: 'video_Command_Ai', title: `${Languages.create_certain_video_tutorial[this.languages]}7` },
+      { image: 'video_Command_Ai', title: `${Languages.create_certain_video_tutorial[this.languages]}8` },
+      { image: 'video_Command_Ai', title: Languages.create_certain_video_tutorial[this.languages] }
+    ]
+  }
+
+  // 初始化方法
+  aboutToAppear() {
+    this.updateVideoData()
+  }
   // 模拟表格数据：替换中文为多语言
   @StorageLink('table_data') table_data: tableDataModel[] = [
     {
