@@ -496,6 +496,10 @@ export struct CreateNewInstruction_pop {
                 .fontColor(CommonConstants.COMMAND_DEFAULT_FONT_COLOR)
                 .fontWeight(CommonConstants.CreateNewInstruction_pop_DEFAULT_FONT_WEIGHT)
                 .layoutWeight(1)
+                .focusable(
+                  !(this.response_[this.currentindex]?.showFilePicker ||
+                    this.response_[this.currentindex]?.showFolderPicker)
+                )
                 .onChange((value: string) => {
                   this.onExecuteChange(value);
                 })
