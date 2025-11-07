@@ -23,6 +23,7 @@ export struct Contentbottom {
   @Link confirmPasswordTwice: string
   @Link oldPassword: string
   @Link newPassword: string
+  @Link newPassword_confirmPasswordTwice: string
 
   change_longin_operation() {
     // console.error('索引号改变')
@@ -59,7 +60,7 @@ export struct Contentbottom {
       .width(config.login_dafault_input_width)
       .margin({ bottom: 10 })
 
-      Text(this.longin_operation === 3 ? Languages.login_confirmModifyBtn[this.languages] //确认修改
+      Text(this.longin_operation === 4 ? Languages.login_confirmModifyBtn[this.languages] //重设密码
         : this.longin_operation === 2 ? Languages.login_registerLoginBtn[this.languages] //注册并登录
           : Languages.login_loginBtn[this.languages])//登录
         .width(config.login_dafault_input_width)
@@ -96,7 +97,7 @@ export struct Contentbottom {
             // 若两者都不匹配，保持accountType为空（无需额外代码）
             if (!accountType) {
               promptAction.showToast({
-                message: Languages.login_invalidAccountFormat[AppStorage.get('languages') as string],//账号格式不正确,请输入正确的手机号/邮箱
+                message: Languages.login_invalidAccountFormat[AppStorage.get('languages') as string], //账号格式不正确,请输入正确的手机号/邮箱
                 duration: 2000,
                 alignment: 4 // 鸿蒙 Alignment.Center 的枚举值为 4，避免直接引用可能的类型问题
               });
@@ -186,6 +187,41 @@ export struct Contentbottom {
             }
 
           }
+          if (this.longin_operation == 4) {
+            /******修改密码页*********/
+            if (!this.captcha) {
+              promptAction.showToast({
+                message: Languages.login_captchaEmpty[this.languages], //请输入验证码
+                duration: 2000,
+                alignment: Alignment.Center
+              });
+              return
+            }
+            if (!this.newPassword) {
+              promptAction.showToast({
+                message: Languages.login_newPwdEmpty[this.languages], //新密码不能为空
+                duration: 2000,
+                alignment: Alignment.Center
+              });
+              return
+            }
+            if (!this.newPassword_confirmPasswordTwice) {
+              promptAction.showToast({
+                message: Languages.confirmPasswordRequired[this.languages], //二次确认密码不能为空
+                duration: 2000,
+                alignment: Alignment.Center
+              });
+              return
+            }
+            if (this.newPassword !== this.newPassword_confirmPasswordTwice) {
+              promptAction.showToast({
+                message: Languages.passwordsNotMatch[this.languages], //两次密码输入不一致
+                duration: 2000,
+                alignment: Alignment.Center
+              });
+              return
+            }
+          }
           if (!this.isChecked) {
             promptAction.showToast({
               message: Languages.login_agreeTermsFirst[this.languages], //请先阅读并同意服务协议和隐私保护
@@ -243,26 +279,8 @@ export struct Contentbottom {
                 })
               break
             case 1:
-              const params2: login_Params = {
-                account: this.phone.trim(), // 传参时去除空格，保证数据准确性
-                code: this.captcha
-              }
-              _login(params2)
-                .then(res => {
-                  console.log('验证码登录', JSON.stringify(res))
-                  //显示必须要有登录密码
-                  //   if (res.statusCode === 200) {
-                  //     // let userLoginInfo: register_Response = res.data as register_Response
-                  //     // AppStorage.setOrCreate('userLoginInfo', userLoginInfo)
-                  //     // AppStorage.setOrCreate("login", true)
-                  //     // this.pageInfo.pop()
-                  //   }
-                  //   // let userLoginInfo: register_Response = res.data as register_Response
-                  //   // AppStorage.setOrCreate('userLoginInfo', userLoginInfo)
-                  // })
-                  // .catch(() => {
-                  //   console.log('注册登录失败')
-                })
+              AppStorage.setOrCreate("login", true)
+              this.pageInfo.pop()
               break
             case 2:
               const params3: register_Params = {
@@ -282,7 +300,6 @@ export struct Contentbottom {
                   } else {
                     return
                   }
-
                 }).catch(() => {
                 /**
                  * 请求错误
@@ -290,22 +307,47 @@ export struct Contentbottom {
               })
               break
             case 3:
-              const params4: resetPwd_Params = {
+              // const params4: resetPwd_Params = {
+              //   account: this.phone.trim(), // 传参时去除空格，保证数据准确性
+              //   code: this.captcha,
+              //   password: this.loginPassword,
+              // }
+              // _resetPwd(params4)
+              //   .then(res => {
+              //     console.log('修改密码', JSON.stringify(res))
+              //     //显示必须要有登录密码
+              //     //   if (res.statusCode === 200) {
+              //     //     // let userLoginInfo: register_Response = res.data as register_Response
+              //     //     // AppStorage.setOrCreate('userLoginInfo', userLoginInfo)
+              //     //     // AppStorage.setOrCreate("login", true)
+              //     //     // this.pageInfo.pop()
+              //     //   }
+              //     //   // let userLoginInfo: register_Response = res.data as register_Response
+              //     //   // AppStorage.setOrCreate('userLoginInfo', userLoginInfo)
+              //     // })
+              //     // .catch(() => {
+              //     //   console.log('注册登录失败')
+              //   })
+              break
+            case 4:
+              const params5: resetPwd_Params = {
                 account: this.phone.trim(), // 传参时去除空格，保证数据准确性
                 code: this.captcha,
-                password: this.loginPassword,
+                password: this.newPassword,
               }
-              _resetPwd(params4)
+              _resetPwd(params5)
                 .then(res => {
-                  console.log('修改密码', JSON.stringify(res))
+                  console.log('忘记密码', JSON.stringify(res))
                   //显示必须要有登录密码
 
-                  //   if (res.statusCode === 200) {
-                  //     // let userLoginInfo: register_Response = res.data as register_Response
-                  //     // AppStorage.setOrCreate('userLoginInfo', userLoginInfo)
-                  //     // AppStorage.setOrCreate("login", true)
-                  //     // this.pageInfo.pop()
-                  //   }
+                  if (res.statusCode === 200) {
+                    promptAction.showToast({ message: Languages.changeSuccess[this.languages] })
+                    this.longin_operation = 0
+                    // let userLoginInfo: register_Response = res.data as register_Response
+                    // AppStorage.setOrCreate('userLoginInfo', userLoginInfo)
+                    // AppStorage.setOrCreate("login", true)
+                    // this.pageInfo.pop()
+                  }
                   //   // let userLoginInfo: register_Response = res.data as register_Response
                   //   // AppStorage.setOrCreate('userLoginInfo', userLoginInfo)
                   // })
@@ -316,7 +358,7 @@ export struct Contentbottom {
           }
 
         })
-      Row() {
+      Flex() {
         Text(this.longin_operation === 0 ? Languages.login_switchCaptcha[this.languages] //切换至验证码登录
           : Languages.login_switchPassword[this.languages])//切换至密码登录
           .textDefaultStyle()
@@ -327,18 +369,21 @@ export struct Contentbottom {
               this.longin_operation = 0
             }
           })
+          .flexShrink(1)
         Blank()
         Text(Languages.login_registerAccount[this.languages])//注册账号
           .textDefaultStyle()
-          .margin({ right: 5 })
+          .margin({left:10, right: 5 })
           .onClick(() => {
             this.longin_operation = 2
           })
+          .flexShrink(1)
         Text(Languages.login_forgotPassword[this.languages])//忘记密码?
           .textDefaultStyle()
           .onClick(() => {
-            this.longin_operation = 3
+            this.longin_operation = 4
           })
+          .flexShrink(1)
       }
       .width(config.login_dafault_input_width)
       .visibility(this.longin_operation == 0 || this.longin_operation == 1 ? Visibility.Visible : Visibility.None)
@@ -353,7 +398,7 @@ export struct Contentbottom {
         Text(Languages.login_forgotPassword[this.languages])//忘记密码?
           .textDefaultStyle()
           .onClick(() => {
-            this.longin_operation = 3
+            this.longin_operation = 4
           })
       }
       .width(config.login_dafault_input_width)
@@ -368,7 +413,7 @@ export struct Contentbottom {
       }
       .justifyContent(FlexAlign.Center)
       .width(config.login_dafault_input_width)
-      .visibility(this.longin_operation == 3 ? Visibility.Visible : Visibility.None)
+      .visibility(this.longin_operation == 3 || this.longin_operation == 4 ? Visibility.Visible : Visibility.None)
     }
   }
 }

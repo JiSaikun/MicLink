@@ -5,11 +5,12 @@ export struct WebUrlToOpen_pop {
   @StorageLink('languages') languages: string = 'ZH_CN'
   @State webUrlToOpen: string = '' //打开网页：输入网址
   @Link isShow_webUrlToOpen_pop: boolean
+  @StorageLink("paletteTheme") paletteTheme: string = ''
 
   aboutToAppear(): void {
     this.webUrlToOpen = AppStorage.get('webUrlToOpen') as string
     AppStorage.setOrCreate('webUrlToOpen', '')
-    console.warn( 'webUrlToOpen:',AppStorage.get('webUrlToOpen') as string)
+    console.warn('webUrlToOpen:', AppStorage.get('webUrlToOpen') as string)
   }
 
   build() {
@@ -26,7 +27,7 @@ export struct WebUrlToOpen_pop {
         .width('100%')
         .borderRadius({ topLeft: 8, topRight: 8 })
         .padding(10)
-        .backgroundColor('#00afcc')
+        .backgroundColor(this.paletteTheme)
 
         // TextInput({ placeholder: '请输入打开网页的网址', text: $$this.webUrlToOpen })
         TextInput({ placeholder: Languages.enter_web_url_placeholder[this.languages], text: $$this.webUrlToOpen })
@@ -54,11 +55,11 @@ export struct WebUrlToOpen_pop {
               left: 35,
               right: 35
             })
-            .backgroundColor('#00afcc')
+            .backgroundColor(this.paletteTheme)
             .borderRadius(5)
             .onClick(() => {
               AppStorage.setOrCreate('webUrlToOpen', this.webUrlToOpen)
-              console.error( 'webUrlToOpen:',AppStorage.get('webUrlToOpen') as string)
+              console.error('webUrlToOpen:', AppStorage.get('webUrlToOpen') as string)
               this.isShow_webUrlToOpen_pop = false
             })
         }

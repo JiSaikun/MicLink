@@ -42,6 +42,6 @@ export function _login(params: login_Params) {
  * @returns
  */
 export function _resetPwd(params: resetPwd_Params) {
-  return http.post<register_Response, resetPwd_Params>('/api/login', params);
+  return http.post<register_Response, resetPwd_Params>('/api/resetPwd', params);
 }
 

@@ -12,13 +12,14 @@ export function LoginBuilder() {
 @Component
 struct Login {
   @StorageLink('languages') languages: string = 'ZH_CN'
-  @State longin_operation: number = 0 //0:登录页 1：验证登录页 2：注册页 3：修改密码
+  @State longin_operation: number = 0 //0:登录页 1：验证登录页 2：注册页 3：修改密码 4:忘记密码
   @State phone: string = '' //手机号
   @State captcha: string = '' //验证码
   @State loginPassword: string = '' //登陆密码
   @State confirmPasswordTwice: string = '' //二次确认密码
   @State oldPassword: string = '' //旧密码
   @State newPassword: string = '' //新密码
+  @State newPassword_confirmPasswordTwice: string = '' //新密码_确认密码
 
   aboutToAppear(): void {
     // console.log('进入了登录页面')
@@ -66,7 +67,14 @@ struct Login {
               data: this.newPassword,
               type: InputType.Password
             })//新密码
-              .visibility(this.longin_operation === 3 ? Visibility.Visible : Visibility.None)
+              .visibility(this.longin_operation === 3 || this.longin_operation === 4 ? Visibility.Visible :
+              Visibility.None)
+            InputBox({
+              placeholder: Languages.login_confirmPassword[this.languages],
+              data: this.newPassword_confirmPasswordTwice,
+              type: InputType.Password
+            })
+              .visibility(this.longin_operation === 4 ? Visibility.Visible : Visibility.None)
           }
           .margin({ top: this.longin_operation === 0 || this.longin_operation === 1 ? 60 : 20 })
 
@@ -77,7 +85,8 @@ struct Login {
             loginPassword: this.loginPassword,
             confirmPasswordTwice: this.confirmPasswordTwice,
             oldPassword: this.oldPassword,
-            newPassword: this.newPassword
+            newPassword: this.newPassword,
+            newPassword_confirmPasswordTwice: this.newPassword_confirmPasswordTwice
           })
 
         }

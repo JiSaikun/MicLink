@@ -1,6 +1,7 @@
 import { KeyPressType, ConnectDevice } from 'mouse' //语音输入
 import { _KeyMethodConfig } from './KeyMethodConfig'
 import { getModelInfoModel, keyInfos_childsModel } from 'config'
+import { DeviceArrayType_Ble } from 'bluetooth'
 
 export interface KeymethodConfig {
   key: KeyPressType
@@ -12,10 +13,13 @@ class setInterval_curr {
 }
 
 export function _change_keyboard_KeyPressType() {
-  let KeymethodConfig = ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].KeymethodConfig
+  let KeymethodConfig = AppStorage.get('device_isBle') ?
+  (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number].KeymethodConfig :
+  ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].KeymethodConfig
   // console.error('77777777777777777777777777777', JSON.stringify(KeymethodConfig))
   let mouse_KeyPressType: KeyPressType = AppStorage.get('mouse_KeyPressType') as KeyPressType //鼠标按键事件监听
-  let getModelInfo =
+  let getModelInfo = AppStorage.get('device_isBle') ?
+    (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number].getModelInfo as getModelInfoModel :
     ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].getModelInfo as getModelInfoModel
   let _keyInfos_childsModel: keyInfos_childsModel | null = null
   if (mouse_KeyPressType === 11) { //语音键单击
@@ -110,7 +114,7 @@ export function _change_keyboard_KeyPressType() {
       }
     }
     console.error(JSON.stringify(_keyInfos_childsModel))
-    console.error('翻译件单击',
+    console.error('翻译键单击',
       (_keyInfos_childsModel as keyInfos_childsModel).childs[KeymethodConfig[4].currIndex].cmd + 'KeymethodConfig[4]:' +
       JSON.stringify(KeymethodConfig[4]))
     sk((_keyInfos_childsModel as keyInfos_childsModel).childs[KeymethodConfig[4].currIndex].cmd)

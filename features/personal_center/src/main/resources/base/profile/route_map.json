@@ -1,0 +1,12 @@
+{
+  "routerMap": [
+    {
+      "name": "personalCenter",
+      "pageSourceFile": "src/main/ets/components/PersonalCenter.ets",
+      "buildFunction": "PersonalCenterBuilder",
+      "data": {
+        "description": "个人中心"
+      }
+    }
+  ]
+}

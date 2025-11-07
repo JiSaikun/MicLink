@@ -3,6 +3,7 @@ import { Languages } from "config"
 @Component
 export struct FixedText_pop {
   @StorageLink('languages') languages: string = 'ZH_CN'
+  @StorageLink("paletteTheme") paletteTheme: string = ''
   @StorageLink('fixedText') fixedText: string = '' //输入固定文本
   @Link isShowFixedText_pop: boolean
 
@@ -20,7 +21,7 @@ export struct FixedText_pop {
         .width('100%')
         .borderRadius({ topLeft: 8, topRight: 8 })
         .padding(10)
-        .backgroundColor('#00afcc')
+        .backgroundColor(this.paletteTheme)
 
         // TextInput({ placeholder: '请输入固定文本', text: $$this.fixedText })
         TextInput({ placeholder: Languages.enter_fixed_text_placeholder[this.languages], text: $$this.fixedText })
@@ -43,7 +44,7 @@ export struct FixedText_pop {
               left: 35,
               right: 35
             })
-            .backgroundColor('#00afcc')
+            .backgroundColor(this.paletteTheme)
             .borderRadius(5)
             .onClick(() => {
               this.isShowFixedText_pop = false

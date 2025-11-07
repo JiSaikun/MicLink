@@ -1,5 +1,6 @@
 import { Ai_Model, AiModel_data, bottom_data } from '../model/LeftBar_DataModel'
 import { Languages } from 'config'
+import { ThemeConfig } from '../common/ThemeConfig'
 
 export interface paramModel {
   web: string,
@@ -14,15 +15,57 @@ export struct LeftBar {
   @Consume('pageInfo') pageInfo: NavPathStack
   @StorageLink('languages') languages: string = 'ZH_CN'
   @StorageLink('tabsControllerIndex') tabsControllerIndex: number = 0
+  @StorageLink("paletteTheme") paletteTheme: string = ThemeConfig.PaletteTheme
   @State AiModel_data: Ai_Model[] = AiModel_data
   @State bottom_data: Ai_Model[] = bottom_data
-
   @Prop currentIndex: number = 0
   @Prop bottomCurrIndex: number = 10000
-
   @State mark: boolean = false
   @State extend: boolean = true
   @State width_length: number = 248
+  // 添加调试状态
+  @State debugInfo: string = ''
+
+  // 方法：为16进制颜色添加透明度
+  addOpacityToHex(hexColor: string, opacity: number): string {
+    // 如果颜色值无效，返回默认值
+    if (!hexColor || typeof hexColor !== 'string') {
+      return `rgba(0, 174, 204, ${opacity})` // 默认颜色 #00aecc
+    }
+
+    // 移除 # 号
+    let cleanHex = hexColor.replace('#', '');
+
+    // 检查长度
+    if (cleanHex.length !== 3 && cleanHex.length !== 6) {
+      return `rgba(0, 174, 204, ${opacity})`
+    }
+
+    // 处理3位简写格式
+    if (cleanHex.length === 3) {
+      cleanHex = cleanHex.split('').map(char => char + char).join('');
+    }
+
+    // 解析RGB值
+    const r = parseInt(cleanHex.substring(0, 2), 16);
+    const g = parseInt(cleanHex.substring(2, 4), 16);
+    const b = parseInt(cleanHex.substring(4, 6), 16);
+
+    // 检查解析结果
+    if (isNaN(r) || isNaN(g) || isNaN(b)) {
+      return `rgba(0, 174, 204, ${opacity})`
+    }
+
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`
+  }
+
+  // 获取带透明度的颜色（每次调用都会重新计算）
+  getPaletteThemeWithOpacity(): string {
+    const result = this.addOpacityToHex(this.paletteTheme, 0.1)
+    console.log('当前主题颜色:', this.paletteTheme, '带透明度:', result)
+    this.debugInfo = `主题: ${this.paletteTheme}, 带透明度: ${result}`
+    return result
+  }
 
   @Styles
   flexGS(){
@@ -35,9 +78,13 @@ export struct LeftBar {
 
   aboutToAppear(): void {
     console.log('AiModel_data length:', this.AiModel_data.length)
+    console.log('初始主题颜色:', this.paletteTheme)
   }
 
   build() {
+    // 每次构建时更新调试信息
+    // this.debugInfo = `主题: ${this.paletteTheme}, 带透明度: ${this.getPaletteThemeWithOpacity()}`
+
     Flex({ direction: FlexDirection.Column }) {
       Row() {
         Image($r('app.media.MicLink_title'))
@@ -109,7 +156,7 @@ export struct LeftBar {
       .margin({ bottom: 20 })
       .flexGS()
 
-      // 顶部选项
+      // 顶部选项 - 每次构建时动态计算颜色
       ForEach(this.AiModel_data, (item: Ai_Model, index) => {
         Flex({ alignItems: ItemAlign.Center }) {
           Image(this.currentIndex === index ? $r(`app.media.${item.select}`) : $r(`app.media.${item.img}`))
@@ -120,10 +167,10 @@ export struct LeftBar {
             .fontSize(14)
             .fontWeight(400)
             .lineHeight(14)
-            .fontColor(this.currentIndex === index ? '#00aecc' : '')
+            .fontColor(this.currentIndex === index ? this.paletteTheme : '')
             .visibility(this.extend ? Visibility.Visible : Visibility.None)
         }
-        .backgroundColor(this.currentIndex === index ? "#e0f1f4" : '#f8f8f8')
+        .backgroundColor(this.currentIndex === index ? this.getPaletteThemeWithOpacity() : '#f8f8f8')
         .padding({ left: 13 })
         .height(40)
         .borderRadius(8)
@@ -145,9 +192,9 @@ export struct LeftBar {
         .margin({ top: 5, bottom: 5 })
         .backgroundColor('#eaeaea')
 
-      // 对话记录
+      // 对话记录 - 每次构建时动态计算颜色
       Flex({ alignItems: ItemAlign.Center }) {
-        Image($r(`app.media.sessionSecord`))
+        Image(this.mark ? $r(`app.media.select_sessionSecord`) : $r(`app.media.sessionSecord`))
           .width(16).height(16)
           .objectFit(ImageFit.Fill)
           .margin({ right: 13 })
@@ -155,7 +202,7 @@ export struct LeftBar {
           .fontSize(14)
           .fontWeight(400)
           .lineHeight(14)
-          .fontColor(this.mark ? '#00aecc' : '')
+          .fontColor(this.mark ? this.paletteTheme : '')
           .visibility(this.extend ? Visibility.Visible : Visibility.None)
         Blank()
         Image($r('app.media.showDown'))
@@ -166,8 +213,8 @@ export struct LeftBar {
           .visibility(this.extend ? Visibility.Visible : Visibility.None)
       }
       .flexGS()
-      .backgroundColor(this.mark ? "#e0f1f4" : '#f8f8f8')
-      .padding({ left: 13 })
+      .backgroundColor(this.mark ? this.getPaletteThemeWithOpacity() : '#f8f8f8')
+      .padding({ left: 13,right:13 })
       .height(40)
       .borderRadius(8)
       .width('100%')
@@ -190,7 +237,7 @@ export struct LeftBar {
         .margin(20)
         .flexGrow(50)
 
-      // 底部选项
+      // 底部选项 - 每次构建时动态计算颜色
       ForEach(this.bottom_data, (item: Ai_Model, index) => {
         Flex({ alignItems: ItemAlign.Center }) {
           Image(this.bottomCurrIndex === index ? $r(`app.media.${item.select}`) : $r(`app.media.${item.img}`))
@@ -201,10 +248,10 @@ export struct LeftBar {
             .fontSize(14)
             .fontWeight(400)
             .lineHeight(14)
-            .fontColor(this.bottomCurrIndex === index ? '#00aecc' : '')
+            .fontColor(this.bottomCurrIndex === index ? this.paletteTheme : '')
             .visibility(this.extend ? Visibility.Visible : Visibility.None)
         }
-        .backgroundColor(this.bottomCurrIndex === index ? "#e0f1f4" : '#f8f8f8')
+        .backgroundColor(this.bottomCurrIndex === index ? this.getPaletteThemeWithOpacity() : '#f8f8f8')
         .padding({ left: 13 })
         .height(40)
         .borderRadius(8)

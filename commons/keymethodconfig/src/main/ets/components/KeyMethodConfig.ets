@@ -7,7 +7,6 @@ import {
   ConnectDevice,
   DPI_currInfoModel,
   KeyPressType,
-  DeviceArrayType
 } from 'mouse' //语音输入
 import { WebSocket_serverUrl, getModelInfoModel } from 'config'; //语音输入
 import window from '@ohos.window'; //一键回到桌面————应用最小化
@@ -22,6 +21,7 @@ import { _translate, translate_Params, translate_Response } from 'mouse'
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl'; //读取剪切板————主动获取权限
 import { Float_Window } from 'float_window'; //按键执行方法回调
 import { OpenFileWithSystemApp } from 'api';
+import { AudioWebSocketHandler_ble, BlueTooth_devices, DeviceArrayType_Ble } from 'bluetooth';
 
 export class _KeyMethodConfig {
   /**
@@ -30,42 +30,82 @@ export class _KeyMethodConfig {
    * 1：语音翻译
    */
   static voiceInput(state: number = 0, isAI_assistant: boolean = false) {
-    if (!ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState) {
-      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x62])
-        .then(() => {
-          Communication.audioData = []
-          ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState =
-            !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState
-          /**
-           * 语音数据处理
-           */
-          //保存本地PCM文件
-          // const context = AppStorage.get('context') as common.UIAbilityContext;
-          // let a: AudioFileManager = new AudioFileManager(Communication.audioData, context)
-          // console.log(Communication.audioData.length.toString(), '语音数据结束*****模拟')
-          //WebSocket  语音数据处理
-          let inputMessage: inputMessageModel = {
-            start: false,
-            "clientId": "clientId1751968608",
-            "ptt": ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].isPunctuationRecognition ?
-              '1' : '0',
-            "serialNo": ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-              0].Communication.deviceInfo.sn,
-            "phrases": "",
-            "format": "pcm",
-            "apiKey": "ebb72c9db60147febd2ccd50a705de57",
-            "language": state ? AppStorage.get('from_languages') as string :
-            ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages,
-            "end": false,
-            "rate": "16k",
-            "deviceNo": "6c:b1:33:9f:b9:8b",
-            content: ''
-          }
-          let audioToText: AudioWebSocketHandler =
-            new AudioWebSocketHandler(WebSocket_serverUrl.audioToText, Communication.audioData, state,
-              inputMessage) //语音转文字 websocket  //0：语音输入
-          audioToText.connect()
-        })
+    if (!(AppStorage.get('device_isBle') ?
+    (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+      0].BlueTooth_devices.audioDataState :
+    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState
+    )) {
+      if (AppStorage.get('device_isBle')) {
+        (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+          0].BlueTooth_devices.send([0x62])
+          .then(() => {
+            BlueTooth_devices.audioData = [];
+            (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+              0].BlueTooth_devices.audioDataState =
+              !(AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+                0].BlueTooth_devices.audioDataState
+
+            //WebSocket  语音数据处理
+            let inputMessage: inputMessageModel = {
+              start: false,
+              "clientId": "clientId1751968608",
+              "ptt": (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number].isPunctuationRecognition ?
+                '1' : '0',
+              "serialNo": (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+                0].BlueTooth_devices.deviceInfo.sn,
+              "phrases": "",
+              "format": "pcm",
+              "apiKey": "ebb72c9db60147febd2ccd50a705de57",
+              "language": state ? AppStorage.get('from_languages') as string :
+              (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages,
+              "end": false,
+              "rate": "16k",
+              "deviceNo": "6c:b1:33:9f:b9:8b",
+              content: ''
+            }
+            let audioToText: AudioWebSocketHandler_ble =
+              new AudioWebSocketHandler_ble(WebSocket_serverUrl.audioToText, BlueTooth_devices.audioData, state,
+                inputMessage) //语音转文字 websocket  //0：语音输入
+            audioToText.connect()
+          })
+      } else {
+        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x62])
+          .then(() => {
+            Communication.audioData = []
+            ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState =
+              !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState
+            /**
+             * 语音数据处理
+             */
+            //保存本地PCM文件
+            // const context = AppStorage.get('context') as common.UIAbilityContext;
+            // let a: AudioFileManager = new AudioFileManager(Communication.audioData, context)
+            // console.log(Communication.audioData.length.toString(), '语音数据结束*****模拟')
+            //WebSocket  语音数据处理
+            let inputMessage: inputMessageModel = {
+              start: false,
+              "clientId": "clientId1751968608",
+              "ptt": ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].isPunctuationRecognition ?
+                '1' : '0',
+              "serialNo": ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+                0].Communication.deviceInfo.sn,
+              "phrases": "",
+              "format": "pcm",
+              "apiKey": "ebb72c9db60147febd2ccd50a705de57",
+              "language": state ? AppStorage.get('from_languages') as string :
+              ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages,
+              "end": false,
+              "rate": "16k",
+              "deviceNo": "6c:b1:33:9f:b9:8b",
+              content: ''
+            }
+            let audioToText: AudioWebSocketHandler =
+              new AudioWebSocketHandler(WebSocket_serverUrl.audioToText, Communication.audioData, state,
+                inputMessage) //语音转文字 websocket  //0：语音输入
+            audioToText.connect()
+          })
+      }
+
       if (state) {
         if (!AppStorage.get('voiceOrText')) {
           AppStorage.setOrCreate('voiceTranslationText', [])
@@ -84,7 +124,7 @@ export class _KeyMethodConfig {
       } else {
         AppStorage.setOrCreate('isAI_assistant', isAI_assistant)
         // if (!Float_Window.showVoiceInput) { //窗口没有显示时创建窗口
-          Float_Window.creat()
+        Float_Window.creat()
         // } else {
         //   Float_Window.show_float_window()
         // }
@@ -92,11 +132,34 @@ export class _KeyMethodConfig {
       }
 
     } else {
-      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x63])
-        .then(() => {
-          ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState =
-            !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState
-        })
+      if (AppStorage.get('device_isBle')) {
+        (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+          0].BlueTooth_devices.send([0x63])
+          .then(() => {
+            (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+              0].BlueTooth_devices.audioDataState =
+              !(AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+                0].BlueTooth_devices.audioDataState
+            /**
+             * 语音数据处理
+             */
+            // 保存本地PCM文件
+            const context = AppStorage.get('context') as common.UIAbilityContext;
+            if (AppStorage.get('device_isBle')) {
+              let a: AudioFileManager = new AudioFileManager(BlueTooth_devices.audioData, context)
+              console.log(BlueTooth_devices.audioData.length.toString(), '语音数据结束*****模拟')
+            } else {
+              let a: AudioFileManager = new AudioFileManager(Communication.audioData, context)
+              console.log(Communication.audioData.length.toString(), '语音数据结束*****模拟')
+            }
+          })
+      } else {
+        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x63])
+          .then(() => {
+            ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState =
+              !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState
+          })
+      }
       if (!state) {
         let flax = Float_Window.showVoiceInput
         setTimeout(() => {
@@ -114,9 +177,15 @@ export class _KeyMethodConfig {
       if (AppStorage.get('voiceInputState')) {
         AppStorage.setOrCreate('voiceInputState', false) //语音状态
       }
-      AppStorage.setOrCreate('voiceTranslationState',
-        !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-          0].Communication.audioDataState) //语音状态
+      if (AppStorage.get('device_isBle')) {
+        AppStorage.setOrCreate('voiceTranslationState',
+          !(AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+            0].BlueTooth_devices.audioDataState)
+      } else {
+        AppStorage.setOrCreate('voiceTranslationState',
+          !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+            0].Communication.audioDataState)
+      } //语音状态
     } else {
       if (AppStorage.get('voiceTranslationState')) {
         AppStorage.setOrCreate('voiceTranslationState', false) //语音状态
@@ -131,7 +200,11 @@ export class _KeyMethodConfig {
    * 语音输入_长按按下
    */
   static voiceInput_long(state: number = 0, isAI_assistant: boolean = false) {
-    Communication.audioData = []
+    if (AppStorage.get('device_isBle')) {
+      BlueTooth_devices.audioData = []
+    } else {
+      Communication.audioData = []
+    }
     /**
      * 语音数据处理
      */
@@ -139,35 +212,75 @@ export class _KeyMethodConfig {
     // const context = AppStorage.get('context') as common.UIAbilityContext;
     // let a: AudioFileManager = new AudioFileManager(Communication.audioData, context)
     // console.log(Communication.audioData.length.toString(), '语音数据结束*****模拟')
-
-    //WebSocket  语音数据处理
-    let inputMessage: inputMessageModel = {
-      start: false,
-      "clientId": "clientId1751968608",
-      "ptt": ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].isPunctuationRecognition ? '1' :
-        '0',
-      "serialNo": ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-        0].Communication.deviceInfo.sn,
-      "phrases": "",
-      "format": "pcm",
-      "apiKey": "ebb72c9db60147febd2ccd50a705de57",
-      "language": state ? AppStorage.get('from_languages') as string :
-      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages,
-      "end": false,
-      "rate": "16k",
-      "deviceNo": "6c:b1:33:9f:b9:8b",
-      content: ''
-    }
-    let audioToText: AudioWebSocketHandler =
-      new AudioWebSocketHandler(WebSocket_serverUrl.audioToText, Communication.audioData, state,
-        inputMessage) //语音转文字 websocket
-    audioToText.connect()
-    if (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-      0].Communication.audioDataState) { //若开始长按时，有通过0x62命令开启的语音输入等，先进行关闭 ...否则改变audioDataState 采集状态，确保1b数据被放到语音数据里 ——————手动发起0x62收集录音数据
-      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x62])
+    if (AppStorage.get('device_isBle')) {
+      //WebSocket  语音数据处理
+      let inputMessage: inputMessageModel = {
+        start: false,
+        "clientId": "clientId1751968608",
+        "ptt": (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number].isPunctuationRecognition ?
+          '1' :
+          '0',
+        "serialNo": (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+          0].BlueTooth_devices.deviceInfo.sn,
+        "phrases": "",
+        "format": "pcm",
+        "apiKey": "ebb72c9db60147febd2ccd50a705de57",
+        "language": state ? AppStorage.get('from_languages') as string :
+        (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages,
+        "end": false,
+        "rate": "16k",
+        "deviceNo": "6c:b1:33:9f:b9:8b",
+        content: ''
+      }
+      let audioToText: AudioWebSocketHandler_ble =
+        new AudioWebSocketHandler_ble(WebSocket_serverUrl.audioToText, Communication.audioData, state,
+          inputMessage) //语音转文字 websocket
+      audioToText.connect()
     } else {
-      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState =
-        !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState
+      //WebSocket  语音数据处理
+      let inputMessage: inputMessageModel = {
+        start: false,
+        "clientId": "clientId1751968608",
+        "ptt": ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].isPunctuationRecognition ?
+          '1' :
+          '0',
+        "serialNo": ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+          0].Communication.deviceInfo.sn,
+        "phrases": "",
+        "format": "pcm",
+        "apiKey": "ebb72c9db60147febd2ccd50a705de57",
+        "language": state ? AppStorage.get('from_languages') as string :
+        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages,
+        "end": false,
+        "rate": "16k",
+        "deviceNo": "6c:b1:33:9f:b9:8b",
+        content: ''
+      }
+      let audioToText: AudioWebSocketHandler =
+        new AudioWebSocketHandler(WebSocket_serverUrl.audioToText, Communication.audioData, state,
+          inputMessage) //语音转文字 websocket
+      audioToText.connect()
+    }
+    if (AppStorage.get('device_isBle')) {
+      if ((AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+        0].BlueTooth_devices.audioDataState) { //若开始长按时，有通过0x62命令开启的语音输入等，先进行关闭 ...否则改变audioDataState 采集状态，确保1b数据被放到语音数据里
+        // ——————手动发起0x62收集录音数据
+        (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+          0].BlueTooth_devices.send([0x62])
+      } else {
+        (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+          0].BlueTooth_devices.audioDataState =
+          !(AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+            0].BlueTooth_devices.audioDataState
+      }
+    } else {
+      if (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+        0].Communication.audioDataState) { //若开始长按时，有通过0x62命令开启的语音输入等，先进行关闭 ...否则改变audioDataState 采集状态，确保1b数据被放到语音数据里 ——————手动发起0x62收集录音数据
+        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x62])
+      } else {
+        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState =
+          !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState
+      }
     }
     if (state) {
       AppStorage.setOrCreate('voiceTranslationText', {
@@ -185,13 +298,19 @@ export class _KeyMethodConfig {
       if (AppStorage.get('voiceInputState')) {
         AppStorage.setOrCreate('voiceInputState', false) //语音状态
       }
-      AppStorage.setOrCreate('voiceTranslationState',
-        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-          0].Communication.audioDataState) //语音状态
+      if (AppStorage.get('device_isBle')) {
+        AppStorage.setOrCreate('voiceTranslationState',
+          (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+            0].BlueTooth_devices.audioDataState)
+      } else {
+        AppStorage.setOrCreate('voiceTranslationState',
+          ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+            0].Communication.audioDataState)
+      } //语音状态
     } else {
       AppStorage.setOrCreate('isAI_assistant', isAI_assistant)
       // if (!Float_Window.showVoiceInput) { //窗口没有显示时创建窗口
-        Float_Window.creat()
+      Float_Window.creat()
       // } else {
       //   Float_Window.show_float_window()
       // }
@@ -199,9 +318,16 @@ export class _KeyMethodConfig {
       if (AppStorage.get('voiceTranslationState')) {
         AppStorage.setOrCreate('voiceTranslationState', false) //语音状态
       }
-      AppStorage.setOrCreate('voiceInputState',
-        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-          0].Communication.audioDataState) //语音状态
+      if (AppStorage.get('device_isBle')) {
+        AppStorage.setOrCreate('voiceInputState',
+          (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+            0].BlueTooth_devices.audioDataState
+        ) //语音状态
+      } else {
+        AppStorage.setOrCreate('voiceInputState',
+          ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+            0].Communication.audioDataState)
+      } //语音状态
     }
   }
 
@@ -209,9 +335,18 @@ export class _KeyMethodConfig {
    * 语音输入_长按抬起
    */
   static endvoiceInput_long(state: number = 0) {
-    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState =
-      !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState
-    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x63])
+    if (AppStorage.get('device_isBle')) {
+      (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+        0].BlueTooth_devices.audioDataState =
+        !(AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+          0].BlueTooth_devices.audioDataState;
+      (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+        0].BlueTooth_devices.send([0x63])
+    } else {
+      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState =
+        !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState
+      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x63])
+    }
     if (!state) {
       let flax = Float_Window.showVoiceInput
       setTimeout(() => {
@@ -227,16 +362,28 @@ export class _KeyMethodConfig {
       if (AppStorage.get('voiceInputState')) {
         AppStorage.setOrCreate('voiceInputState', false) //语音状态
       }
-      AppStorage.setOrCreate('voiceTranslationState',
-        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-          0].Communication.audioDataState) //语音状态
+      if (AppStorage.get('device_isBle')) {
+        AppStorage.setOrCreate('voiceTranslationState',
+          (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+            0].BlueTooth_devices.audioDataState) //语音状态
+      } else {
+        AppStorage.setOrCreate('voiceTranslationState',
+          ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+            0].Communication.audioDataState)
+      } //语音状态
     } else {
       if (AppStorage.get('voiceTranslationState')) {
         AppStorage.setOrCreate('voiceTranslationState', false) //语音状态
       }
-      AppStorage.setOrCreate('voiceInputState',
-        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-          0].Communication.audioDataState) //语音状态
+      if (AppStorage.get('device_isBle')) {
+        AppStorage.setOrCreate('voiceInputState',
+          (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+            0].BlueTooth_devices.audioDataState)
+      } else {
+        AppStorage.setOrCreate('voiceInputState',
+          ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+            0].Communication.audioDataState)
+      } //语音状态
     }
   }
 
@@ -244,16 +391,29 @@ export class _KeyMethodConfig {
    *回车/发送
    */
   static entry() {
-    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20, 0,
-      0x28])
+    if (AppStorage.get('device_isBle')) {
+      (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+        0].BlueTooth_devices.send([0x20, 0,
+        0x28])
+    } else {
+      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20, 0,
+        0x28])
+    }
   }
 
   /**
    *删除
    */
   static delete() {
-    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20, 0,
-      0x2A])
+    if (AppStorage.get('device_isBle')) {
+      (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+        0].BlueTooth_devices.send([0x20, 0,
+        0x2A])
+
+    } else {
+      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20, 0,
+        0x2A])
+    }
   }
 
   /**
@@ -293,80 +453,80 @@ export class _KeyMethodConfig {
    */
   static openChatGPT() {
     let currpageIsAI: boolean = AppStorage.get('currpageIsAI') as boolean
-    switch ( AppStorage.get('mouse_KeyPressType') as KeyPressType){
-      case KeyPressType.WORK_SUMMARY_CLICK://工作总结键-单击
-        AppStorage.setOrCreate('chatIeUrl','og8n92sxc6jd_v1')
+    switch (AppStorage.get('mouse_KeyPressType') as KeyPressType) {
+      case KeyPressType.WORK_SUMMARY_CLICK: //工作总结键-单击
+        AppStorage.setOrCreate('chatIeUrl', 'og8n92sxc6jd_v1')
         break
-      case KeyPressType.WORK_SUMMARY_LONG_PRESS_DOWN://工作总结键-长按按下
-        AppStorage.setOrCreate('chatIeUrl','og8n92sxc6jd_v1')
+      case KeyPressType.WORK_SUMMARY_LONG_PRESS_DOWN: //工作总结键-长按按下
+        AppStorage.setOrCreate('chatIeUrl', 'og8n92sxc6jd_v1')
         break
-      case KeyPressType.TEMPLATE_DOWNLOAD_CLICK://模版下载键-单击
-        AppStorage.setOrCreate('chatIeUrl','template')
+      case KeyPressType.TEMPLATE_DOWNLOAD_CLICK: //模版下载键-单击
+        AppStorage.setOrCreate('chatIeUrl', 'template')
         break
-      case KeyPressType.TEMPLATE_DOWNLOAD_LONG_PRESS_DOWN://模版下载键-长按按下
-        AppStorage.setOrCreate('chatIeUrl','template')
+      case KeyPressType.TEMPLATE_DOWNLOAD_LONG_PRESS_DOWN: //模版下载键-长按按下
+        AppStorage.setOrCreate('chatIeUrl', 'template')
         break
-      case KeyPressType.MIND_MAP_CLICK://思维导图键-单击
-        AppStorage.setOrCreate('chatIeUrl','xml')
+      case KeyPressType.MIND_MAP_CLICK: //思维导图键-单击
+        AppStorage.setOrCreate('chatIeUrl', 'xml')
         break
-      case KeyPressType.MIND_MAP_LONG_PRESS_DOWN://思维导图键-长按按下
-        AppStorage.setOrCreate('chatIeUrl','xml')
+      case KeyPressType.MIND_MAP_LONG_PRESS_DOWN: //思维导图键-长按按下
+        AppStorage.setOrCreate('chatIeUrl', 'xml')
         break
-      case KeyPressType.READING_COMPREHENSION_CLICK://阅读理解键-单击
-        AppStorage.setOrCreate('chatIeUrl','aiReading')
+      case KeyPressType.READING_COMPREHENSION_CLICK: //阅读理解键-单击
+        AppStorage.setOrCreate('chatIeUrl', 'aiReading')
         break
-      case KeyPressType.READING_COMPREHENSION_LONG_PRESS_DOWN://阅读理解键-长按按下
-        AppStorage.setOrCreate('chatIeUrl','aiReading')
+      case KeyPressType.READING_COMPREHENSION_LONG_PRESS_DOWN: //阅读理解键-长按按下
+        AppStorage.setOrCreate('chatIeUrl', 'aiReading')
         break
-      case KeyPressType.DOCUMENT_CONVERSION_CLICK://文档转换键-单击
-        AppStorage.setOrCreate('chatIeUrl','fileChange')
+      case KeyPressType.DOCUMENT_CONVERSION_CLICK: //文档转换键-单击
+        AppStorage.setOrCreate('chatIeUrl', 'fileChange')
         break
-      case KeyPressType.DOCUMENT_CONVERSION_LONG_PRESS_DOWN://文档转换键-长按按下
-        AppStorage.setOrCreate('chatIeUrl','fileChange')
+      case KeyPressType.DOCUMENT_CONVERSION_LONG_PRESS_DOWN: //文档转换键-长按按下
+        AppStorage.setOrCreate('chatIeUrl', 'fileChange')
         break
-      case KeyPressType.WRITING_CLICK://写作键-单击
-        AppStorage.setOrCreate('chatIeUrl','61l7lnzu9kot_v1')
+      case KeyPressType.WRITING_CLICK: //写作键-单击
+        AppStorage.setOrCreate('chatIeUrl', '61l7lnzu9kot_v1')
         break
-      case KeyPressType.WRITING_LONG_PRESS_DOWN://写作键-长按按下
-        AppStorage.setOrCreate('chatIeUrl','61l7lnzu9kot_v1')
+      case KeyPressType.WRITING_LONG_PRESS_DOWN: //写作键-长按按下
+        AppStorage.setOrCreate('chatIeUrl', '61l7lnzu9kot_v1')
         break
-      case KeyPressType.TABLE_CLICK://表格键-单击
-        AppStorage.setOrCreate('chatIeUrl','table')
+      case KeyPressType.TABLE_CLICK: //表格键-单击
+        AppStorage.setOrCreate('chatIeUrl', 'table')
         break
-      case KeyPressType.TABLE_LONG_PRESS_DOWN://表格键-长按按下
-        AppStorage.setOrCreate('chatIeUrl','table')
+      case KeyPressType.TABLE_LONG_PRESS_DOWN: //表格键-长按按下
+        AppStorage.setOrCreate('chatIeUrl', 'table')
         break
-      case KeyPressType.SPEECH_CLICK://演讲稿键-单击
-        AppStorage.setOrCreate('chatIeUrl','1ajruc2aglo3_v1')
+      case KeyPressType.SPEECH_CLICK: //演讲稿键-单击
+        AppStorage.setOrCreate('chatIeUrl', '1ajruc2aglo3_v1')
         break
-      case KeyPressType.SPEECH_LONG_PRESS_DOWN://演讲稿键-长按按下
-        AppStorage.setOrCreate('chatIeUrl','1ajruc2aglo3_v1')
+      case KeyPressType.SPEECH_LONG_PRESS_DOWN: //演讲稿键-长按按下
+        AppStorage.setOrCreate('chatIeUrl', '1ajruc2aglo3_v1')
         break
-      case KeyPressType.AI_PAINTING_CLICK://AI绘画键-单击
-        AppStorage.setOrCreate('chatIeUrl','aiImg')
+      case KeyPressType.AI_PAINTING_CLICK: //AI绘画键-单击
+        AppStorage.setOrCreate('chatIeUrl', 'aiImg')
         break
-      case KeyPressType.AI_PAINTING_LONG_PRESS_DOWN://AI绘画键-长按按下
-        AppStorage.setOrCreate('chatIeUrl','aiImg')
+      case KeyPressType.AI_PAINTING_LONG_PRESS_DOWN: //AI绘画键-长按按下
+        AppStorage.setOrCreate('chatIeUrl', 'aiImg')
         break
-      case KeyPressType.CODE_CLICK://代码键-单击
-        AppStorage.setOrCreate('chatIeUrl','g5wrtd2jx1s1_v1')
+      case KeyPressType.CODE_CLICK: //代码键-单击
+        AppStorage.setOrCreate('chatIeUrl', 'g5wrtd2jx1s1_v1')
         break
-      case KeyPressType.CODE_LONG_PRESS_DOWN://代码键-长按按下
-        AppStorage.setOrCreate('chatIeUrl','g5wrtd2jx1s1_v1')
+      case KeyPressType.CODE_LONG_PRESS_DOWN: //代码键-长按按下
+        AppStorage.setOrCreate('chatIeUrl', 'g5wrtd2jx1s1_v1')
         break
-      case KeyPressType.PPT_CLICK://PPT键-单击
-        AppStorage.setOrCreate('chatIeUrl','ppt')
+      case KeyPressType.PPT_CLICK: //PPT键-单击
+        AppStorage.setOrCreate('chatIeUrl', 'ppt')
         break
-      case KeyPressType.PPT_LONG_PRESS_DOWN://PPT键-长按按下
-        AppStorage.setOrCreate('chatIeUrl','ppt')
+      case KeyPressType.PPT_LONG_PRESS_DOWN: //PPT键-长按按下
+        AppStorage.setOrCreate('chatIeUrl', 'ppt')
         break
-      default :
-        AppStorage.setOrCreate('chatIeUrl','ai')
+      default:
+        AppStorage.setOrCreate('chatIeUrl', 'ai')
     }
     if (currpageIsAI) {
       let pageInfo: NavPathStack = AppStorage.get('pageInfo') as NavPathStack
       pageInfo.clear()
-      pageInfo.pushPath({ name: 'aipage'})
+      pageInfo.pushPath({ name: 'aipage' })
       AppStorage.set('currpageIsAI', false)
     }
   }
@@ -375,8 +535,13 @@ export class _KeyMethodConfig {
    *回到桌面
    */
   static desktop() {
-    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20,
-      0x08, 0x07])
+    if (AppStorage.get('device_isBle')) {
+      (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+        0].BlueTooth_devices.send([0x20, 0x08, 0x07])
+    } else {
+      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20,
+        0x08, 0x07])
+    }
   }
 
   /**
@@ -384,32 +549,52 @@ export class _KeyMethodConfig {
    */
   static triggerShortcut() {
     console.log(JSON.stringify(AppStorage.get('custom_shortcut')))
-    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-      0].Communication.getDeviceInfo((AppStorage.get('custom_shortcut') as shortcutType).pressedKeys)
+    if (AppStorage.get('device_isBle')) {
+      (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+        0].BlueTooth_devices.send((AppStorage.get('custom_shortcut') as shortcutType).pressedKeys)
+    } else {
+      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+        0].Communication.getDeviceInfo((AppStorage.get('custom_shortcut') as shortcutType).pressedKeys)
+    }
   }
 
   /**
    *前进
    */
   static forward() {
-    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20,
-      0x04, 0x4F])
+    if (AppStorage.get('device_isBle')) {
+      (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+        0].BlueTooth_devices.send([0x20, 0x04, 0x4F])
+    } else {
+      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20,
+        0x04, 0x4F])
+    }
   }
 
   /**
    *复制
    */
   static copyContent() {
-    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20,
-      0x01, 0x06])
+    if (AppStorage.get('device_isBle')) {
+      (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+        0].BlueTooth_devices.send([0x20, 0x01, 0x06])
+    } else {
+      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20,
+        0x01, 0x06])
+    }
   }
 
   /**
    *粘贴
    */
   static pasteTarget() {
-    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20,
-      0x01, 0x19])
+    if (AppStorage.get('device_isBle')) {
+      (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+        0].BlueTooth_devices.send([0x20, 0x01, 0x19])
+    } else {
+      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20,
+        0x01, 0x19])
+    }
   }
 
   // /**
@@ -422,16 +607,26 @@ export class _KeyMethodConfig {
    *后退
    */
   static back() {
-    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20,
-      0x04, 0x50])
+    if (AppStorage.get('device_isBle')) {
+      (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+        0].BlueTooth_devices.send([0x20, 0x04, 0x50])
+    } else {
+      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20,
+        0x04, 0x50])
+    }
   }
 
   /**
    *一键锁屏
    */
   static lockNow() {
-    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20,
-      0x08, 0x0F])
+    if (AppStorage.get('device_isBle')) {
+      (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+        0].BlueTooth_devices.send([0x20, 0x08, 0x0F])
+    } else {
+      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20,
+        0x08, 0x0F])
+    }
   }
 
   /**
@@ -446,8 +641,13 @@ export class _KeyMethodConfig {
     }
     let systemPasteboard: pasteboard.SystemPasteboard = pasteboard.getSystemPasteboard(); //获取系统剪贴板对象。
     systemPasteboard.clearData() //清空剪贴板
-    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20,
-      0x01, 0x06]) //Ctrl+C
+    if (AppStorage.get('device_isBle')) {
+      (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+        0].BlueTooth_devices.send([0x20, 0x01, 0x06]) //Ctrl+C
+    } else {
+      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20,
+        0x01, 0x06]) //Ctrl+C
+    }
     let atManager = abilityAccessCtrl.createAtManager();
     try {
       // 向用户申请读取剪贴板的权限
@@ -527,7 +727,9 @@ export class _KeyMethodConfig {
    *DPI切换
    */
   static DPI_Switch() {
-    let DPI_currInfo: DPI_currInfoModel =
+    let DPI_currInfo: DPI_currInfoModel = AppStorage.get('device_isBle') ?
+      (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+        0].DPI_currInfo as DPI_currInfoModel :
       ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].DPI_currInfo as DPI_currInfoModel
     console.log(JSON.stringify(DPI_currInfo))
     if (DPI_currInfo.curr === DPI_currInfo.length - 1) {
@@ -535,16 +737,31 @@ export class _KeyMethodConfig {
     } else {
       DPI_currInfo.curr += 2
     }
+    if (AppStorage.get('device_isBle')) {
+      (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+        0].BlueTooth_devices.send([0x68, DPI_currInfo.curr])
+      // AppStorage.setOrCreate('DPI_currInfo', DPI_currInfo)
+        .then(() => {
+          (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].mouseconfig as DeviceInfo).dpiLevel =
+            DPI_currInfo.curr === 1 ? DPI_currInfo.curr : DPI_currInfo.curr
+        })
+    } else {
+      // AppStorage.setOrCreate('DPI_currInfo', DPI_currInfo)
+      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].Communication.getDeviceInfo([0x68,
+        DPI_currInfo.curr]).then(() => {
+        (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].mouseconfig as DeviceInfo).dpiLevel =
+          DPI_currInfo.curr === 1 ? DPI_currInfo.curr : DPI_currInfo.curr
+      })
+    }
 
-    // AppStorage.setOrCreate('DPI_currInfo', DPI_currInfo)
-    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].Communication.getDeviceInfo([0x68,
-      DPI_currInfo.curr]).then(() => {
-      (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].mouseconfig as DeviceInfo).dpiLevel =
-        DPI_currInfo.curr === 1 ? DPI_currInfo.curr : DPI_currInfo.curr
-    })
     DPI_currInfo.curr -= 1
     AppStorage.setOrCreate('DPI_currInfo', DPI_currInfo)
-    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].DPI_currInfo = DPI_currInfo
+    if (AppStorage.get('device_isBle')) {
+      (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number].DPI_currInfo =
+        DPI_currInfo
+    } else {
+      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].DPI_currInfo = DPI_currInfo
+    }
   }
 
   /**
@@ -657,8 +874,14 @@ export class _KeyMethodConfig {
       systemPasteboard.setData(pasteData)
         .then(() => {
           // console.info('文本已复制到剪贴板: ' + audioToText_res);
-          ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-            0].Communication.getDeviceInfo([0x20, 0x01, 0x19]) //Ctrl+V
+          if (AppStorage.get('device_isBle')) {
+            (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+              0].BlueTooth_devices.send([0x20, 0x01, 0x19]) //Ctrl+V
+          } else {
+            ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+              0].Communication.getDeviceInfo([0x20, 0x01, 0x19]) //Ctrl+V
+          }
+
           setTimeout(() =>
           systemPasteboard.clearData() //清空剪贴板
             , 2000)

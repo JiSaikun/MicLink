@@ -16,6 +16,7 @@
     "mouse": 'file:../../commons/mouse',
     "keymethodconfig": 'file:../../commons/keymethodconfig',
     "command_ai": "file:../../features/command_ai",
-    "float_window": "file:../../commons/float_window"
+    "float_window": "file:../../commons/float_window",
+    "personal_center": "file:../../features/personal_center"
   }
 }

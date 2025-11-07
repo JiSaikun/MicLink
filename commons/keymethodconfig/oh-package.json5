@@ -9,6 +9,7 @@
     'mouse': 'file:../mouse',
     'config': 'file:../config',
     'api': 'file:../api',
-    'float_window': 'file:../float_window'
+    'float_window': 'file:../float_window',
+    'bluetooth': 'file:../bluetooth'
   }
 }

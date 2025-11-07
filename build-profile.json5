@@ -19,8 +19,8 @@
       {
         "name": "default",
         "signingConfig": "default",
-        "targetSdkVersion": "5.0.5(17)",
-        "compatibleSdkVersion": "5.0.5(17)",
+        "targetSdkVersion": "5.0.1(13)",
+        "compatibleSdkVersion": "5.0.1(13)",
         "runtimeOS": "HarmonyOS",
         "buildOption": {
           "strictMode": {
@@ -95,6 +95,10 @@
     {
       "name": "float_window",
       "srcPath": "./commons/float_window",
+    },
+    {
+      "name": "personal_center",
+      "srcPath": "./features/personal_center"
     }
   ]
 }

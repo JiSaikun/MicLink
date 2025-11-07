@@ -37,11 +37,11 @@ instance.interceptors.response.use(
     if (response.data.status === 200 || response.data.statusCode === 200) { // 兼容两种常见状态码字段
       return Promise.resolve(response.data);
     } else {
-      // promptAction.showToast({
-      //   message: response.data.message || '请求失败，请稍后重试',
-      //   duration: 2000,
-      //   alignment: 4 // 鸿蒙 Alignment.Center 的枚举值为 4，避免直接引用可能的类型问题
-      // });
+      promptAction.showToast({
+        message: response.data.message || '请求失败，请稍后重试',
+        duration: 2000,
+        alignment: 4 // 鸿蒙 Alignment.Center 的枚举值为 4，避免直接引用可能的类型问题
+      });
       return Promise.reject(response.data);
     }
   },

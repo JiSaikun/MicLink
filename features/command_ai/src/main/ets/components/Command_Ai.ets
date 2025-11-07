@@ -1,7 +1,7 @@
 import { PopViewUtils, LaunchLogin_pop, PopParams_1 } from 'utils'
 import CommonConstants from '../common/CommonConstants'
 import { CommonConstants_pop, Languages } from "config" // 导入Languages
-import { App, SymbolGlyphModifier } from '@kit.ArkUI';
+import { ThemeConfig } from 'common';
 
 // 新增：获取当前语言（与之前ConfigPage1组件保持一致）
 
@@ -35,6 +35,7 @@ export interface tableDataModel {
 export default struct Command_Ai {
   // 新增：当前语言状态
   @StorageLink('languages') languages: string = 'ZH_CN'
+  @StorageLink("paletteTheme") paletteTheme: string = ThemeConfig.PaletteTheme
   // 模拟视频数据：替换中文标题为多语言
   @State video_data: videoModel[] = [
     { image: 'video_Command_Ai', title: Languages.create_certain_video_tutorial[this.languages] },
@@ -122,7 +123,7 @@ export default struct Command_Ai {
             .fontWeight(400)
             .fontColor(Color.White)
         }
-        .backgroundColor(CommonConstants.COMMAND_SECOND_FONT_COLOR)
+        .backgroundColor(this.paletteTheme)
         .width(135)
         .borderRadius(8)
         .padding(12)
@@ -213,7 +214,7 @@ export default struct Command_Ai {
               Row() {
                 // 替换：编辑
                 Text(Languages.edit[this.languages])
-                  .fontColor(CommonConstants.COMMAND_SECOND_FONT_COLOR)
+                  .fontColor(this.paletteTheme)
                   .margin({ right: 10 })
                   .fontWeight(CommonConstants.COMMAND_ICON_DEFAULT_WEIGHT)
                   .onClick(() => {
@@ -223,7 +224,7 @@ export default struct Command_Ai {
                 // 替换：删除
                 Text(Languages.delete[this.languages])
                   .fontWeight(CommonConstants.COMMAND_ICON_DEFAULT_WEIGHT)
-                  .fontColor(CommonConstants.COMMAND_SECOND_FONT_COLOR)
+                  .fontColor(this.paletteTheme)
                   .onClick(() => {
                     this.EditInstruction_pop_currIndex = index
                     const params_1: PopParams_1 = {
@@ -255,11 +256,12 @@ export default struct Command_Ai {
       }
       .edgeEffect(EdgeEffect.Spring)
       .width('100%')
+      .layoutWeight(1)
       .flexGS()
 
-      Column()
-        .layoutWeight(1)
-        .flexGS()
+      // Column()
+      //   .layoutWeight(1)
+      //   .flexGS()
     }
     .padding({
       left: 24,

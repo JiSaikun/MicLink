@@ -18,7 +18,6 @@ export default  class CommonConstants {
    * AI-指令内容区
    */
   static readonly COMMAND_DEFAULT_FONT_COLOR: string = '#31373d';
-  static readonly COMMAND_SECOND_FONT_COLOR: string = '#00aecc';
   static readonly COMMAND_TITLE_FONT_SIZE: number = 32;
   static readonly COMMAND_DEFAULT_FONT_SIZE: number = 14;
   static readonly COMMAND_TITLE_FONT_WEIGHT: number = 600;

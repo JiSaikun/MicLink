@@ -1,4 +1,6 @@
 import { LengthMetrics } from "@kit.ArkUI"
+import { DeviceArrayType_Ble } from "bluetooth"
+import { ThemeConfig } from "common"
 import { Languages, getModelInfoModel, languagesModel } from 'config'
 import { ConnectDevice } from "mouse"
 
@@ -6,16 +8,13 @@ interface shortcutType {
   keyPreview: string
   pressedKeys: number[]
 }
-
 /**
  * 智能设置
  */
 @Component
 export struct ConfigPage1 {
-  aboutToAppear(): void {
-    this.shortcut_change()
-  }
-
+  @StorageLink('devices') devices: DeviceArrayType_Ble[] = []
+  @Consume device_isBle: boolean //该设备是否是蓝牙连接
   @StorageLink('languages') languages: string = 'ZH_CN'
   @State getModelInfo: getModelInfoModel = AppStorage.get('getModelInfo') as getModelInfoModel
   @State isPunctuationRecognition: boolean =
@@ -40,6 +39,16 @@ export struct ConfigPage1 {
   @State voice_translation_shortcut: string = '' //语音翻译快捷键
   @State screenshot_recognition_shortcut: string = '' //截图识别快捷键
 
+  aboutToAppear(): void {
+    this.shortcut_change()
+    if (this.device_isBle) {
+      this.isPunctuationRecognition =
+        this.devices[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition
+      this.speech_Recognition_languages =
+        this.devices[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages //语音识别语种
+    }
+  }
+
   build() {
     Flex({ space: { main: LengthMetrics.px(15) }, direction: FlexDirection.Column }) {
       // Text('语音识别设置')
@@ -62,12 +71,18 @@ export struct ConfigPage1 {
             indicatorType: RadioIndicatorType.DOT
           }).checked(this.isPunctuationRecognition)
             .height(14)
+            .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
             .width(14)
             .onChange((isChecked: boolean) => {
               if (isChecked) {
                 console.log('*****************************打开识别带标点****************************************')
-                ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition =
-                  true
+                if (this.device_isBle) {
+                  this.devices[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition =
+                    true
+                } else {
+                  ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition =
+                    true
+                }
               }
             })
           Text(Languages.on_common[this.languages])
@@ -76,7 +91,13 @@ export struct ConfigPage1 {
             .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
         }
         .onClick(() => {
-          ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition = true
+          if (this.device_isBle) {
+            this.devices[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition =
+              true
+          } else {
+            ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition =
+              true
+          }
         })
 
         Row() {
@@ -85,12 +106,18 @@ export struct ConfigPage1 {
             indicatorType: RadioIndicatorType.DOT
           }).checked(!this.isPunctuationRecognition)
             .height(14)
+            .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
             .width(14)
             .onChange((isChecked: boolean) => {
               if (isChecked) {
                 console.log('*****************************关闭识别带标点****************************************')
-                ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition =
-                  false
+                if (this.device_isBle) {
+                  this.devices[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition =
+                    false
+                } else {
+                  ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition =
+                    false
+                }
 
               }
             })
@@ -99,9 +126,15 @@ export struct ConfigPage1 {
             .fontWeight(400)
             .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
         }
+
         .onClick(() => {
-          ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition =
-            false
+          if (this.device_isBle) {
+            this.devices[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition =
+              false
+          } else {
+            ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition =
+              false
+          }
         })
       }
       .width('100%')
@@ -119,6 +152,7 @@ export struct ConfigPage1 {
             indicatorType: RadioIndicatorType.DOT
           }).checked(this.isEnableLongVoiceRecog)
             .height(14)
+            .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
             .width(14)
             .onChange((isChecked: boolean) => {
               if (isChecked) {
@@ -141,6 +175,7 @@ export struct ConfigPage1 {
             indicatorType: RadioIndicatorType.DOT
           }).checked(!this.isEnableLongVoiceRecog)
             .height(14)
+            .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
             .width(14)
             .onChange((isChecked: boolean) => {
               if (isChecked) {
@@ -169,8 +204,13 @@ export struct ConfigPage1 {
       Select(this.convert_LanguagesToOptions())
         .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.languages[this.getDefaultSelectedIndex_from(this.speech_Recognition_languages)]))
         .onSelect((index: number) => {
-          ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages =
-            this.getModelInfo.languages[index].code
+          if (this.device_isBle) {
+            this.devices[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages =
+              this.getModelInfo.languages[index].code
+          } else {
+            ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages =
+              this.getModelInfo.languages[index].code
+          }
         })
         .selected(this.getDefaultSelectedIndex_from(this.speech_Recognition_languages))
         .width('100%')
@@ -275,7 +315,10 @@ export struct ConfigPage1 {
         .fontSize($r('app.float.default_text_font_size_14'))
         .fontWeight(400)
         .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-      TextInput({ placeholder:  Languages.click_to_input_keys[this.languages], text: this.voice_translation_shortcut })//点击后输入目标按键即可
+      TextInput({
+        placeholder: Languages.click_to_input_keys[this.languages],
+        text: this.voice_translation_shortcut
+      })//点击后输入目标按键即可
         .backgroundColor('#fff')
         .placeholderColor('#bbbdbf')
         .placeholderFont({ size: 14, weight: 400 })
@@ -303,6 +346,7 @@ export struct ConfigPage1 {
             value: 'Radio3', group: 'radioGroup3',
             indicatorType: RadioIndicatorType.DOT
           }).checked(this.isWordScan_Translation)
+            .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
             .height(14)
             .width(14)
             .onChange((isChecked: boolean) => {
@@ -325,6 +369,7 @@ export struct ConfigPage1 {
             value: 'Radio3', group: 'radioGroup3',
             indicatorType: RadioIndicatorType.DOT
           }).checked(!this.isWordScan_Translation)
+            .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
             .height(14)
             .width(14)
             .onChange((isChecked: boolean) => {
@@ -411,6 +456,7 @@ export struct ConfigPage1 {
             indicatorType: RadioIndicatorType.DOT
           }).checked(this.isOCR_Translate_Toggle)
             .height(14)
+            .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
             .width(14)
             .onChange((isChecked: boolean) => {
               if (isChecked) {
@@ -433,6 +479,7 @@ export struct ConfigPage1 {
             indicatorType: RadioIndicatorType.DOT
           }).checked(!this.isOCR_Translate_Toggle)
             .height(14)
+            .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
             .width(14)
             .onChange((isChecked: boolean) => {
               if (isChecked) {
@@ -503,7 +550,10 @@ export struct ConfigPage1 {
         .fontSize($r('app.float.default_text_font_size_14'))
         .fontWeight(400)
         .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-      TextInput({ placeholder:Languages.click_to_input_keys[this.languages], text: this.screenshot_recognition_shortcut })
+      TextInput({
+        placeholder: Languages.click_to_input_keys[this.languages],
+        text: this.screenshot_recognition_shortcut
+      })
         .backgroundColor('#fff')
         .placeholderColor('#bbbdbf')
         .placeholderFont({ size: 14, weight: 400 })
@@ -560,6 +610,7 @@ export struct ConfigPage1 {
             indicatorType: RadioIndicatorType.DOT
           }).checked(this.isAutoCloseVoiceTransPop)
             .height(14)
+            .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
             .width(14)
             .onChange((isChecked: boolean) => {
               if (isChecked) {
@@ -582,6 +633,7 @@ export struct ConfigPage1 {
             indicatorType: RadioIndicatorType.DOT
           }).checked(!this.isAutoCloseVoiceTransPop)
             .height(14)
+            .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
             .width(14)
             .onChange((isChecked: boolean) => {
               if (isChecked) {

@@ -1,6 +1,7 @@
 import { KeyCode } from '@kit.InputKit'
 import { LengthMetrics } from '@kit.ArkUI'
 import { Languages } from 'config'
+import { ThemeConfig } from 'common'
 
 @Builder
 export function Shortcut_popBuilder() {
@@ -37,6 +38,7 @@ interface shortcutType {
 
 @Component
 struct Shortcut_pop {
+  @StorageLink("paletteTheme") paletteTheme: string = ThemeConfig.PaletteTheme
   @StorageLink('languages') languages: string = 'ZH_CN'
   // 快捷键组列表
   @State shortcutGroups: ShortcutConfig[] = []
@@ -56,19 +58,19 @@ struct Shortcut_pop {
   @Consume('pageInfo') pageInfo: NavPathStack
   @StorageLink("shortcut") shortcut: number = 0 //标记快捷键功能
   @StorageLink("voice_recognition_shortcut") voice_recognition_shortcut: shortcutType = {
-    keyPreview:Languages.none[this.languages],//无
+    keyPreview: Languages.none[this.languages], //无
     pressedKeys: []
   } //语音识别快捷键
   @StorageLink("voice_translation_shortcut") voice_translation_shortcut: shortcutType = {
-    keyPreview: Languages.none[this.languages],//无
+    keyPreview: Languages.none[this.languages], //无
     pressedKeys: []
   } //语音翻译快捷键
   @StorageLink("screenshot_recognition_shortcut") screenshot_recognition_shortcut: shortcutType = {
-    keyPreview: Languages.none[this.languages],//无
+    keyPreview: Languages.none[this.languages], //无
     pressedKeys: []
   } //截图识别快捷键
   @StorageLink("custom_shortcut") custom_shortcut: shortcutType = {
-    keyPreview: Languages.none[this.languages],//无
+    keyPreview: Languages.none[this.languages], //无
     pressedKeys: []
   } //自定义快捷键
 
@@ -77,24 +79,28 @@ struct Shortcut_pop {
       case 1:
         //语音识别
         this.keyPreview_old =
-          this.voice_recognition_shortcut.keyPreview ? this.voice_recognition_shortcut.keyPreview :  Languages.none[this.languages]//无
+          this.voice_recognition_shortcut.keyPreview ? this.voice_recognition_shortcut.keyPreview :
+          Languages.none[this.languages] //无
         break
       case 2:
         //语音翻译
         this.keyPreview_old =
-          this.voice_translation_shortcut.keyPreview ? this.voice_translation_shortcut.keyPreview :  Languages.none[this.languages]//无
+          this.voice_translation_shortcut.keyPreview ? this.voice_translation_shortcut.keyPreview :
+          Languages.none[this.languages] //无
         break
       case 3:
         //截图识别
         this.keyPreview_old =
-          this.screenshot_recognition_shortcut.keyPreview ? this.screenshot_recognition_shortcut.keyPreview :  Languages.none[this.languages]//无
+          this.screenshot_recognition_shortcut.keyPreview ? this.screenshot_recognition_shortcut.keyPreview :
+          Languages.none[this.languages] //无
         break
       case 4:
         //自定义快捷键
-        this.keyPreview_old = this.custom_shortcut.keyPreview ? this.custom_shortcut.keyPreview :  Languages.none[this.languages]//无
+        this.keyPreview_old =
+          this.custom_shortcut.keyPreview ? this.custom_shortcut.keyPreview : Languages.none[this.languages] //无
         break
       default:
-        this.keyPreview_old = Languages.none[this.languages]//无
+        this.keyPreview_old = Languages.none[this.languages] //无
     }
   }
 
@@ -113,7 +119,7 @@ struct Shortcut_pop {
           .width('100%')
           .borderRadius({ topLeft: 8, topRight: 8 })
           .padding(10)
-          .backgroundColor('#00afcc')
+          .backgroundColor(this.paletteTheme)
 
           Text(this.keyPreview ? this.keyPreview : this.keyPreview_old)
             .margin({ top: 50, bottom: 50 })
@@ -142,7 +148,7 @@ struct Shortcut_pop {
                 left: 35,
                 right: 35
               })
-              .backgroundColor('#00afcc')
+              .backgroundColor(this.paletteTheme)
               .borderRadius(5)
               // 在Shortcut_pop的确定按钮点击事件中简化：
               .onClick(() => {
@@ -206,7 +212,7 @@ struct Shortcut_pop {
                 left: 35,
                 right: 35
               })
-              .backgroundColor('#00afcc')
+              .backgroundColor(this.paletteTheme)
               .borderRadius(5)
               .onClick(() => {
                 this.shortcut = 1000;
@@ -312,7 +318,7 @@ struct Shortcut_pop {
 
     if (isDuplicate) {
       // this.feedback = '该按键组合已存在'
-      this.feedback =Languages.shortcut_combination_exists[this.languages]
+      this.feedback = Languages.shortcut_combination_exists[this.languages]
       return
     }
 
@@ -509,64 +515,116 @@ struct Shortcut_pop {
     // 这里需要将KeyCode映射到HID键值
     switch (keyCode) {
       // 字母键
-      case KeyCode.KEYCODE_A: return 0x04;
-      case KeyCode.KEYCODE_B: return 0x05;
-      case KeyCode.KEYCODE_C: return 0x06;
-      case KeyCode.KEYCODE_D: return 0x07;
-      case KeyCode.KEYCODE_E: return 0x08;
-      case KeyCode.KEYCODE_F: return 0x09;
-      case KeyCode.KEYCODE_G: return 0x0A;
-      case KeyCode.KEYCODE_H: return 0x0B;
-      case KeyCode.KEYCODE_I: return 0x0C;
-      case KeyCode.KEYCODE_J: return 0x0D;
-      case KeyCode.KEYCODE_K: return 0x0E;
-      case KeyCode.KEYCODE_L: return 0x0F;
-      case KeyCode.KEYCODE_M: return 0x10;
-      case KeyCode.KEYCODE_N: return 0x11;
-      case KeyCode.KEYCODE_O: return 0x12;
-      case KeyCode.KEYCODE_P: return 0x13;
-      case KeyCode.KEYCODE_Q: return 0x14;
-      case KeyCode.KEYCODE_R: return 0x15;
-      case KeyCode.KEYCODE_S: return 0x16;
-      case KeyCode.KEYCODE_T: return 0x17;
-      case KeyCode.KEYCODE_U: return 0x18;
-      case KeyCode.KEYCODE_V: return 0x19;
-      case KeyCode.KEYCODE_W: return 0x1A;
-      case KeyCode.KEYCODE_X: return 0x1B;
-      case KeyCode.KEYCODE_Y: return 0x1C;
-      case KeyCode.KEYCODE_Z: return 0x1D;
+      case KeyCode.KEYCODE_A:
+        return 0x04;
+      case KeyCode.KEYCODE_B:
+        return 0x05;
+      case KeyCode.KEYCODE_C:
+        return 0x06;
+      case KeyCode.KEYCODE_D:
+        return 0x07;
+      case KeyCode.KEYCODE_E:
+        return 0x08;
+      case KeyCode.KEYCODE_F:
+        return 0x09;
+      case KeyCode.KEYCODE_G:
+        return 0x0A;
+      case KeyCode.KEYCODE_H:
+        return 0x0B;
+      case KeyCode.KEYCODE_I:
+        return 0x0C;
+      case KeyCode.KEYCODE_J:
+        return 0x0D;
+      case KeyCode.KEYCODE_K:
+        return 0x0E;
+      case KeyCode.KEYCODE_L:
+        return 0x0F;
+      case KeyCode.KEYCODE_M:
+        return 0x10;
+      case KeyCode.KEYCODE_N:
+        return 0x11;
+      case KeyCode.KEYCODE_O:
+        return 0x12;
+      case KeyCode.KEYCODE_P:
+        return 0x13;
+      case KeyCode.KEYCODE_Q:
+        return 0x14;
+      case KeyCode.KEYCODE_R:
+        return 0x15;
+      case KeyCode.KEYCODE_S:
+        return 0x16;
+      case KeyCode.KEYCODE_T:
+        return 0x17;
+      case KeyCode.KEYCODE_U:
+        return 0x18;
+      case KeyCode.KEYCODE_V:
+        return 0x19;
+      case KeyCode.KEYCODE_W:
+        return 0x1A;
+      case KeyCode.KEYCODE_X:
+        return 0x1B;
+      case KeyCode.KEYCODE_Y:
+        return 0x1C;
+      case KeyCode.KEYCODE_Z:
+        return 0x1D;
 
     // 数字键
-      case KeyCode.KEYCODE_0: return 0x27;
-      case KeyCode.KEYCODE_1: return 0x1E;
-      case KeyCode.KEYCODE_2: return 0x1F;
-      case KeyCode.KEYCODE_3: return 0x20;
-      case KeyCode.KEYCODE_4: return 0x21;
-      case KeyCode.KEYCODE_5: return 0x22;
-      case KeyCode.KEYCODE_6: return 0x23;
-      case KeyCode.KEYCODE_7: return 0x24;
-      case KeyCode.KEYCODE_8: return 0x25;
-      case KeyCode.KEYCODE_9: return 0x26;
+      case KeyCode.KEYCODE_0:
+        return 0x27;
+      case KeyCode.KEYCODE_1:
+        return 0x1E;
+      case KeyCode.KEYCODE_2:
+        return 0x1F;
+      case KeyCode.KEYCODE_3:
+        return 0x20;
+      case KeyCode.KEYCODE_4:
+        return 0x21;
+      case KeyCode.KEYCODE_5:
+        return 0x22;
+      case KeyCode.KEYCODE_6:
+        return 0x23;
+      case KeyCode.KEYCODE_7:
+        return 0x24;
+      case KeyCode.KEYCODE_8:
+        return 0x25;
+      case KeyCode.KEYCODE_9:
+        return 0x26;
 
     // 功能键
-      case KeyCode.KEYCODE_F1: return 0x3A;
-      case KeyCode.KEYCODE_F2: return 0x3B;
-      case KeyCode.KEYCODE_F3: return 0x3C;
-      case KeyCode.KEYCODE_F4: return 0x3D;
-      case KeyCode.KEYCODE_F5: return 0x3E;
-      case KeyCode.KEYCODE_F6: return 0x3F;
-      case KeyCode.KEYCODE_F7: return 0x40;
-      case KeyCode.KEYCODE_F8: return 0x41;
-      case KeyCode.KEYCODE_F9: return 0x42;
-      case KeyCode.KEYCODE_F10: return 0x43;
-      case KeyCode.KEYCODE_F11: return 0x44;
-      case KeyCode.KEYCODE_F12: return 0x45;
+      case KeyCode.KEYCODE_F1:
+        return 0x3A;
+      case KeyCode.KEYCODE_F2:
+        return 0x3B;
+      case KeyCode.KEYCODE_F3:
+        return 0x3C;
+      case KeyCode.KEYCODE_F4:
+        return 0x3D;
+      case KeyCode.KEYCODE_F5:
+        return 0x3E;
+      case KeyCode.KEYCODE_F6:
+        return 0x3F;
+      case KeyCode.KEYCODE_F7:
+        return 0x40;
+      case KeyCode.KEYCODE_F8:
+        return 0x41;
+      case KeyCode.KEYCODE_F9:
+        return 0x42;
+      case KeyCode.KEYCODE_F10:
+        return 0x43;
+      case KeyCode.KEYCODE_F11:
+        return 0x44;
+      case KeyCode.KEYCODE_F12:
+        return 0x45;
 
     // 其他常用键
-      case KeyCode.KEYCODE_ENTER: return 0x28;
-      case KeyCode.KEYCODE_SPACE: return 0x2C;
-      case KeyCode.KEYCODE_TAB: return 0x2B;
-      case KeyCode.KEYCODE_ESCAPE: return 0x29;
+      case KeyCode.KEYCODE_ENTER:
+        return 0x28;
+      case KeyCode.KEYCODE_SPACE:
+        return 0x2C;
+      case KeyCode.KEYCODE_TAB:
+        return 0x2B;
+      case KeyCode.KEYCODE_ESCAPE:
+        return 0x29;
 
       default:
         return 0x00; // 未映射的键
@@ -607,101 +665,185 @@ struct Shortcut_pop {
 
     switch (normalizedKeyCode) {
       // 字母键
-      case KeyCode.KEYCODE_A: return 'A';
-      case KeyCode.KEYCODE_B: return 'B';
-      case KeyCode.KEYCODE_C: return 'C';
-      case KeyCode.KEYCODE_D: return 'D';
-      case KeyCode.KEYCODE_E: return 'E';
-      case KeyCode.KEYCODE_F: return 'F';
-      case KeyCode.KEYCODE_G: return 'G';
-      case KeyCode.KEYCODE_H: return 'H';
-      case KeyCode.KEYCODE_I: return 'I';
-      case KeyCode.KEYCODE_J: return 'J';
-      case KeyCode.KEYCODE_K: return 'K';
-      case KeyCode.KEYCODE_L: return 'L';
-      case KeyCode.KEYCODE_M: return 'M';
-      case KeyCode.KEYCODE_N: return 'N';
-      case KeyCode.KEYCODE_O: return 'O';
-      case KeyCode.KEYCODE_P: return 'P';
-      case KeyCode.KEYCODE_Q: return 'Q';
-      case KeyCode.KEYCODE_R: return 'R';
-      case KeyCode.KEYCODE_S: return 'S';
-      case KeyCode.KEYCODE_T: return 'T';
-      case KeyCode.KEYCODE_U: return 'U';
-      case KeyCode.KEYCODE_V: return 'V';
-      case KeyCode.KEYCODE_W: return 'W';
-      case KeyCode.KEYCODE_X: return 'X';
-      case KeyCode.KEYCODE_Y: return 'Y';
-      case KeyCode.KEYCODE_Z: return 'Z';
+      case KeyCode.KEYCODE_A:
+        return 'A';
+      case KeyCode.KEYCODE_B:
+        return 'B';
+      case KeyCode.KEYCODE_C:
+        return 'C';
+      case KeyCode.KEYCODE_D:
+        return 'D';
+      case KeyCode.KEYCODE_E:
+        return 'E';
+      case KeyCode.KEYCODE_F:
+        return 'F';
+      case KeyCode.KEYCODE_G:
+        return 'G';
+      case KeyCode.KEYCODE_H:
+        return 'H';
+      case KeyCode.KEYCODE_I:
+        return 'I';
+      case KeyCode.KEYCODE_J:
+        return 'J';
+      case KeyCode.KEYCODE_K:
+        return 'K';
+      case KeyCode.KEYCODE_L:
+        return 'L';
+      case KeyCode.KEYCODE_M:
+        return 'M';
+      case KeyCode.KEYCODE_N:
+        return 'N';
+      case KeyCode.KEYCODE_O:
+        return 'O';
+      case KeyCode.KEYCODE_P:
+        return 'P';
+      case KeyCode.KEYCODE_Q:
+        return 'Q';
+      case KeyCode.KEYCODE_R:
+        return 'R';
+      case KeyCode.KEYCODE_S:
+        return 'S';
+      case KeyCode.KEYCODE_T:
+        return 'T';
+      case KeyCode.KEYCODE_U:
+        return 'U';
+      case KeyCode.KEYCODE_V:
+        return 'V';
+      case KeyCode.KEYCODE_W:
+        return 'W';
+      case KeyCode.KEYCODE_X:
+        return 'X';
+      case KeyCode.KEYCODE_Y:
+        return 'Y';
+      case KeyCode.KEYCODE_Z:
+        return 'Z';
 
     // 数字键
-      case KeyCode.KEYCODE_0: return '0';
-      case KeyCode.KEYCODE_1: return '1';
-      case KeyCode.KEYCODE_2: return '2';
-      case KeyCode.KEYCODE_3: return '3';
-      case KeyCode.KEYCODE_4: return '4';
-      case KeyCode.KEYCODE_5: return '5';
-      case KeyCode.KEYCODE_6: return '6';
-      case KeyCode.KEYCODE_7: return '7';
-      case KeyCode.KEYCODE_8: return '8';
-      case KeyCode.KEYCODE_9: return '9';
+      case KeyCode.KEYCODE_0:
+        return '0';
+      case KeyCode.KEYCODE_1:
+        return '1';
+      case KeyCode.KEYCODE_2:
+        return '2';
+      case KeyCode.KEYCODE_3:
+        return '3';
+      case KeyCode.KEYCODE_4:
+        return '4';
+      case KeyCode.KEYCODE_5:
+        return '5';
+      case KeyCode.KEYCODE_6:
+        return '6';
+      case KeyCode.KEYCODE_7:
+        return '7';
+      case KeyCode.KEYCODE_8:
+        return '8';
+      case KeyCode.KEYCODE_9:
+        return '9';
 
     // 功能键
-      case KeyCode.KEYCODE_F1: return 'F1';
-      case KeyCode.KEYCODE_F2: return 'F2';
-      case KeyCode.KEYCODE_F3: return 'F3';
-      case KeyCode.KEYCODE_F4: return 'F4';
-      case KeyCode.KEYCODE_F5: return 'F5';
-      case KeyCode.KEYCODE_F6: return 'F6';
-      case KeyCode.KEYCODE_F7: return 'F7';
-      case KeyCode.KEYCODE_F8: return 'F8';
-      case KeyCode.KEYCODE_F9: return 'F9';
-      case KeyCode.KEYCODE_F10: return 'F10';
-      case KeyCode.KEYCODE_F11: return 'F11';
-      case KeyCode.KEYCODE_F12: return 'F12';
+      case KeyCode.KEYCODE_F1:
+        return 'F1';
+      case KeyCode.KEYCODE_F2:
+        return 'F2';
+      case KeyCode.KEYCODE_F3:
+        return 'F3';
+      case KeyCode.KEYCODE_F4:
+        return 'F4';
+      case KeyCode.KEYCODE_F5:
+        return 'F5';
+      case KeyCode.KEYCODE_F6:
+        return 'F6';
+      case KeyCode.KEYCODE_F7:
+        return 'F7';
+      case KeyCode.KEYCODE_F8:
+        return 'F8';
+      case KeyCode.KEYCODE_F9:
+        return 'F9';
+      case KeyCode.KEYCODE_F10:
+        return 'F10';
+      case KeyCode.KEYCODE_F11:
+        return 'F11';
+      case KeyCode.KEYCODE_F12:
+        return 'F12';
 
     // 修饰键 - 统一显示，不区分左右
-      case KeyCode.KEYCODE_CTRL_LEFT: return 'Ctrl';
-      case KeyCode.KEYCODE_SHIFT_LEFT: return 'Shift';
-      case KeyCode.KEYCODE_ALT_LEFT: return 'Alt';
-      case KeyCode.KEYCODE_META_LEFT: return 'Cmd';
+      case KeyCode.KEYCODE_CTRL_LEFT:
+        return 'Ctrl';
+      case KeyCode.KEYCODE_SHIFT_LEFT:
+        return 'Shift';
+      case KeyCode.KEYCODE_ALT_LEFT:
+        return 'Alt';
+      case KeyCode.KEYCODE_META_LEFT:
+        return 'Cmd';
 
     // 特殊键
-      case KeyCode.KEYCODE_ENTER: return 'Enter';
-      case KeyCode.KEYCODE_SPACE: return 'Space';
-      case KeyCode.KEYCODE_TAB: return 'Tab';
-      case KeyCode.KEYCODE_BACK: return 'Backspace';
-      case KeyCode.KEYCODE_CAPS_LOCK: return 'Caps';
-      case KeyCode.KEYCODE_ESCAPE: return 'Escape';
-      case KeyCode.KEYCODE_DEL: return 'Delete';
-      case KeyCode.KEYCODE_MOVE_HOME: return 'Home';
-      case KeyCode.KEYCODE_MOVE_END: return 'End';
-      case KeyCode.KEYCODE_PAGE_UP: return 'PageUp';
-      case KeyCode.KEYCODE_PAGE_DOWN: return 'PageDown';
-      case KeyCode.KEYCODE_DPAD_UP: return '↑';
-      case KeyCode.KEYCODE_DPAD_DOWN: return '↓';
-      case KeyCode.KEYCODE_DPAD_LEFT: return '←';
-      case KeyCode.KEYCODE_DPAD_RIGHT: return '→';
-      case KeyCode.KEYCODE_DPAD_CENTER: return 'Center';
+      case KeyCode.KEYCODE_ENTER:
+        return 'Enter';
+      case KeyCode.KEYCODE_SPACE:
+        return 'Space';
+      case KeyCode.KEYCODE_TAB:
+        return 'Tab';
+      case KeyCode.KEYCODE_BACK:
+        return 'Backspace';
+      case KeyCode.KEYCODE_CAPS_LOCK:
+        return 'Caps';
+      case KeyCode.KEYCODE_ESCAPE:
+        return 'Escape';
+      case KeyCode.KEYCODE_DEL:
+        return 'Delete';
+      case KeyCode.KEYCODE_MOVE_HOME:
+        return 'Home';
+      case KeyCode.KEYCODE_MOVE_END:
+        return 'End';
+      case KeyCode.KEYCODE_PAGE_UP:
+        return 'PageUp';
+      case KeyCode.KEYCODE_PAGE_DOWN:
+        return 'PageDown';
+      case KeyCode.KEYCODE_DPAD_UP:
+        return '↑';
+      case KeyCode.KEYCODE_DPAD_DOWN:
+        return '↓';
+      case KeyCode.KEYCODE_DPAD_LEFT:
+        return '←';
+      case KeyCode.KEYCODE_DPAD_RIGHT:
+        return '→';
+      case KeyCode.KEYCODE_DPAD_CENTER:
+        return 'Center';
 
     // 符号键
-      case KeyCode.KEYCODE_COMMA: return ',';
-      case KeyCode.KEYCODE_PERIOD: return '.';
-      case KeyCode.KEYCODE_SLASH: return '/';
-      case KeyCode.KEYCODE_BACKSLASH: return '\\';
-      case KeyCode.KEYCODE_SEMICOLON: return ';';
-      case KeyCode.KEYCODE_APOSTROPHE: return "'";
-      case KeyCode.KEYCODE_LEFT_BRACKET: return '[';
-      case KeyCode.KEYCODE_RIGHT_BRACKET: return ']';
-      case KeyCode.KEYCODE_MINUS: return '-';
-      case KeyCode.KEYCODE_EQUALS: return '=';
-      case KeyCode.KEYCODE_GRAVE: return '`';
-      case KeyCode.KEYCODE_AT: return '@';
-      case KeyCode.KEYCODE_PLUS: return '+';
-      case KeyCode.KEYCODE_STAR: return '*';
-      case KeyCode.KEYCODE_POUND: return '#';
+      case KeyCode.KEYCODE_COMMA:
+        return ',';
+      case KeyCode.KEYCODE_PERIOD:
+        return '.';
+      case KeyCode.KEYCODE_SLASH:
+        return '/';
+      case KeyCode.KEYCODE_BACKSLASH:
+        return '\\';
+      case KeyCode.KEYCODE_SEMICOLON:
+        return ';';
+      case KeyCode.KEYCODE_APOSTROPHE:
+        return "'";
+      case KeyCode.KEYCODE_LEFT_BRACKET:
+        return '[';
+      case KeyCode.KEYCODE_RIGHT_BRACKET:
+        return ']';
+      case KeyCode.KEYCODE_MINUS:
+        return '-';
+      case KeyCode.KEYCODE_EQUALS:
+        return '=';
+      case KeyCode.KEYCODE_GRAVE:
+        return '`';
+      case KeyCode.KEYCODE_AT:
+        return '@';
+      case KeyCode.KEYCODE_PLUS:
+        return '+';
+      case KeyCode.KEYCODE_STAR:
+        return '*';
+      case KeyCode.KEYCODE_POUND:
+        return '#';
 
-      default: return `Key${keyCode}`;
+      default:
+        return `Key${keyCode}`;
     }
   }
 

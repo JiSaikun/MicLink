@@ -1,22 +1,39 @@
-import { LeftBar, Topbar, Content, Reset, observeSystemLanguageChanges, AiModel_data, bottom_data } from 'common'
+import {
+  LeftBar,
+  Topbar,
+  Content,
+  Reset,
+  observeSystemLanguageChanges,
+  AiModel_data,
+  bottom_data,
+  ThemeConfig
+} from 'common'
 import Content_Ai from 'command_ai/src/main/ets/components/Command_Ai'
-import { inputDevice, KeyCode } from '@kit.InputKit';
-import { ConnectDevice, Communication, DeviceInfo, KeyPressType, DeviceArrayType, PRODUCT_TYPE, } from 'mouse'
+import { inputDevice } from '@kit.InputKit';
+import { ConnectDevice, DeviceInfo, KeyPressType, DeviceArrayType, PRODUCT_TYPE, } from 'mouse'
 import common from '@ohos.app.ability.common';
 import { _change_keyboard_KeyPressType, _change_mouse_KeyPressType } from 'keymethodconfig';
 import { Float_Window } from 'float_window';
 import { window } from '@kit.ArkUI';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { FixedText_pop, globalShortcutService, WebUrlToOpen_pop } from 'utils';
+import {
+  BluetoothConnect_pop,
+  FixedText_pop,
+  globalShortcutService,
+  PasswordModification_pop,
+  WebUrlToOpen_pop
+} from 'utils';
 import { CreateNewInstruction_pop } from 'command_ai';
 import { DeviceSettings } from '../components/DeviceSettings';
+import { DeviceArrayType_Ble } from 'bluetooth';
 
 
 PersistentStorage.persistProp("login", false)
+PersistentStorage.persistProp("userLoginInfo", null)
 PersistentStorage.persistProp("table_data", []) //AI指令本地存储
 // PersistentStorage.persistProp("KeymethodConfig", null) //按键设置方法执行记录
 // PersistentStorage.persistProp("mouseconfig", null) //鼠标实时数据
-// PersistentStorage.persistProp("getModelInfo", null) //获取用户按键模式详情
+PersistentStorage.persistProp("getModelInfo", null) //获取用户按键模式详情
 PersistentStorage.persistProp("languages", 'ZH_CN') //用户语言
 // PersistentStorage.persistProp("speech_Recognition_languages", 'ZH_CN') //语音识别语言
 PersistentStorage.persistProp("from_languages", 'ZH_CN') //语音翻译源语言
@@ -36,12 +53,14 @@ PersistentStorage.persistProp("foldPath", '') //打开文件记录文件路径  
 PersistentStorage.persistProp("webUrlToOpen", '') //输入打开网页的具体网址
 PersistentStorage.persistProp("EnhancedBrowserSearch", 0) //搜索引擎
 PersistentStorage.persistProp("device_currIndex", 0) //设备信息接收与发送
+PersistentStorage.persistProp("device_isBle", false) //是否是蓝牙连接设备
 PersistentStorage.persistProp("device_show_currIndex", 0) //设备信息展示
 
 PersistentStorage.persistProp("voice_recognition_shortcut", { keyPreview: '', pressedKeys: [] }) //语音识别快捷键
 PersistentStorage.persistProp("voice_translation_shortcut", { keyPreview: '', pressedKeys: [] }) //语音翻译快捷键
 PersistentStorage.persistProp("screenshot_recognition_shortcut", { keyPreview: '', pressedKeys: [] }) //截图识别快捷键
 PersistentStorage.persistProp("custom_shortcut", { keyPreview: '', pressedKeys: [] }) //自定义快捷键
+PersistentStorage.persistProp("paletteTheme", ThemeConfig.PaletteTheme) //主题颜色
 
 @Entry
 @Component
@@ -53,7 +72,8 @@ struct Index {
   @Provide('pageInfo') pageInfo: NavPathStack = new NavPathStack()
   @StorageLink("pageInfo") pageInfo_: NavPathStack = this.pageInfo
   @Watch('change_mouse_KeyPressType') @StorageLink("mouse_KeyPressType") mouse_KeyPressType: KeyPressType =
-    KeyPressType.VOICE_CLICK
+    KeyPressType.DEFAULT
+  @StorageLink("device_isBle") device_isBle: boolean = false
   @State web: string = 'https://asrai.miclink.net?sno=123&productCode=999999&config=configMiclink_B_1755079145452'
   @State currentIndex: number = 0
   @State bottomCurrIndex: number = 10000
@@ -70,17 +90,22 @@ struct Index {
   @StorageLink("shortcut") shortcut: number = 0
   @StorageLink("isShowFixedText_pop") isShowFixedText_pop: boolean = false
   @StorageLink("isShow_webUrlToOpen_pop") isShow_webUrlToOpen_pop: boolean = false
+  @StorageLink("isShow_passwordModification_pop") isShow_passwordModification_pop: boolean = false
+  @StorageLink("isShow_bluetoothConnect_pop") isShow_bluetoothConnect_pop: boolean = false
+  @StorageLink("isBluetoothConnect_state") isBluetoothConnect_state: boolean = false //蓝牙检索状态
   @State shortcut_pop: boolean = false
-  @State isNavigationLibActive: boolean = true//导航库重置
+  @State isNavigationLibActive: boolean = true //导航库重置
+  @StorageLink('devices') devices: DeviceArrayType_Ble[] = []
+  @StorageLink("paletteTheme") paletteTheme: string = ThemeConfig.PaletteTheme
 
   // TabsControllerIndex 变化监听
   onTabsControllerIndexChange(): void {
     console.log('onTabsControllerIndexChange called:', this.tabsControllerIndex)
     if (this.tabsController) {
-      if (this.tabsControllerIndex===4) {
-        this.isNavigationLibActive=true
-      }else {
-        this.isNavigationLibActive=false
+      if (this.tabsControllerIndex === 4) {
+        this.isNavigationLibActive = true
+      } else {
+        this.isNavigationLibActive = false
       }
       this.tabsController.changeIndex(this.tabsControllerIndex)
     }
@@ -113,11 +138,24 @@ struct Index {
 
   change_mouse_KeyPressType() {
     if (this.login) {
-      switch ((ConnectDevice.Communication[AppStorage.get('device_currIndex')as number] as DeviceArrayType).PRODUCT_TYPE) {
-        case PRODUCT_TYPE.DEFAULT:
+      let PRODUCT_TYPE_: PRODUCT_TYPE = PRODUCT_TYPE.DEFAULT
+      if (this.device_isBle) {
+        /**
+         * BLE
+         */
+        PRODUCT_TYPE_ = (this.devices[AppStorage.get('device_currIndex')as number]).PRODUCT_TYPE
+      } else {
+        /**
+         * 2.4G
+         */
+        PRODUCT_TYPE_ =
+          (ConnectDevice.Communication[AppStorage.get('device_currIndex')as number] as DeviceArrayType).PRODUCT_TYPE
+      }
+      switch (PRODUCT_TYPE_) {
+        case PRODUCT_TYPE.DEFAULT: //鼠标
           _change_mouse_KeyPressType()
           break
-        case PRODUCT_TYPE.keyboard:
+        case PRODUCT_TYPE.keyboard: //键盘
           _change_keyboard_KeyPressType()
           break
       }
@@ -136,6 +174,7 @@ struct Index {
   }
 
   aboutToAppear(): void {
+    ThemeConfig.PaletteTheme = this.paletteTheme
     const context = getContext(this) as common.UIAbilityContext;
     AppStorage.setOrCreate('context', context);
     AppStorage.setOrCreate('currpageIsAI', true);
@@ -358,6 +397,15 @@ struct Index {
           }
           if (this.isShow_webUrlToOpen_pop) {
             WebUrlToOpen_pop({ isShow_webUrlToOpen_pop: this.isShow_webUrlToOpen_pop })
+          }
+          if (this.isShow_passwordModification_pop) { //修改密码弹窗
+            PasswordModification_pop({ isShow_passwordModification_pop: this.isShow_passwordModification_pop })
+          }
+          if (this.isShow_bluetoothConnect_pop) { //检索并建立蓝牙连接弹窗弹窗
+            BluetoothConnect_pop({
+              isShow_bluetoothConnect_pop: this.isShow_bluetoothConnect_pop,
+              isBluetoothConnect_state: this.isBluetoothConnect_state
+            })
           }
 
         }

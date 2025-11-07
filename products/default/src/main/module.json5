@@ -15,6 +15,16 @@
         "reason": "$string:INTERNET"
       },
       {
+        "name": "ohos.permission.CUSTOM_SCREEN_CAPTURE",
+        "reason": '$string:app_name',
+        "usedScene": {
+          "abilities": [
+            "EntryAbility"
+          ],
+          "when": "inuse"
+        }
+      },
+      {
         "name": "ohos.permission.ACCESS_EXTENSIONAL_DEVICE_DRIVER",
         "reason": "$string:ACCESS_EXTENSIONAL_DEVICE_DRIVER"
       },
@@ -61,6 +71,16 @@
           ],
           "when": "inuse"
         }
+      },
+      {
+        'name': 'ohos.permission.ACCESS_BLUETOOTH',
+        "reason": "$string:ACCESS_BLUETOOTH",
+        "usedScene": {
+          "abilities": [
+            "EntryAbility"
+          ],
+          "when": "inuse"
+        }
       }
     ],
     "deliveryWithInstall": true,
@@ -72,6 +92,7 @@
         "srcEntry": "./ets/entryability/EntryAbility.ets",
         "description": "$string:EntryAbility_desc",
         "minWindowHeight": 600,
+        "minWindowWidth": 1000,
         "icon": "$media:layered_image",
         "label": "$string:EntryAbility_label",
         "startWindowIcon": "$media:startIcon",

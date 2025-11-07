@@ -8,10 +8,13 @@ import { _resetCustomerKey } from '../viewmodel/UserViewModel'
 import {
   getModelInfoModel, imagesModel, imagesDataModel, Languages
 } from 'config' //获取设备按键信息
+import { DeviceArrayType_Ble } from 'bluetooth'
 
 @Component
 export struct DevicesConfig {
   @Link isShowConfig: boolean //控制显隐状态
+  @StorageLink('devices') devices: DeviceArrayType_Ble[] = []
+  @Consume device_isBle: boolean //该设备是否是蓝牙连接
   @State mouseconfig: DeviceInfo =
     ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo //鼠标信息
   @State currIndex: number = 0
@@ -22,10 +25,17 @@ export struct DevicesConfig {
   @State DPI_currIndex: number = 0
   @State currLED: boolean = true
   @State getModelInfo: getModelInfoModel =
-    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo as getModelInfoModel
+    AppStorage.get('getModelInfo') as getModelInfoModel
 
   onDidBuild(): void {
     this.data_init()
+  }
+
+  aboutToAppear(): void {
+    if (this.device_isBle) { //蓝牙设备信息
+      this.mouseconfig =
+        this.devices[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo //鼠标信息
+    }
   }
 
   build() {
@@ -216,8 +226,12 @@ export struct DevicesConfig {
   private refreshModelInfo() {
     const params: getModelInfo_Params = {
       languageCode: '',
-      productCode: ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.deviceInfo.productType.toString(),
-      sno: ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.deviceInfo.sn
+      productCode: this.device_isBle ?
+      this.devices[AppStorage.get('device_show_currIndex') as number].BlueTooth_devices.deviceInfo.productType.toString() :
+      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.deviceInfo.productType.toString(),
+      sno: this.device_isBle ?
+      this.devices[AppStorage.get('device_show_currIndex') as number].BlueTooth_devices.deviceInfo.sn :
+      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.deviceInfo.sn
     }
 
     _getModelInfo(params).then((res) => {
@@ -225,16 +239,23 @@ export struct DevicesConfig {
       if (res.status === 200) {
         let getModelInfo: getModelInfoModel = res.data as getModelInfoModel
         // 更新数据
-        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo = getModelInfo
+        if (this.device_isBle) {
+          this.devices[AppStorage.get('device_show_currIndex') as number].getModelInfo = getModelInfo
+        } else {
+          ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo = getModelInfo
+        }
         AppStorage.setOrCreate('getModelInfo', getModelInfo)
-
-        // 重置 KeymethodConfig，让 ConfigPage2 重新初始化
-        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].KeymethodConfig = []
+        if (this.device_isBle) {
+          this.devices[AppStorage.get('device_show_currIndex') as number].KeymethodConfig = []
+        } else {
+          // 重置 KeymethodConfig，让 ConfigPage2 重新初始化
+          ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].KeymethodConfig = []
+        }
 
         console.log('数据重置完成，ConfigPage2 将自动重新初始化')
       }
     }).catch(() => {
-      console.error('获取模型信息失败:', )
+      console.error('获取模型信息失败:',)
     })
   }
 }

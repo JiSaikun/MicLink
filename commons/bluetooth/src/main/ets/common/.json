@@ -1,0 +1,670 @@
+[
+  [
+    {
+      "serviceUuid": "00001800-0000-1000-8000-00805F9B34FB", --通用访问协议
+      "isPrimary": true,
+      "characteristics": [
+        {
+          "characteristicUuid": "00002A00-0000-1000-8000-00805F9B34FB", --设备名称
+          "serviceUuid": "00001800-0000-1000-8000-00805F9B34FB",
+          "characteristicValue": {},
+          "properties": {
+            "write": true,
+            "writeNoResponse": false,
+            "read": true,
+            "notify": false,
+            "indicate": false
+          },
+          "descriptors": []
+        },
+        {
+          "characteristicUuid": "00002A01-0000-1000-8000-00805F9B34FB", --外观
+          "serviceUuid": "00001800-0000-1000-8000-00805F9B34FB",
+          "characteristicValue": {},
+          "properties": {
+
+            "write": false,
+            "writeNoResponse": false,
+            "read": true,
+            "notify": false,
+            "indicate": false
+          },
+          "descriptors": []
+        },
+        {
+          "characteristicUuid": "00002A04-0000-1000-8000-00805F9B34FB", --连接参数
+          "serviceUuid": "00001800-0000-1000-8000-00805F9B34FB",
+          "characteristicValue": {},
+          "properties": {
+            "write": false,
+            "writeNoResponse": false,
+            "read": true,
+            "notify": false,
+            "indicate": false
+          },
+          "descriptors": []
+        }
+      ],
+      "includeServices": []
+    },
+    {
+      "serviceUuid": "00001801-0000-1000-8000-00805F9B34FB",
+      --通用属性协议
+      "isPrimary": true,
+      "characteristics": [],
+      "includeServices": []
+    },
+    {
+      "serviceUuid": "0000180A-0000-1000-8000-00805F9B34FB",
+      --设备信息服务
+      "isPrimary": true,
+      "characteristics": [
+        {
+          "characteristicUuid": "00002A50-0000-1000-8000-00805F9B34FB",
+          --PNP
+          ID
+          "serviceUuid": "0000180A-0000-1000-8000-00805F9B34FB",
+          "characteristicValue": {},
+          "properties": {
+            "write": false,
+            "writeNoResponse": false,
+            "read": true,
+            "notify": false,
+            "indicate": false
+          },
+          "descriptors": []
+        }
+      ],
+      "includeServices": []
+    },
+    {
+      "serviceUuid": "0000180F-0000-1000-8000-00805F9B34FB",
+      --电池服务
+      "isPrimary": true,
+      "characteristics": [
+        {
+          "characteristicUuid": "00002A19-0000-1000-8000-00805F9B34FB",
+          --电池电量
+          "serviceUuid": "0000180F-0000-1000-8000-00805F9B34FB",
+          "characteristicValue": {},
+          "properties": {
+            "write": false,
+            "writeNoResponse": false,
+            "read": true,
+            "notify": true,
+            "indicate": false
+          },
+          "descriptors": [
+            {
+              "descriptorUuid": "00002902-0000-1000-8000-00805F9B34FB",
+              "characteristicUuid": "00002A19-0000-1000-8000-00805F9B34FB",
+              "serviceUuid": "0000180F-0000-1000-8000-00805F9B34FB",
+              "descriptorValue": {}
+            }
+          ]
+        }
+      ],
+      "includeServices": []
+    },
+    {
+      "serviceUuid": "00010203-0405-0607-0809-0A0B0C0D1912",
+      --自定义服务1
+      "isPrimary": true,
+      "characteristics": [
+        {
+          "characteristicUuid": "00010203-0405-0607-0809-0A0B0C0D2B12",
+          "serviceUuid": "00010203-0405-0607-0809-0A0B0C0D1912",
+          "characteristicValue": {},
+          "properties": {
+            "write": false,
+            "writeNoResponse": true,
+            "read": true,
+            "notify": true,
+            "indicate": false
+          },
+          "descriptors": [
+            {
+              "descriptorUuid": "00002902-0000-1000-8000-00805F9B34FB",
+              "characteristicUuid": "00010203-0405-0607-0809-0A0B0C0D2B12",
+              "serviceUuid": "00010203-0405-0607-0809-0A0B0C0D1912",
+              "descriptorValue": {}
+            },
+            {
+              "descriptorUuid": "00002901-0000-1000-8000-00805F9B34FB",
+              "characteristicUuid": "00010203-0405-0607-0809-0A0B0C0D2B12",
+              "serviceUuid": "00010203-0405-0607-0809-0A0B0C0D1912",
+              "descriptorValue": {}
+            }
+          ]
+        }
+      ],
+      "includeServices": []
+    },
+    {
+      "serviceUuid": "00010203-0405-0607-0809-0A0B0C0D1911",
+      --自定义服务2
+      "isPrimary": true,
+      "characteristics": [
+        {
+          "characteristicUuid": "00010203-0405-0607-0809-0A0B0C0D2B18",
+          "serviceUuid": "00010203-0405-0607-0809-0A0B0C0D1911",
+          "characteristicValue": {},
+          "properties": {
+            "write": false,
+            "writeNoResponse": false,
+            "read": true,
+            "notify": true,
+            "indicate": false
+          },
+          "descriptors": [
+            {
+              "descriptorUuid": "00002902-0000-1000-8000-00805F9B34FB",
+              "characteristicUuid": "00010203-0405-0607-0809-0A0B0C0D2B18",
+              "serviceUuid": "00010203-0405-0607-0809-0A0B0C0D1911",
+              "descriptorValue": {}
+            }
+          ]
+        },
+        {
+          "characteristicUuid": "00010203-0405-0607-0809-0A0B0C0D2B19",
+          "serviceUuid": "00010203-0405-0607-0809-0A0B0C0D1911",
+          "characteristicValue": {},
+          "properties": {
+            "write": false,
+            "writeNoResponse": true,
+            "read": true,
+            "notify": false,
+            "indicate": false
+          },
+          "descriptors": []
+        }
+      ],
+      "includeServices": []
+    },
+    {
+      "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+      --HID服务
+      "isPrimary": true,
+      "characteristics": [
+        {
+          "characteristicUuid": "00002A4E-0000-1000-8000-00805F9B34FB",
+          --HID信息
+          "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+          "characteristicValue": {},
+          "properties": {
+            "write": false,
+            "writeNoResponse": true,
+            "read": true,
+            "notify": false,
+            "indicate": false
+          },
+          --无响应写入
+          、
+          可读
+          "descriptors": []
+        },
+        {
+          "characteristicUuid": "00002A22-0000-1000-8000-00805F9B34FB",
+          --HID输入报告
+          "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+          "characteristicValue": {},
+          "properties": {
+            "write": true,
+            "writeNoResponse": false,
+            "read": true,
+            "notify": true,
+            "indicate": false
+          },
+          --可写
+          、
+          可读
+          、
+          通知
+          —
+          —
+          —
+          —
+          上位机可以写入输入报告
+          （
+          如键盘按键
+          ）
+          ，
+          读取报告
+          ，
+          并启用通知以接收报告
+          。
+          "descriptors": [
+            {
+              "descriptorUuid": "00002902-0000-1000-8000-00805F9B34FB",
+              "characteristicUuid": "00002A22-0000-1000-8000-00805F9B34FB",
+              "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+              "descriptorValue": {}
+            }
+          ]
+        },
+        {
+          "characteristicUuid": "00002A32-0000-1000-8000-00805F9B34FB",
+          --HID控制点
+          "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+          "characteristicValue": {},
+          "properties": {
+            "write": true,
+            "writeNoResponse": true,
+            "read": true,
+            "notify": false,
+            "indicate": false
+          },
+          --
+          无响应写入
+          、
+          可读
+          "descriptors": []
+        },
+        {
+          "characteristicUuid": "00002A4D-0000-1000-8000-00805F9B34FB",
+          --另一个HID报告
+          ，
+          属性略有不同
+          "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+          "characteristicValue": {},
+          "properties": {
+            "write": true,
+            "writeNoResponse": false,
+            "read": true,
+            "notify": true,
+            "indicate": false
+          },
+          --可写
+          、
+          可读
+          、
+          通知
+          "descriptors": [
+            {
+              "descriptorUuid": "00002902-0000-1000-8000-00805F9B34FB",
+              "characteristicUuid": "00002A4D-0000-1000-8000-00805F9B34FB",
+              "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+              "descriptorValue": {}
+            },
+            {
+              "descriptorUuid": "00002908-0000-1000-8000-00805F9B34FB",
+              "characteristicUuid": "00002A4D-0000-1000-8000-00805F9B34FB",
+              "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+              "descriptorValue": {}
+            }
+          ]
+        }
+        {
+          "characteristicUuid": "00002A4D-0000-1000-8000-00805F9B34FB",
+          --又一个HID报告
+          ，
+          属性为无响应写入
+          、
+          可读
+          "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+          "characteristicValue": {},
+          "properties": {
+            "write": true,
+            "writeNoResponse": true,
+            "read": true,
+            "notify": false,
+            "indicate": false
+          },
+          "descriptors": [
+            {
+              "descriptorUuid": "00002908-0000-1000-8000-00805F9B34FB",
+              "characteristicUuid": "00002A4D-0000-1000-8000-00805F9B34FB",
+              "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+              "descriptorValue": {}
+            }
+          ]
+        },
+        {
+          "characteristicUuid": "00002A33-0000-1000-8000-00805F9B34FB",
+          --HID输出报告
+          "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+          --
+          可写
+          、
+          可读
+          、
+          通知
+          "characteristicValue": {},
+          "properties": {
+            "write": true,
+            "writeNoResponse": false,
+            "read": true,
+            "notify": true,
+            "indicate": false
+          },
+          "descriptors": [
+            {
+              "descriptorUuid": "00002902-0000-1000-8000-00805F9B34FB",
+              "characteristicUuid": "00002A33-0000-1000-8000-00805F9B34FB",
+              "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+              "descriptorValue": {}
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "serviceUuid": "00001800-0000-1000-8000-00805F9B34FB",
+      "isPrimary": true,
+      "characteristics": [
+        {
+          "characteristicUuid": "00002A00-0000-1000-8000-00805F9B34FB",
+          "serviceUuid": "00001800-0000-1000-8000-00805F9B34FB",
+          "characteristicValue": {},
+          "properties": {
+            "write": true,
+            "writeNoResponse": false,
+            "read": true,
+            "notify": false,
+            "indicate": false
+          },
+          "descriptors": []
+        },
+        {
+          "characteristicUuid": "00002A01-0000-1000-8000-00805F9B34FB",
+          "serviceUuid": "00001800-0000-1000-8000-00805F9B34FB",
+          "characteristicValue": {},
+          "properties": {
+            "write": false,
+            "writeNoResponse": false,
+            "read": true,
+            "notify": false,
+            "indicate": false
+          },
+          "descriptors": []
+        },
+        {
+          "characteristicUuid": "00002A04-0000-1000-8000-00805F9B34FB",
+          "serviceUuid": "00001800-0000-1000-8000-00805F9B34FB",
+          "characteristicValue": {},
+          "properties": {
+            "write": false,
+            "writeNoResponse": false,
+            "read": true,
+            "notify": false,
+            "indicate": false
+          },
+          "descriptors": []
+        }
+      ],
+      "includeServices": []
+    },
+    {
+      "serviceUuid": "00001801-0000-1000-8000-00805F9B34FB",
+      "isPrimary": true,
+      "characteristics": [],
+      "includeServices": []
+    },
+    {
+      "serviceUuid": "0000180A-0000-1000-8000-00805F9B34FB",
+      "isPrimary": true,
+      "characteristics": [
+        {
+          "characteristicUuid": "00002A50-0000-1000-8000-00805F9B34FB",
+          "serviceUuid": "0000180A-0000-1000-8000-00805F9B34FB",
+          "characteristicValue": {},
+          "properties": {
+            "write": false,
+            "writeNoResponse": false,
+            "read": true,
+            "notify": false,
+            "indicate": false
+          },
+          "descriptors": []
+        }
+      ],
+      "includeServices": []
+    },
+    {
+      "serviceUuid": "0000180F-0000-1000-8000-00805F9B34FB",
+      "isPrimary": true,
+      "characteristics": [
+        {
+          "characteristicUuid": "00002A19-0000-1000-8000-00805F9B34FB",
+          "serviceUuid": "0000180F-0000-1000-8000-00805F9B34FB",
+          "characteristicValue": {},
+          "properties": {
+            "write": false,
+            "writeNoResponse": false,
+            "read": true,
+            "notify": true,
+            "indicate": false
+          },
+          "descriptors": [
+            {
+              "descriptorUuid": "00002902-0000-1000-8000-00805F9B34FB",
+              "characteristicUuid": "00002A19-0000-1000-8000-00805F9B34FB",
+              "serviceUuid": "0000180F-0000-1000-8000-00805F9B34FB",
+              "descriptorValue": {}
+            }
+          ]
+        }
+      ],
+      "includeServices": []
+    },
+    {
+      "serviceUuid": "00010203-0405-0607-0809-0A0B0C0D1912",
+      "isPrimary": true,
+      "characteristics": [
+        {
+          "characteristicUuid": "00010203-0405-0607-0809-0A0B0C0D2B12",
+          "serviceUuid": "00010203-0405-0607-0809-0A0B0C0D1912",
+          "characteristicValue": {},
+          "properties": {
+            "write": false,
+            "writeNoResponse": true,
+            "read": true,
+            "notify": true,
+            "indicate": false
+          },
+          "descriptors": [
+            {
+              "descriptorUuid": "00002902-0000-1000-8000-00805F9B34FB",
+              "characteristicUuid": "00010203-0405-0607-0809-0A0B0C0D2B12",
+              "serviceUuid": "00010203-0405-0607-0809-0A0B0C0D1912",
+              "descriptorValue": {}
+            },
+            {
+              "descriptorUuid": "00002901-0000-1000-8000-00805F9B34FB",
+              "characteristicUuid": "00010203-0405-0607-0809-0A0B0C0D2B12",
+              "serviceUuid": "00010203-0405-0607-0809-0A0B0C0D1912",
+              "descriptorValue": {}
+            }
+          ]
+        }
+      ],
+      "includeServices": []
+    },
+    {
+      "serviceUuid": "00010203-0405-0607-0809-0A0B0C0D1911",
+      "isPrimary": true,
+      "characteristics": [
+        {
+          "characteristicUuid": "00010203-0405-0607-0809-0A0B0C0D2B18",
+          "serviceUuid": "00010203-0405-0607-0809-0A0B0C0D1911",
+          "characteristicValue": {},
+          "properties": {
+            "write": false,
+            "writeNoResponse": false,
+            "read": true,
+            "notify": true,
+            "indicate": false
+          },
+          "descriptors": [
+            {
+              "descriptorUuid": "00002902-0000-1000-8000-00805F9B34FB",
+              "characteristicUuid": "00010203-0405-0607-0809-0A0B0C0D2B18",
+              "serviceUuid": "00010203-0405-0607-0809-0A0B0C0D1911",
+              "descriptorValue": {}
+            }
+          ]
+        },
+        {
+          "characteristicUuid": "00010203-0405-0607-0809-0A0B0C0D2B19",
+          "serviceUuid": "00010203-0405-0607-0809-0A0B0C0D1911",
+          "characteristicValue": {},
+          "properties": {
+            "write": false,
+            "writeNoResponse": true,
+            "read": true,
+            "notify": false,
+            "indicate": false
+          },
+          "descriptors": []
+        }
+      ],
+      "includeServices": []
+    },
+    {
+      "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+      "isPrimary": true,
+      "characteristics":  [
+        {
+          "characteristicUuid": "00002A4E-0000-1000-8000-00805F9B34FB",
+          "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+          "characteristicValue": {},
+          "properties": {
+            "write": false,
+            "writeNoResponse": true,
+            "read": true,
+            "notify": false,
+            "indicate": false
+          },
+          "descriptors": []
+        },
+        {
+          "characteristicUuid": "00002A22-0000-1000-8000-00805F9B34FB",
+          "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+          "characteristicValue": {},
+          "properties": {
+            "write": true,
+            "writeNoResponse": false,
+            "read": true,
+            "notify": true,
+            "indicate": false
+          },
+          "descriptors": [
+            {
+              "descriptorUuid": "00002902-0000-1000-8000-00805F9B34FB",
+              "characteristicUuid": "00002A22-0000-1000-8000-00805F9B34FB",
+              "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+              "descriptorValue": {}
+            }
+          ]
+        },
+        {
+          "characteristicUuid": "00002A32-0000-1000-8000-00805F9B34FB",
+          "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+          "characteristicValue": {},
+          "properties": {
+            "write": true,
+            "writeNoResponse": true,
+            "read": true,
+            "notify": false,
+            "indicate": false
+          },
+          "descriptors": []
+        },
+        {
+          "characteristicUuid": "00002A4D-0000-1000-8000-00805F9B34FB",
+          "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+          "characteristicValue": {},
+          "properties": {
+            "write": true,
+            "writeNoResponse": false,
+            "read": true,
+            "notify": true,
+            "indicate": false
+          },
+          "descriptors": [
+            {
+              "descriptorUuid": "00002902-0000-1000-8000-00805F9B34FB",
+              "characteristicUuid": "00002A4D-0000-1000-8000-00805F9B34FB",
+              "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+              "descriptorValue": {}
+            },
+            {
+              "descriptorUuid": "00002908-0000-1000-8000-00805F9B34FB",
+              "characteristicUuid": "00002A4D-0000-1000-8000-00805F9B34FB",
+              "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+              "descriptorValue": {}
+            }
+          ]
+        },
+        {
+          "characteristicUuid": "00002A4D-0000-1000-8000-00805F9B34FB",
+          "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+          "characteristicValue": {},
+          "properties": {
+            "write": true,
+            "writeNoResponse": false,
+            "read": true,
+            "notify": true,
+            "indicate": false
+          },
+          "descriptors": [
+            {
+              "descriptorUuid": "00002902-0000-1000-8000-00805F9B34FB",
+              "characteristicUuid": "00002A4D-0000-1000-8000-00805F9B34FB",
+              "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+              "descriptorValue": {}
+            },
+            {
+              "descriptorUuid": "00002908-0000-1000-8000-00805F9B34FB",
+              "characteristicUuid": "00002A4D-0000-1000-8000-00805F9B34FB",
+              "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+              "descriptorValue": {}
+            }
+          ]
+        },
+        {
+          "characteristicUuid": "00002A4D-0000-1000-8000-00805F9B34FB",
+          "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+          "characteristicValue": {},
+          "properties": {
+            "write": true,
+            "writeNoResponse": true,
+            "read": true,
+            "notify": false,
+            "indicate": false
+          },
+          "descriptors": [
+            {
+              "descriptorUuid": "00002908-0000-1000-8000-00805F9B34FB",
+              "characteristicUuid": "00002A4D-0000-1000-8000-00805F9B34FB",
+              "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+              "descriptorValue": {}
+            }
+          ]
+        },
+        {
+          "characteristicUuid": "00002A33-0000-1000-8000-00805F9B34FB",
+          "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+          "characteristicValue": {},
+          "properties": {
+            "write": true,
+            "writeNoResponse": false,
+            "read": true,
+            "notify": true,
+            "indicate": false
+          },
+          "descriptors": [
+            {
+              "descriptorUuid": "00002902-0000-1000-8000-00805F9B34FB",
+              "characteristicUuid": "00002A33-0000-1000-8000-00805F9B34FB",
+              "serviceUuid": "00001812-0000-1000-8000-00805F9B34FB",
+              "descriptorValue": {}
+            }
+          ]
+        }
+      ]
+    }
+  ]
+]

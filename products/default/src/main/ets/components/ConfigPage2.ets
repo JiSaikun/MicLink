@@ -12,6 +12,7 @@ import {
 import { picker } from '@kit.CoreFileKit'
 import { BusinessError } from '@kit.BasicServicesKit'
 import { OpenFileWithSystemApp } from 'api'
+import { DeviceArrayType_Ble } from 'bluetooth'
 
 export interface KeymethodConfig {
   key: KeyPressType
@@ -23,12 +24,12 @@ export interface KeymethodConfig {
  */
 @Component
 export struct ConfigPage2 {
+  @StorageLink('devices') devices: DeviceArrayType_Ble[] = []
+  @Consume device_isBle: boolean //该设备是否是蓝牙连接
   @Watch('onGetModelInfoChange') @StorageLink('getModelInfo') getModelInfo: getModelInfoModel =
     ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo as getModelInfoModel
-
   @State mouseconfig: DeviceInfo =
     ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo
-
   @StorageLink('languages') languages: string = 'ZH_CN'
   @State KeymethodConfig: KeymethodConfig[] = []
   @StorageLink("shortcut") shortcut: number = 0
@@ -53,6 +54,9 @@ export struct ConfigPage2 {
   }
 
   aboutToAppear(): void {
+    if (this.device_isBle) {
+      this.mouseconfig = this.devices[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo
+    }
     // 初始检查设备状态
     if (this.checkDeviceDisconnected()) {
       console.log('初始检测到设备已断开连接，关闭配置页面')
@@ -70,14 +74,12 @@ export struct ConfigPage2 {
   private checkDeviceDisconnected(): boolean {
     try {
       const currIndex = AppStorage.get('device_show_currIndex') as number
-      const communication = ConnectDevice.Communication[currIndex]
+      const communication = this.device_isBle ? this.devices[currIndex] : ConnectDevice.Communication[currIndex]
 
       // 检查关键数据是否存在
       if (!communication ||
         !communication.getModelInfo ||
-        !communication.mouseconfig ||
-        !communication.Communication ||
-        !communication.Communication.deviceInfo) {
+        !communication.mouseconfig) {
         return true
       }
 
@@ -137,7 +139,13 @@ export struct ConfigPage2 {
     })
 
     this.KeymethodConfig = [...defaultConfig]
-    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].KeymethodConfig = [...defaultConfig]
+    if (this.device_isBle) {
+      this.devices[AppStorage.get('device_show_currIndex') as number].KeymethodConfig =
+        [...defaultConfig]
+    } else {
+      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].KeymethodConfig =
+        [...defaultConfig]
+    }
     this.isDataReady = true
     this.hasDeviceDisconnected = false
   }
@@ -145,27 +153,48 @@ export struct ConfigPage2 {
   /**
    * 根据操作类型更新配置
    */
-  private updateKeymethodConfigByOperation(key: string, operation: string, index: number, config: KeymethodConfig[]): void {
+  private updateKeymethodConfigByOperation(key: string, operation: string, index: number,
+    config: KeymethodConfig[]): void {
     switch (key) {
       case 'voice_key':
-        if (operation === 'sk') config[0].currIndex = index
-        if (operation === 'lk') config[1].currIndex = index
+        if (operation === 'sk') {
+          config[0].currIndex = index
+        }
+        if (operation === 'lk') {
+          config[1].currIndex = index
+        }
         break
       case 'search_key':
-        if (operation === 'sk') config[2].currIndex = index
-        if (operation === 'lk') config[3].currIndex = index
+        if (operation === 'sk') {
+          config[2].currIndex = index
+        }
+        if (operation === 'lk') {
+          config[3].currIndex = index
+        }
         break
       case 'translate_key':
-        if (operation === 'sk') config[4].currIndex = index
-        if (operation === 'lk') config[5].currIndex = index
+        if (operation === 'sk') {
+          config[4].currIndex = index
+        }
+        if (operation === 'lk') {
+          config[5].currIndex = index
+        }
         break
       case 'AI_key':
-        if (operation === 'sk') config[6].currIndex = index
-        if (operation === 'lk') config[7].currIndex = index
+        if (operation === 'sk') {
+          config[6].currIndex = index
+        }
+        if (operation === 'lk') {
+          config[7].currIndex = index
+        }
         break
       case 'M_key':
-        if (operation === 'sk') config[8].currIndex = index
-        if (operation === 'lk') config[9].currIndex = index
+        if (operation === 'sk') {
+          config[8].currIndex = index
+        }
+        if (operation === 'lk') {
+          config[9].currIndex = index
+        }
         break
     }
   }
@@ -190,7 +219,9 @@ export struct ConfigPage2 {
    * 获取默认选中索引
    */
   private getDefaultSelectedIndex(childs: keyInfos_childs_childsModel[], index1: number, index2: number): number {
-    if (!childs || childs.length === 0) return 0
+    if (!childs || childs.length === 0) {
+      return 0
+    }
 
     // 从当前的 KeymethodConfig 中获取
     const configIndex = this.getKeymethodConfigIndex(
@@ -266,7 +297,13 @@ export struct ConfigPage2 {
 
     if (configIndex !== -1) {
       this.KeymethodConfig[configIndex].currIndex = index
-      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].KeymethodConfig = [...this.KeymethodConfig]
+      if (this.device_isBle) {
+        this.devices[AppStorage.get('device_show_currIndex') as number].KeymethodConfig =
+          [...this.KeymethodConfig]
+      } else {
+        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].KeymethodConfig =
+          [...this.KeymethodConfig]
+      }
     }
 
     // 处理特殊命令
@@ -298,60 +335,63 @@ export struct ConfigPage2 {
 
   build() {
     // 使用条件渲染而不是条件返回
-    Scroll(){
-      Column() {
-        if (this.hasDeviceDisconnected) {
-          // 设备断开时显示空白
-          Blank()
-        } else if (this.getModelInfo?.keyInfos && this.isDataReady) {
-          // 数据加载完成的情况
-          Flex({ space: { main: LengthMetrics.px(15) }, direction: FlexDirection.Column }) {
-            ForEach(this.getModelInfo.keyInfos, (item: keyInfosModel, index1: number) => {
-              Text((item.names as LanguageNames)[this.languages])
-                .fontSize(14)
-                .lineHeight(14)
-                .fontWeight(400)
-                .fontColor('#a4aab2')
-                .margin(index1 === 0 ? { bottom: 10 } : { bottom: 5, top: 10 })
-
-              ForEach(item.childs, (child: keyInfos_childsModel, index2: number) => {
-                Text((child.names as LanguageNames)[this.languages])
-                  .fontSize($r('app.float.default_text_font_size_14'))
-                  .fontWeight(400)
-                  .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-
-                Select(this.convertChildsToOptions(child.childs || []))
-                  .value(((child.childs[this.getDefaultSelectedIndex(child.childs, index1, index2)] as keyInfos_childs_childsModel).names as LanguageNames)[this.languages])
-                  .onSelect((index: number) => {
-                    this.handleSelect(index1, index2, index, child.childs || [])
-                  })
-                  .selected(this.getDefaultSelectedIndex(child.childs || [], index1, index2))
-                  .width('100%')
-                  .font({ size: $r('app.float.default_text_font_size_14'), weight: 400 })
-                  .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-                  .borderRadius(4)
-                  .border({ width: 1, color: $r('app.string.DEFAULT_BORDER_COLOR') })
-                  .backgroundColor(Color.White)
-              }, (item: keyInfos_childsModel) => item.name)
-
-            }, (item: keyInfosModel) => item.keyName)
-          }
-          .width('100%')
-        } else {
-          // 数据加载中的情况
-          Column() {
-            Text('加载中...')
+    // Scroll() {
+    Column() {
+      if (this.hasDeviceDisconnected) {
+        // 设备断开时显示空白
+        Blank()
+      } else if (this.getModelInfo?.keyInfos && this.isDataReady) {
+        // 数据加载完成的情况
+        Flex({ space: { main: LengthMetrics.px(15) }, direction: FlexDirection.Column }) {
+          ForEach(this.getModelInfo.keyInfos, (item: keyInfosModel, index1: number) => {
+            Text((item.names as LanguageNames)[this.languages])
               .fontSize(14)
+              .lineHeight(14)
+              .fontWeight(400)
               .fontColor('#a4aab2')
-          }
-          .width('100%')
-          .height(100)
-          .justifyContent(FlexAlign.Center)
-          .alignItems(HorizontalAlign.Center)
+              .margin(index1 === 0 ? { bottom: 10 } : { bottom: 5, top: 10 })
+
+            ForEach(item.childs, (child: keyInfos_childsModel, index2: number) => {
+              Text((child.names as LanguageNames)[this.languages])
+                .fontSize($r('app.float.default_text_font_size_14'))
+                .fontWeight(400)
+                .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
+
+              Select(this.convertChildsToOptions(child.childs || []))
+                .value(((child.childs[this.getDefaultSelectedIndex(child.childs, index1,
+                  index2)] as keyInfos_childs_childsModel).names as LanguageNames)[this.languages])
+                .onSelect((index: number) => {
+                  this.handleSelect(index1, index2, index, child.childs || [])
+                })
+                .selected(this.getDefaultSelectedIndex(child.childs || [], index1, index2))
+                .width('100%')
+                .font({ size: $r('app.float.default_text_font_size_14'), weight: 400 })
+                .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
+                .borderRadius(4)
+                .border({ width: 1, color: $r('app.string.DEFAULT_BORDER_COLOR') })
+                .backgroundColor(Color.White)
+            }, (item: keyInfos_childsModel) => item.name)
+
+          }, (item: keyInfosModel) => item.keyName)
         }
+        .width('100%')
+      } else {
+        // 数据加载中的情况
+        Column() {
+          Text('加载中...')
+            .fontSize(14)
+            .fontColor('#a4aab2')
+        }
+        .width('100%')
+        .height(100)
+        .justifyContent(FlexAlign.Center)
+        .alignItems(HorizontalAlign.Center)
       }
-      .width('100%')
-    }.height('100%')
+    }
+    .width('100%')
+
+    // }.height('100%')
+    // .align(Alignment.TopStart)
 
   }
 

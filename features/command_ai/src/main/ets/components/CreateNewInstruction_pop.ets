@@ -6,6 +6,7 @@ import { picker } from '@kit.CoreFileKit';
 import { common, Want } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { promptAction } from '@kit.ArkUI';
+import { ThemeConfig } from "common";
 
 interface response_interface {
   title: string
@@ -468,7 +469,6 @@ export struct CreateNewInstruction_pop {
               .fontColor(CommonConstants.COMMAND_DEFAULT_FONT_COLOR)
               .fontWeight(CommonConstants.CreateNewInstruction_pop_DEFAULT_FONT_WEIGHT)
               .width(410)
-              .height(32)
               .borderRadius(4)
               .border({ width: 1, color: '#eaeaEa' })
               .onChange((value: string) => {
@@ -529,7 +529,7 @@ export struct CreateNewInstruction_pop {
         Row() {
           Text(Languages.confirm[this.languages])
             .fontSize(14)
-            .fontColor('#00aecc')
+            .fontColor(ThemeConfig.PaletteTheme)
             .borderRadius(4)
             .padding({
               top: 9,

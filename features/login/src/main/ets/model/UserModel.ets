@@ -60,6 +60,7 @@ export interface login_Params extends BaseParams {
   password?: string //密码
   code?: string //验证码
 }
+
 /**
  * 修改密码
  */

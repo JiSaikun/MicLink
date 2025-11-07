@@ -13,7 +13,7 @@ export interface PopParams_1 {
 export function LaunchLogin_pop(params: PopParams_1) {
   Flex({ direction: FlexDirection.Column }) {
     Row() {
-      Text($r('app.string.prompt'))
+      Text(Languages.prompt[AppStorage.get('languages') as string])
         .fontWeight(CommonConstants_pop.login_dafault_text_font_weight)
         .fontSize(CommonConstants_pop.login_dafault_text_font_size)
         .fontColor(CommonConstants_pop.login_dafault_text_font_color)
@@ -40,7 +40,8 @@ export function LaunchLogin_pop(params: PopParams_1) {
     Row() {
       Text(Languages.confirm[AppStorage.get('languages') as string])
         .fontSize(14)
-        .fontColor('#00aecc')
+        .backgroundColor(AppStorage.get('paletteTheme'))
+        .fontColor('#fff')
         .borderRadius(4)
         .padding({
           top: 9,

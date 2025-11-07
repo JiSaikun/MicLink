@@ -6,5 +6,8 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
+    "config": "file:../config",
+    "float_window": "file:../float_window",
+    "mouse": "file:../mouse"
   }
 }

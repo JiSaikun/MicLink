@@ -1,0 +1,12 @@
+{
+  "module": {
+    "name": "personal_center",
+    "type": "har",
+    "routerMap": "$profile:route_map",
+    "requestPermissions": [{"name": 'ohos.permission.INTERNET'}],
+    "deviceTypes": [
+      "tablet",
+      "2in1"
+    ]
+  }
+}

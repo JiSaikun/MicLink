@@ -50,7 +50,7 @@ export struct Captcha {
             case 2:
               codeType = 'REGISTER'
               break
-            case 3:
+            case 4:
               codeType = 'RESET'
               break
             default:

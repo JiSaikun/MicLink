@@ -1,6 +1,8 @@
 import { DPI_currInfoModel, ConnectDevice, DeviceInfo, MouseICType } from 'mouse'
 import { LengthMetrics } from '@kit.ArkUI'
 import { getModelInfoModel, Languages } from 'config'
+import { DeviceArrayType_Ble } from 'bluetooth'
+import { ThemeConfig } from 'common'
 
 PersistentStorage.persistProp("lowPowerAlertEnabled", true)
 PersistentStorage.persistProp("DPI_currInfo", null)
@@ -15,6 +17,8 @@ PersistentStorage.persistProp("DPI_currInfo", null)
  */
 @Component
 export struct ConfigPage3 {
+  @StorageLink('devices') devices: DeviceArrayType_Ble[] = []
+  @Consume device_isBle: boolean //该设备是否是蓝牙连接
   // @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null //鼠标信息
   @StorageLink('DPI_currInfo') DPI_currInfo: DPI_currInfoModel | null = null //DPI信息
   @StorageLink("lowPowerAlertEnabled") lowPowerAlertEnabled: boolean = true //是否开启低电量提醒
@@ -34,36 +38,65 @@ export struct ConfigPage3 {
   // @Link pageshow:boolean
   change_reportRate() {
     setTimeout(() => {
-      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number||
-        0].Communication.getDeviceInfo([0x13, this.reportRate_currIndex])
+      if (this.device_isBle) {
+        this.devices[AppStorage.get('device_show_currIndex') as number||
+          0].BlueTooth_devices.send([0x13, this.reportRate_currIndex])
+      } else {
+        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number||
+          0].Communication.getDeviceInfo([0x13, this.reportRate_currIndex])
+      }
     }, 50)
   }
 
   change_DPI() {
     setTimeout(() => {
-      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.getDeviceInfo([0x68,
-        this.DPI_currIndex + 1]).then(() => {
-        (ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo).dpiLevel =
-          this.DPI_currIndex
-      })
+      if (this.device_isBle) {
+        this.devices[AppStorage.get('device_show_currIndex') as number].BlueTooth_devices.send([0x68,
+          this.DPI_currIndex + 1]).then(() => {
+          (this.devices[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo).dpiLevel =
+            this.DPI_currIndex
+        })
+      } else {
+        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.getDeviceInfo([0x68,
+          this.DPI_currIndex + 1]).then(() => {
+          (ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo).dpiLevel =
+            this.DPI_currIndex
+        })
+      }
     }, 50)
     let currDPI_Info: DPI_currInfoModel = {
       length: this.DPI.length,
       curr: this.DPI_currIndex
     }
     this.DPI_currInfo = currDPI_Info
-    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].DPI_currInfo = currDPI_Info
+    if (this.device_isBle) {
+      this.devices[AppStorage.get('device_show_currIndex') as number].DPI_currInfo = currDPI_Info
+    } else {
+      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].DPI_currInfo = currDPI_Info
+    }
     // console.error(JSON.stringify(currDPI_Info), '00000000000000000000000000000000000000000000000000')
   }
 
   change_LEDstate() {
     setTimeout(() => {
       if (this.currLED) {
-        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.getDeviceInfo([0x83])
+        if (this.device_isBle) {
+          this.devices[AppStorage.get('device_show_currIndex') as number].BlueTooth_devices.send([0x83])
+        } else {
+          ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.getDeviceInfo([0x83])
+        }
       } else {
-        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.getDeviceInfo([0x84])
+        if (this.device_isBle) {
+          this.devices[AppStorage.get('device_show_currIndex') as number].BlueTooth_devices.send([0x84])
+        } else {
+          ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.getDeviceInfo([0x84])
+        }
       }
-      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].currLED = this.currLED
+      if (this.device_isBle) {
+        this.devices[AppStorage.get('device_show_currIndex') as number].currLED = this.currLED
+      } else {
+        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].currLED = this.currLED
+      }
     }, 50)
 
   }
@@ -78,6 +111,14 @@ export struct ConfigPage3 {
       }
     }
     return false
+  }
+
+  aboutToAppear(): void {
+    if (this.device_isBle) {
+      this.getModelInfo =
+        this.devices[AppStorage.get('device_show_currIndex') as number].getModelInfo as getModelInfoModel
+      this.currLED = this.devices[AppStorage.get('device_show_currIndex') as number].currLED
+    }
   }
 
   build() {
@@ -137,9 +178,11 @@ export struct ConfigPage3 {
             Radio({
               value: 'Radio2', group: 'radioGroup',
               indicatorType: RadioIndicatorType.DOT
-            }).checked(this.currLED)
+            })
+              .checked(this.currLED)
               .height(14)
               .width(14)
+              .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
               .onChange((isChecked: boolean) => {
                 if (isChecked) {
                   console.log('*****************************打开氛围灯****************************************')
@@ -159,8 +202,10 @@ export struct ConfigPage3 {
             Radio({
               value: 'Radio2', group: 'radioGroup',
               indicatorType: RadioIndicatorType.DOT
-            }).checked(!this.currLED)
+            })
+              .checked(!this.currLED)
               .height(14)
+              .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
               .width(14)
               .onChange((isChecked: boolean) => {
                 if (isChecked) {
@@ -191,8 +236,10 @@ export struct ConfigPage3 {
           Radio({
             value: 'Radio2', group: 'lowPowerAlertEnabled',
             indicatorType: RadioIndicatorType.DOT
-          }).checked(this.lowPowerAlertEnabled)
+          })
+            .checked(this.lowPowerAlertEnabled)
             .height(14)
+            .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
             .width(14)
             .onChange((isChecked: boolean) => {
               if (isChecked) {
@@ -212,7 +259,9 @@ export struct ConfigPage3 {
           Radio({
             value: 'Radio2', group: 'lowPowerAlertEnabled',
             indicatorType: RadioIndicatorType.DOT
-          }).checked(!this.lowPowerAlertEnabled)
+          })
+            .checked(!this.lowPowerAlertEnabled)
+            .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
             .height(14)
             .width(14)
             .onChange((isChecked: boolean) => {
@@ -237,7 +286,10 @@ export struct ConfigPage3 {
   }
 
   onDidBuild(): void {
-    switch (ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number||0].mouseconfig?.icType) {
+    const icType =
+      this.device_isBle ? this.devices[AppStorage.get('device_show_currIndex') as number||0].mouseconfig?.icType :
+        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number||0].mouseconfig?.icType
+    switch (icType) {
       case MouseICType.MouseICTypeLS8650:
       case MouseICType.MouseICTypePAW3205:
       case MouseICType.MouseICTypeFCT3065:
@@ -301,7 +353,10 @@ export struct ConfigPage3 {
         break;
     }
     //防止重设按键设置————再次校验
-    switch (ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number||0].mouseconfig?.reportRate) {
+    const reportRate =
+      this.device_isBle ? this.devices[AppStorage.get('device_show_currIndex') as number||0].mouseconfig?.reportRate :
+        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number||0].mouseconfig?.reportRate
+    switch (reportRate) {
       case 125:
         this.reportRate_currIndex = 0
         break
@@ -315,21 +370,37 @@ export struct ConfigPage3 {
         this.reportRate_currIndex = 3
         break
     }
-    this.DPI_currIndex =
-      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].DPI_currInfo as DPI_currInfoModel ?
-      (ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].DPI_currInfo as DPI_currInfoModel).curr :
-        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number||
-          0].mouseconfig?.dpiLevel as number - 1
-    this.currLED = ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number||
-      0].mouseconfig?.atmosphereLight as boolean
+    if (this.device_isBle) {
+      this.DPI_currIndex =
+        this.devices[AppStorage.get('device_show_currIndex') as number].DPI_currInfo as DPI_currInfoModel ?
+        (this.devices[AppStorage.get('device_show_currIndex') as number].DPI_currInfo as DPI_currInfoModel).curr :
+          this.devices[AppStorage.get('device_show_currIndex') as number||
+            0].mouseconfig?.dpiLevel as number - 1
+      this.currLED = this.devices[AppStorage.get('device_show_currIndex') as number||
+        0].mouseconfig?.atmosphereLight as boolean
+    } else {
+      this.DPI_currIndex =
+        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].DPI_currInfo as DPI_currInfoModel ?
+        (ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].DPI_currInfo as DPI_currInfoModel).curr :
+          ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number||
+            0].mouseconfig?.dpiLevel as number - 1
+      this.currLED = ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number||
+        0].mouseconfig?.atmosphereLight as boolean
+    }
+
 
     let currDPI_Info: DPI_currInfoModel = {
       length: this.DPI.length,
       curr: this.DPI_currIndex
     }
     this.DPI_currInfo = currDPI_Info
-    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].DPI_currInfo = currDPI_Info
-    // console.error(JSON.stringify(currDPI_Info), '00000000000000000000000000000000000000000000000000')
+    if (this.device_isBle) {
+      this.devices[AppStorage.get('device_show_currIndex') as number].DPI_currInfo = currDPI_Info
+      // console.error(JSON.stringify(currDPI_Info), '00000000000000000000000000000000000000000000000000')
+    } else {
+      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].DPI_currInfo = currDPI_Info
+      // console.error(JSON.stringify(currDPI_Info), '00000000000000000000000000000000000000000000000000')
+    }
 
   }
 }

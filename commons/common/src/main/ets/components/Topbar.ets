@@ -1,11 +1,14 @@
 import { PopViewUtils, LaunchLogin_pop, PopParams_1 } from 'utils'
 import { Languages } from 'config'
+import { UserLoginInfo } from '../model/UserLoginInfo'
 
 @Component
 export struct Topbar {
   @State isDown: boolean = false
   @StorageLink('languages') languages: string = 'ZH_CN' //语言适配
+  @StorageLink('userLoginInfo') userLoginInfo:UserLoginInfo =  AppStorage.get('userLoginInfo') as UserLoginInfo  //语言适配
   @Consume('pageInfo') pageInfo: NavPathStack
+
 
   @Styles
   textStyle(){
@@ -25,6 +28,7 @@ export struct Topbar {
     PopViewUtils.closePopView();
     AppStorage.setOrCreate("login", false);
     this.pageInfo.pushPath({ "name": 'login' });
+    AppStorage.setOrCreate('userLoginInfo', null)
   }
 
   build() {
@@ -34,7 +38,7 @@ export struct Topbar {
           Image($r('app.media.avatar'))
             .width(32)
             .margin({ right: 10 })
-          Text('迷人的Justin')
+          Text(this.userLoginInfo ? this.userLoginInfo.name : '迷人的Justin')
             .fontSize(14)
             .fontWeight(400)
             .lineHeight(14)
@@ -62,8 +66,14 @@ export struct Topbar {
         Column() {
           Text(Languages.profile[this.languages])
             .textStyle()
+            .onClick(() => {
+              this.pageInfo.pushPath({ name: 'personalCenter' })
+            })
           Text(Languages.passwordReset[this.languages])
             .textStyle()
+            .onClick(() => {
+              AppStorage.setOrCreate('isShow_passwordModification_pop', true)
+            })
           Divider()
             .width('100%')
             .height(1)

@@ -195,7 +195,7 @@ export interface DeviceArrayType {
   Communication: Communication
   mouseconfig: DeviceInfo | null
   getModelInfo: getModelInfoModel | null
-  connectionmethod: connectionmethodType
+  connectionmethod: connectionmethodType //连接方式
   KeymethodConfig: KeymethodConfig[]
   DPI_currInfo: DPI_currInfoModel | null
   currLED: boolean
@@ -234,10 +234,10 @@ export class ConnectDevice {
       console.log('设备列表长度:', devices?.length || 0);
       if (!devices || devices.length === 0) {
         hilog.error(0x0000, 'USB', 'No USB devices found=================没有找到设备');
-        // 延迟后重试连接
-        setTimeout((): void => {
-          ConnectDevice.connectDevice()
-        }, 3000);
+        // // 延迟后重试连接
+        // setTimeout((): void => {
+        //   ConnectDevice.connectDevice()
+        // }, 3000);
         return;
       }
       // 显示所有设备信息————遍历
@@ -247,6 +247,10 @@ export class ConnectDevice {
 
       // 查找匹配的设备 (VID: 0x248A)————鼠标
       const targetDevice = devices.filter(device => device.vendorId === 0x248A);
+      console.error('匹配成功的设备状态：', JSON.stringify(targetDevice))
+      targetDevice.forEach((targetDevice, index) => {
+        console.log(`设备 ${index}: VID=0x${targetDevice.vendorId.toString(16)}, PID=0x${targetDevice.productId.toString(16)}, 名称=${targetDevice.name}`);
+      });
       ConnectDevice.targetDevice = targetDevice
       if (!targetDevice || targetDevice.length === 0) {
         hilog.error(0x0000, 'USB', '没找到鼠标设备');
@@ -625,7 +629,8 @@ export class Communication {
     console.log('开始获取设备信息');
     try {
       if (this.outputEndpoint && this.outputInterface && this.inputEndpoint && this.inputInterface) {
-        console.log('找到合适的端点，开始通信', JSON.stringify(this.outputEndpoint), '+', JSON.stringify(this.outputInterface));
+        console.log('找到合适的端点，开始通信', JSON.stringify(this.outputEndpoint), '+',
+          JSON.stringify(this.outputInterface));
 
         // 1. 首先发送命令
         let a = await this.sendCommand(this.outputInterface, this.outputEndpoint, command);
@@ -637,7 +642,8 @@ export class Communication {
         if (a === -1) {
           console.log('****************************************************************发送命令失败：断开设备连接', a);
           await this.reconnectDevice();
-          console.log(`****************************************************************设备连接完成：重新发送断掉的命令:0x`, command[0].toString(16));
+          console.log(`****************************************************************设备连接完成：重新发送断掉的命令:0x`,
+            command[0].toString(16));
           this.getDeviceInfo(command);
           return;
         }
@@ -656,7 +662,8 @@ export class Communication {
         let b = await this.readResponse(this.inputInterface, this.inputEndpoint);
         console.log('==================b', b);
 
-        console.log('=========================================命令发送成功，并成功读取一次数据，开始执行循环读取', '发送的命令是：', JSON.stringify(command), JSON.stringify(this.isPhysicalKeyboardExist));
+        console.log('=========================================命令发送成功，并成功读取一次数据，开始执行循环读取',
+          '发送的命令是：', JSON.stringify(command), JSON.stringify(this.isPhysicalKeyboardExist));
 
         // 确保心跳检测在持续读取前启动
         if (!this.isHeartbeatRunning) {
@@ -678,9 +685,11 @@ export class Communication {
   }
 
   // 发送命令到输出端点
-  private async sendCommand(iface: usbManager.USBInterface, endpoint: usbManager.USBEndpoint, command: number[], length: number = 33): Promise<number> {
+  private async sendCommand(iface: usbManager.USBInterface, endpoint: usbManager.USBEndpoint, command: number[],
+    length: number = 33): Promise<number> {
     this.sendState = true;
-    hilog.warn(0x00, 'send', '*******************************************************************************向鼠标发送消息');
+    hilog.warn(0x00, 'send',
+      '*******************************************************************************向鼠标发送消息');
 
     if (!this.devicePipe) {
       this.sendState = false;
@@ -689,15 +698,18 @@ export class Communication {
 
     try {
       const claimResult = usbManager.claimInterface(this.devicePipe, iface, true);
-      console.log('================================================发送建立信息发送通道信息前，建立信息发送通道：', claimResult);
+      console.log('================================================发送建立信息发送通道信息前，建立信息发送通道：',
+        claimResult);
 
       if (claimResult === 0) {
         const cmdData = this.buildCommandFrame(command, length);
         const cmdData_21 = this.buildCommandFrame(command, 21);
         const hexString = Array.from(cmdData).map(b => b.toString(16).padStart(2, '0')).join(' ');
         const hexString_21 = Array.from(cmdData_21).map(b => b.toString(16).padStart(2, '0')).join(' ');
-        console.log('\n', `发送命令 0x${command[0].toString(16)}:`, hexString, '\n', `发送命令 0x${command[0].toString(16)}:`, hexString_21);
-        console.log('`````````````````````````````````````````````````````````````等待发送的命令:', this.sendDataList.length);
+        console.log('\n', `发送命令 0x${command[0].toString(16)}:`, hexString, '\n',
+          `发送命令 0x${command[0].toString(16)}:`, hexString_21);
+        console.log('`````````````````````````````````````````````````````````````等待发送的命令:',
+          this.sendDataList.length);
 
         const result = await usbManager.bulkTransfer(this.devicePipe, endpoint, cmdData, 2000);
         const result_21 = await usbManager.bulkTransfer(this.devicePipe, endpoint, cmdData_21, 2000);
@@ -716,7 +728,8 @@ export class Communication {
       }
 
       console.log('命令未成功发送');
-      console.log('================================================发送建立信息发送通道信息前，建立信息发送通道不成功：', claimResult);
+      console.log('================================================发送建立信息发送通道信息前，建立信息发送通道不成功：',
+        claimResult);
       this.sendState = false;
 
     } catch (error) {
@@ -728,7 +741,8 @@ export class Communication {
 
   // 从输入端点读取响应数据
   private async readResponse(iface: usbManager.USBInterface, endpoint: usbManager.USBEndpoint): Promise<number> {
-    hilog.warn(0x00, 'send', '*******************************************************************************接收鼠标发送的消息');
+    hilog.warn(0x00, 'send',
+      '*******************************************************************************接收鼠标发送的消息');
 
     if (!this.devicePipe) {
       this.readState = false;
@@ -740,7 +754,8 @@ export class Communication {
     try {
       const claimResult = usbManager.claimInterface(this.devicePipe, iface, true);
       console.log('声明接口结果:', claimResult);
-      console.log('***************************************************************************创建通信接口：', claimResult);
+      console.log('***************************************************************************创建通信接口：',
+        claimResult);
 
       if (claimResult === 0) {
         const buffer = new Uint8Array(64);
@@ -764,7 +779,8 @@ export class Communication {
         this.readState = false;
         return result;
       } else {
-        console.log('***************************************************************************创建通信接口失败：', claimResult);
+        console.log('***************************************************************************创建通信接口失败：',
+          claimResult);
         this.readState = false;
       }
     } catch (error) {
@@ -794,11 +810,13 @@ export class Communication {
           c++;
           console.log('循环读取鼠标数据-----', c, '---------------------');
 
-          let a = await this.readResponse(this.inputInterface as usbManager.USBInterface, this.inputEndpoint as usbManager.USBEndpoint);
+          let a = await this.readResponse(this.inputInterface as usbManager.USBInterface,
+            this.inputEndpoint as usbManager.USBEndpoint);
 
           if (a === -1) {
             console.log('第一次读取失败，尝试第二次读取');
-            let a = await this.readResponse(this.inputInterface as usbManager.USBInterface, this.inputEndpoint as usbManager.USBEndpoint);
+            let a = await this.readResponse(this.inputInterface as usbManager.USBInterface,
+              this.inputEndpoint as usbManager.USBEndpoint);
             if (a === -1) {
               console.log('连续两次读取失败，重新连接设备');
               await this.reconnectDevice();
@@ -930,9 +948,12 @@ export class Communication {
                 { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
                 { key: KeyPressType.AI_CLICK, currIndex: 0 },
                 { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
+                { key: KeyPressType.CUSTOM_CLICK, currIndex: 0 },
+                { key: KeyPressType.CUSTOM_LONG_PRESS_DOWN, currIndex: 0 },
               ];
 
-              for (let item of (AppStorage.get('devicesList') as DeviceArrayType[])[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[]) {
+              for (let item
+                of (AppStorage.get('devicesList') as DeviceArrayType[])[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[]) {
                 for (let childs of item.childs) {
                   childs.childs.forEach((keyInfos_childs_childsModel, index) => {
                     if (keyInfos_childs_childsModel.first === 1) {
@@ -967,6 +988,14 @@ export class Communication {
                           }
                           if (childs.operation === 'lk') { //长按
                             ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[7].currIndex = index;
+                          }
+                          break;
+                        case 'M_key': //AI键
+                          if (childs.operation === 'sk') {
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[8].currIndex = index;
+                          }
+                          if (childs.operation === 'lk') { //长按
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[9].currIndex = index;
                           }
                           break;
                       }
@@ -1030,9 +1059,12 @@ export class Communication {
                 { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
                 { key: KeyPressType.AI_CLICK, currIndex: 0 },
                 { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
+                { key: KeyPressType.CUSTOM_CLICK, currIndex: 0 },
+                { key: KeyPressType.CUSTOM_LONG_PRESS_DOWN, currIndex: 0 },
               ];
 
-              for (let item of (AppStorage.get('devicesList') as DeviceArrayType[])[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[]) {
+              for (let item
+                of (AppStorage.get('devicesList') as DeviceArrayType[])[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[]) {
                 for (let childs of item.childs) {
                   childs.childs.forEach((keyInfos_childs_childsModel, index) => {
                     if (keyInfos_childs_childsModel.first === 1) {
@@ -1069,6 +1101,14 @@ export class Communication {
                             ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[7].currIndex = index;
                           }
                           break;
+                        case 'M_key': //AI键
+                          if (childs.operation === 'sk') {
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[8].currIndex = index;
+                          }
+                          if (childs.operation === 'lk') { //长按
+                            ConnectDevice.Communication[this.device_currIndex].KeymethodConfig[9].currIndex = index;
+                          }
+                          break;
                       }
                     }
                   });
@@ -1089,104 +1129,124 @@ export class Communication {
         if (data[3] === 0x33) {
           console.log('****************************语音键单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.VOICE_CLICK)
         }
         if (data[3] === 0x40) {
           console.log('****************************语音键双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.VOICE_DOUBLE_CLICK)
         }
         if (data[3] === 0x37) {
           console.log('****************************语音键长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.VOICE_LONG_PRESS_DOWN)
         }
         if (data[3] === 0x38) {
           console.log('****************************语音键长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.VOICE_LONG_PRESS_UP)
         }
         if (data[3] === 0x35) {
           console.log('****************************搜索键单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SEARCH_CLICK)
         }
         if (data[3] === 0x41) {
           console.log('****************************搜索键双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SEARCH_DOUBLE_CLICK)
         }
         if (data[3] === 0x31) {
           console.log('****************************搜索键长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SEARCH_LONG_PRESS_DOWN)
         }
         if (data[3] === 0x32) {
           console.log('****************************搜索键长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SEARCH_LONG_PRESS_UP)
         }
 
         if (data[3] === 0x42) {
           console.log('****************************翻译键单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TRANSLATE_CLICK)
         }
         if (data[3] === 0x43) {
           console.log('****************************翻译键双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TRANSLATE_DOUBLE_CLICK)
         }
         if (data[3] === 0x44) {
           console.log('****************************翻译键长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TRANSLATE_LONG_PRESS_DOWN)
         }
         if (data[3] === 0x45) {
           console.log('****************************翻译键长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TRANSLATE_LONG_PRESS_UP)
         }
 
         if (data[3] === 0x46) {
           console.log('****************************自定义键——M键单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM_CLICK)
         }
         if (data[3] === 0x47) {
           console.log('****************************自定义键——M键双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM_DOUBLE_CLICK)
         }
         if (data[3] === 0x48) {
           console.log('****************************自定义键——M键长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM_LONG_PRESS_DOWN)
         }
         if (data[3] === 0x49) {
           console.log('****************************自定义键——M键长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM_LONG_PRESS_UP)
         }
 
         if (data[3] === 0x50) {
           console.log('****************************AI键单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_CLICK)
         }
         if (data[3] === 0x51) {
           console.log('****************************AI键双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_DOUBLE_CLICK)
         }
         if (data[3] === 0x52) {
           console.log('****************************AI键长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_LONG_PRESS_DOWN)
         }
         if (data[3] === 0x53) {
           console.log('****************************AI键长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_LONG_PRESS_UP)
         }
 
@@ -1197,21 +1257,25 @@ export class Communication {
         if (data[3] === 0x80) {
           console.log('****************************截图翻译键单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SCREENSHOT_TRANSLATE_CLICK)
         }
         if (data[3] === 0x81) {
           console.log('****************************截图翻译键双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SCREENSHOT_TRANSLATE_DOUBLE_CLICK)
         }
         if (data[3] === 0x82) {
           console.log('****************************截图翻译键长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SCREENSHOT_TRANSLATE_LONG_PRESS_DOWN)
         }
         if (data[3] === 0x83) {
           console.log('****************************截图翻译键长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SCREENSHOT_TRANSLATE_LONG_PRESS_UP)
         }
 
@@ -1219,21 +1283,25 @@ export class Communication {
         if (data[3] === 0x84) {
           console.log('****************************AI绘画键单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_PAINTING_CLICK)
         }
         if (data[3] === 0x85) {
           console.log('****************************AI绘画键双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_PAINTING_DOUBLE_CLICK)
         }
         if (data[3] === 0x86) {
           console.log('****************************AI绘画键长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_PAINTING_LONG_PRESS_DOWN)
         }
         if (data[3] === 0x87) {
           console.log('****************************AI绘画键长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_PAINTING_LONG_PRESS_UP)
         }
 
@@ -1241,21 +1309,25 @@ export class Communication {
         if (data[3] === 0x88) {
           console.log('****************************文档转换键单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_CONVERSION_CLICK)
         }
         if (data[3] === 0x89) {
           console.log('****************************文档转换键双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_CONVERSION_DOUBLE_CLICK)
         }
         if (data[3] === 0x8A) {
           console.log('****************************文档转换键长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_CONVERSION_LONG_PRESS_DOWN)
         }
         if (data[3] === 0x8B) {
           console.log('****************************文档转换键长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_CONVERSION_LONG_PRESS_UP)
         }
 
@@ -1263,21 +1335,25 @@ export class Communication {
         if (data[3] === 0x8C) {
           console.log('****************************思维导图键单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.MIND_MAP_CLICK)
         }
         if (data[3] === 0x8D) {
           console.log('****************************思维导图键双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.MIND_MAP_DOUBLE_CLICK)
         }
         if (data[3] === 0x8E) {
           console.log('****************************思维导图键长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.MIND_MAP_LONG_PRESS_DOWN)
         }
         if (data[3] === 0x8F) {
           console.log('****************************思维导图键长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.MIND_MAP_LONG_PRESS_UP)
         }
 
@@ -1285,21 +1361,25 @@ export class Communication {
         if (data[3] === 0x90) {
           console.log('****************************工作总结键单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WORK_SUMMARY_CLICK)
         }
         if (data[3] === 0x91) {
           console.log('****************************工作总结键双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WORK_SUMMARY_DOUBLE_CLICK)
         }
         if (data[3] === 0x92) {
           console.log('****************************工作总结键长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WORK_SUMMARY_LONG_PRESS_DOWN)
         }
         if (data[3] === 0x93) {
           console.log('****************************工作总结键长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WORK_SUMMARY_LONG_PRESS_UP)
         }
 
@@ -1307,21 +1387,25 @@ export class Communication {
         if (data[3] === 0x94) {
           console.log('****************************模版下载键单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TEMPLATE_DOWNLOAD_CLICK)
         }
         if (data[3] === 0x95) {
           console.log('****************************模版下载键双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TEMPLATE_DOWNLOAD_DOUBLE_CLICK)
         }
         if (data[3] === 0x96) {
           console.log('****************************模版下载键长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TEMPLATE_DOWNLOAD_LONG_PRESS_DOWN)
         }
         if (data[3] === 0x97) {
           console.log('****************************模版下载键长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TEMPLATE_DOWNLOAD_LONG_PRESS_UP)
         }
 
@@ -1329,21 +1413,25 @@ export class Communication {
         if (data[3] === 0x98) {
           console.log('****************************阅读理解键单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.READING_COMPREHENSION_CLICK)
         }
         if (data[3] === 0x99) {
           console.log('****************************阅读理解键双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.READING_COMPREHENSION_DOUBLE_CLICK)
         }
         if (data[3] === 0x9A) {
           console.log('****************************阅读理解键长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.READING_COMPREHENSION_LONG_PRESS_DOWN)
         }
         if (data[3] === 0x9B) {
           console.log('****************************阅读理解键长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.READING_COMPREHENSION_LONG_PRESS_UP)
         }
 
@@ -1351,21 +1439,25 @@ export class Communication {
         if (data[3] === 0x9C) {
           console.log('****************************表格键单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TABLE_CLICK)
         }
         if (data[3] === 0x9D) {
           console.log('****************************表格键双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TABLE_DOUBLE_CLICK)
         }
         if (data[3] === 0x9E) {
           console.log('****************************表格键长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TABLE_LONG_PRESS_DOWN)
         }
         if (data[3] === 0x9F) {
           console.log('****************************表格键长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TABLE_LONG_PRESS_UP)
         }
 
@@ -1373,21 +1465,25 @@ export class Communication {
         if (data[3] === 0xA0) {
           console.log('****************************代码键单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CODE_CLICK)
         }
         if (data[3] === 0xA1) {
           console.log('****************************代码键双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CODE_DOUBLE_CLICK)
         }
         if (data[3] === 0xA2) {
           console.log('****************************代码键长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CODE_LONG_PRESS_DOWN)
         }
         if (data[3] === 0xA3) {
           console.log('****************************代码键长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CODE_LONG_PRESS_UP)
         }
 
@@ -1395,21 +1491,25 @@ export class Communication {
         if (data[3] === 0xA4) {
           console.log('****************************演讲稿键单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SPEECH_CLICK)
         }
         if (data[3] === 0xA5) {
           console.log('****************************演讲稿键双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SPEECH_DOUBLE_CLICK)
         }
         if (data[3] === 0xA6) {
           console.log('****************************演讲稿键长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SPEECH_LONG_PRESS_DOWN)
         }
         if (data[3] === 0xA7) {
           console.log('****************************演讲稿键长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SPEECH_LONG_PRESS_UP)
         }
 
@@ -1417,21 +1517,25 @@ export class Communication {
         if (data[3] === 0xA8) {
           console.log('****************************写作键单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WRITING_CLICK)
         }
         if (data[3] === 0xA9) {
           console.log('****************************写作键双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WRITING_DOUBLE_CLICK)
         }
         if (data[3] === 0xAA) {
           console.log('****************************写作键长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WRITING_LONG_PRESS_DOWN)
         }
         if (data[3] === 0xAB) {
           console.log('****************************写作键长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WRITING_LONG_PRESS_UP)
         }
 
@@ -1439,21 +1543,25 @@ export class Communication {
         if (data[3] === 0xAC) {
           console.log('****************************PPT键单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PPT_CLICK)
         }
         if (data[3] === 0xAD) {
           console.log('****************************PPT键双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PPT_DOUBLE_CLICK)
         }
         if (data[3] === 0xAE) {
           console.log('****************************PPT键长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PPT_LONG_PRESS_DOWN)
         }
         if (data[3] === 0xAF) {
           console.log('****************************PPT键长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PPT_LONG_PRESS_UP)
         }
 
@@ -1461,21 +1569,25 @@ export class Communication {
         if (data[3] === 0xB0) {
           console.log('****************************自定义键1单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM1_CLICK)
         }
         if (data[3] === 0xB1) {
           console.log('****************************自定义键1双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM1_DOUBLE_CLICK)
         }
         if (data[3] === 0xB2) {
           console.log('****************************自定义键1长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM1_LONG_PRESS_DOWN)
         }
         if (data[3] === 0xB3) {
           console.log('****************************自定义键1长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM1_LONG_PRESS_UP)
         }
 
@@ -1483,21 +1595,25 @@ export class Communication {
         if (data[3] === 0xB4) {
           console.log('****************************自定义键2单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM2_CLICK)
         }
         if (data[3] === 0xB5) {
           console.log('****************************自定义键2双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM2_DOUBLE_CLICK)
         }
         if (data[3] === 0xB6) {
           console.log('****************************自定义键2长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM2_LONG_PRESS_DOWN)
         }
         if (data[3] === 0xB7) {
           console.log('****************************自定义键2长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM2_LONG_PRESS_UP)
         }
 
@@ -1505,21 +1621,25 @@ export class Communication {
         if (data[3] === 0xB8) {
           console.log('****************************自定义键3单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM3_CLICK)
         }
         if (data[3] === 0xB9) {
           console.log('****************************自定义键3双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM3_DOUBLE_CLICK)
         }
         if (data[3] === 0xBA) {
           console.log('****************************自定义键3长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM3_LONG_PRESS_DOWN)
         }
         if (data[3] === 0xBB) {
           console.log('****************************自定义键3长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM3_LONG_PRESS_UP)
         }
 
@@ -1527,21 +1647,25 @@ export class Communication {
         if (data[3] === 0xC0) {
           console.log('****************************朋友圈手册单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.FRIENDS_MANUAL_CLICK)
         }
         if (data[3] === 0xC1) {
           console.log('****************************朋友圈手册双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.FRIENDS_MANUAL_DOUBLE_CLICK)
         }
         if (data[3] === 0xC2) {
           console.log('****************************朋友圈手册长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.FRIENDS_MANUAL_LONG_PRESS_DOWN)
         }
         if (data[3] === 0xC3) {
           console.log('****************************朋友圈手册长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.FRIENDS_MANUAL_LONG_PRESS_UP)
         }
 
@@ -1549,21 +1673,25 @@ export class Communication {
         if (data[3] === 0xC4) {
           console.log('****************************长文翻译单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.LONG_TEXT_TRANSLATION_CLICK)
         }
         if (data[3] === 0xC5) {
           console.log('****************************长文翻译双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.LONG_TEXT_TRANSLATION_DOUBLE_CLICK)
         }
         if (data[3] === 0xC6) {
           console.log('****************************长文翻译长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.LONG_TEXT_TRANSLATION_LONG_PRESS_DOWN)
         }
         if (data[3] === 0xC7) {
           console.log('****************************长文翻译长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.LONG_TEXT_TRANSLATION_LONG_PRESS_UP)
         }
 
@@ -1571,21 +1699,25 @@ export class Communication {
         if (data[3] === 0xC8) {
           console.log('****************************一键抠图单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.ONE_CLICK_CUTOUT_CLICK)
         }
         if (data[3] === 0xC9) {
           console.log('****************************一键抠图双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.ONE_CLICK_CUTOUT_DOUBLE_CLICK)
         }
         if (data[3] === 0xCA) {
           console.log('****************************一键抠图长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.ONE_CLICK_CUTOUT_LONG_PRESS_DOWN)
         }
         if (data[3] === 0xCB) {
           console.log('****************************一键抠图长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.ONE_CLICK_CUTOUT_LONG_PRESS_UP)
         }
 
@@ -1593,21 +1725,25 @@ export class Communication {
         if (data[3] === 0xCC) {
           console.log('****************************微博文案小助手单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WEIBO_COPY_ASSISTANT_CLICK)
         }
         if (data[3] === 0xCD) {
           console.log('****************************微博文案小助手双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WEIBO_COPY_ASSISTANT_DOUBLE_CLICK)
         }
         if (data[3] === 0xCE) {
           console.log('****************************微博文案小助手长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WEIBO_COPY_ASSISTANT_LONG_PRESS_DOWN)
         }
         if (data[3] === 0xCF) {
           console.log('****************************微博文案小助手长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WEIBO_COPY_ASSISTANT_LONG_PRESS_UP)
         }
 
@@ -1615,21 +1751,25 @@ export class Communication {
         if (data[3] === 0xE0) {
           console.log('****************************自定义键4单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM4_CLICK)
         }
         if (data[3] === 0xE1) {
           console.log('****************************自定义键4双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM4_DOUBLE_CLICK)
         }
         if (data[3] === 0xE2) {
           console.log('****************************自定义键4长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM4_LONG_PRESS_DOWN)
         }
         if (data[3] === 0xE3) {
           console.log('****************************自定义键4长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM4_LONG_PRESS_UP)
         }
 
@@ -1637,21 +1777,25 @@ export class Communication {
         if (data[3] === 0xE5) {
           console.log('****************************拍照键单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PHOTO_CLICK)
         }
         if (data[3] === 0xE6) {
           console.log('****************************拍照键双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PHOTO_DOUBLE_CLICK)
         }
         if (data[3] === 0xE7) {
           console.log('****************************拍照键长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PHOTO_LONG_PRESS_DOWN)
         }
         if (data[3] === 0xE8) {
           console.log('****************************拍照键长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PHOTO_LONG_PRESS_UP)
         }
 
@@ -1659,21 +1803,25 @@ export class Communication {
         if (data[3] === 0xE9) {
           console.log('****************************文稿校对单击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_PROOFREADING_CLICK)
         }
         if (data[3] === 0xEA) {
           console.log('****************************文稿校对双击按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_PROOFREADING_DOUBLE_CLICK)
         }
         if (data[3] === 0xEB) {
           console.log('****************************文稿校对长按按下****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_PROOFREADING_LONG_PRESS_DOWN)
         }
         if (data[3] === 0xEC) {
           console.log('****************************文稿校对长按抬起****************************')
           AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_PROOFREADING_LONG_PRESS_UP)
         }
 
@@ -1714,8 +1862,10 @@ export class Communication {
             /**
              * 判断当前设备是否是键盘
              */
-            if ((ConnectDevice.Communication[this.device_currIndex].getModelInfo as getModelInfoModel).functions.length !== 0) {
-              for (let item of (ConnectDevice.Communication[this.device_currIndex].getModelInfo as getModelInfoModel).functions) {
+            if ((ConnectDevice.Communication[this.device_currIndex].getModelInfo as getModelInfoModel).functions.length !==
+              0) {
+              for (let item
+                of (ConnectDevice.Communication[this.device_currIndex].getModelInfo as getModelInfoModel).functions) {
                 if (item.code === 'keyboard') {
                   ConnectDevice.Communication[this.device_currIndex].PRODUCT_TYPE = PRODUCT_TYPE.keyboard;
                 }
