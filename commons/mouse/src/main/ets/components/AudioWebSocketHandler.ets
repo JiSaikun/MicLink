@@ -83,10 +83,10 @@ export class AudioWebSocketHandler {
   private completionCheckId: number | null = null;
   private isClosing: boolean = false; // 新增：标记是否正在关闭
 
-  // 优化配置 - 1008字节分片
-  private readonly CHUNK_SIZE_BYTES = 1008; // 目标分片大小
-  private readonly SAMPLES_PER_CHUNK = 504; // 1008字节 / 2字节每采样点 = 504个采样点
-  private readonly SEND_INTERVAL_MS = 2; // 发送间隔
+  // 优化配置 - 1024字节分片
+  private readonly CHUNK_SIZE_BYTES = 1024; // 目标分片大小
+  private readonly SAMPLES_PER_CHUNK = 512; // 1024字节 / 2字节每采样点 = 512个采样点
+  private readonly SEND_INTERVAL_MS = 0; // 发送间隔（立即发送）
   private readonly CHECK_INTERVAL_MS = 5; // 检查间隔
   private readonly COMPLETION_CHECK_MS = 100; // 完成检查间隔
   private readonly MAX_BUFFER_SIZE = 50; // 最大缓冲分片数
@@ -579,7 +579,7 @@ export class AudioWebSocketHandler {
     return this.base64Encode(byteArray);
   }
 
-  // 将音频数据分片为1008字节的块
+  // 将音频数据分片为1024字节的块
   private chunkAudioData(audioData: Int16Array[]): Int16Array[] {
     const chunks: Int16Array[] = [];
 
@@ -589,6 +589,8 @@ export class AudioWebSocketHandler {
       totalLength += frame.length;
     }
 
+    console.log(`2.4G分片前总采样点数: ${totalLength}, 总字节数: ${totalLength * 2}`);
+
     const combinedData = new Int16Array(totalLength);
     let offset = 0;
     for (const frame of audioData) {
@@ -596,13 +598,15 @@ export class AudioWebSocketHandler {
       offset += frame.length;
     }
 
-    // 按504个采样点（1008字节）分块
+    // 按512个采样点（1024字节）分块
     for (let i = 0; i < combinedData.length; i += this.SAMPLES_PER_CHUNK) {
       const endIndex = Math.min(i + this.SAMPLES_PER_CHUNK, combinedData.length);
       const chunk = combinedData.slice(i, endIndex);
       chunks.push(chunk);
+      console.log(`2.4G生成分片 ${chunks.length}: ${chunk.length}采样点 (${chunk.length * 2}字节)`);
     }
 
+    console.log(`2.4G总共生成 ${chunks.length} 个分片`);
     return chunks;
   }
 
@@ -611,10 +615,10 @@ export class AudioWebSocketHandler {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  // ========== 优化的1008字节分片发送方法 ==========
+  // ========== 优化的1024字节分片发送方法 ==========
 
   private startRealTimeAudioSending(): void {
-    console.log('开始实时音频发送 - 1008字节分片');
+    console.log('开始实时音频发送 - 1024字节分片');
 
     // 立即发送现有数据
     this.sendExistingDataImmediately();
@@ -636,9 +640,9 @@ export class AudioWebSocketHandler {
     try {
       this.isSending = true;
 
-      // 分片处理现有数据为1008字节块
+      // 分片处理现有数据为1024字节块
       const chunks = this.chunkAudioData(this.audioData);
-      console.log(`生成 ${chunks.length} 个1008字节分片`);
+      console.log(`生成 ${chunks.length} 个1024字节分片`);
 
       for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
         if (this.isClosing) {
@@ -646,6 +650,7 @@ export class AudioWebSocketHandler {
         }
 
         const chunk = chunks[chunkIndex];
+        console.log(`2.4G发送分片 ${chunkIndex + 1}/${chunks.length}, 大小: ${chunk.length} 采样点`);
         await this.sendAudioChunk(chunk, chunkIndex, chunks.length);
 
         // 控制发送速率
@@ -763,6 +768,8 @@ export class AudioWebSocketHandler {
       if (!base64Audio) {
         return;
       }
+
+      console.log(`2.4G分片 ${chunkIndex} Base64长度: ${base64Audio.length}, 前50字符: ${base64Audio.substring(0, 50)}`);
 
       const isStart = (chunkIndex === 0 && this.lastSentIndex === 0);
       const isEnd = false;

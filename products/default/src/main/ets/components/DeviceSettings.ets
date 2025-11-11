@@ -46,19 +46,19 @@ export struct DeviceSettings {
               .width(32)
               .height(32)
               .onClick(() => {
-                if (!AppStorage.get('isShow_bluetoothConnect_pop')) {
-                  AppStorage.setOrCreate('isShow_bluetoothConnect_pop', true)
-                  //检索与连接蓝牙，之前的连接列表清空    蓝牙检索状态:false
-                  for (let item of this.devices) {
-                    item.BlueTooth_devices.closeconnectDevice()
-                  }
-                  AppStorage.setOrCreate('isBluetoothConnect_state', false)
-                  AppStorage.setOrCreate('devices', [])
-                  const context: common.UIAbilityContext =
-                    this.getUIContext().getHostContext() as common.UIAbilityContext;
-                  connectDevice(context)
-
-                }
+                // if (!AppStorage.get('isShow_bluetoothConnect_pop')) {
+                //   AppStorage.setOrCreate('isShow_bluetoothConnect_pop', true)
+                //   //检索与连接蓝牙，之前的连接列表清空    蓝牙检索状态:false
+                //   for (let item of this.devices) {
+                //     item.BlueTooth_devices.closeconnectDevice()
+                //   }
+                //   AppStorage.setOrCreate('isBluetoothConnect_state', false)
+                //   AppStorage.setOrCreate('devices', [])
+                //   const context: common.UIAbilityContext =
+                //     this.getUIContext().getHostContext() as common.UIAbilityContext;
+                //   connectDevice(context)
+                //
+                // }
               })
           }
           .alignItems(VerticalAlign.Center)

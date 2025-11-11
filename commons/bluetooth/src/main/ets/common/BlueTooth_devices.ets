@@ -1167,11 +1167,18 @@ export class BlueTooth_devices {
   // 处理音频数据
   private processAudioData(data: Uint8Array): void {
     try {
+      console.log(`蓝牙接收原始音频数据长度: ${data.length}`);
+      console.log(`蓝牙原始音频数据前20字节: ${Array.from(data.slice(0, 20)).map(b => b.toString(16).padStart(2, '0')).join(' ')}`);
+
       // 移除帧头(0x1b)
       let audioFrame = data.subarray(1);
+      console.log(`蓝牙移除帧头后数据长度: ${audioFrame.length}`);
+
       if (Number(this.deviceInfo.firmwareVersion) > 23) {
-        // 解密音频数据
-        const decryptedData = this.audioProcessor.miclinkDecrypt(audioFrame);
+        // 解密音频数据 - 蓝牙使用100字节长度
+        const decryptedData = this.audioProcessor.miclinkDecrypt(audioFrame, 100);
+        console.log(`蓝牙解密后数据长度: ${decryptedData.length}`);
+        console.log(`蓝牙解密后数据前20字节: ${Array.from(decryptedData.slice(0, 20)).map(b => b.toString(16).padStart(2, '0')).join(' ')}`);
         // 这里可以添加播放或保存PCM数据的逻辑
         audioFrame = decryptedData;
       }
@@ -1181,12 +1188,17 @@ export class BlueTooth_devices {
 
       if (pcmData) {
         // 处理PCM数据（播放或保存）
-        console.log(`解码得到PCM数据: ${pcmData.length}个样本`, '\n', '具体数据：', pcmData);
+        console.log(`蓝牙解码得到PCM数据: ${pcmData.length}个样本`);
+        console.log(`蓝牙PCM数据前10个样本: ${Array.from(pcmData.slice(0, 10)).join(', ')}`);
+        console.log(`蓝牙当前BlueTooth_devices.audioData长度: ${BlueTooth_devices.audioData.length}`);
         // 这里可以添加播放或保存PCM数据的逻辑
         BlueTooth_devices.audioData.push(pcmData);
+        console.log(`蓝牙添加后BlueTooth_devices.audioData长度: ${BlueTooth_devices.audioData.length}`);
+      } else {
+        console.error('蓝牙PCM解码失败，返回null');
       }
     } catch (error) {
-      console.error('处理音频数据失败:', error);
+      console.error('蓝牙处理音频数据失败:', error);
     }
   }
 

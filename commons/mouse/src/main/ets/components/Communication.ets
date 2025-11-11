@@ -1941,11 +1941,18 @@ export class Communication {
   // 处理音频数据
   private processAudioData(data: Uint8Array): void {
     try {
+      console.log(`2.4G接收原始音频数据长度: ${data.length}`);
+      console.log(`2.4G原始音频数据前20字节: ${Array.from(data.slice(0, 20)).map(b => b.toString(16).padStart(2, '0')).join(' ')}`);
+
       // 移除帧头(0x1b)
       let audioFrame = data.subarray(1);
+      console.log(`2.4G移除帧头后数据长度: ${audioFrame.length}`);
+
       if (Number(this.deviceInfo.firmwareVersion) > 23) {
         // 解密音频数据
         const decryptedData = this.audioProcessor.miclinkDecrypt(audioFrame);
+        console.log(`2.4G解密后数据长度: ${decryptedData.length}`);
+        console.log(`2.4G解密后数据前20字节: ${Array.from(decryptedData.slice(0, 20)).map(b => b.toString(16).padStart(2, '0')).join(' ')}`);
         // 这里可以添加播放或保存PCM数据的逻辑
         audioFrame = decryptedData;
       }
@@ -1955,12 +1962,17 @@ export class Communication {
 
       if (pcmData) {
         // 处理PCM数据（播放或保存）
-        console.log(`解码得到PCM数据: ${pcmData.length}个样本`, '\n', '具体数据：', pcmData);
+        console.log(`2.4G解码得到PCM数据: ${pcmData.length}个样本`);
+        console.log(`2.4G PCM数据前10个样本: ${Array.from(pcmData.slice(0, 10)).join(', ')}`);
+        console.log(`2.4G 当前Communication.audioData长度: ${Communication.audioData.length}`);
         // 这里可以添加播放或保存PCM数据的逻辑
         Communication.audioData.push(pcmData);
+        console.log(`2.4G 添加后Communication.audioData长度: ${Communication.audioData.length}`);
+      } else {
+        console.error('2.4G PCM解码失败，返回null');
       }
     } catch (error) {
-      console.error('处理音频数据失败:', error);
+      console.error('2.4G 处理音频数据失败:', error);
     }
   }
 }

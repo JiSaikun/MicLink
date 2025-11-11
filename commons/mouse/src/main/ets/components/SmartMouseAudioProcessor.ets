@@ -24,7 +24,8 @@ export  class SmartMouseAudioProcessor {
 
   // 处理原始音频数据并返回解码后的PCM数据
   processVoiceData(frame: Uint8Array): Int16Array | null {
-    if (frame.length < 32) {
+    if (frame.length < 4) {
+      console.log(`音频帧长度${frame.length}太短，至少需要4字节`);
       return null;
     }
 
@@ -33,14 +34,22 @@ export  class SmartMouseAudioProcessor {
       const ps = new Int16Array(2);
       ps[0] = (frame[0] | (frame[1] << 8)); // predict（低字节在前）
       ps[1] = (frame[2] | (frame[3] << 8)); // predictIdx
+      console.log(`ADPCM预测值: ${ps[0]}, 预测索引: ${ps[1]}`);
 
       // 提取ADPCM编码数据（从第5字节开始）
       const adpcm = frame.subarray(4);
+      console.log(`ADPCM数据长度: ${adpcm.length}字节`);
+
+      if (adpcm.length === 0) {
+        console.log('没有ADPCM数据');
+        return null;
+      }
 
       // 解码为PCM（每字节ADPCM包含2个PCM样本）
       const pcmData = new Int16Array(adpcm.length * 2);
       this.adpcmToPcm(ps, pcmData, adpcm);
 
+      console.log(`PCM解码完成: ${pcmData.length}个样本`);
       return pcmData;
     } catch (e) {
       console.error('音频处理失败:', e);
@@ -52,13 +61,16 @@ export  class SmartMouseAudioProcessor {
   miclinkDecrypt(indata: Uint8Array, len: number = 32): Uint8Array {
     const hexString = Array.from(indata).map(b => b.toString(16).padStart(2, '0')).join(' ');
     console.log('*****************接收到的语音初始数据********************************','\n',hexString)
-    if (indata.length < len || this.BKEY.length < len) {
-      throw new Error("Data or key length too short——————语音数据应为32位，长度不够不予解析");
-    }
 
-    const outdata = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-      outdata[i] = indata[i] ^ this.BKEY[i]; // 异或解密
+    // 如果输入数据长度小于期望长度，使用实际长度
+    const actualLen = Math.min(indata.length, len);
+    console.log(`解密长度: 期望${len}字节, 实际使用${actualLen}字节`);
+
+    const outdata = new Uint8Array(actualLen);
+    for (let i = 0; i < actualLen; i++) {
+      // 使用循环密钥：当i超过BKEY长度时，从头开始循环使用
+      const keyIndex = i % this.BKEY.length;
+      outdata[i] = indata[i] ^ this.BKEY[keyIndex]; // 异或解密
     }
     console.log('***********************************解密结果**************************：','\t',Array.from(outdata).map(b => b.toString(16).padStart(2, '0')).join(' '))
     return outdata;

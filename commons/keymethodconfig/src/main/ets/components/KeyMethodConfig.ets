@@ -63,6 +63,7 @@ export class _KeyMethodConfig {
               "deviceNo": "6c:b1:33:9f:b9:8b",
               content: ''
             }
+            console.log(`创建蓝牙WebSocket时，BlueTooth_devices.audioData长度: ${BlueTooth_devices.audioData.length}`);
             let audioToText: AudioWebSocketHandler_ble =
               new AudioWebSocketHandler_ble(WebSocket_serverUrl.audioToText, BlueTooth_devices.audioData, state,
                 inputMessage) //语音转文字 websocket  //0：语音输入
@@ -100,6 +101,7 @@ export class _KeyMethodConfig {
               "deviceNo": "6c:b1:33:9f:b9:8b",
               content: ''
             }
+            console.log(`创建2.4G WebSocket时，Communication.audioData长度: ${Communication.audioData.length}`);
             let audioToText: AudioWebSocketHandler =
               new AudioWebSocketHandler(WebSocket_serverUrl.audioToText, Communication.audioData, state,
                 inputMessage) //语音转文字 websocket  //0：语音输入
@@ -145,14 +147,14 @@ export class _KeyMethodConfig {
              * 语音数据处理
              */
             // 保存本地PCM文件
-            // const context = AppStorage.get('context') as common.UIAbilityContext;
-            // if (AppStorage.get('device_isBle')) {
-            //   let a: AudioFileManager = new AudioFileManager(BlueTooth_devices.audioData, context)
-            //   console.log(BlueTooth_devices.audioData.length.toString(), '语音数据结束*****模拟')
-            // } else {
-            //   let a: AudioFileManager = new AudioFileManager(Communication.audioData, context)
-            //   console.log(Communication.audioData.length.toString(), '语音数据结束*****模拟')
-            // }
+            const context = AppStorage.get('context') as common.UIAbilityContext;
+            if (AppStorage.get('device_isBle')) {
+              let a: AudioFileManager = new AudioFileManager(BlueTooth_devices.audioData, context)
+              console.log(BlueTooth_devices.audioData.length.toString(), '语音数据结束*****模拟')
+            } else {
+              let a: AudioFileManager = new AudioFileManager(Communication.audioData, context)
+              console.log(Communication.audioData.length.toString(), '语音数据结束*****模拟')
+            }
           })
       } else {
         ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x63])

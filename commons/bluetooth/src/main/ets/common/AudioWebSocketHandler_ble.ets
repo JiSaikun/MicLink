@@ -66,11 +66,11 @@ export class AudioWebSocketHandler_ble {
   private completionCheckId: number | null = null;
   private isClosing: boolean = false; // 新增：标记是否正在关闭
 
-  // 优化配置 - 1008字节分片
-  private readonly CHUNK_SIZE_BYTES = 1008; // 目标分片大小
-  private readonly SAMPLES_PER_CHUNK = 512; // 1008字节 / 2字节每采样点 = 504个采样点
-  private readonly SEND_INTERVAL_MS = 2; // 发送间隔
-  private readonly CHECK_INTERVAL_MS = 5; // 检查间隔
+  // 优化配置 - 1024字节分片，减少延迟提高实时性
+  private readonly CHUNK_SIZE_BYTES = 1024; // 目标分片大小
+  private readonly SAMPLES_PER_CHUNK = 512; // 1024字节 / 2字节每采样点 = 512个采样点
+  private readonly SEND_INTERVAL_MS = 0; // 发送间隔（立即发送）
+  private readonly CHECK_INTERVAL_MS = 3; // 检查间隔（更频繁检查）
   private readonly COMPLETION_CHECK_MS = 100; // 完成检查间隔
   private readonly MAX_BUFFER_SIZE = 50; // 最大缓冲分片数
 
@@ -568,7 +568,7 @@ export class AudioWebSocketHandler_ble {
     return this.base64Encode(byteArray);
   }
 
-  // 将音频数据分片为1008字节的块
+  // 将音频数据分片为1024字节的块
   private chunkAudioData(audioData: Int16Array[]): Int16Array[] {
     const chunks: Int16Array[] = [];
 
@@ -578,6 +578,8 @@ export class AudioWebSocketHandler_ble {
       totalLength += frame.length;
     }
 
+    console.log(`蓝牙分片前总采样点数: ${totalLength}, 总字节数: ${totalLength * 2}`);
+
     const combinedData = new Int16Array(totalLength);
     let offset = 0;
     for (const frame of audioData) {
@@ -585,13 +587,15 @@ export class AudioWebSocketHandler_ble {
       offset += frame.length;
     }
 
-    // 按504个采样点（1008字节）分块
+    // 按512个采样点（1024字节）分块
     for (let i = 0; i < combinedData.length; i += this.SAMPLES_PER_CHUNK) {
       const endIndex = Math.min(i + this.SAMPLES_PER_CHUNK, combinedData.length);
       const chunk = combinedData.slice(i, endIndex);
       chunks.push(chunk);
+      console.log(`蓝牙生成分片 ${chunks.length}: ${chunk.length}采样点 (${chunk.length * 2}字节)`);
     }
 
+    console.log(`蓝牙总共生成 ${chunks.length} 个分片`);
     return chunks;
   }
 
@@ -600,10 +604,10 @@ export class AudioWebSocketHandler_ble {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  // ========== 优化的1008字节分片发送方法 ==========
+  // ========== 优化的1024字节分片发送方法 ==========
 
   private startRealTimeAudioSending(): void {
-    console.log('开始实时音频发送 - 1008字节分片');
+    console.log('开始实时音频发送 - 1024字节分片');
 
     // 立即发送现有数据
     this.sendExistingDataImmediately();
@@ -625,9 +629,9 @@ export class AudioWebSocketHandler_ble {
     try {
       this.isSending = true;
 
-      // 分片处理现有数据为1008字节块
+      // 分片处理现有数据为1024字节块
       const chunks = this.chunkAudioData(this.audioData);
-      console.log(`生成 ${chunks.length} 个1008字节分片`);
+      console.log(`生成 ${chunks.length} 个1024字节分片`);
 
       for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
         if (this.isClosing) {
@@ -635,6 +639,7 @@ export class AudioWebSocketHandler_ble {
         }
 
         const chunk = chunks[chunkIndex];
+        console.log(`蓝牙发送分片 ${chunkIndex + 1}/${chunks.length}, 大小: ${chunk.length} 采样点`);
         await this.sendAudioChunk(chunk, chunkIndex, chunks.length);
 
         // 控制发送速率
@@ -712,7 +717,7 @@ export class AudioWebSocketHandler_ble {
 
     let lastDataLength = this.audioData.length;
     let stableCount = 0;
-    const maxStableCount = 5; // 100ms无新数据 (20ms * 5)
+    const maxStableCount = 25; // 增加等待时间到500ms (3ms * 25) - 防止过早结束
 
     this.completionCheckId = setInterval(() => {
       if (this.isClosing) {
@@ -722,17 +727,25 @@ export class AudioWebSocketHandler_ble {
 
       const currentLength = this.audioData.length;
 
+      // 只有在至少有3个数据包后才开始检测完成
+      if (currentLength < 3) {
+        console.log(`蓝牙数据包不足(${currentLength})，继续等待...`);
+        return;
+      }
+
       if (currentLength === lastDataLength) {
         stableCount++;
+        console.log(`蓝牙数据稳定计数: ${stableCount}/${maxStableCount}`);
 
         if (stableCount >= maxStableCount) {
-          console.log('数据稳定，发送结束标记');
+          console.log('蓝牙数据稳定，发送结束标记');
           this.sendEndMarker();
           this.cleanupIntervals();
         }
       } else {
         stableCount = 0;
         lastDataLength = currentLength;
+        console.log(`蓝牙接收到新数据，当前长度: ${currentLength}`);
       }
     }, this.CHECK_INTERVAL_MS) as number;
   }
@@ -752,6 +765,8 @@ export class AudioWebSocketHandler_ble {
       if (!base64Audio) {
         return;
       }
+
+      console.log(`蓝牙分片 ${chunkIndex} Base64长度: ${base64Audio.length}, 前50字符: ${base64Audio.substring(0, 50)}`);
 
       const isStart = (chunkIndex === 0 && this.lastSentIndex === 0);
       const isEnd = false;

@@ -178,9 +178,14 @@ export class Float_Window {
   }
 
   static destroyWindow(windowClass: window.Window | null = Float_Window.windowClass) {
+    // 检查窗口是否存在
+    if (!windowClass) {
+      console.log('Window is null, no need to destroy');
+      return;
+    }
 
     // 4.销毁悬浮窗。当不再需要悬浮窗时，可根据具体实现逻辑，使用destroy对其进行销毁。
-    (windowClass as window.Window).destroyWindow((err: BusinessError) => {
+    windowClass.destroyWindow((err: BusinessError) => {
       let errCode: number = err.code;
       if (errCode) {
         console.error('Failed to destroy the window. Cause: ' + JSON.stringify(err));
@@ -191,8 +196,14 @@ export class Float_Window {
   }
 
   static minimize_float_window(windowClass: window.Window | null = Float_Window.windowClass) {
-    // 4.销毁悬浮窗。当不再需要悬浮窗时，可根据具体实现逻辑，使用destroy对其进行销毁。
-    (windowClass as window.Window).destroyWindow((err: BusinessError) => {
+    // 检查窗口是否存在
+    if (!windowClass) {
+      console.log('Window is null, no need to minimize/destroy');
+      return;
+    }
+
+    // 销毁悬浮窗（实际上是销毁而不是最小化）
+    windowClass.destroyWindow((err: BusinessError) => {
       let errCode: number = err.code;
       if (errCode) {
         console.error('Failed to destroy the window. Cause: ' + JSON.stringify(err));
@@ -200,20 +211,16 @@ export class Float_Window {
       }
       console.info('Succeeded in destroying the window.');
     });
-    // // 调用最小化方法
-    // (windowClass as window.Window).minimize((err: BusinessError) => {
-    //   if (err) {
-    //     console.error(`最小化窗口失败，错误码: ${err.code}, 信息: ${err.message}`);
-    //     AppStorage.setOrCreate('voiceInputText', '')
-    //     return;
-    //   }
-    //   console.info('窗口最小化成功');
-    //   AppStorage.setOrCreate('voiceInputText', '')
-    // });
   }
 
   static show_float_window(windowClass: window.Window | null = Float_Window.windowClass) {
-    (windowClass as window.Window).show((err: BusinessError) => {
+    // 检查窗口是否存在
+    if (!windowClass) {
+      console.log('Window is null, cannot show');
+      return;
+    }
+
+    windowClass.show((err: BusinessError) => {
       const errCode: number = err.code;
       if (errCode) {
         console.error(`Failed to show the window. Cause code: ${err.code}, message: ${err.message}`);
