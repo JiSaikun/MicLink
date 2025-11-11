@@ -22,16 +22,14 @@ export struct ConfigPage3 {
   // @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null //鼠标信息
   @StorageLink('DPI_currInfo') DPI_currInfo: DPI_currInfoModel | null = null //DPI信息
   @StorageLink("lowPowerAlertEnabled") lowPowerAlertEnabled: boolean = true //是否开启低电量提醒
-  @State getModelInfo: getModelInfoModel =
-    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo as getModelInfoModel
+  @State getModelInfo: getModelInfoModel =AppStorage.get('getModelInfo') as getModelInfoModel
   @StorageLink('languages') languages: string = 'ZH_CN'
   @State reportRate: SelectOption[] = [{ value: '125' }, { value: '250' }, { value: '500' }, { value: '1000' }]
   @State DPI: SelectOption[] =
     [{ value: '1000' }, { value: '1200' }, { value: '1600' }, { value: '2400' }, { value: '4000' }, { value: '4800' },
       { value: '6000' }]
   @Prop currportRate: number
-  @Watch('change_LEDstate') @State currLED: boolean =
-    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].currLED
+  @Watch('change_LEDstate') @State currLED: boolean =false
   @Watch('change_reportRate') @State reportRate_currIndex: number = 0
   @Watch('change_DPI') @State DPI_currIndex: number = 0
 
@@ -115,9 +113,9 @@ export struct ConfigPage3 {
 
   aboutToAppear(): void {
     if (this.device_isBle) {
-      this.getModelInfo =
-        this.devices[AppStorage.get('device_show_currIndex') as number].getModelInfo as getModelInfoModel
       this.currLED = this.devices[AppStorage.get('device_show_currIndex') as number].currLED
+    }else {
+      this.currLED = ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].currLED
     }
   }
 

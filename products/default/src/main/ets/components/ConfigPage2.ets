@@ -26,10 +26,8 @@ export interface KeymethodConfig {
 export struct ConfigPage2 {
   @StorageLink('devices') devices: DeviceArrayType_Ble[] = []
   @Consume device_isBle: boolean //该设备是否是蓝牙连接
-  @Watch('onGetModelInfoChange') @StorageLink('getModelInfo') getModelInfo: getModelInfoModel =
-    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo as getModelInfoModel
-  @State mouseconfig: DeviceInfo =
-    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo
+  @Watch('onGetModelInfoChange') @StorageLink('getModelInfo') getModelInfo: getModelInfoModel = AppStorage.get('getModelInfo') as getModelInfoModel
+  @State mouseconfig: DeviceInfo | null = null
   @StorageLink('languages') languages: string = 'ZH_CN'
   @State KeymethodConfig: KeymethodConfig[] = []
   @StorageLink("shortcut") shortcut: number = 0
@@ -56,6 +54,9 @@ export struct ConfigPage2 {
   aboutToAppear(): void {
     if (this.device_isBle) {
       this.mouseconfig = this.devices[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo
+    } else {
+      this.mouseconfig =
+        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo
     }
     // 初始检查设备状态
     if (this.checkDeviceDisconnected()) {

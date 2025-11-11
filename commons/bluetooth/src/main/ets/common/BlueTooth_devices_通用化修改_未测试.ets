@@ -121,7 +121,7 @@ export class BlueTooth_devices {
     hilog.warn(0x00, 'send',
       '*******************************************************************************接收鼠标发送的消息');
     console.log('读取数据结果,读取到的数据的长度:', value.length);
-    // value = new Uint8Array([0, ...value])
+    value = new Uint8Array([0, ...value])
     if (value.length > 0) {
       const hexData = Array.from(value.slice(0, value.length)).map(b => b.toString(16).padStart(2, '0')).join(' ');
       console.log('接收到的数据展示:', hexData);
@@ -130,10 +130,6 @@ export class BlueTooth_devices {
     } else {
       console.log('未接收到数据');
     }
-  }
-
-  public closeconnectDevice() {
-    this.gattClient?.close()
   }
 
   public parseDeviceInfo(data: Uint8Array): void {
@@ -211,10 +207,10 @@ export class BlueTooth_devices {
             this.deviceInfo.firmwareVersion = data[19].toString();
             this.devices[this.device_currIndex].mouseconfig = this.deviceInfo;
 
-            if (!(AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].getModelInfo) {
+            if (!this.getModelInfo) {
               this.devices = AppStorage.get('devices') as DeviceArrayType_Ble[]
-              const newList: DeviceArrayType_Ble[] = JSON.parse(JSON.stringify(this.devices));
               AppStorage.setOrCreate('devices', null);
+              const newList: DeviceArrayType_Ble[] = JSON.parse(JSON.stringify(this.devices));
               AppStorage.setOrCreate('devices', newList);
             } else {
               if (!this.devices[this.device_currIndex].KeymethodConfig.length) {
@@ -323,10 +319,10 @@ export class BlueTooth_devices {
 
             this.devices[this.device_currIndex].mouseconfig = this.deviceInfo;
 
-            if (!(AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].getModelInfo) {
+            if (!this.devices[this.device_currIndex].getModelInfo) {
               this.devices = AppStorage.get('devices') as DeviceArrayType_Ble[]
-              const newList: DeviceArrayType_Ble[] = JSON.parse(JSON.stringify(this.devices));
               AppStorage.setOrCreate('devices', null);
+              const newList: DeviceArrayType_Ble[] = JSON.parse(JSON.stringify(this.devices));
               AppStorage.setOrCreate('devices', newList);
             } else {
               if (!this.devices[this.device_currIndex].KeymethodConfig.length) {
@@ -1136,8 +1132,8 @@ export class BlueTooth_devices {
               this.devices[this.device_currIndex].getModelInfo = getModelInfo;
               this.devices = AppStorage.get('devices') as DeviceArrayType_Ble[]
               const newList: DeviceArrayType_Ble[] = JSON.parse(JSON.stringify(this.devices));
-              AppStorage.setOrCreate('devices', null);
               AppStorage.setOrCreate('devices', newList);
+
               /**
                * 判断当前设备是否是键盘
                */
@@ -1218,7 +1214,6 @@ export class BlueTooth_devices {
           if (err) {
             console.error('client端启用或者禁用接收server端特征值内容变更通知的能力。使用Callback异步回调 callback failed');
           } else {
-            AppStorage.setOrCreate('isBluetoothConnect_state', true)
             console.info('client端启用或者禁用接收server端特征值内容变更通知的能力。使用Callback异步回调 callback successful');
           }
         });
@@ -1226,6 +1221,8 @@ export class BlueTooth_devices {
       console.error('errCode: ' + (err as BusinessError).code + ', errMessage: ' +
       (err as BusinessError).message);
     }
+
+
   }
 
   /**
@@ -1416,47 +1413,45 @@ export class BlueTooth_devices {
    */
 
   public async send(command: number[] = [0x61]) {
+    // let descriptors: Array<ble.BLEDescriptor> = [];
+    // let bufferDesc = new ArrayBuffer(2);
+    // let descV = new Uint8Array(bufferDesc);
+    // descV[0] = 0; // 以Client Characteristic Configuration描述符为例，表示bit0、bit1均为0，notification和indication均不开启
+    // let descriptor: ble.BLEDescriptor = {
+    //   serviceUuid: this.CUSTOM_SERVICE_UUID,
+    //   characteristicUuid: this.WRITE_CHAR_UUID,
+    //   descriptorUuid: '',
+    //   descriptorValue: bufferDesc
+    // };
+    // descriptors[0] = descriptor;
+
+    let bufferCCC = this.buildCommandFrame(command);
+    const hexString = Array.from(bufferCCC).map(b => b.toString(16).padStart(2, '0')).join(' ');
+    console.log(`发送命令 0x${command[0].toString(16)}:`, hexString, '\t发送数据长度', bufferCCC.length)
+    console.error(bufferCCC.length + JSON.stringify(bufferCCC))
+    // let cccV = new Uint8Array(bufferCCC);
+    // cccV[0] = 1;
+    let characteristic: ble.BLECharacteristic = {
+      serviceUuid: this.CUSTOM_SERVICE_UUID,
+      characteristicUuid: this.WRITE_CHAR_UUID,
+      characteristicValue: bufferCCC,
+      descriptors: this.WRITE_DESCRIPTORS
+    };
     try {
-      let bufferCCC = this.buildCommandFrame(command);
-      const hexString = Array.from(bufferCCC).map(b => b.toString(16).padStart(2, '0')).join(' ');
-      console.log(`发送命令 0x${command[0].toString(16)}:`, hexString, '\t发送数据长度', bufferCCC.length);
-
-      // 创建 ArrayBuffer
-      let arrayBuffer = new ArrayBuffer(bufferCCC.length);
-      let dataView = new Uint8Array(arrayBuffer);
-      dataView.set(bufferCCC);
-
-      let characteristic: ble.BLECharacteristic = {
-        serviceUuid: this.CUSTOM_SERVICE_UUID,
-        characteristicUuid: this.WRITE_CHAR_UUID,
-        characteristicValue: arrayBuffer,
-        descriptors: this.WRITE_DESCRIPTORS || []
-      };
-
-      // 根据特征值属性选择合适的写入类型
-      // WRITE_CHAR_UUID 的属性是 writeNoResponse: true，所以使用 WRITE_NO_RESPONSE
-      (this.gattClient as ble.GattClientDevice).writeCharacteristicValue(
-        characteristic,
-        ble.GattWriteType.WRITE_NO_RESPONSE
-      ).then(() => {
-        console.info('写入特征值成功');
-      }).catch((err: BusinessError) => {
-        console.error(`写入特征值失败: errCode: ${err.code}, errMessage: ${err.message}`);
-
-        // 如果 WRITE_NO_RESPONSE 失败，尝试使用 WRITE
-        (this.gattClient as ble.GattClientDevice).writeCharacteristicValue(
-          characteristic,
-          ble.GattWriteType.WRITE
-        ).then(() => {
-          console.info('使用 WRITE 方式写入成功');
-        }).catch((err2: BusinessError) => {
-          console.error(`WRITE 方式也失败: errCode: ${err2.code}, errMessage: ${err2.message}`);
-        });
-      });
-
+      (this.gattClient as ble.GattClientDevice).writeCharacteristicValue(characteristic, ble.GattWriteType.WRITE)
+        .then(() => {
+          bufferCCC = this.buildCommandFrame(command, 33)
+          console.log(JSON.stringify(bufferCCC))
+          let characteristic: ble.BLECharacteristic = {
+            serviceUuid: this.CUSTOM_SERVICE_UUID,
+            characteristicUuid: this.WRITE_CHAR_UUID,
+            characteristicValue: bufferCCC,
+            descriptors: []
+          };
+          (this.gattClient as ble.GattClientDevice).writeCharacteristicValue(characteristic, ble.GattWriteType.WRITE)
+        })
     } catch (err) {
-      console.error('发送命令异常: errCode: ' + (err as BusinessError).code + ', errMessage: ' +
-      (err as BusinessError).message);
+      console.error('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);
     }
   }
 
@@ -1558,9 +1553,44 @@ function getPairedDevices() {
   }
 }
 
-export function connectDevice(context: common.UIAbilityContext) {
-  // 使用UIExtensionAbility：将common.UIAbilityContext 替换为common.UIExtensionContext
-  // const context: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
-  console.error('进入蓝牙连接：')
-  reqPermissionsFromUser(permissions, context);
+@Entry
+@Component
+struct I {
+  @State gattClient: ble.GattClientDevice | null = null
+  @StorageLink('devices') devices: BlueTooth_devices[] = []
+
+  aboutToAppear() {
+    // 使用UIExtensionAbility：将common.UIAbilityContext 替换为common.UIExtensionContext
+    const context: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
+    reqPermissionsFromUser(permissions, context);
+  }
+
+  build() {
+    Flex({ direction: FlexDirection.Column, space: { main: LengthMetrics.px(30) } }) {
+      ForEach(this.devices, (item: BlueTooth_devices, index) => {
+        Column() {
+          Text('蓝牙连接设备：' + item.device_address)
+          Button('client端从指定的server端特征值读取数据')
+            .onClick(() => {
+              item.readCharacteristicValue()
+            })
+          Button('client端从指定的server端描述符读取数据')
+            .onClick(() => {
+              item.readDescriptorValue()
+            })
+          Button('向指定的server端特征值写入数据')
+            .onClick(() => {
+              item.send()
+            })
+            .margin(20)
+          Button('client端从指定的server端描述符读取数据')
+            .onClick(() => {
+              item.writeDescriptorValue()
+            })
+        }
+
+      }, (item: BlueTooth_devices) => JSON.stringify(item.gattClient))
+    }
+
+  }
 }

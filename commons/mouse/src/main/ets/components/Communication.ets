@@ -203,7 +203,8 @@ export interface DeviceArrayType {
   isPunctuationRecognition: boolean //语音识别是否带标点
   speech_Recognition_languages: string //语音识别语种
   productImg: string,
-  PRODUCT_TYPE: PRODUCT_TYPE //设备类型
+  PRODUCT_TYPE: PRODUCT_TYPE, //设备类型
+  name: string
 }
 
 export interface KeymethodConfig {
@@ -287,7 +288,8 @@ export class ConnectDevice {
                     isPunctuationRecognition: true,
                     speech_Recognition_languages: 'ZH_CN',
                     productImg: '',
-                    PRODUCT_TYPE: PRODUCT_TYPE.DEFAULT
+                    PRODUCT_TYPE: PRODUCT_TYPE.DEFAULT,
+                    name: ConnectDevice.targetDevice[index].productName
                   }
                   ConnectDevice.Communication.push(device)
                   Communication_.connectDevice()
@@ -315,7 +317,8 @@ export class ConnectDevice {
             isPunctuationRecognition: true,
             speech_Recognition_languages: 'ZH_CN',
             productImg: '',
-            PRODUCT_TYPE: PRODUCT_TYPE.DEFAULT
+            PRODUCT_TYPE: PRODUCT_TYPE.DEFAULT,
+            name: ConnectDevice.targetDevice[index].productName
           }
           ConnectDevice.Communication.push(device)
           Communication_.connectDevice()
@@ -384,6 +387,8 @@ export class Communication {
   private isHeartbeatRunning: boolean = false;
   private reconnectAttempts: number = 0;
   private readonly MAX_RECONNECT_ATTEMPTS: number = 5;
+  // 新增属性 - 防止重复重连
+  private isReconnecting: boolean = false;
 
   // 构建命令帧的通用方法
   private buildCommandFrame(cmd: number[], length: number): Uint8Array {
@@ -539,7 +544,7 @@ export class Communication {
   // 发送心跳测试包
   private sendHeartbeatTest(): void {
     if (!this.sendState && this.devicePipe) {
-      this.getDeviceInfo([0x69]); // 使用查询设备状态作为心跳测试
+      this.getDeviceInfo([0x61]); // 使用查询设备状态作为心跳测试
     }
   }
 
@@ -566,35 +571,79 @@ export class Communication {
     }
   }
 
-  // 重新连接设备
+  // 重新连接设备 - 优化版本
   private async reconnectDevice(): Promise<void> {
-    console.log('开始重新连接设备...');
-
-    // 停止心跳检测
-    this.stopHeartbeatCheck();
-
-    // 关闭现有连接
-    if (this.devicePipe) {
-      try {
-        usbManager.closePipe(this.devicePipe);
-        console.log('已关闭现有设备连接');
-      } catch (error) {
-        console.error('关闭设备连接时出错:', error);
-      }
-      this.devicePipe = null;
+    // 防止重复重连
+    if (this.isReconnecting) {
+      console.log('重连操作正在进行中，跳过此次请求');
+      return;
     }
 
-    // 等待一小段时间再重连
-    await new Promise<void>((resolve: () => void) => setTimeout(resolve, 1000));
+    this.isReconnecting = true;
+    console.log('开始优化重连流程，当前重连尝试次数:', this.reconnectAttempts);
 
     try {
-      // 重新连接
+      // 停止心跳检测
+      this.stopHeartbeatCheck();
+
+      // 使用更安全的关闭方式
+      await this.safeClosePipe();
+
+      // 指数退避策略
+      const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
+      console.log(`重连延迟: ${delay}ms`);
+      await new Promise<void>(resolve => setTimeout(resolve, delay));
+
+      // 执行重连
       await this.connectDevice();
-      console.log('设备重新连接完成');
+      this.reconnectAttempts = 0;
+      console.log('重连成功完成');
+
     } catch (error) {
-      console.error('设备重新连接失败:', error);
-      await this.handleConnectionError();
+      console.error('重连过程出错:', error);
+      this.reconnectAttempts++;
+      console.log('重连失败，当前重连尝试次数:', this.reconnectAttempts);
+
+      // 重连失败后继续处理错误
+      if (this.reconnectAttempts <= this.MAX_RECONNECT_ATTEMPTS) {
+        await this.handleConnectionError();
+      } else {
+        console.log('达到最大重连尝试次数，停止重连');
+        this.stopHeartbeatCheck();
+      }
+    } finally {
+      this.isReconnecting = false;
+      console.log('重连流程结束');
     }
+  }
+
+  private async safeClosePipe(): Promise<void> {
+    if (!this.devicePipe) {
+      console.log('设备管道为空，无需关闭');
+      return;
+    }
+
+    return new Promise<void>((resolve) => {
+      console.log('开始安全关闭USB管道');
+      const timeoutId = setTimeout(() => {
+        console.warn('USB关闭超时，强制清理并继续执行重连');
+        this.devicePipe = null;
+        resolve();
+      }, 2000);
+
+      try {
+        usbManager.closePipe(this.devicePipe);
+        console.log('USB管道成功关闭');
+        clearTimeout(timeoutId);
+        this.devicePipe = null;
+        resolve();
+      } catch (error) {
+        console.error('关闭USB管道失败:', error);
+        clearTimeout(timeoutId);
+        this.devicePipe = null;
+        resolve();
+      }
+    });
   }
 
   // 使用批量传输获取设备信息
@@ -852,10 +901,14 @@ export class Communication {
   public destroy(): void {
     console.log(`销毁设备通信实例: ${this.device_currIndex}`);
     this.stopHeartbeatCheck();
-    if (this.devicePipe) {
-      usbManager.closePipe(this.devicePipe);
-      this.devicePipe = null;
-    }
+    this.isReconnecting = false; // 重置重连状态
+
+    // 使用安全关闭
+    this.safeClosePipe().then(() => {
+      console.log('设备资源安全清理完成');
+    }).catch(() => {
+      console.error('设备资源安全清理失败:');
+    });
   }
 
   // 解析设备信息
@@ -1678,7 +1731,7 @@ export class Communication {
         }
         if (data[3] === 0xC5) {
           console.log('****************************长文翻译双击按下****************************')
-          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('设备_currIndex', this.device_currIndex)
           AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.LONG_TEXT_TRANSLATION_DOUBLE_CLICK)
         }

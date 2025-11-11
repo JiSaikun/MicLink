@@ -15,8 +15,7 @@ export struct DevicesConfig {
   @Link isShowConfig: boolean //控制显隐状态
   @StorageLink('devices') devices: DeviceArrayType_Ble[] = []
   @Consume device_isBle: boolean //该设备是否是蓝牙连接
-  @State mouseconfig: DeviceInfo =
-    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo //鼠标信息
+  @State mouseconfig: DeviceInfo | null = null //鼠标信息
   @State currIndex: number = 0
   @StorageLink('languages') languages: string = 'ZH_CN'
   @State configsList: string[] =
@@ -35,6 +34,9 @@ export struct DevicesConfig {
     if (this.device_isBle) { //蓝牙设备信息
       this.mouseconfig =
         this.devices[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo //鼠标信息
+    } else {
+      this.mouseconfig =
+        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo
     }
   }
 

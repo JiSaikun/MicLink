@@ -25,7 +25,7 @@ import {
 } from 'utils';
 import { CreateNewInstruction_pop } from 'command_ai';
 import { DeviceSettings } from '../components/DeviceSettings';
-import { DeviceArrayType_Ble } from 'bluetooth';
+import { connectDevice, DeviceArrayType_Ble } from 'bluetooth';
 
 
 PersistentStorage.persistProp("login", false)
@@ -196,7 +196,6 @@ struct Index {
     const context = getContext(this) as common.UIAbilityContext;
     AppStorage.setOrCreate('context', context);
     AppStorage.setOrCreate('currpageIsAI', true);
-
     // 修复：初始化时获取正确的数据长度
     this.aiModelDataLength = AiModel_data.length;
     this.bottomDataLength = bottom_data.length;
@@ -245,6 +244,8 @@ struct Index {
           // 初始化后同步状态
           this.syncCurrentIndexWithTabs()
         })
+        const context: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
+        connectDevice(context)
       } catch (e) {
         console.log(e)
       }
@@ -284,6 +285,7 @@ struct Index {
             .flexGrow(1)
             .flexShrink(1)
             .scale({ x: this.scaleValue, y: this.scaleValue })
+            .zIndex(100)
 
             Tabs({ controller: this.tabsController, index: this.tabsControllerIndex }) {
               // 确保 TabContent 数量与 AiModel_data + bottom_data 匹配

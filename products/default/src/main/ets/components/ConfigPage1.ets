@@ -8,6 +8,7 @@ interface shortcutType {
   keyPreview: string
   pressedKeys: number[]
 }
+
 /**
  * 智能设置
  */
@@ -17,14 +18,12 @@ export struct ConfigPage1 {
   @Consume device_isBle: boolean //该设备是否是蓝牙连接
   @StorageLink('languages') languages: string = 'ZH_CN'
   @State getModelInfo: getModelInfoModel = AppStorage.get('getModelInfo') as getModelInfoModel
-  @State isPunctuationRecognition: boolean =
-    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition //语音识别是否带标点
+  @State isPunctuationRecognition: boolean = false //语音识别是否带标点
   @StorageLink('isEnableLongVoiceRecog') isEnableLongVoiceRecog: boolean = true //是否开启长语音识别
   @StorageLink('isWordScan_Translation') isWordScan_Translation: boolean = true //是否开启划词翻译功能
   @StorageLink('isOCR_Translate_Toggle') isOCR_Translate_Toggle: boolean = true //是否开启截图识别/翻译
   @StorageLink('isAutoCloseVoiceTransPop') isAutoCloseVoiceTransPop: boolean = true //是否开启语音翻译弹窗自动关闭
-  @State speech_Recognition_languages: string =
-    ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages //语音识别语种
+  @State speech_Recognition_languages: string = 'ZH_CN' //语音识别语种
   @State keystroke: SelectOption[] = [{ value: '动态打字模式' }, { value: '兼容打字模式' }] //打字输入模式选项
   @State searchEngine: SelectOption[] = [{ value: '百度' }, { value: 'Google' }] //搜索引擎
   @StorageLink('from_languages') from_languages: string = 'ZH_CN' //语音翻译源语言
@@ -46,6 +45,11 @@ export struct ConfigPage1 {
         this.devices[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition
       this.speech_Recognition_languages =
         this.devices[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages //语音识别语种
+    } else {
+      this.isPunctuationRecognition =
+        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition
+      this.speech_Recognition_languages =
+        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages
     }
   }
 
@@ -69,7 +73,8 @@ export struct ConfigPage1 {
           Radio({
             value: 'Radio1', group: 'radioGroup1',
             indicatorType: RadioIndicatorType.DOT
-          }).checked(this.isPunctuationRecognition)
+          })
+            .checked(this.isPunctuationRecognition)
             .height(14)
             .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
             .width(14)
@@ -104,7 +109,8 @@ export struct ConfigPage1 {
           Radio({
             value: 'Radio1', group: 'radioGroup1',
             indicatorType: RadioIndicatorType.DOT
-          }).checked(!this.isPunctuationRecognition)
+          })
+            .checked(!this.isPunctuationRecognition)
             .height(14)
             .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
             .width(14)
@@ -150,7 +156,8 @@ export struct ConfigPage1 {
           Radio({
             value: 'Radio2', group: 'radioGroup2',
             indicatorType: RadioIndicatorType.DOT
-          }).checked(this.isEnableLongVoiceRecog)
+          })
+            .checked(this.isEnableLongVoiceRecog)
             .height(14)
             .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
             .width(14)
@@ -173,7 +180,8 @@ export struct ConfigPage1 {
           Radio({
             value: 'Radio2', group: 'radioGroup2',
             indicatorType: RadioIndicatorType.DOT
-          }).checked(!this.isEnableLongVoiceRecog)
+          })
+            .checked(!this.isEnableLongVoiceRecog)
             .height(14)
             .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
             .width(14)
@@ -345,7 +353,8 @@ export struct ConfigPage1 {
           Radio({
             value: 'Radio3', group: 'radioGroup3',
             indicatorType: RadioIndicatorType.DOT
-          }).checked(this.isWordScan_Translation)
+          })
+            .checked(this.isWordScan_Translation)
             .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
             .height(14)
             .width(14)
@@ -368,7 +377,8 @@ export struct ConfigPage1 {
           Radio({
             value: 'Radio3', group: 'radioGroup3',
             indicatorType: RadioIndicatorType.DOT
-          }).checked(!this.isWordScan_Translation)
+          })
+            .checked(!this.isWordScan_Translation)
             .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
             .height(14)
             .width(14)
@@ -454,7 +464,8 @@ export struct ConfigPage1 {
           Radio({
             value: 'Radio4', group: 'radioGroup4',
             indicatorType: RadioIndicatorType.DOT
-          }).checked(this.isOCR_Translate_Toggle)
+          })
+            .checked(this.isOCR_Translate_Toggle)
             .height(14)
             .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
             .width(14)
@@ -477,7 +488,8 @@ export struct ConfigPage1 {
           Radio({
             value: 'Radio4', group: 'radioGroup4',
             indicatorType: RadioIndicatorType.DOT
-          }).checked(!this.isOCR_Translate_Toggle)
+          })
+            .checked(!this.isOCR_Translate_Toggle)
             .height(14)
             .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
             .width(14)
@@ -608,7 +620,8 @@ export struct ConfigPage1 {
           Radio({
             value: 'Radio5', group: 'radioGroup5',
             indicatorType: RadioIndicatorType.DOT
-          }).checked(this.isAutoCloseVoiceTransPop)
+          })
+            .checked(this.isAutoCloseVoiceTransPop)
             .height(14)
             .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
             .width(14)
@@ -631,7 +644,8 @@ export struct ConfigPage1 {
           Radio({
             value: 'Radio5', group: 'radioGroup5',
             indicatorType: RadioIndicatorType.DOT
-          }).checked(!this.isAutoCloseVoiceTransPop)
+          })
+            .checked(!this.isAutoCloseVoiceTransPop)
             .height(14)
             .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
             .width(14)
@@ -658,7 +672,7 @@ export struct ConfigPage1 {
   }
 
   private getDefaultSelectedIndex_from(from_languages: string): number {
-    const index = this.getModelInfo.languages.findIndex((item) => {
+    const index = this.getModelInfo.transLanguages.findIndex((item) => {
       return item.code === from_languages;
     });
     return index !== -1 ? index : 0; // 找到返回索引，否则返回0

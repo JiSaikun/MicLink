@@ -1,10 +1,11 @@
 import { Float_Window } from 'float_window'
-import { ConnectDevice,translate_Response, Communication, _translate, translate_Params } from "mouse"
+import { ConnectDevice, translate_Response, Communication, _translate, translate_Params } from "mouse"
 import { getModelInfoModel, languagesModel } from 'config'
 import { promptAction } from '@kit.ArkUI'
 import { pasteboard } from '@kit.BasicServicesKit'; //复制
 import { BusinessError } from '@kit.BasicServicesKit';
 import { globalShortcutService } from 'utils';
+import { DeviceArrayType_Ble } from 'bluetooth';
 
 /**
  * 语音翻译悬浮窗
@@ -12,7 +13,7 @@ import { globalShortcutService } from 'utils';
 @Entry
 @Component
 struct VoiceTranslation {
-  @State getModelInfo: getModelInfoModel = ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].getModelInfo as getModelInfoModel
+  @State getModelInfo: getModelInfoModel = AppStorage.get('getModelInfo') as getModelInfoModel
   @StorageLink('voiceTranslationText') voiceTranslationText: translate_Response = {
     transText: '',
     text: ''
@@ -26,13 +27,24 @@ struct VoiceTranslation {
   // 1. 初始化滚动控制器
   private scroller_to: Scroller = new Scroller();
   private scroller_from: Scroller = new Scroller();
+
   changeLanguages() {
     let params: translate_Params = {
-      appkey: (AppStorage.get('getModelInfo') as getModelInfoModel).appkey, //获取用户按键模式详情中得到
+      appkey: AppStorage.get('device_isBle') ?
+      ((AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+        0].getModelInfo as getModelInfoModel).appkey :
+      (AppStorage.get('getModelInfo') as getModelInfoModel).appkey, //获取用户按键模式详情中得到
       from: this.voiceOrText ? AppStorage.get('from_languages') as string :
         AppStorage.get('wordScan_from_languages') as string, //源语言___后面配置
-      productCode: ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.deviceInfo.productType.toString(), //产品编码
-      sno: ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.deviceInfo.sn, //设备号
+      productCode: AppStorage.get('device_isBle') ?
+      (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+        0].BlueTooth_devices.deviceInfo.productType.toString() :
+      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+        0].Communication.deviceInfo.productType.toString(), //产品编码
+      sno: AppStorage.get('device_isBle') ?
+      (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+        0].BlueTooth_devices.deviceInfo.sn : ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+        0].Communication.deviceInfo.sn, //设备号
       text: this.voiceTranslationText.text, //翻译内容
       to: this.voiceOrText ? AppStorage.get('to_languages') as string :
         AppStorage.get('wordScan_to_languages') as string //翻译语言___后面配置
@@ -50,6 +62,17 @@ struct VoiceTranslation {
       }
     })
 
+  }
+
+  aboutToAppear(): void {
+    if (AppStorage.get('device_isBle')) {
+      this.getModelInfo =
+        (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+          0].getModelInfo as getModelInfoModel
+    } else {
+      this.getModelInfo =
+        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].getModelInfo as getModelInfoModel
+    }
   }
 
   build() {
@@ -85,10 +108,28 @@ struct VoiceTranslation {
               transText: '',
               text: ''
             }
-            if (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState) {
-              ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x63])
-              ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState = !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState
+            if (AppStorage.get('device_isBle')) {
+              if ((AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+                0].BlueTooth_devices.audioDataState) {
+                (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+                  0].BlueTooth_devices.send([0x63]);
+                (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+                  0].BlueTooth_devices.audioDataState =
+                  !(AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+                    0].BlueTooth_devices.audioDataState
+              }
+            } else {
+              if (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+                0].Communication.audioDataState) {
+                ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+                  0].Communication.getDeviceInfo([0x63])
+                ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+                  0].Communication.audioDataState =
+                  !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+                    0].Communication.audioDataState
+              }
             }
+
           })
       }
       .width('100%')
@@ -117,7 +158,7 @@ struct VoiceTranslation {
               .fontWeight(400)
               .fontSize(14)
               .backgroundColor('#f8f8f8')
-              // .focusable(false)
+            // .focusable(false)
           }
         }
         .padding({
@@ -150,13 +191,13 @@ struct VoiceTranslation {
 
           Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
             Select(this.convert_ttsLanguagesToOptions())
-              .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.ttsLanguages[this.getDefaultSelectedIndex_from(this.voiceOrText ?
+              .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.voiceOrText ?
               this.from_languages : this.wordScan_from_languages)]))
               .onSelect((index: number) => {
                 if (this.voiceOrText) {
-                  this.from_languages = this.getModelInfo.ttsLanguages[index].code
+                  this.from_languages = this.getModelInfo.transLanguages[index].code
                 } else {
-                  this.wordScan_from_languages = this.getModelInfo.ttsLanguages[index].code
+                  this.wordScan_from_languages = this.getModelInfo.transLanguages[index].code
                 }
               })
               .selected(this.getDefaultSelectedIndex_from(this.voiceOrText ? this.from_languages :
@@ -174,13 +215,13 @@ struct VoiceTranslation {
               .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
               .padding({ left: 20, right: 20 })
             Select(this.convert_ttsLanguagesToOptions())
-              .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.ttsLanguages[this.getDefaultSelectedIndex_from(this.voiceOrText ?
+              .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.voiceOrText ?
               this.to_languages : this.wordScan_to_languages)]))
               .onSelect((index: number) => {
                 if (this.voiceOrText) {
-                  this.to_languages = this.getModelInfo.ttsLanguages[index].code
+                  this.to_languages = this.getModelInfo.transLanguages[index].code
                 } else {
-                  this.wordScan_to_languages = this.getModelInfo.ttsLanguages[index].code
+                  this.wordScan_to_languages = this.getModelInfo.transLanguages[index].code
                 }
               })
               .selected(this.getDefaultSelectedIndex_from(this.voiceOrText ? this.to_languages :
@@ -199,7 +240,8 @@ struct VoiceTranslation {
               .padding(4)
               .onClick(() => {
                 try {
-                  const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, this.voiceTranslationText.transText);
+                  const pasteData =
+                    pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, this.voiceTranslationText.transText);
                   let systemPasteboard: pasteboard.SystemPasteboard = pasteboard.getSystemPasteboard(); //获取系统剪贴板对象。
                   // systemPasteboard.setAppShareOptions(pasteboard.ShareOption.INAPP);
                   systemPasteboard.setData(pasteData)
@@ -240,7 +282,7 @@ struct VoiceTranslation {
   }
 
   convert_ttsLanguagesToOptions(): SelectOption[] {
-    return ((this.getModelInfo.ttsLanguages).map((item, index) => {
+    return ((this.getModelInfo.transLanguages).map((item, index) => {
       // 多语言适配：优先取当前语言文本，无则按顺序兜底
       let languageField: string = item.name; // 默认使用中文简体
 
@@ -329,7 +371,7 @@ struct VoiceTranslation {
    */
   private getDefaultSelectedIndex_from(from_languages: string):
     number {
-    const index = this.getModelInfo.ttsLanguages.findIndex((item) => {
+    const index = this.getModelInfo.transLanguages.findIndex((item) => {
       return item.code === from_languages;
     });
     return index !== -1 ? index : 0; // 找到返回索引，否则返回0

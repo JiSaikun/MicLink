@@ -55,7 +55,7 @@ export class _KeyMethodConfig {
                 0].BlueTooth_devices.deviceInfo.sn,
               "phrases": "",
               "format": "pcm",
-              "apiKey": "ebb72c9db60147febd2ccd50a705de57",
+              "apiKey": (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_show_currIndex') as number].getModelInfo?.appkey as string,
               "language": state ? AppStorage.get('from_languages') as string :
               (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages,
               "end": false,
@@ -91,7 +91,8 @@ export class _KeyMethodConfig {
                 0].Communication.deviceInfo.sn,
               "phrases": "",
               "format": "pcm",
-              "apiKey": "ebb72c9db60147febd2ccd50a705de57",
+              "apiKey": ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+                0].getModelInfo?.appkey as string,
               "language": state ? AppStorage.get('from_languages') as string :
               ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages,
               "end": false,
@@ -144,14 +145,14 @@ export class _KeyMethodConfig {
              * 语音数据处理
              */
             // 保存本地PCM文件
-            const context = AppStorage.get('context') as common.UIAbilityContext;
-            if (AppStorage.get('device_isBle')) {
-              let a: AudioFileManager = new AudioFileManager(BlueTooth_devices.audioData, context)
-              console.log(BlueTooth_devices.audioData.length.toString(), '语音数据结束*****模拟')
-            } else {
-              let a: AudioFileManager = new AudioFileManager(Communication.audioData, context)
-              console.log(Communication.audioData.length.toString(), '语音数据结束*****模拟')
-            }
+            // const context = AppStorage.get('context') as common.UIAbilityContext;
+            // if (AppStorage.get('device_isBle')) {
+            //   let a: AudioFileManager = new AudioFileManager(BlueTooth_devices.audioData, context)
+            //   console.log(BlueTooth_devices.audioData.length.toString(), '语音数据结束*****模拟')
+            // } else {
+            //   let a: AudioFileManager = new AudioFileManager(Communication.audioData, context)
+            //   console.log(Communication.audioData.length.toString(), '语音数据结束*****模拟')
+            // }
           })
       } else {
         ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x63])
@@ -190,7 +191,11 @@ export class _KeyMethodConfig {
       if (AppStorage.get('voiceTranslationState')) {
         AppStorage.setOrCreate('voiceTranslationState', false) //语音状态
       }
-      AppStorage.setOrCreate('voiceInputState',
+
+
+      AppStorage.setOrCreate('voiceInputState', AppStorage.get('device_isBle') ?
+        !(AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+          0].BlueTooth_devices.audioDataState :
         !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
           0].Communication.audioDataState) //语音状态
     }
@@ -224,7 +229,7 @@ export class _KeyMethodConfig {
           0].BlueTooth_devices.deviceInfo.sn,
         "phrases": "",
         "format": "pcm",
-        "apiKey": "ebb72c9db60147febd2ccd50a705de57",
+        "apiKey": (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_show_currIndex') as number].getModelInfo?.appkey as string,
         "language": state ? AppStorage.get('from_languages') as string :
         (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages,
         "end": false,
@@ -233,7 +238,7 @@ export class _KeyMethodConfig {
         content: ''
       }
       let audioToText: AudioWebSocketHandler_ble =
-        new AudioWebSocketHandler_ble(WebSocket_serverUrl.audioToText, Communication.audioData, state,
+        new AudioWebSocketHandler_ble(WebSocket_serverUrl.audioToText, BlueTooth_devices.audioData, state,
           inputMessage) //语音转文字 websocket
       audioToText.connect()
     } else {
@@ -248,7 +253,7 @@ export class _KeyMethodConfig {
           0].Communication.deviceInfo.sn,
         "phrases": "",
         "format": "pcm",
-        "apiKey": "ebb72c9db60147febd2ccd50a705de57",
+        "apiKey": ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].getModelInfo?.appkey as string,
         "language": state ? AppStorage.get('from_languages') as string :
         ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages,
         "end": false,
@@ -352,7 +357,7 @@ export class _KeyMethodConfig {
       setTimeout(() => {
         if (Float_Window.showVoiceInput === flax) { //说明在60s内没有再进行过语音输入功能
           // Float_Window.showVoiceInput = 0
-          Float_Window.minimize_float_window()
+          Float_Window.destroyWindow()
           // Float_Window.destroyWindow() //在悬浮窗关闭后清空语音输入文本状态变量，文本显示：如果文本变量不为空，在后面拼接，如果为空则直接将新数据赋值即可
         }
       }, 2000)
@@ -409,7 +414,6 @@ export class _KeyMethodConfig {
       (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
         0].BlueTooth_devices.send([0x20, 0,
         0x2A])
-
     } else {
       ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20, 0,
         0x2A])
@@ -673,12 +677,22 @@ export class _KeyMethodConfig {
           })
           AppStorage.setOrCreate('voiceOrText', false)
           let params: translate_Params = {
-            appkey: (AppStorage.get('getModelInfo') as getModelInfoModel).appkey, //获取用户按键模式详情中得到
+            appkey: AppStorage.get('device_isBle') ?
+            ((AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+              0].getModelInfo as getModelInfoModel).appkey :
+            (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+              0].getModelInfo as getModelInfoModel).appkey, //获取用户按键模式详情中得到
             from: AppStorage.get('wordScan_from_languages') ? AppStorage.get('wordScan_from_languages') as string :
               'ZH_CN', //源语言___后面配置
-            productCode: ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+            productCode: AppStorage.get('device_isBle') ?
+            (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+              0].BlueTooth_devices.deviceInfo.productType.toString() :
+            ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
               0].Communication.deviceInfo.productType.toString(), //产品编码
-            sno: ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+            sno: AppStorage.get('device_isBle') ?
+            (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+              0].BlueTooth_devices.deviceInfo.sn :
+            ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
               0].Communication.deviceInfo.sn, //设备号
             text: text, //翻译内容
             to: AppStorage.get('wordScan_to_languages') ? AppStorage.get('wordScan_to_languages') as string :

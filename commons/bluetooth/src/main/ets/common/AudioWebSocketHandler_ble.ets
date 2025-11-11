@@ -68,7 +68,7 @@ export class AudioWebSocketHandler_ble {
 
   // 优化配置 - 1008字节分片
   private readonly CHUNK_SIZE_BYTES = 1008; // 目标分片大小
-  private readonly SAMPLES_PER_CHUNK = 504; // 1008字节 / 2字节每采样点 = 504个采样点
+  private readonly SAMPLES_PER_CHUNK = 512; // 1008字节 / 2字节每采样点 = 504个采样点
   private readonly SEND_INTERVAL_MS = 2; // 发送间隔
   private readonly CHECK_INTERVAL_MS = 5; // 检查间隔
   private readonly COMPLETION_CHECK_MS = 100; // 完成检查间隔

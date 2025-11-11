@@ -203,7 +203,8 @@ export interface DeviceArrayType {
   isPunctuationRecognition: boolean //语音识别是否带标点
   speech_Recognition_languages: string //语音识别语种
   productImg: string,
-  PRODUCT_TYPE: PRODUCT_TYPE //设备类型
+  PRODUCT_TYPE: PRODUCT_TYPE, //设备类型
+  name:string
 }
 
 export interface KeymethodConfig {
@@ -287,7 +288,8 @@ export class ConnectDevice {
                     isPunctuationRecognition: true,
                     speech_Recognition_languages: 'ZH_CN',
                     productImg: '',
-                    PRODUCT_TYPE: PRODUCT_TYPE.DEFAULT
+                    PRODUCT_TYPE: PRODUCT_TYPE.DEFAULT,
+                    name:ConnectDevice.targetDevice[index].productName
                   }
                   ConnectDevice.Communication.push(device)
                   Communication_.connectDevice()
@@ -315,7 +317,8 @@ export class ConnectDevice {
             isPunctuationRecognition: true,
             speech_Recognition_languages: 'ZH_CN',
             productImg: '',
-            PRODUCT_TYPE: PRODUCT_TYPE.DEFAULT
+            PRODUCT_TYPE: PRODUCT_TYPE.DEFAULT,
+            name:ConnectDevice.targetDevice[index].productName
           }
           ConnectDevice.Communication.push(device)
           Communication_.connectDevice()

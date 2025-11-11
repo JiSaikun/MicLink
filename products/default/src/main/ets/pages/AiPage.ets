@@ -7,6 +7,7 @@ import { common } from '@kit.AbilityKit';
 import { Want } from '@kit.AbilityKit';
 import { fileIo } from '@kit.CoreFileKit';
 import { getModelInfoModel } from 'config';
+import { DeviceArrayType_Ble } from 'bluetooth';
 
 // PersistentStorage.persistProp("login", false)
 
@@ -17,8 +18,7 @@ function AiPageBuilder() {
 
 @Component
 struct AiPage {
-  @State getModelInfo: getModelInfoModel =
-    (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number] as DeviceArrayType).getModelInfo as getModelInfoModel
+  @State getModelInfo: getModelInfoModel =AppStorage.get('getModelInfo') as getModelInfoModel
   @StorageLink("login") login: boolean = true
   @Watch('executeJSFunction')@StorageLink("chatIeUrl") chatIeUrl: string = 'ai'
   @Consume('pageInfo') pageInfo: NavPathStack
@@ -39,6 +39,13 @@ struct AiPage {
   aboutToAppear(): void {
     if (!this.login) {
       this.pageInfo.pushPath({ 'name': 'login' })
+    }
+    if (AppStorage.get('device_isBle')) {
+      this.getModelInfo =
+        (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+          0].getModelInfo as getModelInfoModel
+    }else {
+      this.getModelInfo=(ConnectDevice.Communication[AppStorage.get('device_currIndex') as number] as DeviceArrayType).getModelInfo as getModelInfoModel
     }
     console.error(this.chatIeUrl)
     // this.pageInfo.getParamByName('aipage')
@@ -380,7 +387,7 @@ struct AiPage {
                 }
 
                 Web({
-                  src: (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number] as DeviceArrayType).getModelInfo?.chatChromeUrl as string,
+                  src:AppStorage.get('device_isBle')?this.getModelInfo.chatChromeUrl: (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number] as DeviceArrayType).getModelInfo?.chatChromeUrl as string,
                   controller: this.webviewController
                 })
                   .onPageEnd(() => {

@@ -139,7 +139,7 @@ struct Index {
 
           try {
             console.info('OCR响应状态码:', data.responseCode);
-            console.info('OCR响应数据:', JSON.stringify(data));
+            console.info('OCR响应数据:', data.result);
 
             // 解析响应数据
             // let responseData=null

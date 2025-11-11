@@ -211,10 +211,11 @@ export struct LeftBar {
             angle: this.mark ? 90 : 0
           })
           .visibility(this.extend ? Visibility.Visible : Visibility.None)
+          .margin({right:13})
       }
       .flexGS()
       .backgroundColor(this.mark ? this.getPaletteThemeWithOpacity() : '#f8f8f8')
-      .padding({ left: 13,right:13 })
+      .padding({ left: 13})
       .height(40)
       .borderRadius(8)
       .width('100%')
