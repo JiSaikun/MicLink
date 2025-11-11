@@ -1175,8 +1175,9 @@ export class BlueTooth_devices {
       console.log(`蓝牙移除帧头后数据长度: ${audioFrame.length}`);
 
       if (Number(this.deviceInfo.firmwareVersion) > 23) {
-        // 解密音频数据 - 蓝牙使用100字节长度
-        const decryptedData = this.audioProcessor.miclinkDecrypt(audioFrame, 100);
+        // 解密音频数据 - 使用实际数据长度而不是固定100字节
+        console.log(`蓝牙音频帧长度: ${audioFrame.length}, 将使用此长度进行解密`);
+        const decryptedData = this.audioProcessor.miclinkDecrypt(audioFrame, audioFrame.length);
         console.log(`蓝牙解密后数据长度: ${decryptedData.length}`);
         console.log(`蓝牙解密后数据前20字节: ${Array.from(decryptedData.slice(0, 20)).map(b => b.toString(16).padStart(2, '0')).join(' ')}`);
         // 这里可以添加播放或保存PCM数据的逻辑

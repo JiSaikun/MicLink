@@ -59,7 +59,7 @@ export class _KeyMethodConfig {
               "language": state ? AppStorage.get('from_languages') as string :
               (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages,
               "end": false,
-              "rate": "16k",
+              "rate": "8k",
               "deviceNo": "6c:b1:33:9f:b9:8b",
               content: ''
             }
@@ -143,24 +143,26 @@ export class _KeyMethodConfig {
               0].BlueTooth_devices.audioDataState =
               !(AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
                 0].BlueTooth_devices.audioDataState
-            /**
-             * 语音数据处理
-             */
-            // 保存本地PCM文件
-            const context = AppStorage.get('context') as common.UIAbilityContext;
-            if (AppStorage.get('device_isBle')) {
-              let a: AudioFileManager = new AudioFileManager(BlueTooth_devices.audioData, context)
-              console.log(BlueTooth_devices.audioData.length.toString(), '语音数据结束*****模拟')
-            } else {
-              let a: AudioFileManager = new AudioFileManager(Communication.audioData, context)
-              console.log(Communication.audioData.length.toString(), '语音数据结束*****模拟')
-            }
+            // /**
+            //  * 语音数据处理
+            //  */
+            // // 保存本地PCM文件
+            // const context = AppStorage.get('context') as common.UIAbilityContext;
+            //   let a: AudioFileManager = new AudioFileManager(BlueTooth_devices.audioData, context)
+            //   console.log(BlueTooth_devices.audioData.length.toString(), '语音数据结束*****模拟')
           })
       } else {
         ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x63])
           .then(() => {
             ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState =
               !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState
+            /**
+             * 语音数据处理
+             */
+            // 保存本地PCM文件
+            const context = AppStorage.get('context') as common.UIAbilityContext;
+            let a: AudioFileManager = new AudioFileManager(Communication.audioData, context)
+            console.log(Communication.audioData.length.toString(), '语音数据结束*****模拟')
           })
       }
       if (!state) {
@@ -235,7 +237,7 @@ export class _KeyMethodConfig {
         "language": state ? AppStorage.get('from_languages') as string :
         (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages,
         "end": false,
-        "rate": "16k",
+        "rate": "8k",
         "deviceNo": "6c:b1:33:9f:b9:8b",
         content: ''
       }
