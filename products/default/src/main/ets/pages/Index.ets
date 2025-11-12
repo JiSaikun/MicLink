@@ -96,6 +96,7 @@ struct Index {
   @StorageLink("isBluetoothConnect_state") isBluetoothConnect_state: boolean = false //蓝牙检索状态
   @State shortcut_pop: boolean = false
   @State isNavigationLibActive: boolean = true //导航库重置
+  @State isDeviceSettingsActive: boolean = true //设备设置状态
   @StorageLink('devices') @Watch('onDevicesChange') devices: DeviceArrayType_Ble[] = []
   @StorageLink("paletteTheme") paletteTheme: string = ThemeConfig.PaletteTheme
   @StorageLink("resolutionScale") @Watch('onResolutionChange') resolutionScale: string = 'followSystem'
@@ -105,10 +106,19 @@ struct Index {
   onTabsControllerIndexChange(): void {
     console.log('onTabsControllerIndexChange called:', this.tabsControllerIndex)
     if (this.tabsController) {
+      // 导航库逻辑
       if (this.tabsControllerIndex === 4) {
         this.isNavigationLibActive = true
       } else {
         this.isNavigationLibActive = false
+      }
+
+      // 设备设置逻辑 - 每次进入都刷新状态，触发重新渲染
+      if (this.tabsControllerIndex === 7) {
+        // 使用setTimeout确保状态变化生效后再设置为true，触发重新渲染
+          this.isDeviceSettingsActive = true
+      }else{
+        this.isDeviceSettingsActive = false
       }
       this.tabsController.changeIndex(this.tabsControllerIndex)
     }
@@ -381,7 +391,9 @@ struct Index {
 
               TabContent() { // 设备设置
                 Stack() {
-                  DeviceSettings()
+                  if (this.isDeviceSettingsActive) {
+                    DeviceSettings()
+                  }
                   Topbar()
                 }
                 .height('100%')
