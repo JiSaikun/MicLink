@@ -265,7 +265,7 @@ export struct DeviceSettings {
                         .fontWeight(400)
                         .lineHeight(14)
                         .fontColor('#eb5e12')
-                        .visibility(item.mouseconfig?.isConnected === false ? Visibility.Visible : Visibility.None)
+                        .visibility(item.getModelInfo ? Visibility.None : Visibility.Visible)
                     }
                     .width('100%')
 
