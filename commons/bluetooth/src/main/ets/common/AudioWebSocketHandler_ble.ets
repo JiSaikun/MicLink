@@ -38,10 +38,26 @@ interface res_data_moudel {
   "type": string
 }
 
+// 配置常量
+const SERVER_URL: string = "ws://asr.miclink.net/ws";
+const CHUNK_SIZE_BYTES: number = 1024;
+const SAMPLES_PER_CHUNK: number = 512;
+const SEND_INTERVAL_MS: number = 0;
+const CHECK_INTERVAL_MS: number = 3;
+const COMPLETION_CHECK_MS: number = 100;
+const DISCONNECT_TIMEOUT_MS: number = 5000;
+const END_MARKER_DELAY_MS: number = 100;
+const PASTEBOARD_CLEAR_DELAY_MS: number = 2000;
+const TRANSLATION_EXECUTE_DELAY_MS: number = 50;
+const MIN_DATA_PACKETS: number = 3;
+const MAX_STABLE_COUNT: number = 25;
+const BASE64_CHARS: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+const LOG_LEVEL: string = 'info';
+
 export class AudioWebSocketHandler_ble {
   public isConnected: boolean = false;
   private ws: webSocket.WebSocket | null = null;
-  private serverUrl: string = "ws://asr.miclink.net/ws";
+  private serverUrl: string;
   private audioData: Int16Array[] = []
   private state: number = 0 //0:语音输入
   private wending: boolean = false //语音数据不再变化
@@ -66,17 +82,8 @@ export class AudioWebSocketHandler_ble {
   private completionCheckId: number | null = null;
   private isClosing: boolean = false; // 新增：标记是否正在关闭
 
-  // 优化配置 - 1024字节分片，减少延迟提高实时性
-  private readonly CHUNK_SIZE_BYTES = 1024; // 目标分片大小
-  private readonly SAMPLES_PER_CHUNK = 512; // 1024字节 / 2字节每采样点 = 512个采样点
-  private readonly SEND_INTERVAL_MS = 0; // 发送间隔（立即发送）
-  private  readonly CHECK_INTERVAL_MS = 3; // 检查间隔（更频繁检查）
-  private readonly COMPLETION_CHECK_MS = 100; // 完成检查间隔
-  private base64Chars: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-
   constructor(serverUrl: string, audioData: Int16Array[], state: number, inputMessage: inputMessageModel) {
-
-    this.serverUrl = serverUrl;
+    this.serverUrl = serverUrl || SERVER_URL;
     this.audioData = audioData;
     this.state = state;
     this.inputMessage = inputMessage;
@@ -95,6 +102,7 @@ export class AudioWebSocketHandler_ble {
     this.isClosing = false;
   }
 
+
   public connect(): void {
     try {
       // 添加连接状态检查
@@ -103,7 +111,7 @@ export class AudioWebSocketHandler_ble {
         return;
       }
 
-      console.log('*************************进入webSocket连接************************');
+      console.log('开始WebSocket连接');
 
       // 清理之前的连接
       this.disconnect();
@@ -114,8 +122,8 @@ export class AudioWebSocketHandler_ble {
         if (!err) {
           this.isConnected = true;
           this.isClosing = false;
-          console.log("连接已打开，状态:" + JSON.stringify(value));
-          console.log('*******************************语音数据长度：', this.audioData.length);
+          console.log("连接已打开");
+          console.log('语音数据长度：', this.audioData.length);
 
           // 使用优化的实时发送方式
           this.startRealTimeAudioSending();
@@ -257,7 +265,7 @@ export class AudioWebSocketHandler_ble {
             .then(() => {
               setTimeout(() => {
                 systemPasteboard.clearData();
-              }, 2000);
+              }, PASTEBOARD_CLEAR_DELAY_MS);
             });
         } else {
           console.warn('设备列表或设备索引无效，跳过音频状态重置');
@@ -330,12 +338,12 @@ export class AudioWebSocketHandler_ble {
                         }
                         setTimeout(() => {
                           systemPasteboard.clearData();
-                        }, 2000);
+                        }, PASTEBOARD_CLEAR_DELAY_MS);
                       });
                   } else {
                     console.warn('设备对象无效，跳过粘贴操作');
                   }
-                }, 50);
+                }, TRANSLATION_EXECUTE_DELAY_MS);
               })
               .catch((err: BusinessError) => {
                 console.error('翻译文本复制失败: ' + err.message);
@@ -384,7 +392,7 @@ export class AudioWebSocketHandler_ble {
             this.isConnected = false;
             this.isClosing = false;
           });
-        }, 100);
+        }, END_MARKER_DELAY_MS);
 
       } catch (error) {
         console.error('断开连接异常:', error);
@@ -420,61 +428,6 @@ export class AudioWebSocketHandler_ble {
         this.ws = null;
       }
     }
-  }
-
-  // 异步断开连接方法
-  public async disconnectAsync(): Promise<void> {
-    return new Promise((resolve) => {
-      console.log('开始异步断开WebSocket连接');
-
-      this.cleanupIntervals();
-      this.isSending = false;
-      this.isClosing = true;
-
-      if (!this.ws || !this.isConnected) {
-        console.log('WebSocket未连接，直接完成');
-        this.isConnected = false;
-        this.isClosing = false;
-        resolve();
-        return;
-      }
-
-      // 设置超时保护
-      const timeoutId = setTimeout(() => {
-        console.warn('WebSocket关闭超时，强制断开');
-        this.forceDisconnect();
-        resolve();
-      }, 5000);
-
-      try {
-        // 发送结束标记
-        this.sendEndMarker();
-
-        setTimeout(() => {
-          this.ws!.close({
-            code: 1000,
-            reason: "客户端主动关闭"
-          }, (err: BusinessError, value: boolean) => {
-            clearTimeout(timeoutId);
-            if (!err) {
-              console.log("连接已成功关闭");
-            } else {
-              console.error("关闭连接失败。错误信息: " + JSON.stringify(err));
-            }
-            this.ws = null;
-            this.isConnected = false;
-            this.isClosing = false;
-            resolve();
-          });
-        }, 100);
-
-      } catch (error) {
-        console.error('断开连接异常:', error);
-        clearTimeout(timeoutId);
-        this.forceDisconnect();
-        resolve();
-      }
-    });
   }
 
   private cleanupIntervals(): void {
@@ -530,34 +483,41 @@ export class AudioWebSocketHandler_ble {
     }
   }
 
-  // Base64编码实现
+  // 优化的Base64编码实现，使用查找表提高性能
   private base64Encode(uint8Array: Uint8Array): string {
     if (!uint8Array || uint8Array.length === 0) {
       return '';
     }
 
-    const outputLength = Math.ceil(uint8Array.length / 3) * 4;
-    const output = new Array<string>(outputLength);
-    let outputIndex = 0;
-
     try {
-      for (let i = 0; i < uint8Array.length; i += 3) {
+      // 使用更高效的编码方式
+      const length = uint8Array.length;
+      const outputLength = Math.ceil(length / 3) * 4;
+      let output = '';
+
+      for (let i = 0; i < length; i += 3) {
         const byte1 = uint8Array[i];
-        const byte2 = i + 1 < uint8Array.length ? uint8Array[i + 1] : 0;
-        const byte3 = i + 2 < uint8Array.length ? uint8Array[i + 2] : 0;
+        const byte2 = i + 1 < length ? uint8Array[i + 1] : 0;
+        const byte3 = i + 2 < length ? uint8Array[i + 2] : 0;
 
-        const enc1 = byte1 >> 2;
-        const enc2 = ((byte1 & 0x3) << 4) | (byte2 >> 4);
-        const enc3 = ((byte2 & 0xf) << 2) | (byte3 >> 6);
-        const enc4 = byte3 & 0x3f;
+        // 使用位运算进行编码
+        output += BASE64_CHARS.charAt(byte1 >> 2);
+        output += BASE64_CHARS.charAt(((byte1 & 0x3) << 4) | (byte2 >> 4));
 
-        output[outputIndex++] = this.base64Chars.charAt(enc1);
-        output[outputIndex++] = this.base64Chars.charAt(enc2);
-        output[outputIndex++] = i + 1 < uint8Array.length ? this.base64Chars.charAt(enc3) : '=';
-        output[outputIndex++] = i + 2 < uint8Array.length ? this.base64Chars.charAt(enc4) : '=';
+        if (i + 1 < length) {
+          output += BASE64_CHARS.charAt(((byte2 & 0xf) << 2) | (byte3 >> 6));
+        } else {
+          output += '=';
+        }
+
+        if (i + 2 < length) {
+          output += BASE64_CHARS.charAt(byte3 & 0x3f);
+        } else {
+          output += '=';
+        }
       }
 
-      return output.join('');
+      return output;
     } catch (error) {
       console.error('Base64编码错误:', error);
       return '';
@@ -597,8 +557,8 @@ export class AudioWebSocketHandler_ble {
     }
 
     // 按512个采样点（1024字节）分块
-    for (let i = 0; i < combinedData.length; i += this.SAMPLES_PER_CHUNK) {
-      const endIndex = Math.min(i + this.SAMPLES_PER_CHUNK, combinedData.length);
+    for (let i = 0; i < combinedData.length; i += SAMPLES_PER_CHUNK) {
+      const endIndex = Math.min(i + SAMPLES_PER_CHUNK, combinedData.length);
       const chunk = combinedData.slice(i, endIndex);
       chunks.push(chunk);
       console.log(`蓝牙生成分片 ${chunks.length}: ${chunk.length}采样点 (${chunk.length * 2}字节)`);
@@ -653,12 +613,13 @@ export class AudioWebSocketHandler_ble {
 
         // 控制发送速率
         if (chunkIndex < chunks.length - 1) {
-          await this.delay(this.SEND_INTERVAL_MS);
+          await this.delay(SEND_INTERVAL_MS);
         }
       }
 
       this.lastSentIndex = this.audioData.length;
       console.log(`现有数据发送完成，最后发送位置: ${this.lastSentIndex}`);
+
 
     } catch (error) {
       console.error('发送现有数据错误:', error);
@@ -679,7 +640,7 @@ export class AudioWebSocketHandler_ble {
       if (this.audioData.length > this.lastSentIndex) {
         await this.sendNewDataImmediately();
       }
-    }, this.CHECK_INTERVAL_MS) as number;
+    }, CHECK_INTERVAL_MS) as number;
   }
 
   private async sendNewDataImmediately(): Promise<void> {
@@ -707,12 +668,13 @@ export class AudioWebSocketHandler_ble {
 
           // 最小延迟
           if (chunkIndex < chunks.length - 1) {
-            await this.delay(this.SEND_INTERVAL_MS);
+            await this.delay(SEND_INTERVAL_MS);
           }
         }
       }
 
       this.lastSentIndex = this.audioData.length;
+
 
     } catch (error) {
       console.error('发送新数据错误:', error);
@@ -726,7 +688,6 @@ export class AudioWebSocketHandler_ble {
 
     let lastDataLength = this.audioData.length;
     let stableCount = 0;
-    const maxStableCount = 25; // 增加等待时间到500ms (3ms * 25) - 防止过早结束
 
     this.completionCheckId = setInterval(() => {
       if (this.isClosing) {
@@ -736,17 +697,17 @@ export class AudioWebSocketHandler_ble {
 
       const currentLength = this.audioData.length;
 
-      // 只有在至少有3个数据包后才开始检测完成
-      if (currentLength < 3) {
+      // 只有在至少有指定数量的数据包后才开始检测完成
+      if (currentLength < MIN_DATA_PACKETS) {
         console.log(`蓝牙数据包不足(${currentLength})，继续等待...`);
         return;
       }
 
       if (currentLength === lastDataLength) {
         stableCount++;
-        console.log(`蓝牙数据稳定计数: ${stableCount}/${maxStableCount}`);
+        console.log(`蓝牙数据稳定计数: ${stableCount}/${MAX_STABLE_COUNT}`);
 
-        if (stableCount >= maxStableCount) {
+        if (stableCount >= MAX_STABLE_COUNT) {
           console.log('蓝牙数据稳定，发送结束标记');
           this.sendEndMarker();
           this.cleanupIntervals();
@@ -756,7 +717,7 @@ export class AudioWebSocketHandler_ble {
         lastDataLength = currentLength;
         console.log(`蓝牙接收到新数据，当前长度: ${currentLength}`);
       }
-    }, this.CHECK_INTERVAL_MS) as number;
+    }, CHECK_INTERVAL_MS) as number;
   }
 
   private async sendAudioChunk(chunk: Int16Array, chunkIndex: number, totalChunks: number): Promise<void> {
@@ -828,18 +789,18 @@ export class AudioWebSocketHandler_ble {
     this.wending = true;
   }
 
+
   // 清理资源
   public destroy(): void {
     console.log('开始销毁AudioWebSocketHandler');
-    this.disconnectAsync().then(() => {
-      // 清理音频数据
-      this.audioData = [];
-      this.pendingChunks = [];
-      this.isSending = false;
-      this.ws = null;
-      this.lastSentIndex = 0;
-      this.isClosing = false;
-      console.log('AudioWebSocketHandler资源已完全清理');
-    });
+    this.disconnect();
+    // 清理音频数据
+    this.audioData = [];
+    this.pendingChunks = [];
+    this.isSending = false;
+    this.ws = null;
+    this.lastSentIndex = 0;
+    this.isClosing = false;
+    console.log('AudioWebSocketHandler资源已完全清理');
   }
 }
