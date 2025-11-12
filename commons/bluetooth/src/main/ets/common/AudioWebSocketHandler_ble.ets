@@ -70,11 +70,8 @@ export class AudioWebSocketHandler_ble {
   private readonly CHUNK_SIZE_BYTES = 1024; // 目标分片大小
   private readonly SAMPLES_PER_CHUNK = 512; // 1024字节 / 2字节每采样点 = 512个采样点
   private readonly SEND_INTERVAL_MS = 0; // 发送间隔（立即发送）
-  private readonly CHECK_INTERVAL_MS = 3; // 检查间隔（更频繁检查）
+  private  readonly CHECK_INTERVAL_MS = 3; // 检查间隔（更频繁检查）
   private readonly COMPLETION_CHECK_MS = 100; // 完成检查间隔
-  private readonly MAX_BUFFER_SIZE = 50; // 最大缓冲分片数
-
-  // Base64编码表
   private base64Chars: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
   constructor(serverUrl: string, audioData: Int16Array[], state: number, inputMessage: inputMessageModel) {
@@ -251,14 +248,20 @@ export class AudioWebSocketHandler_ble {
 
       if (this.state === 0 && this.wending && !AppStorage.get('isAI_assistant')) {
         this.wending = false;
-        // 语音输入模式
-        (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||0].BlueTooth_devices.send([0x20,
-          0x01, 0x19])
-          .then(() => {
-            setTimeout(() => {
-              systemPasteboard.clearData();
-            }, 2000);
-          });
+        // 语音输入模式 - 安全检查设备访问
+        const devices = AppStorage.get('devices') as DeviceArrayType_Ble[];
+        const deviceIndex = AppStorage.get('device_currIndex') as number || 0;
+
+        if (devices && devices.length > 0 && deviceIndex >= 0 && deviceIndex < devices.length && devices[deviceIndex]?.BlueTooth_devices) {
+          devices[deviceIndex].BlueTooth_devices.send([0x20, 0x01, 0x19])
+            .then(() => {
+              setTimeout(() => {
+                systemPasteboard.clearData();
+              }, 2000);
+            });
+        } else {
+          console.warn('设备列表或设备索引无效，跳过音频状态重置');
+        }
         return;
       }
 
@@ -273,13 +276,22 @@ export class AudioWebSocketHandler_ble {
   }
 
   private handleTranslation(text: string, systemPasteboard: pasteboard.SystemPasteboard, type: string): void {
+    // 安全检查设备访问
+    const devices = AppStorage.get('devices') as DeviceArrayType_Ble[];
+    const deviceIndex = AppStorage.get('device_currIndex') as number || 0;
+
+    if (!devices || devices.length === 0 || deviceIndex < 0 || deviceIndex >= devices.length || !devices[deviceIndex]) {
+      console.error('设备列表或设备索引无效，无法进行翻译');
+      return;
+    }
+
+    const currentDevice = devices[deviceIndex];
+
     let params: translate_Params = {
-      appkey: ((AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-        0].getModelInfo as getModelInfoModel).appkey,
+      appkey: (currentDevice.getModelInfo as getModelInfoModel)?.appkey || '',
       from: AppStorage.get('from_languages') ? AppStorage.get('from_languages') as string : 'ZH_CN',
-      productCode: (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-        0].BlueTooth_devices.deviceInfo.productType.toString(),
-      sno: (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||0].BlueTooth_devices.deviceInfo.sn,
+      productCode: currentDevice.BlueTooth_devices?.deviceInfo?.productType?.toString() || '0',
+      sno: currentDevice.BlueTooth_devices?.deviceInfo?.sn || '',
       text: text,
       to: AppStorage.get('to_languages') ? AppStorage.get('to_languages') as string : 'EN_US'
     };
@@ -306,26 +318,23 @@ export class AudioWebSocketHandler_ble {
                 this.wending = false
                 Float_Window.destroyWindow(Float_Window.window_VoiceTranslation)
                 setTimeout(() => {
-                  // 语音输入模式
-                  (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-                    0].BlueTooth_devices.send([0x20,
-                    0x01, 0x19])
-                    .then(() => {
-                      console.error('执行粘贴操作: ' + dataArray.transText);
-                      Float_Window.showVoiceTranslation = false
-                      if ((AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-                        0].BlueTooth_devices.audioDataState) {
-                        (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-                          0].BlueTooth_devices.send([0x63]);
-                        (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-                          0].BlueTooth_devices.audioDataState =
-                          !(AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-                            0].BlueTooth_devices.audioDataState
-                      }
-                      setTimeout(() => {
-                        systemPasteboard.clearData();
-                      }, 2000);
-                    });
+                  // 语音输入模式 - 安全检查设备访问
+                  if (currentDevice?.BlueTooth_devices) {
+                    currentDevice.BlueTooth_devices.send([0x20, 0x01, 0x19])
+                      .then(() => {
+                        console.error('执行粘贴操作: ' + dataArray.transText);
+                        Float_Window.showVoiceTranslation = false;
+                        if (currentDevice.BlueTooth_devices.audioDataState) {
+                          currentDevice.BlueTooth_devices.send([0x63]);
+                          currentDevice.BlueTooth_devices.audioDataState = !currentDevice.BlueTooth_devices.audioDataState;
+                        }
+                        setTimeout(() => {
+                          systemPasteboard.clearData();
+                        }, 2000);
+                      });
+                  } else {
+                    console.warn('设备对象无效，跳过粘贴操作');
+                  }
                 }, 50);
               })
               .catch((err: BusinessError) => {

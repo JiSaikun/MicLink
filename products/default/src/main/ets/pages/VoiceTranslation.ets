@@ -10,6 +10,19 @@ import { DeviceArrayType_Ble } from 'bluetooth';
 /**
  * 语音翻译悬浮窗
  */
+
+// 安全的设备访问辅助函数
+function getCurrentDeviceSafe(): DeviceArrayType_Ble | null {
+  const devices = AppStorage.get('devices') as DeviceArrayType_Ble[];
+  const deviceIndex = AppStorage.get('device_currIndex') as number || 0;
+
+  if (!devices || devices.length === 0 || deviceIndex < 0 || deviceIndex >= devices.length || !devices[deviceIndex]) {
+    console.warn('设备列表或设备索引无效');
+    return null;
+  }
+
+  return devices[deviceIndex];
+}
 @Entry
 @Component
 struct VoiceTranslation {
@@ -29,22 +42,24 @@ struct VoiceTranslation {
   private scroller_from: Scroller = new Scroller();
 
   changeLanguages() {
+    // 安全获取设备信息
+    const currentDevice = getCurrentDeviceSafe();
+    const deviceIndex = AppStorage.get('device_currIndex') as number || 0;
+
     let params: translate_Params = {
       appkey: AppStorage.get('device_isBle') ?
-      ((AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-        0].getModelInfo as getModelInfoModel).appkey :
-      (AppStorage.get('getModelInfo') as getModelInfoModel).appkey, //获取用户按键模式详情中得到
+        (currentDevice?.getModelInfo as getModelInfoModel)?.appkey || (AppStorage.get('getModelInfo') as getModelInfoModel)?.appkey :
+        (AppStorage.get('getModelInfo') as getModelInfoModel)?.appkey, //获取用户按键模式详情中得到
       from: this.voiceOrText ? AppStorage.get('from_languages') as string :
         AppStorage.get('wordScan_from_languages') as string, //源语言___后面配置
       productCode: AppStorage.get('device_isBle') ?
-      (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-        0].BlueTooth_devices.deviceInfo.productType.toString() :
-      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-        0].Communication.deviceInfo.productType.toString(), //产品编码
+        currentDevice?.BlueTooth_devices?.deviceInfo?.productType?.toString() ||
+        ConnectDevice.Communication[deviceIndex]?.Communication?.deviceInfo?.productType?.toString() || '0' :
+        ConnectDevice.Communication[deviceIndex]?.Communication?.deviceInfo?.productType?.toString() || '0', //产品编码
       sno: AppStorage.get('device_isBle') ?
-      (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-        0].BlueTooth_devices.deviceInfo.sn : ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-        0].Communication.deviceInfo.sn, //设备号
+        currentDevice?.BlueTooth_devices?.deviceInfo?.sn ||
+        ConnectDevice.Communication[deviceIndex]?.Communication?.deviceInfo?.sn || '' :
+        ConnectDevice.Communication[deviceIndex]?.Communication?.deviceInfo?.sn || '', //设备号
       text: this.voiceTranslationText.text, //翻译内容
       to: this.voiceOrText ? AppStorage.get('to_languages') as string :
         AppStorage.get('wordScan_to_languages') as string //翻译语言___后面配置
@@ -58,7 +73,7 @@ struct VoiceTranslation {
         }
         AppStorage.setOrCreate('voiceTranslationText', data)
       } else {
-        promptAction.showToast({ message: '无法翻译到对应目标语言' });
+        console.warn('无法翻译到对应目标语言');
       }
     })
 
@@ -66,12 +81,23 @@ struct VoiceTranslation {
 
   aboutToAppear(): void {
     if (AppStorage.get('device_isBle')) {
-      this.getModelInfo =
-        (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-          0].getModelInfo as getModelInfoModel
+      // 安全检查设备访问
+      const currentDevice = getCurrentDeviceSafe();
+      if (currentDevice?.getModelInfo) {
+        this.getModelInfo = currentDevice.getModelInfo as getModelInfoModel;
+      } else {
+        console.warn('无法获取蓝牙设备信息');
+      }
     } else {
-      this.getModelInfo =
-        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].getModelInfo as getModelInfoModel
+      // 安全检查非蓝牙设备访问
+      const deviceIndex = AppStorage.get('device_currIndex') as number || 0;
+      if (ConnectDevice.Communication && ConnectDevice.Communication.length > 0 &&
+          deviceIndex >= 0 && deviceIndex < ConnectDevice.Communication.length &&
+          ConnectDevice.Communication[deviceIndex]?.getModelInfo) {
+        this.getModelInfo = ConnectDevice.Communication[deviceIndex].getModelInfo as getModelInfoModel;
+      } else {
+        console.warn('无法获取非蓝牙设备信息');
+      }
     }
   }
 
@@ -109,24 +135,32 @@ struct VoiceTranslation {
               text: ''
             }
             if (AppStorage.get('device_isBle')) {
-              if ((AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-                0].BlueTooth_devices.audioDataState) {
-                (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-                  0].BlueTooth_devices.send([0x63]);
-                (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-                  0].BlueTooth_devices.audioDataState =
-                  !(AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-                    0].BlueTooth_devices.audioDataState
+              // 安全检查：确保设备列表和索引有效
+              const devices = AppStorage.get('devices') as DeviceArrayType_Ble[];
+              const deviceIndex = AppStorage.get('device_currIndex') as number || 0;
+
+              if (devices && devices.length > 0 && deviceIndex >= 0 && deviceIndex < devices.length && devices[deviceIndex]) {
+                const currentDevice = devices[deviceIndex];
+                if (currentDevice.BlueTooth_devices && currentDevice.BlueTooth_devices.audioDataState) {
+                  currentDevice.BlueTooth_devices.send([0x63]);
+                  currentDevice.BlueTooth_devices.audioDataState = !currentDevice.BlueTooth_devices.audioDataState;
+                }
+              } else {
+                console.warn('设备列表或设备索引无效，跳过音频状态重置');
               }
             } else {
-              if (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-                0].Communication.audioDataState) {
-                ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-                  0].Communication.getDeviceInfo([0x63])
-                ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-                  0].Communication.audioDataState =
-                  !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-                    0].Communication.audioDataState
+              // 安全检查：确保非蓝牙设备列表和索引有效
+              const deviceIndex = AppStorage.get('device_currIndex') as number || 0;
+              if (ConnectDevice.Communication && ConnectDevice.Communication.length > 0 &&
+                  deviceIndex >= 0 && deviceIndex < ConnectDevice.Communication.length &&
+                  ConnectDevice.Communication[deviceIndex] && ConnectDevice.Communication[deviceIndex].Communication) {
+                const communication = ConnectDevice.Communication[deviceIndex].Communication;
+                if (communication.audioDataState) {
+                  communication.getDeviceInfo([0x63]);
+                  communication.audioDataState = !communication.audioDataState;
+                }
+              } else {
+                console.warn('非蓝牙设备列表或设备索引无效，跳过音频状态重置');
               }
             }
 
@@ -247,7 +281,7 @@ struct VoiceTranslation {
                   systemPasteboard.setData(pasteData)
                     .then(() => {
                       console.error('文本已复制到剪贴板: ' + this.voiceTranslationText.transText);
-                      promptAction.showToast({ message: '复制成功' });
+                      console.info('复制成功');
                     })
                     .catch((err: BusinessError) => {
                       console.error('复制失败: ' + err.message);
@@ -430,14 +464,14 @@ struct VoiceTranslation {
     true //语音翻译为true,文本翻译为false
 
   change_flax_yuyinfanyi_chachaobudaoyuyan() {
-    promptAction.showToast({ message: '无法翻译到对应目标语言', backgroundColor: Color.Red, duration: 3000 });
+    console.warn('无法翻译到对应目标语言');
   }
 
   @Watch('change_flax_huacifanyi') @StorageLink('flax_huacifanyi') flax_huacifanyi: boolean =
     true //语音翻译为true,文本翻译为false
 
   change_flax_huacifanyi() {
-    promptAction.showToast({ message: '未识别到选中划词', backgroundColor: Color.Red });
+    console.warn('未识别到选中划词');
 
   }
 }

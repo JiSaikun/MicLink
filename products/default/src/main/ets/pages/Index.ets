@@ -96,7 +96,7 @@ struct Index {
   @StorageLink("isBluetoothConnect_state") isBluetoothConnect_state: boolean = false //蓝牙检索状态
   @State shortcut_pop: boolean = false
   @State isNavigationLibActive: boolean = true //导航库重置
-  @StorageLink('devices') devices: DeviceArrayType_Ble[] = []
+  @StorageLink('devices') @Watch('onDevicesChange') devices: DeviceArrayType_Ble[] = []
   @StorageLink("paletteTheme") paletteTheme: string = ThemeConfig.PaletteTheme
   @StorageLink("resolutionScale") @Watch('onResolutionChange') resolutionScale: string = 'followSystem'
   @State scaleValue: number = 1.0
@@ -152,6 +152,27 @@ struct Index {
       this.scaleValue = parseFloat(this.resolutionScale) / 100
     }
     console.info(`全局应用缩放比例: ${this.scaleValue}`)
+  }
+
+  // 监听设备列表变化
+  onDevicesChange(): void {
+    console.log('设备列表发生变化，当前设备数量:', this.devices.length)
+
+    // 当设备列表被清空时，重置相关索引
+    if (this.devices.length === 0) {
+      AppStorage.setOrCreate('device_currIndex', 0)
+      AppStorage.setOrCreate('device_show_currIndex', 0)
+      AppStorage.setOrCreate('device_isBle', false)
+      console.log('设备列表已清空，重置设备索引')
+    } else {
+      // 当有设备时，确保当前索引有效
+      const currentIndex = AppStorage.get('device_currIndex') as number || 0
+      if (currentIndex >= this.devices.length) {
+        // 如果当前索引超出范围，设置为最后一个设备
+        AppStorage.setOrCreate('device_currIndex', Math.max(0, this.devices.length - 1))
+        console.log('设备索引超出范围，已调整为最后一个设备')
+      }
+    }
   }
 
   change_mouse_KeyPressType() {

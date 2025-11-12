@@ -204,7 +204,7 @@ export interface DeviceArrayType {
   speech_Recognition_languages: string //语音识别语种
   productImg: string,
   PRODUCT_TYPE: PRODUCT_TYPE, //设备类型
-  name: string
+  name:string
 }
 
 export interface KeymethodConfig {
@@ -289,7 +289,7 @@ export class ConnectDevice {
                     speech_Recognition_languages: 'ZH_CN',
                     productImg: '',
                     PRODUCT_TYPE: PRODUCT_TYPE.DEFAULT,
-                    name: ConnectDevice.targetDevice[index].productName
+                    name:ConnectDevice.targetDevice[index].productName
                   }
                   ConnectDevice.Communication.push(device)
                   Communication_.connectDevice()
@@ -318,7 +318,7 @@ export class ConnectDevice {
             speech_Recognition_languages: 'ZH_CN',
             productImg: '',
             PRODUCT_TYPE: PRODUCT_TYPE.DEFAULT,
-            name: ConnectDevice.targetDevice[index].productName
+            name:ConnectDevice.targetDevice[index].productName
           }
           ConnectDevice.Communication.push(device)
           Communication_.connectDevice()
@@ -387,8 +387,6 @@ export class Communication {
   private isHeartbeatRunning: boolean = false;
   private reconnectAttempts: number = 0;
   private readonly MAX_RECONNECT_ATTEMPTS: number = 5;
-  // 新增属性 - 防止重复重连
-  private isReconnecting: boolean = false;
 
   // 构建命令帧的通用方法
   private buildCommandFrame(cmd: number[], length: number): Uint8Array {
@@ -531,20 +529,22 @@ export class Communication {
     console.log(`心跳检查: 上次接收时间 ${timeSinceLastReceive}ms 前`);
 
     if (timeSinceLastReceive > this.HEARTBEAT_TIMEOUT) {
-      console.log(`心跳超时（${timeSinceLastReceive}ms 未收到消息），开始重新连接设备`);
-      this.stopHeartbeatCheck();
-      await this.reconnectDevice();
+      console.log(`心跳超时（${timeSinceLastReceive}ms 未收到消息），发送心跳包查询设备信息`);
+      // 发送心跳包，查询设备信息，发送成功后会自动更新lastReceivedTime
+      this.sendHeartbeatTest();
     } else {
-      // 可选：发送心跳包测试连接
-      console.log('连接正常，发送心跳测试包');
-      // this.sendHeartbeatTest();
+      // 连接正常，不需要发送心跳包
+      console.log('连接正常，无需发送心跳包');
     }
   }
 
   // 发送心跳测试包
   private sendHeartbeatTest(): void {
     if (!this.sendState && this.devicePipe) {
-      this.getDeviceInfo([0x61]); // 使用查询设备状态作为心跳测试
+      console.log('发送心跳包: 0x61命令（获取设备基本信息）');
+      this.getDeviceInfo([0x61]); // 使用获取设备基本信息作为心跳测试
+    } else {
+      console.log('当前正在发送数据或设备未连接，跳过心跳包发送');
     }
   }
 
@@ -571,79 +571,35 @@ export class Communication {
     }
   }
 
-  // 重新连接设备 - 优化版本
+  // 重新连接设备
   private async reconnectDevice(): Promise<void> {
-    // 防止重复重连
-    if (this.isReconnecting) {
-      console.log('重连操作正在进行中，跳过此次请求');
-      return;
-    }
+    console.log('开始重新连接设备...');
 
-    this.isReconnecting = true;
-    console.log('开始优化重连流程，当前重连尝试次数:', this.reconnectAttempts);
+    // 停止心跳检测
+    this.stopHeartbeatCheck();
 
-    try {
-      // 停止心跳检测
-      this.stopHeartbeatCheck();
-
-      // 使用更安全的关闭方式
-      await this.safeClosePipe();
-
-      // 指数退避策略
-      const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
-      console.log(`重连延迟: ${delay}ms`);
-      await new Promise<void>(resolve => setTimeout(resolve, delay));
-
-      // 执行重连
-      await this.connectDevice();
-      this.reconnectAttempts = 0;
-      console.log('重连成功完成');
-
-    } catch (error) {
-      console.error('重连过程出错:', error);
-      this.reconnectAttempts++;
-      console.log('重连失败，当前重连尝试次数:', this.reconnectAttempts);
-
-      // 重连失败后继续处理错误
-      if (this.reconnectAttempts <= this.MAX_RECONNECT_ATTEMPTS) {
-        await this.handleConnectionError();
-      } else {
-        console.log('达到最大重连尝试次数，停止重连');
-        this.stopHeartbeatCheck();
-      }
-    } finally {
-      this.isReconnecting = false;
-      console.log('重连流程结束');
-    }
-  }
-
-  private async safeClosePipe(): Promise<void> {
-    if (!this.devicePipe) {
-      console.log('设备管道为空，无需关闭');
-      return;
-    }
-
-    return new Promise<void>((resolve) => {
-      console.log('开始安全关闭USB管道');
-      const timeoutId = setTimeout(() => {
-        console.warn('USB关闭超时，强制清理并继续执行重连');
-        this.devicePipe = null;
-        resolve();
-      }, 2000);
-
+    // 关闭现有连接
+    if (this.devicePipe) {
       try {
         usbManager.closePipe(this.devicePipe);
-        console.log('USB管道成功关闭');
-        clearTimeout(timeoutId);
-        this.devicePipe = null;
-        resolve();
+        console.log('已关闭现有设备连接');
       } catch (error) {
-        console.error('关闭USB管道失败:', error);
-        clearTimeout(timeoutId);
-        this.devicePipe = null;
-        resolve();
+        console.error('关闭设备连接时出错:', error);
       }
-    });
+      this.devicePipe = null;
+    }
+
+    // 等待一小段时间再重连
+    await new Promise<void>((resolve: () => void) => setTimeout(resolve, 1000));
+
+    try {
+      // 重新连接
+      await this.connectDevice();
+      console.log('设备重新连接完成');
+    } catch (error) {
+      console.error('设备重新连接失败:', error);
+      await this.handleConnectionError();
+    }
   }
 
   // 使用批量传输获取设备信息
@@ -901,14 +857,10 @@ export class Communication {
   public destroy(): void {
     console.log(`销毁设备通信实例: ${this.device_currIndex}`);
     this.stopHeartbeatCheck();
-    this.isReconnecting = false; // 重置重连状态
-
-    // 使用安全关闭
-    this.safeClosePipe().then(() => {
-      console.log('设备资源安全清理完成');
-    }).catch(() => {
-      console.error('设备资源安全清理失败:');
-    });
+    if (this.devicePipe) {
+      usbManager.closePipe(this.devicePipe);
+      this.devicePipe = null;
+    }
   }
 
   // 解析设备信息
@@ -1731,7 +1683,7 @@ export class Communication {
         }
         if (data[3] === 0xC5) {
           console.log('****************************长文翻译双击按下****************************')
-          AppStorage.setOrCreate('设备_currIndex', this.device_currIndex)
+          AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
           AppStorage.setOrCreate('device_isBle', false)
           AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.LONG_TEXT_TRANSLATION_DOUBLE_CLICK)
         }
@@ -1941,19 +1893,11 @@ export class Communication {
   // 处理音频数据
   private processAudioData(data: Uint8Array): void {
     try {
-      console.log(`2.4G接收原始音频数据长度: ${data.length}`);
-      console.log(`2.4G原始音频数据前20字节: ${Array.from(data.slice(0, 20)).map(b => b.toString(16).padStart(2, '0')).join(' ')}`);
-
       // 移除帧头(0x1b)
       let audioFrame = data.subarray(1);
-      console.log(`2.4G移除帧头后数据长度: ${audioFrame.length}`);
-
       if (Number(this.deviceInfo.firmwareVersion) > 23) {
-        // 解密音频数据 - 使用实际数据长度
-        console.log(`2.4G音频帧长度: ${audioFrame.length}, 将使用此长度进行解密`);
-        const decryptedData = this.audioProcessor.miclinkDecrypt(audioFrame, audioFrame.length);
-        console.log(`2.4G解密后数据长度: ${decryptedData.length}`);
-        console.log(`2.4G解密后数据前20字节: ${Array.from(decryptedData.slice(0, 20)).map(b => b.toString(16).padStart(2, '0')).join(' ')}`);
+        // 解密音频数据
+        const decryptedData = this.audioProcessor.miclinkDecrypt(audioFrame);
         // 这里可以添加播放或保存PCM数据的逻辑
         audioFrame = decryptedData;
       }
@@ -1963,17 +1907,12 @@ export class Communication {
 
       if (pcmData) {
         // 处理PCM数据（播放或保存）
-        console.log(`2.4G解码得到PCM数据: ${pcmData.length}个样本`);
-        console.log(`2.4G PCM数据前10个样本: ${Array.from(pcmData.slice(0, 10)).join(', ')}`);
-        console.log(`2.4G 当前Communication.audioData长度: ${Communication.audioData.length}`);
+        console.log(`解码得到PCM数据: ${pcmData.length}个样本`, '\n', '具体数据：', pcmData);
         // 这里可以添加播放或保存PCM数据的逻辑
         Communication.audioData.push(pcmData);
-        console.log(`2.4G 添加后Communication.audioData长度: ${Communication.audioData.length}`);
-      } else {
-        console.error('2.4G PCM解码失败，返回null');
       }
     } catch (error) {
-      console.error('2.4G 处理音频数据失败:', error);
+      console.error('处理音频数据失败:', error);
     }
   }
 }

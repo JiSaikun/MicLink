@@ -2,7 +2,7 @@ import { a2dp, ble, constant } from '@kit.ConnectivityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { abilityAccessCtrl, common, Permissions } from '@kit.AbilityKit';
 import { connection } from '@kit.ConnectivityKit';
-import { LengthMetrics, promptAction } from '@kit.ArkUI';
+import { LengthMetrics } from '@kit.ArkUI';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { getModelInfoModel, keyInfosModel } from 'config'
 import {
@@ -36,10 +36,14 @@ export function reqPermissionsFromUser(permissions: Array<Permissions>, context:
     for (let i = 0; i < length; i++) {
       if (grantStatus[i] === 0) {
         // 用户授权，可以继续访问目标操作。
-        getPairedDevices()
+        // 异步执行设备扫描，避免阻塞主线程
+        setTimeout(() => {
+          getPairedDevices();
+        }, 100);
       } else {
         // 当用户拒绝授权时，系统应提示用户必须授予相应权限才能使用当前页面的功能，并指导用户前往系统设置开启所需权限。
-        promptAction.showToast({ message: '请打开蓝牙设备获取权限', duration: 2000 })
+        // 使用 console.warn 替代已弃用的 showToast
+        console.warn('请打开蓝牙设备获取权限')
         return;
       }
     }
@@ -212,10 +216,11 @@ export class BlueTooth_devices {
             this.devices[this.device_currIndex].mouseconfig = this.deviceInfo;
 
             if (!(AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].getModelInfo) {
-              this.devices = AppStorage.get('devices') as DeviceArrayType_Ble[]
-              const newList: DeviceArrayType_Ble[] = JSON.parse(JSON.stringify(this.devices));
-              AppStorage.setOrCreate('devices', null);
+              // 深拷贝更新设备列表以触发UI更新
+              const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[];
+              const newList: DeviceArrayType_Ble[] = deepCopyDevices(currentDevices);
               AppStorage.setOrCreate('devices', newList);
+              this.devices = newList;
             } else {
               if (!this.devices[this.device_currIndex].KeymethodConfig.length) {
                 this.devices[this.device_currIndex].KeymethodConfig = [
@@ -324,10 +329,11 @@ export class BlueTooth_devices {
             this.devices[this.device_currIndex].mouseconfig = this.deviceInfo;
 
             if (!(AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].getModelInfo) {
-              this.devices = AppStorage.get('devices') as DeviceArrayType_Ble[]
-              const newList: DeviceArrayType_Ble[] = JSON.parse(JSON.stringify(this.devices));
-              AppStorage.setOrCreate('devices', null);
+              // 深拷贝更新设备列表以触发UI更新
+              const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[];
+              const newList: DeviceArrayType_Ble[] = deepCopyDevices(currentDevices);
               AppStorage.setOrCreate('devices', newList);
+              this.devices = newList;
             } else {
               if (!this.devices[this.device_currIndex].KeymethodConfig.length) {
                 this.devices[this.device_currIndex].KeymethodConfig = [
@@ -1121,7 +1127,7 @@ export class BlueTooth_devices {
         console.log('没有收到0x61命令,重新获取设备信息');
         this.send();
       } else {
-        if (!this.devices[this.device_currIndex].getModelInfo) {
+        if (!(AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].getModelInfo) {
           console.warn(this.deviceInfo.productType.toString());
           const params: getModelInfo_Params = {
             languageCode: '',
@@ -1130,23 +1136,40 @@ export class BlueTooth_devices {
           };
 
           _getModelInfo(params).then((res) => {
-            console.log('获取用户按键模式详情数据', JSON.stringify(res.data));
-            if (res.status === 200) {
-              let getModelInfo: getModelInfoModel = res.data as getModelInfoModel;
-              this.devices[this.device_currIndex].getModelInfo = getModelInfo;
-              this.devices = AppStorage.get('devices') as DeviceArrayType_Ble[]
-              const newList: DeviceArrayType_Ble[] = JSON.parse(JSON.stringify(this.devices));
-              AppStorage.setOrCreate('devices', null);
-              AppStorage.setOrCreate('devices', newList);
-              /**
-               * 判断当前设备是否是键盘
-               */
-              if ((this.devices[this.device_currIndex].getModelInfo as getModelInfoModel).functions.length !==
-                0) {
-                for (let item
-                  of (this.devices[this.device_currIndex].getModelInfo as getModelInfoModel).functions) {
-                  if (item.code === 'keyboard') {
-                    this.devices[this.device_currIndex].PRODUCT_TYPE = PRODUCT_TYPE.keyboard;
+            console.log('获取用户按键模式详情数据1111', '\n', JSON.stringify(res.status), JSON.stringify(res.data));
+            if ((res.status === 200 || res.statusCode === 200) && res.data) {
+              let getModelInfo: getModelInfoModel = res.data;
+              console.warn('获取到设备模型信息，开始更新设备数据');
+
+              // 检查设备索引是否有效
+              if (this.device_currIndex >= 0 && this.device_currIndex < this.devices.length &&
+              this.devices[this.device_currIndex]) {
+                this.devices[this.device_currIndex].getModelInfo = getModelInfo;
+                console.warn('设备模型信息已设置');
+
+                // 深拷贝更新设备列表以触发UI更新
+                const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[];
+                const newList: DeviceArrayType_Ble[] = deepCopyDevices(currentDevices);
+                AppStorage.setOrCreate('devices', newList);
+                this.devices = newList;
+                console.warn('设备列表已更新');
+                AppStorage.setOrCreate('isBluetoothConnect_state', true)
+              } else {
+                console.error('设备索引无效，无法更新设备信息', this.device_currIndex, this.devices.length);
+              }
+
+              // 在索引检查后，判断当前设备是否是键盘
+              if (this.device_currIndex >= 0 && this.device_currIndex < this.devices.length &&
+              this.devices[this.device_currIndex] && this.devices[this.device_currIndex].getModelInfo) {
+                const currentDevice = this.devices[this.device_currIndex];
+                if ((currentDevice.getModelInfo as getModelInfoModel).functions &&
+                  (currentDevice.getModelInfo as getModelInfoModel).functions.length !== 0) {
+                  for (let item of (currentDevice.getModelInfo as getModelInfoModel).functions) {
+                    if (item.code === 'keyboard') {
+                      currentDevice.PRODUCT_TYPE = PRODUCT_TYPE.keyboard;
+                      console.warn('设备类型已设置为键盘');
+                      break;
+                    }
                   }
                 }
               }
@@ -1168,7 +1191,9 @@ export class BlueTooth_devices {
   private processAudioData(data: Uint8Array): void {
     try {
       console.log(`蓝牙接收原始音频数据长度: ${data.length}`);
-      console.log(`蓝牙原始音频数据前20字节: ${Array.from(data.slice(0, 20)).map(b => b.toString(16).padStart(2, '0')).join(' ')}`);
+      console.log(`蓝牙原始音频数据前20字节: ${Array.from(data.slice(0, 20))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join(' ')}`);
 
       // 移除帧头(0x1b)
       let audioFrame = data.subarray(1);
@@ -1179,7 +1204,9 @@ export class BlueTooth_devices {
         console.log(`蓝牙音频帧长度: ${audioFrame.length}, 将使用此长度进行解密`);
         const decryptedData = this.audioProcessor.miclinkDecrypt(audioFrame, audioFrame.length);
         console.log(`蓝牙解密后数据长度: ${decryptedData.length}`);
-        console.log(`蓝牙解密后数据前20字节: ${Array.from(decryptedData.slice(0, 20)).map(b => b.toString(16).padStart(2, '0')).join(' ')}`);
+        console.log(`蓝牙解密后数据前20字节: ${Array.from(decryptedData.slice(0, 20))
+          .map(b => b.toString(16).padStart(2, '0'))
+          .join(' ')}`);
         // 这里可以添加播放或保存PCM数据的逻辑
         audioFrame = decryptedData;
       }
@@ -1231,7 +1258,6 @@ export class BlueTooth_devices {
           if (err) {
             console.error('client端启用或者禁用接收server端特征值内容变更通知的能力。使用Callback异步回调 callback failed');
           } else {
-            AppStorage.setOrCreate('isBluetoothConnect_state', true)
             console.info('client端启用或者禁用接收server端特征值内容变更通知的能力。使用Callback异步回调 callback successful');
           }
         });
@@ -1328,8 +1354,13 @@ export class BlueTooth_devices {
               name: ''
             }
             this.devices = AppStorage.get('devices') as DeviceArrayType_Ble[]
-            this.devices.push(device)
-            AppStorage.setOrCreate('devices', this.devices)
+            // 更新设备列表，确保UI正确显示
+            const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[];
+            currentDevices.push(device);
+            // 使用深拷贝确保UI更新
+            const newDevices = deepCopyDevices(currentDevices);
+            AppStorage.setOrCreate('devices', newDevices);
+            this.devices = newDevices;
             this.device_currIndex = this.devices.length - 1;
 
             //client端启用或者禁用接收server端特征值内容变更通知的能力
@@ -1353,8 +1384,38 @@ export class BlueTooth_devices {
 
   //监听连接状态改变
   ConnectStateChanged(state: ble.BLEConnectionChangeState) {
-    let connectState: ble.ProfileConnectionState = state.state;
+    let connectState: number = state.state;
     console.info('bluetooth connect state changed', connectState);
+
+    // 当蓝牙连接断开时，延迟处理，避免频繁清空重连
+    // 连接状态: 0=断开, 1=连接中, 2=已连接, 3=断开中
+    // if (connectState === 0) {
+    //   console.info('检测到蓝牙连接断开');
+
+    //   // 使用更长的延迟，避免在临时断开时立即清空设备列表
+    //   // 给设备自动重连的机会
+    //   setTimeout(() => {
+    //     try {
+    //       // 检查是否还有设备连接，如果没有则重新扫描
+    //       const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[];
+    //       const hasConnectedDevices = currentDevices.some(device =>
+    //         device.mouseconfig?.isConnected === true
+    //       );
+
+    //       if (!hasConnectedDevices) {
+    //         console.info('没有连接的设备，开始重新扫描');
+    //         // 清空设备列表
+    //         AppStorage.setOrCreate('devices', []);
+    //         // 重新扫描已配对的设备
+    //         getPairedDevices();
+    //       } else {
+    //         console.info('还有其他设备保持连接，跳过重新扫描');
+    //       }
+    //     } catch (err) {
+    //       console.error('处理连接状态变化失败:', err);
+    //     }
+    //   }, 2000); // 延迟2秒，给设备重连机会
+    // }
   }
 
   /**
@@ -1537,32 +1598,77 @@ export class BlueTooth_devices {
   }
 }
 
+// 深拷贝设备数组
+function deepCopyDevices(devices: DeviceArrayType_Ble[]): DeviceArrayType_Ble[] {
+  return devices.map(device => {
+    const newDevice: DeviceArrayType_Ble = {
+      BlueTooth_devices: device.BlueTooth_devices,
+      mouseconfig: device.mouseconfig,
+      getModelInfo: device.getModelInfo,
+      connectionmethod: device.connectionmethod,
+      KeymethodConfig: device.KeymethodConfig.map(config => {
+        const newConfig: KeymethodConfig = {
+          key: config.key,
+          currIndex: config.currIndex
+        };
+        return newConfig;
+      }),
+      DPI_currInfo: device.DPI_currInfo,
+      currLED: device.currLED,
+      reportRate_currIndex: device.reportRate_currIndex,
+      isPunctuationRecognition: device.isPunctuationRecognition,
+      speech_Recognition_languages: device.speech_Recognition_languages,
+      productImg: device.productImg,
+      PRODUCT_TYPE: device.PRODUCT_TYPE,
+      name: device.name
+    };
+    return newDevice;
+  });
+}
+
 //获取已配对的蓝牙连接列表
 function getPairedDevices() {
   try {
     // 获取已配对设备的地址数组
     let pairedDevices: Array<string> = connection.getPairedDevices();
     console.log('Paired devices:', pairedDevices); // 例如：['11:22:33:AA:BB:FF', '68:13:24:79:4C:8C']
-    for (let item of pairedDevices) {
-      // 获取对端蓝牙设备的名称
-      let remoteDeviceName: string = connection.getRemoteDeviceName(item, true);
-      console.log('获取对端蓝牙设备的名称:', remoteDeviceName); // 例如：['11:22:33:AA:BB:FF', '68:13:24:79:4C:8C']
-      try {
-        connection.getRemoteProfileUuids(item, (err: BusinessError, data: Array<connection.ProfileUuids>) => {
-          console.error('getRemoteProfileUuids, err: ' + JSON.stringify(err) + '\n' + item +
-            '\t蓝牙Profile协议的UUID: ' + JSON.stringify(data));
-        });
-      } catch (err) {
-        console.error('errCode: ' + (err as BusinessError).code + ', errMessage: ' +
-        (err as BusinessError).message);
-      }
-      let device = new BlueTooth_devices(item)
 
-      /**
-       * 连接设备
-       */
-      device.connectDevice(device)
+    // 取消同时连接设备数量限制
+    // const maxConcurrentConnections = 3;
+    // let connectionCount = 0;
 
+    for (let i = 0; i < pairedDevices.length; i++) {
+      const item = pairedDevices[i];
+
+      // 延迟连接，避免同时连接太多设备
+      setTimeout(() => {
+        try {
+          // 获取对端蓝牙设备的名称
+          let remoteDeviceName: string = connection.getRemoteDeviceName(item, true);
+          console.log('获取对端蓝牙设备的名称:', remoteDeviceName);
+
+          try {
+            connection.getRemoteProfileUuids(item, (err: BusinessError, data: Array<connection.ProfileUuids>) => {
+              console.error('getRemoteProfileUuids, err: ' + JSON.stringify(err) + '\n' + item +
+                '\t蓝牙Profile协议的UUID: ' + JSON.stringify(data));
+            });
+          } catch (err) {
+            console.error('errCode: ' + (err as BusinessError).code + ', errMessage: ' +
+            (err as BusinessError).message);
+          }
+
+          let device = new BlueTooth_devices(item);
+
+          /**
+           * 连接设备
+           */
+          device.connectDevice(device);
+          // 取消连接数量限制检查
+
+        } catch (deviceErr) {
+          console.error('处理设备连接失败:', item, deviceErr);
+        }
+      }, i * 200); // 每个设备间隔200ms，避免同时操作
     }
 
   } catch (err) {
