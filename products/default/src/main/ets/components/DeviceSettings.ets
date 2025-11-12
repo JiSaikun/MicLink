@@ -49,15 +49,20 @@ export struct DeviceSettings {
                 if (!AppStorage.get('isShow_bluetoothConnect_pop')) {
                   AppStorage.setOrCreate('isShow_bluetoothConnect_pop', true)
                   //检索与连接蓝牙，之前的连接列表清空    蓝牙检索状态:false
+                  console.info('开始重新扫描蓝牙设备，清空现有连接');
                   for (let item of this.devices) {
+                    console.info('关闭设备连接:', item.name);
                     item.BlueTooth_devices.closeconnectDevice()
                   }
-                  AppStorage.setOrCreate('isBluetoothConnect_state', false)
-                  AppStorage.setOrCreate('devices', [])
-                  const context: common.UIAbilityContext =
-                    this.getUIContext().getHostContext() as common.UIAbilityContext;
-                  connectDevice(context)
-
+                  // 延迟一点时间确保连接完全关闭
+                  setTimeout(() => {
+                    AppStorage.setOrCreate('isBluetoothConnect_state', false)
+                    AppStorage.setOrCreate('devices', [])
+                    console.info('设备列表已清空，开始重新扫描');
+                    const context: common.UIAbilityContext =
+                      this.getUIContext().getHostContext() as common.UIAbilityContext;
+                    connectDevice(context)
+                  }, 1000); // 等待1秒确保连接完全关闭
                 }
               })
           }

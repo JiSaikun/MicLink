@@ -1309,73 +1309,18 @@ export class BlueTooth_devices {
 
   public connectDevice(deviceClass: BlueTooth_devices) {
     try {
+      console.info('开始连接BLE设备:', this.device_address);
       this.BlueTooth_devices = deviceClass
       this.gattClient = ble.createGattClientDevice(this.device_address);
+      console.info('GATT客户端创建成功');
+
+      // 设置监听器 - 在连接之前设置，确保不会错过状态变化
+      this.gattClient.on('BLECharacteristicChange', (changeReq) => this.CharacteristicChange(changeReq));
+      this.gattClient.on('BLEConnectionStateChange', (state) => this.ConnectStateChanged(state));
+
       this.gattClient.connect();
-      setTimeout(() => {
-        (this.gattClient as ble.GattClientDevice).getServices()
-          .then((result: Array<ble.GattService>) => {
-            // console.warn('getServices successfully:' + JSON.stringify(result));
-            // for (let index = 0; index < result.length; index++) {
-            //   console.warn('ssss',JSON.stringify(result[index]))
-            // }
-            for (let item of result) {
-              if (item.serviceUuid === '00010203-0405-0607-0809-0a0b0c0d1911') {
-                for (let characteristic of item.characteristics) {
-                  if (characteristic.characteristicUuid === '00010203-0405-0607-0809-0A0B0C0D2B18') {
-                    this.NOTIFY_DESCRIPTORS = characteristic.descriptors
-                  }
-                  if (characteristic.characteristicUuid === '00010203-0405-0607-0809-0A0B0C0D2B19') {
-                    this.WRITE_DESCRIPTORS = characteristic.descriptors
-                  }
-                }
-              }
-            }
-
-
-            (this.gattClient as ble.GattClientDevice).getDeviceName((err: BusinessError, data: string) => {
-              console.info('device name err ' + JSON.stringify(err));
-              console.error('device name' + data);
-              this.devices[this.device_currIndex].name = data
-            })
-            let device: DeviceArrayType_Ble = {
-              BlueTooth_devices: this.BlueTooth_devices as BlueTooth_devices,
-              mouseconfig: null,
-              getModelInfo: null,
-              connectionmethod: connectionmethodType.Bluetooth,
-              KeymethodConfig: [],
-              DPI_currInfo: null,
-              currLED: true,
-              reportRate_currIndex: 0,
-              isPunctuationRecognition: true,
-              speech_Recognition_languages: 'ZH_CN',
-              productImg: '',
-              PRODUCT_TYPE: PRODUCT_TYPE.DEFAULT,
-              name: ''
-            }
-            this.devices = AppStorage.get('devices') as DeviceArrayType_Ble[]
-            // 更新设备列表，确保UI正确显示
-            const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[];
-            currentDevices.push(device);
-            // 使用深拷贝确保UI更新
-            const newDevices = deepCopyDevices(currentDevices);
-            AppStorage.setOrCreate('devices', newDevices);
-            this.devices = newDevices;
-            this.device_currIndex = this.devices.length - 1;
-
-            //client端启用或者禁用接收server端特征值内容变更通知的能力
-            this.setCharacteristicChangeNotification()
-            // setTimeout(() => {
-            //   this.setCharacteristicChangeIndication()
-            // }, 500)
-          }).catch(() => {
-          (this.gattClient as ble.GattClientDevice).getDeviceName((err: BusinessError, data: string) => {
-            console.warn('设备暂未连接设备蓝牙:', data)
-          })
-        })
-      }, 20)
-      this.gattClient.on('BLECharacteristicChange', this.CharacteristicChange);
-      this.gattClient.on('BLEConnectionStateChange', this.ConnectStateChanged);
+      console.info('发起连接请求');
+      // 注意：获取服务现在在ConnectStateChanged中处理，当连接状态变为2（已连接）时
     } catch (err) {
       console.error('errCode: ' + (err as BusinessError).code + ', errMessage: ' +
       (err as BusinessError).message);
@@ -1387,35 +1332,112 @@ export class BlueTooth_devices {
     let connectState: number = state.state;
     console.info('bluetooth connect state changed', connectState);
 
-    // 当蓝牙连接断开时，延迟处理，避免频繁清空重连
     // 连接状态: 0=断开, 1=连接中, 2=已连接, 3=断开中
-    // if (connectState === 0) {
-    //   console.info('检测到蓝牙连接断开');
+    if (connectState === 2) {
+      console.info('蓝牙设备连接成功，准备获取服务');
+      // 连接成功时，延迟一小段时间再获取服务，确保连接完全稳定
+      const self = this;
+      setTimeout(() => {
+        self.getServicesAfterConnection();
+      }, 100);
 
-    //   // 使用更长的延迟，避免在临时断开时立即清空设备列表
-    //   // 给设备自动重连的机会
-    //   setTimeout(() => {
-    //     try {
-    //       // 检查是否还有设备连接，如果没有则重新扫描
-    //       const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[];
-    //       const hasConnectedDevices = currentDevices.some(device =>
-    //         device.mouseconfig?.isConnected === true
-    //       );
+      // 更新设备连接状态
+      try {
+        if (this.devices && this.devices.length > 0 && this.device_currIndex >= 0 && this.device_currIndex < this.devices.length) {
+          if (this.devices[this.device_currIndex].mouseconfig) {
+            this.devices[this.device_currIndex].mouseconfig!.isConnected = true;
+          }
+        }
+      } catch (err) {
+        console.error('更新设备连接状态失败:', err);
+      }
+    } else if (connectState === 0) {
+      console.info('检测到蓝牙连接断开');
+      // 连接断开时更新设备连接状态
+      try {
+        if (this.devices && this.devices.length > 0 && this.device_currIndex >= 0 && this.device_currIndex < this.devices.length) {
+          if (this.devices[this.device_currIndex].mouseconfig) {
+            this.devices[this.device_currIndex].mouseconfig!.isConnected = false;
+          }
+        }
+      } catch (err) {
+        console.error('更新设备断开状态失败:', err);
+      }
+    }
+  }
 
-    //       if (!hasConnectedDevices) {
-    //         console.info('没有连接的设备，开始重新扫描');
-    //         // 清空设备列表
-    //         AppStorage.setOrCreate('devices', []);
-    //         // 重新扫描已配对的设备
-    //         getPairedDevices();
-    //       } else {
-    //         console.info('还有其他设备保持连接，跳过重新扫描');
-    //       }
-    //     } catch (err) {
-    //       console.error('处理连接状态变化失败:', err);
-    //     }
-    //   }, 2000); // 延迟2秒，给设备重连机会
-    // }
+  // 在连接成功后获取服务
+  private getServicesAfterConnection() {
+    if (!this.gattClient) {
+      console.error('gattClient未初始化，无法获取服务');
+      return;
+    }
+
+    console.info('连接成功后开始获取BLE服务');
+    this.gattClient.getServices()
+      .then((result: Array<ble.GattService>) => {
+        console.info('获取服务成功，发现', result.length, '个服务');
+        for (let item of result) {
+          if (item.serviceUuid === '00010203-0405-0607-0809-0a0b0c0d1911') {
+            for (let characteristic of item.characteristics) {
+              if (characteristic.characteristicUuid === '00010203-0405-0607-0809-0A0B0C0D2B18') {
+                this.NOTIFY_DESCRIPTORS = characteristic.descriptors
+                console.info('找到通知特征，描述符数量:', this.NOTIFY_DESCRIPTORS?.length || 0);
+              }
+              if (characteristic.characteristicUuid === '00010203-0405-0607-0809-0A0B0C0D2B19') {
+                this.WRITE_DESCRIPTORS = characteristic.descriptors
+                console.info('找到写入特征，描述符数量:', this.WRITE_DESCRIPTORS?.length || 0);
+              }
+            }
+          }
+        }
+
+        if (this.gattClient) {
+          this.gattClient.getDeviceName((err: BusinessError, data: string) => {
+            console.info('device name err ' + JSON.stringify(err));
+            console.error('device name' + data);
+            // 安全检查设备索引
+            if (this.devices && this.device_currIndex >= 0 && this.device_currIndex < this.devices.length) {
+              this.devices[this.device_currIndex].name = data
+            }
+          })
+        }
+
+        let device: DeviceArrayType_Ble = {
+          BlueTooth_devices: this.BlueTooth_devices as BlueTooth_devices,
+          mouseconfig: null,
+          getModelInfo: null,
+          connectionmethod: connectionmethodType.Bluetooth,
+          KeymethodConfig: [],
+          DPI_currInfo: null,
+          currLED: true,
+          reportRate_currIndex: 0,
+          isPunctuationRecognition: true,
+          speech_Recognition_languages: 'ZH_CN',
+          productImg: '',
+          PRODUCT_TYPE: PRODUCT_TYPE.DEFAULT,
+          name: ''
+        }
+        // 更新设备列表，确保UI正确显示
+        const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || [];
+        currentDevices.push(device);
+        // 使用深拷贝确保UI更新
+        const newDevices = deepCopyDevices(currentDevices);
+        AppStorage.setOrCreate('devices', newDevices);
+        this.devices = newDevices;
+        this.device_currIndex = this.devices.length - 1;
+
+        //client端启用或者禁用接收server端特征值内容变更通知的能力
+        console.info('开始设置特征值变更通知');
+        this.setCharacteristicChangeNotification()
+      }).catch((err: BusinessError) => {
+        console.error('获取服务失败:', err.code, err.message);
+        if (this.gattClient) {
+          this.gattClient.getDeviceName((err: BusinessError, data: string) => {
+            console.warn('设备暂未连接设备蓝牙:', data)
+          })
+        }
+      })
   }
 
   /**
@@ -1633,10 +1655,6 @@ function getPairedDevices() {
     let pairedDevices: Array<string> = connection.getPairedDevices();
     console.log('Paired devices:', pairedDevices); // 例如：['11:22:33:AA:BB:FF', '68:13:24:79:4C:8C']
 
-    // 取消同时连接设备数量限制
-    // const maxConcurrentConnections = 3;
-    // let connectionCount = 0;
-
     for (let i = 0; i < pairedDevices.length; i++) {
       const item = pairedDevices[i];
 
@@ -1663,12 +1681,11 @@ function getPairedDevices() {
            * 连接设备
            */
           device.connectDevice(device);
-          // 取消连接数量限制检查
 
         } catch (deviceErr) {
           console.error('处理设备连接失败:', item, deviceErr);
         }
-      }, i * 200); // 每个设备间隔200ms，避免同时操作
+      }, i * 200); // 每个设备间隔200ms
     }
 
   } catch (err) {
