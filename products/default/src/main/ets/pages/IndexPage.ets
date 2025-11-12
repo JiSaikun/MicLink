@@ -17,7 +17,7 @@ PersistentStorage.persistProp("custom_shortcut", { keyPreview: '', pressedKeys: 
 @Component
 struct IndexPage {
   @StorageLink("login") login: boolean = true
-  @Watch('shortcut_change') @StorageLink("shortcut") shortcut: number =
+  @StorageLink("shortcut") shortcut: number =
     0 //改变该值弹出对应快捷键悬浮窗口 1：语音识别 2：语音翻译 3:截图识别 4：自定义快捷键
   @Consume('pageInfo') pageInfo: NavPathStack
   @State web: string = 'https://asrai.miclink.net/'
@@ -30,7 +30,7 @@ struct IndexPage {
   @State EditInstruction_pop_currIndex: number = 0 //AI指令编辑弹窗定位索引
   @State shortcut_pop: boolean = false //快捷键弹窗
   @StorageLink("isShowFixedText_pop") isShowFixedText_pop: boolean = false //控制打开固定文本悬浮窗
-  @StorageLink("isShow_webUrlToOpen_pop") isShow_webUrlToOpen_pop: boolean = false //快捷键弹窗
+  @StorageLink("isShow_webUrlToOpen_pop") isShow_webUrlToOpen_pop: boolean = false //打开网页弹窗
 
   shortcut_change() {
     this.shortcut_pop = !this.shortcut_pop

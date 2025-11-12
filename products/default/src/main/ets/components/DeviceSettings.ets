@@ -20,24 +20,28 @@ export struct DeviceSettings {
   // @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null //鼠标信息
   @StorageLink('getModelInfo') getModelInfo: getModelInfoModel =
     AppStorage.get('getModelInfo') as getModelInfoModel
-  @Watch('a') @StorageLink('devicesList') devicesList: DeviceArrayType[] = []
+  @StorageLink('devicesList') devicesList: DeviceArrayType[] = []
   @Watch('onDevicesChange') @StorageLink('devices') devicesLink: DeviceArrayType_Ble[] = []
   @State devices: DeviceArrayType_Ble[] = []
   @Provide device_isBle: boolean = false //该设备是否是蓝牙连接
+
+  onDevicesChange() {
+    console.log('DeviceSettings: 设备列表发生变化，当前设备数量:', this.devicesLink ? this.devicesLink.length : 0)
+    // 将StorageLink的值同步到State，触发UI重新渲染
+    if (this.devicesLink && Array.isArray(this.devicesLink)) {
+      this.devices = [...this.devicesLink]
+    } else {
+      this.devices = []
+    }
+    // 强制触发UI更新
+    this.forceUpdate()
+  }
 
   a() {
     console.error('设备长度', this.devicesList.length)
     if (this.devicesList.length) {
       console.error('设备长度::', this.devicesList[0].getModelInfo)
     }
-  }
-
-  onDevicesChange() {
-    console.log('DeviceSettings: 设备列表发生变化，当前设备数量:', this.devicesLink.length)
-    // 将StorageLink的值同步到State，触发UI重新渲染
-    this.devices = [...this.devicesLink]
-    // 强制触发UI更新
-    this.forceUpdate()
   }
 
   // 强制更新方法
@@ -49,7 +53,11 @@ export struct DeviceSettings {
   aboutToAppear() {
     console.log('DeviceSettings: 页面即将显示，当前设备数量:', this.devices.length)
     // 确保设备列表数据同步
-    this.devices = [...this.devicesLink]
+    if (this.devicesLink && Array.isArray(this.devicesLink)) {
+      this.devices = [...this.devicesLink]
+    } else {
+      this.devices = []
+    }
   }
 
   build() {
@@ -76,9 +84,9 @@ export struct DeviceSettings {
                     console.info('关闭设备连接:', item.name);
                     item.BlueTooth_devices.closeconnectDevice()
                   }
+                  AppStorage.setOrCreate('isBluetoothConnect_state', false)
                   // 延迟一点时间确保连接完全关闭
                   setTimeout(() => {
-                    AppStorage.setOrCreate('isBluetoothConnect_state', false)
                     AppStorage.setOrCreate('devices', [])
                     console.info('设备列表已清空，开始重新扫描');
 
@@ -159,7 +167,7 @@ export struct DeviceSettings {
                           .lineHeight(18)
                           .fontColor('#31373d')
                       }
-                      .visibility(Visibility.Visible)  // 总是显示设备名称
+                      .visibility(Visibility.Visible) // 总是显示设备名称
 
                       // Text('未连接')
                       Text(Languages.notConnected[this.languages])
@@ -167,13 +175,13 @@ export struct DeviceSettings {
                         .fontWeight(400)
                         .lineHeight(14)
                         .fontColor('#eb5e12')
-                        .visibility(item.mouseconfig?.isConnected === false ? Visibility.Visible : Visibility.None)
+                        .visibility(item.getModelInfo ? Visibility.None : Visibility.Visible)
                     }
                     .width('100%')
 
                     Image(item.getModelInfo && (item.getModelInfo as getModelInfoModel).images &&
-                      (item.getModelInfo as getModelInfoModel).images.length ?
-                      this.getdeviesImage(item.getModelInfo as getModelInfoModel) : $r('app.media.HM_001_white'))
+                    (item.getModelInfo as getModelInfoModel).images.length ?
+                    this.getdeviesImage(item.getModelInfo as getModelInfoModel) : $r('app.media.HM_001_white'))
                       .width('100%')
                       .margin({ bottom: 15, top: 15 })
 
@@ -223,8 +231,8 @@ export struct DeviceSettings {
               }
             }, (item: DeviceArrayType) => JSON.stringify(item.Communication))
             ForEach(this.devices, (item: DeviceArrayType_Ble, index) => {
-
-              GridItem() {
+              if (item.getModelInfo){
+                GridItem() {
                   Column() {
                     Row() {
                       Text('')
@@ -257,7 +265,7 @@ export struct DeviceSettings {
                           .lineHeight(18)
                           .fontColor('#31373d')
                       }
-                      .visibility(Visibility.Visible)  // 总是显示设备名称
+                      .visibility(Visibility.Visible) // 总是显示设备名称
 
                       // Text('未连接')
                       Text(Languages.notConnected[this.languages])
@@ -270,8 +278,8 @@ export struct DeviceSettings {
                     .width('100%')
 
                     Image(item.getModelInfo && (item.getModelInfo as getModelInfoModel).images &&
-                      (item.getModelInfo as getModelInfoModel).images.length ?
-                      this.getdeviesImage(item.getModelInfo as getModelInfoModel) : $r('app.media.HM_001_white'))
+                    (item.getModelInfo as getModelInfoModel).images.length ?
+                    this.getdeviesImage(item.getModelInfo as getModelInfoModel) : $r('app.media.HM_001_white'))
                       .width('100%')
                       .margin({ bottom: 15, top: 15 })
 
@@ -309,7 +317,7 @@ export struct DeviceSettings {
                     }
                   })
                   .onClick(() => {
-                    if (item.mouseconfig?.sn) {  // 只要有设备信息就可以点击
+                    if (item.mouseconfig?.sn && item.getModelInfo) { // 只要有设备信息就可以点击
                       AppStorage.setOrCreate('device_show_currIndex', index)
                       AppStorage.setOrCreate('getModelInfo',
                         this.devices[AppStorage.get('device_show_currIndex') as number].getModelInfo)
@@ -318,6 +326,8 @@ export struct DeviceSettings {
                     }
                   })
                 }
+
+              }
             }, (item: DeviceArrayType_Ble) => item.BlueTooth_devices.device_address)
           }
           .columnsTemplate('1fr 1fr 1fr') // 每行3个等宽列
@@ -357,6 +367,9 @@ export struct DeviceSettings {
   }
 
   getdeviesImage(getModelInfo: getModelInfoModel): string {
+    if (!getModelInfo || !getModelInfo.images) {
+      return ''
+    }
     for (let item of getModelInfo.images) {
       console.error('设备图片', JSON.stringify((item as imagesModel)[this.languages]))
       if ((item as imagesModel)[this.languages]) {
@@ -365,6 +378,5 @@ export struct DeviceSettings {
       }
     }
     return ''
-    return ((getModelInfo.images[0] as imagesModel)["ZH_CN"][0] as imagesDataModel)['img']
   }
 }

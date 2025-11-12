@@ -1144,14 +1144,46 @@ export class BlueTooth_devices {
               // 检查设备索引是否有效
               if (this.device_currIndex >= 0 && this.device_currIndex < this.devices.length &&
               this.devices[this.device_currIndex]) {
+                // 首先更新本地设备数据
                 this.devices[this.device_currIndex].getModelInfo = getModelInfo;
                 console.warn('设备模型信息已设置');
 
-                // 深拷贝更新设备列表以触发UI更新
-                const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[];
-                const newList: DeviceArrayType_Ble[] = deepCopyDevices(currentDevices);
-                AppStorage.setOrCreate('devices', newList);
-                this.devices = newList;
+                // 直接更新本地设备数据，然后强制创建全新的AppStorage数据
+                console.warn('准备更新AppStorage中的设备数据');
+
+                // 创建一个全新的设备数组，确保引用完全不同
+                const freshDevices: DeviceArrayType_Ble[] = [];
+                for (let i = 0; i < this.devices.length; i++) {
+                  const device = this.devices[i];
+                  const newDevice: DeviceArrayType_Ble = {
+                    BlueTooth_devices: device.BlueTooth_devices,
+                    mouseconfig: device.mouseconfig,
+                    getModelInfo: i === this.device_currIndex ? getModelInfo : device.getModelInfo, // 只更新当前设备
+                    connectionmethod: device.connectionmethod,
+                    KeymethodConfig: device.KeymethodConfig.map((config: KeymethodConfig): KeymethodConfig => {
+                      const newConfig: KeymethodConfig = {
+                        key: config.key,
+                        currIndex: config.currIndex
+                      };
+                      return newConfig;
+                    }),
+                    DPI_currInfo: device.DPI_currInfo,
+                    currLED: device.currLED,
+                    reportRate_currIndex: device.reportRate_currIndex,
+                    isPunctuationRecognition: device.isPunctuationRecognition,
+                    speech_Recognition_languages: device.speech_Recognition_languages,
+                    productImg: device.productImg,
+                    PRODUCT_TYPE: device.PRODUCT_TYPE,
+                    name: device.name
+                  };
+                  freshDevices.push(newDevice);
+                }
+                AppStorage.setOrCreate('devices', freshDevices);
+
+                // 使用全新的数组更新AppStorage
+                // AppStorage.setOrCreate('devices', fres
+                // hDevices);
+                this.devices = freshDevices;
                 console.warn('设备列表已更新');
                 AppStorage.setOrCreate('isBluetoothConnect_state', true)
               } else {

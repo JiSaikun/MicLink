@@ -190,6 +190,9 @@ export struct DevicesConfig {
   }
 
   getdeviesImage(): string {
+    if (!this.getModelInfo || !this.getModelInfo.images) {
+      return ''
+    }
     for (let item of this.getModelInfo.images) {
       if ((item as imagesModel)[this.languages]) {
         return ((item as imagesModel)[this.languages][0] as imagesDataModel)['img']
@@ -219,8 +222,12 @@ export struct DevicesConfig {
 
   // 新增：处理按键重置的独立方法
   private handleKeyReset() {
+    if (!this.getModelInfo || !this.mouseconfig?.sn) {
+      console.error('getModelInfo 或设备信息为空，无法重置按键')
+      return
+    }
     let param: resetCustomerKey_Params = {
-      sno: this.mouseconfig?.sn as string, //设备号
+      sno: this.mouseconfig.sn, //设备号
       userModelId: this.getModelInfo.id.toString()//按鍵模式ID
     }
 

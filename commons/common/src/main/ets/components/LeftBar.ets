@@ -16,7 +16,7 @@ export struct LeftBar {
   @StorageLink('languages') languages: string = 'ZH_CN'
   @StorageLink('tabsControllerIndex') tabsControllerIndex: number = 0
   @StorageLink("paletteTheme") paletteTheme: string = ThemeConfig.PaletteTheme
-  @State AiModel_data: Ai_Model[] = AiModel_data
+  @State aiModelData: Ai_Model[] = AiModel_data
   @State bottom_data: Ai_Model[] = bottom_data
   @Prop currentIndex: number = 0
   @Prop bottomCurrIndex: number = 10000
@@ -77,7 +77,7 @@ export struct LeftBar {
   @Link web: string
 
   aboutToAppear(): void {
-    console.log('AiModel_data length:', this.AiModel_data.length)
+    console.log('AiModel_data length:', this.aiModelData.length)
     console.log('初始主题颜色:', this.paletteTheme)
   }
 
@@ -157,7 +157,7 @@ export struct LeftBar {
       .flexGS()
 
       // 顶部选项 - 每次构建时动态计算颜色
-      ForEach(this.AiModel_data, (item: Ai_Model, index) => {
+      ForEach(this.aiModelData, (item: Ai_Model, index) => {
         Flex({ alignItems: ItemAlign.Center }) {
           Image(this.currentIndex === index ? $r(`app.media.${item.select}`) : $r(`app.media.${item.img}`))
             .width(16).height(16)
@@ -260,7 +260,7 @@ export struct LeftBar {
         .onClick(() => {
           console.log('Bottom item clicked:', index, item.title[this.languages])
           this.web = item.web
-          this.tabsControllerIndex = index + this.AiModel_data.length
+          this.tabsControllerIndex = index + this.aiModelData.length
           setTimeout(() => {
             this.pageInfo.clear()
           }, 200)
