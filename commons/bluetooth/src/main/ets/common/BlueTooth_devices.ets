@@ -1418,14 +1418,21 @@ export class BlueTooth_devices {
           PRODUCT_TYPE: PRODUCT_TYPE.DEFAULT,
           name: ''
         }
-        // 更新设备列表，确保UI正确显示
-        const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || [];
-        currentDevices.push(device);
-        // 使用深拷贝确保UI更新
-        const newDevices = deepCopyDevices(currentDevices);
-        AppStorage.setOrCreate('devices', newDevices);
-        this.devices = newDevices;
-        this.device_currIndex = this.devices.length - 1;
+              // 更新设备列表，确保UI正确显示
+              const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || [];
+              currentDevices.push(device);
+              // 使用深拷贝确保UI更新
+              const newDevices = deepCopyDevices(currentDevices);
+              AppStorage.setOrCreate('devices', newDevices);
+              this.devices = newDevices;
+              this.device_currIndex = this.devices.length - 1;
+
+              // 立即触发UI更新，确保新设备立即显示
+              console.info('新设备添加完成，立即触发UI更新');
+              setTimeout(() => {
+                // 再次更新AppStorage以触发@Watch监听器
+                AppStorage.setOrCreate('devices', deepCopyDevices(newDevices));
+              }, 100);
 
         //client端启用或者禁用接收server端特征值内容变更通知的能力
         console.info('开始设置特征值变更通知');

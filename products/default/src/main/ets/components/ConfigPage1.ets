@@ -40,16 +40,27 @@ export struct ConfigPage1 {
 
   aboutToAppear(): void {
     this.shortcut_change()
+
+    const deviceIndex = AppStorage.get('device_show_currIndex') as number || 0
+
     if (this.device_isBle) {
-      this.isPunctuationRecognition =
-        this.devices[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition
-      this.speech_Recognition_languages =
-        this.devices[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages //语音识别语种
+      if (this.devices && deviceIndex >= 0 && deviceIndex < this.devices.length && this.devices[deviceIndex]) {
+        this.isPunctuationRecognition = this.devices[deviceIndex].isPunctuationRecognition
+        this.speech_Recognition_languages = this.devices[deviceIndex].speech_Recognition_languages //语音识别语种
+      } else {
+        console.error('ConfigPage1: 蓝牙设备索引无效或设备不存在:', deviceIndex, this.devices?.length)
+        this.isPunctuationRecognition = true
+        this.speech_Recognition_languages = 'ZH_CN'
+      }
     } else {
-      this.isPunctuationRecognition =
-        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition
-      this.speech_Recognition_languages =
-        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages
+      if (ConnectDevice.Communication && deviceIndex >= 0 && deviceIndex < ConnectDevice.Communication.length && ConnectDevice.Communication[deviceIndex]) {
+        this.isPunctuationRecognition = ConnectDevice.Communication[deviceIndex].isPunctuationRecognition
+        this.speech_Recognition_languages = ConnectDevice.Communication[deviceIndex].speech_Recognition_languages
+      } else {
+        console.error('ConfigPage1: 2.4G设备索引无效或设备不存在:', deviceIndex, ConnectDevice.Communication?.length)
+        this.isPunctuationRecognition = true
+        this.speech_Recognition_languages = 'ZH_CN'
+      }
     }
   }
 

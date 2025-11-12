@@ -52,12 +52,24 @@ export struct ConfigPage2 {
   }
 
   aboutToAppear(): void {
+    const deviceIndex = AppStorage.get('device_show_currIndex') as number || 0
+
     if (this.device_isBle) {
-      this.mouseconfig = this.devices[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo
+      if (this.devices && deviceIndex >= 0 && deviceIndex < this.devices.length && this.devices[deviceIndex]) {
+        this.mouseconfig = this.devices[deviceIndex].mouseconfig as DeviceInfo
+      } else {
+        console.error('ConfigPage2: 蓝牙设备索引无效或设备不存在:', deviceIndex, this.devices?.length)
+        this.mouseconfig = null
+      }
     } else {
-      this.mouseconfig =
-        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo
+      if (ConnectDevice.Communication && deviceIndex >= 0 && deviceIndex < ConnectDevice.Communication.length && ConnectDevice.Communication[deviceIndex]) {
+        this.mouseconfig = ConnectDevice.Communication[deviceIndex].mouseconfig as DeviceInfo
+      } else {
+        console.error('ConfigPage2: 2.4G设备索引无效或设备不存在:', deviceIndex, ConnectDevice.Communication?.length)
+        this.mouseconfig = null
+      }
     }
+
     // 初始检查设备状态
     if (this.checkDeviceDisconnected()) {
       console.log('初始检测到设备已断开连接，关闭配置页面')

@@ -31,12 +31,22 @@ export struct DevicesConfig {
   }
 
   aboutToAppear(): void {
+    const deviceIndex = AppStorage.get('device_show_currIndex') as number || 0
+
     if (this.device_isBle) { //蓝牙设备信息
-      this.mouseconfig =
-        this.devices[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo //鼠标信息
+      if (this.devices && deviceIndex >= 0 && deviceIndex < this.devices.length && this.devices[deviceIndex]) {
+        this.mouseconfig = this.devices[deviceIndex].mouseconfig as DeviceInfo //鼠标信息
+      } else {
+        console.error('蓝牙设备索引无效或设备不存在:', deviceIndex, this.devices?.length)
+        this.mouseconfig = null
+      }
     } else {
-      this.mouseconfig =
-        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].mouseconfig as DeviceInfo
+      if (ConnectDevice.Communication && deviceIndex >= 0 && deviceIndex < ConnectDevice.Communication.length && ConnectDevice.Communication[deviceIndex]) {
+        this.mouseconfig = ConnectDevice.Communication[deviceIndex].mouseconfig as DeviceInfo
+      } else {
+        console.error('2.4G设备索引无效或设备不存在:', deviceIndex, ConnectDevice.Communication?.length)
+        this.mouseconfig = null
+      }
     }
   }
 

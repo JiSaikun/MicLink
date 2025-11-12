@@ -16,11 +16,13 @@ interface connectionmethod_Model {
 export struct DeviceSettings {
   @StorageLink('languages') languages: string = 'ZH_CN'
   @State isShowConfig: boolean = false
+  @State forceUpdateTrigger: number = 0 // 专门用于强制UI更新的触发器
   // @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null //鼠标信息
   @StorageLink('getModelInfo') getModelInfo: getModelInfoModel =
     AppStorage.get('getModelInfo') as getModelInfoModel
   @Watch('a') @StorageLink('devicesList') devicesList: DeviceArrayType[] = []
-  @StorageLink('devices') devices: DeviceArrayType_Ble[] = []
+  @Watch('onDevicesChange') @StorageLink('devices') devicesLink: DeviceArrayType_Ble[] = []
+  @State devices: DeviceArrayType_Ble[] = []
   @Provide device_isBle: boolean = false //该设备是否是蓝牙连接
 
   a() {
@@ -28,6 +30,26 @@ export struct DeviceSettings {
     if (this.devicesList.length) {
       console.error('设备长度::', this.devicesList[0].getModelInfo)
     }
+  }
+
+  onDevicesChange() {
+    console.log('DeviceSettings: 设备列表发生变化，当前设备数量:', this.devicesLink.length)
+    // 将StorageLink的值同步到State，触发UI重新渲染
+    this.devices = [...this.devicesLink]
+    // 强制触发UI更新
+    this.forceUpdate()
+  }
+
+  // 强制更新方法
+  private forceUpdate() {
+    // 通过改变专门的触发器状态来强制重新渲染，避免影响弹窗显示
+    this.forceUpdateTrigger += 1
+  }
+
+  aboutToAppear() {
+    console.log('DeviceSettings: 页面即将显示，当前设备数量:', this.devices.length)
+    // 确保设备列表数据同步
+    this.devices = [...this.devicesLink]
   }
 
   build() {
@@ -59,6 +81,35 @@ export struct DeviceSettings {
                     AppStorage.setOrCreate('isBluetoothConnect_state', false)
                     AppStorage.setOrCreate('devices', [])
                     console.info('设备列表已清空，开始重新扫描');
+
+                    // 强制触发设备列表变化监听，确保UI更新
+                    const tempDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || [];
+                    AppStorage.setOrCreate('devices', [...tempDevices]);
+
+                    // 在扫描开始后，设置一个定时器来强制更新UI
+                    let lastDeviceCount = 0;
+                    const updateTimer = setInterval(() => {
+                      const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || [];
+                      if (currentDevices.length > lastDeviceCount) {
+                        console.log('检测到设备数量增加，强制更新UI', currentDevices.length, '->', lastDeviceCount);
+                        this.devices = [...currentDevices];
+                        this.forceUpdate();
+                        lastDeviceCount = currentDevices.length;
+                      }
+                      // 如果设备数量没有变化，也强制更新一次确保UI同步
+                      if (currentDevices.length > 0 && currentDevices.length === lastDeviceCount) {
+                        console.log('设备数量未变，强制同步UI');
+                        this.devices = [...currentDevices];
+                        this.forceUpdate();
+                        clearInterval(updateTimer);
+                      }
+                    }, 300); // 每300ms检查一次，更频繁
+
+                    // 8秒后停止检查，避免无限循环
+                    setTimeout(() => {
+                      clearInterval(updateTimer);
+                    }, 8000);
+
                     const context: common.UIAbilityContext =
                       this.getUIContext().getHostContext() as common.UIAbilityContext;
                     connectDevice(context)
@@ -108,7 +159,7 @@ export struct DeviceSettings {
                           .lineHeight(18)
                           .fontColor('#31373d')
                       }
-                      .visibility(item.getModelInfo?.id ? Visibility.Visible : Visibility.None)
+                      .visibility(Visibility.Visible)  // 总是显示设备名称
 
                       // Text('未连接')
                       Text(Languages.notConnected[this.languages])
@@ -116,12 +167,13 @@ export struct DeviceSettings {
                         .fontWeight(400)
                         .lineHeight(14)
                         .fontColor('#eb5e12')
-                        .visibility(item.getModelInfo?.id ? Visibility.None : Visibility.Visible)
+                        .visibility(item.mouseconfig?.isConnected === false ? Visibility.Visible : Visibility.None)
                     }
                     .width('100%')
 
-                    Image((item.getModelInfo as getModelInfoModel).images.length ?
-                    this.getdeviesImage(item.getModelInfo as getModelInfoModel) : $r('app.media.HM_001_white'))
+                    Image(item.getModelInfo && (item.getModelInfo as getModelInfoModel).images &&
+                      (item.getModelInfo as getModelInfoModel).images.length ?
+                      this.getdeviesImage(item.getModelInfo as getModelInfoModel) : $r('app.media.HM_001_white'))
                       .width('100%')
                       .margin({ bottom: 15, top: 15 })
 
@@ -171,8 +223,8 @@ export struct DeviceSettings {
               }
             }, (item: DeviceArrayType) => JSON.stringify(item.Communication))
             ForEach(this.devices, (item: DeviceArrayType_Ble, index) => {
-              if (item.getModelInfo) {
-                GridItem() {
+
+              GridItem() {
                   Column() {
                     Row() {
                       Text('')
@@ -205,7 +257,7 @@ export struct DeviceSettings {
                           .lineHeight(18)
                           .fontColor('#31373d')
                       }
-                      .visibility(item.getModelInfo?.id ? Visibility.Visible : Visibility.None)
+                      .visibility(Visibility.Visible)  // 总是显示设备名称
 
                       // Text('未连接')
                       Text(Languages.notConnected[this.languages])
@@ -213,12 +265,13 @@ export struct DeviceSettings {
                         .fontWeight(400)
                         .lineHeight(14)
                         .fontColor('#eb5e12')
-                        .visibility(item.getModelInfo?.id ? Visibility.None : Visibility.Visible)
+                        .visibility(item.mouseconfig?.isConnected === false ? Visibility.Visible : Visibility.None)
                     }
                     .width('100%')
 
-                    Image((item.getModelInfo as getModelInfoModel).images.length ?
-                    this.getdeviesImage(item.getModelInfo as getModelInfoModel) : $r('app.media.HM_001_white'))
+                    Image(item.getModelInfo && (item.getModelInfo as getModelInfoModel).images &&
+                      (item.getModelInfo as getModelInfoModel).images.length ?
+                      this.getdeviesImage(item.getModelInfo as getModelInfoModel) : $r('app.media.HM_001_white'))
                       .width('100%')
                       .margin({ bottom: 15, top: 15 })
 
@@ -256,7 +309,7 @@ export struct DeviceSettings {
                     }
                   })
                   .onClick(() => {
-                    if (item.mouseconfig?.sn && item.getModelInfo) {
+                    if (item.mouseconfig?.sn) {  // 只要有设备信息就可以点击
                       AppStorage.setOrCreate('device_show_currIndex', index)
                       AppStorage.setOrCreate('getModelInfo',
                         this.devices[AppStorage.get('device_show_currIndex') as number].getModelInfo)
@@ -265,7 +318,6 @@ export struct DeviceSettings {
                     }
                   })
                 }
-              }
             }, (item: DeviceArrayType_Ble) => item.BlueTooth_devices.device_address)
           }
           .columnsTemplate('1fr 1fr 1fr') // 每行3个等宽列
@@ -300,7 +352,7 @@ export struct DeviceSettings {
         .backgroundColor('#fff')
       }
       // .visibility(this.isShowConfig?Visibility.Visible:Visibility.None)
-    }
+    }.id(this.forceUpdateTrigger.toString())
 
   }
 
