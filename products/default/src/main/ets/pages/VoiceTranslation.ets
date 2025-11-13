@@ -10,19 +10,6 @@ import { DeviceArrayType_Ble } from 'bluetooth';
 /**
  * 语音翻译悬浮窗
  */
-
-// 安全的设备访问辅助函数
-function getCurrentDeviceSafe(): DeviceArrayType_Ble | null {
-  const devices = AppStorage.get('devices') as DeviceArrayType_Ble[];
-  const deviceIndex = AppStorage.get('device_currIndex') as number || 0;
-
-  if (!devices || devices.length === 0 || deviceIndex < 0 || deviceIndex >= devices.length || !devices[deviceIndex]) {
-    console.warn('设备列表或设备索引无效');
-    return null;
-  }
-
-  return devices[deviceIndex];
-}
 @Entry
 @Component
 struct VoiceTranslation {
@@ -37,67 +24,73 @@ struct VoiceTranslation {
   @Watch('changeLanguages') @StorageLink('to_languages') to_languages: string = 'EN_US' //翻译目标语言
   @Watch('changeLanguages') @StorageLink('wordScan_from_languages') wordScan_from_languages: string = 'ZH_CN' //翻译源语言
   @Watch('changeLanguages') @StorageLink('wordScan_to_languages') wordScan_to_languages: string = 'EN_US' //翻译目标语言
+
+  // 防抖定时器，避免频繁触发翻译请求
+  private translateDebounceTimer: number | null = null
   // 1. 初始化滚动控制器
   private scroller_to: Scroller = new Scroller();
   private scroller_from: Scroller = new Scroller();
 
   changeLanguages() {
-    // 安全获取设备信息
-    const currentDevice = getCurrentDeviceSafe();
-    const deviceIndex = AppStorage.get('device_currIndex') as number || 0;
-
-    let params: translate_Params = {
-      appkey: AppStorage.get('device_isBle') ?
-        (currentDevice?.getModelInfo as getModelInfoModel)?.appkey || (AppStorage.get('getModelInfo') as getModelInfoModel)?.appkey :
-        (AppStorage.get('getModelInfo') as getModelInfoModel)?.appkey, //获取用户按键模式详情中得到
-      from: this.voiceOrText ? AppStorage.get('from_languages') as string :
-        AppStorage.get('wordScan_from_languages') as string, //源语言___后面配置
-      productCode: AppStorage.get('device_isBle') ?
-        currentDevice?.BlueTooth_devices?.deviceInfo?.productType?.toString() ||
-        ConnectDevice.Communication[deviceIndex]?.Communication?.deviceInfo?.productType?.toString() || '0' :
-        ConnectDevice.Communication[deviceIndex]?.Communication?.deviceInfo?.productType?.toString() || '0', //产品编码
-      sno: AppStorage.get('device_isBle') ?
-        currentDevice?.BlueTooth_devices?.deviceInfo?.sn ||
-        ConnectDevice.Communication[deviceIndex]?.Communication?.deviceInfo?.sn || '' :
-        ConnectDevice.Communication[deviceIndex]?.Communication?.deviceInfo?.sn || '', //设备号
-      text: this.voiceTranslationText.text, //翻译内容
-      to: this.voiceOrText ? AppStorage.get('to_languages') as string :
-        AppStorage.get('wordScan_to_languages') as string //翻译语言___后面配置
+    // 清除之前的定时器
+    if (this.translateDebounceTimer) {
+      clearTimeout(this.translateDebounceTimer);
     }
-    _translate(params).then((res) => {
-      if (res.data) {
-        console.log('翻译请求成功————翻译结果：' + res.data?.transText)
-        let data: translate_Response = {
-          transText: res.data?.transText as string,
-          text: res.data?.text as string,
-        }
-        AppStorage.setOrCreate('voiceTranslationText', data)
-      } else {
-        console.warn('无法翻译到对应目标语言');
-      }
-    })
 
+    // 检查是否有翻译文本
+    if (!this.voiceTranslationText.text || this.voiceTranslationText.text.trim() === '') {
+      return; // 没有文本时不触发翻译
+    }
+
+    // 防抖处理，避免频繁请求（500ms延迟）
+    this.translateDebounceTimer = setTimeout(() => {
+      let params: translate_Params = {
+        appkey: AppStorage.get('device_isBle') ?
+        ((AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+          0].getModelInfo as getModelInfoModel).appkey :
+        (AppStorage.get('getModelInfo') as getModelInfoModel).appkey, //获取用户按键模式详情中得到
+        from: this.voiceOrText ? AppStorage.get('from_languages') as string :
+          AppStorage.get('wordScan_from_languages') as string, //源语言___后面配置
+        productCode: AppStorage.get('device_isBle') ?
+        (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+          0].BlueTooth_devices.deviceInfo.productType.toString() :
+        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+          0].Communication.deviceInfo.productType.toString(), //产品编码
+        sno: AppStorage.get('device_isBle') ?
+        (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+          0].BlueTooth_devices.deviceInfo.sn : ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+          0].Communication.deviceInfo.sn, //设备号
+        text: this.voiceTranslationText.text, //翻译内容
+        to: this.voiceOrText ? AppStorage.get('to_languages') as string :
+          AppStorage.get('wordScan_to_languages') as string //翻译语言___后面配置
+      }
+
+      _translate(params).then((res) => {
+        if (res.data) {
+          console.log('翻译请求成功————翻译结果：' + res.data?.transText)
+          let data: translate_Response = {
+            transText: res.data?.transText as string,
+            text: res.data?.text as string,
+          }
+          AppStorage.setOrCreate('voiceTranslationText', data)
+        } else {
+          promptAction.showToast({ message: '无法翻译到对应目标语言' });
+        }
+      }).catch((error: BusinessError) => {
+        console.error('翻译请求失败:', error);
+        promptAction.showToast({ message: '翻译请求失败，请检查网络连接' });
+      })
+    }, 500);
   }
 
   aboutToAppear(): void {
     if (AppStorage.get('device_isBle')) {
-      // 安全检查设备访问
-      const currentDevice = getCurrentDeviceSafe();
-      if (currentDevice?.getModelInfo) {
-        this.getModelInfo = currentDevice.getModelInfo as getModelInfoModel;
-      } else {
-        console.warn('无法获取蓝牙设备信息');
-      }
+      this.getModelInfo =
+        (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+          0].getModelInfo as getModelInfoModel
     } else {
-      // 安全检查非蓝牙设备访问
-      const deviceIndex = AppStorage.get('device_currIndex') as number || 0;
-      if (ConnectDevice.Communication && ConnectDevice.Communication.length > 0 &&
-          deviceIndex >= 0 && deviceIndex < ConnectDevice.Communication.length &&
-          ConnectDevice.Communication[deviceIndex]?.getModelInfo) {
-        this.getModelInfo = ConnectDevice.Communication[deviceIndex].getModelInfo as getModelInfoModel;
-      } else {
-        console.warn('无法获取非蓝牙设备信息');
-      }
+      this.getModelInfo =
+        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].getModelInfo as getModelInfoModel
     }
   }
 
@@ -135,32 +128,24 @@ struct VoiceTranslation {
               text: ''
             }
             if (AppStorage.get('device_isBle')) {
-              // 安全检查：确保设备列表和索引有效
-              const devices = AppStorage.get('devices') as DeviceArrayType_Ble[];
-              const deviceIndex = AppStorage.get('device_currIndex') as number || 0;
-
-              if (devices && devices.length > 0 && deviceIndex >= 0 && deviceIndex < devices.length && devices[deviceIndex]) {
-                const currentDevice = devices[deviceIndex];
-                if (currentDevice.BlueTooth_devices && currentDevice.BlueTooth_devices.audioDataState) {
-                  currentDevice.BlueTooth_devices.send([0x63]);
-                  currentDevice.BlueTooth_devices.audioDataState = !currentDevice.BlueTooth_devices.audioDataState;
-                }
-              } else {
-                console.warn('设备列表或设备索引无效，跳过音频状态重置');
+              if ((AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+                0].BlueTooth_devices.audioDataState) {
+                (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+                  0].BlueTooth_devices.send([0x63]);
+                (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+                  0].BlueTooth_devices.audioDataState =
+                  !(AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+                    0].BlueTooth_devices.audioDataState
               }
             } else {
-              // 安全检查：确保非蓝牙设备列表和索引有效
-              const deviceIndex = AppStorage.get('device_currIndex') as number || 0;
-              if (ConnectDevice.Communication && ConnectDevice.Communication.length > 0 &&
-                  deviceIndex >= 0 && deviceIndex < ConnectDevice.Communication.length &&
-                  ConnectDevice.Communication[deviceIndex] && ConnectDevice.Communication[deviceIndex].Communication) {
-                const communication = ConnectDevice.Communication[deviceIndex].Communication;
-                if (communication.audioDataState) {
-                  communication.getDeviceInfo([0x63]);
-                  communication.audioDataState = !communication.audioDataState;
-                }
-              } else {
-                console.warn('非蓝牙设备列表或设备索引无效，跳过音频状态重置');
+              if (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+                0].Communication.audioDataState) {
+                ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+                  0].Communication.getDeviceInfo([0x63])
+                ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+                  0].Communication.audioDataState =
+                  !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+                    0].Communication.audioDataState
               }
             }
 
@@ -281,7 +266,7 @@ struct VoiceTranslation {
                   systemPasteboard.setData(pasteData)
                     .then(() => {
                       console.error('文本已复制到剪贴板: ' + this.voiceTranslationText.transText);
-                      console.info('复制成功');
+                      promptAction.showToast({ message: '复制成功' });
                     })
                     .catch((err: BusinessError) => {
                       console.error('复制失败: ' + err.message);
@@ -309,92 +294,68 @@ struct VoiceTranslation {
     .height('100%')
     .backgroundColor('#f8f8f8')
     .onKeyEvent((event: KeyEvent) => {
-      // console.error('err：',JSON.stringify(event))
-      // 将按键事件传递给全局监听服务
-      globalShortcutService.handleGlobalKeyEvent(event)
+      // 异步处理按键事件，避免阻塞UI渲染
+      setTimeout(() => {
+        try {
+          globalShortcutService.handleGlobalKeyEvent(event)
+        } catch (error) {
+          console.error('按键事件处理失败:', error)
+        }
+      }, 0)
     })
   }
 
-  convert_ttsLanguagesToOptions(): SelectOption[] {
-    return ((this.getModelInfo.transLanguages).map((item, index) => {
-      // 多语言适配：优先取当前语言文本，无则按顺序兜底
-      let languageField: string = item.name; // 默认使用中文简体
+  // 语言映射缓存，避免每次渲染都重新计算
+  private languageFieldMap: Map<string, string> = new Map();
 
-      switch (AppStorage.get('languages') as string) {
-        case "FIL_PH":
-          languageField = item.nameFil_ph;
-          break;
-        case "ES_ES":
-          languageField = item.nameEs_es;
-          break;
-        case "JA_JP":
-          languageField = item.nameJp;
-          break;
-        case "ZH_TW":
-          languageField = item.nameTw;
-          break;
-        case "UYGUR":
-          languageField = item.nameUygur;
-          break;
-        case "MO_MO":
-          languageField = item.nameMo_mo;
-          break;
-        case "RU_RU":
-          languageField = item.nameRu_ru;
-          break;
-        case "IT_IT":
-          languageField = item.nameIt_it;
-          break;
-        case "ZH_TI":
-          languageField = item.nameZh_ti;
-          break;
-        case "EN_US":
-          languageField = item.nameEn;
-          break;
-        case "MAY_MAY":
-          languageField = item.nameMay_may;
-          break;
-        case "AR_SA":
-          languageField = item.nameAr_sa;
-          break;
-        case "DE_DE":
-          languageField = item.nameDe_de;
-          break;
-        case "KO_KR":
-          languageField = item.nameKo_kr;
-          break;
-        case "ID_ID":
-          languageField = item.nameId_id;
-          break;
-        case "TR_TR":
-          languageField = item.nameTr_tr;
-          break;
-        case "KA_KA":
-          languageField = item.nameKa_ka;
-          break;
-        case "FR_FR":
-          languageField = item.nameFr_fr;
-          break;
-        case "MN_MN":
-          languageField = item.nameMn_mn;
-          break;
-        case "TH_TH":
-          languageField = item.nameTh_th;
-          break;
-        case "VI_VN":
-          languageField = item.nameVi_vn;
-          break;
-        // 默认使用中文简体
-        default:
-          languageField = item.name;
-          break;
+  convert_ttsLanguagesToOptions(): SelectOption[] {
+    const currentLang = AppStorage.get('languages') as string;
+
+    // 检查缓存是否有效
+    if (this.languageFieldMap.size === 0 || !this.languageFieldMap.has('currentLang') ||
+        this.languageFieldMap.get('currentLang') !== currentLang) {
+      // 清空旧缓存
+      this.languageFieldMap.clear();
+      this.languageFieldMap.set('currentLang', currentLang);
+    }
+
+    return this.getModelInfo.transLanguages.map((item) => {
+      // 使用缓存获取语言字段
+      const cacheKey = `${item.code}_${currentLang}`;
+      let languageField = this.languageFieldMap.get(cacheKey);
+
+      if (!languageField) {
+        // 高效的语言字段获取，使用Map替代switch
+        const langMap = new Map([
+          ['FIL_PH', item.nameFil_ph],
+          ['ES_ES', item.nameEs_es],
+          ['JA_JP', item.nameJp],
+          ['ZH_TW', item.nameTw],
+          ['UYGUR', item.nameUygur],
+          ['MO_MO', item.nameMo_mo],
+          ['RU_RU', item.nameRu_ru],
+          ['IT_IT', item.nameIt_it],
+          ['ZH_TI', item.nameZh_ti],
+          ['EN_US', item.nameEn],
+          ['MAY_MAY', item.nameMay_may],
+          ['AR_SA', item.nameAr_sa],
+          ['DE_DE', item.nameDe_de],
+          ['KO_KR', item.nameKo_kr],
+          ['ID_ID', item.nameId_id],
+          ['TR_TR', item.nameTr_tr],
+          ['KA_KA', item.nameKa_ka],
+          ['FR_FR', item.nameFr_fr],
+          ['MN_MN', item.nameMn_mn],
+          ['TH_TH', item.nameTh_th],
+          ['VI_VN', item.nameVi_vn]
+        ]);
+
+        languageField = langMap.get(currentLang) || item.name; // 默认中文简体
+        this.languageFieldMap.set(cacheKey, languageField);
       }
 
-      // 使用方括号表示法动态访问属性
-      return {
-        value: languageField // 正确的属性访问方式
-      } as SelectOption;
-    }));
+      return { value: languageField } as SelectOption;
+    });
   }
 
   /**
@@ -412,66 +373,55 @@ struct VoiceTranslation {
   }
 
   private getDefaultSelectedIndex_fromText(item: languagesModel): string {
-    switch (AppStorage.get('languages') as string) {
-      case "FIL_PH":
-        return item.nameFil_ph;
-      case "ES_ES":
-        return item.nameEs_es;
-      case "JA_JP":
-        return item.nameJp;
-      case "ZH_TW":
-        return item.nameTw;
-      case "UYGUR":
-        return item.nameUygur;
-      case "MO_MO":
-        return item.nameMo_mo;
-      case "RU_RU":
-        return item.nameRu_ru;
-      case "IT_IT":
-        return item.nameIt_it;
-      case "ZH_TI":
-        return item.nameZh_ti;
-      case "EN_US":
-        return item.nameEn;
-      case "MAY_MAY":
-        return item.nameMay_may;
-      case "AR_SA":
-        return item.nameAr_sa;
-      case "DE_DE":
-        return item.nameDe_de;
-      case "KO_KR":
-        return item.nameKo_kr;
-      case "ID_ID":
-        return item.nameId_id;
-      case "TR_TR":
-        return item.nameTr_tr;
-      case "KA_KA":
-        return item.nameKa_ka;
-      case "FR_FR":
-        return item.nameFr_fr;
-      case "MN_MN":
-        return item.nameMn_mn;
-      case "TH_TH":
-        return item.nameTh_th;
-      case "VI_VN":
-        return item.nameVi_vn;
-      default:
-        return item.name;
-    }
+    const currentLang = AppStorage.get('languages') as string;
+
+    // 使用Map提升性能，避免长switch语句
+    const langMap = new Map([
+      ['FIL_PH', item.nameFil_ph],
+      ['ES_ES', item.nameEs_es],
+      ['JA_JP', item.nameJp],
+      ['ZH_TW', item.nameTw],
+      ['UYGUR', item.nameUygur],
+      ['MO_MO', item.nameMo_mo],
+      ['RU_RU', item.nameRu_ru],
+      ['IT_IT', item.nameIt_it],
+      ['ZH_TI', item.nameZh_ti],
+      ['EN_US', item.nameEn],
+      ['MAY_MAY', item.nameMay_may],
+      ['AR_SA', item.nameAr_sa],
+      ['DE_DE', item.nameDe_de],
+      ['KO_KR', item.nameKo_kr],
+      ['ID_ID', item.nameId_id],
+      ['TR_TR', item.nameTr_tr],
+      ['KA_KA', item.nameKa_ka],
+      ['FR_FR', item.nameFr_fr],
+      ['MN_MN', item.nameMn_mn],
+      ['TH_TH', item.nameTh_th],
+      ['VI_VN', item.nameVi_vn]
+    ]);
+
+    return langMap.get(currentLang) || item.name; // 默认中文简体
   }
 
   @Watch('change_flax_yuyinfanyi_chachaobudaoyuyan') @StorageLink('flax_yuyinfanyi_chachaobudaoyuyan') flax_yuyinfanyi_chachaobudaoyuyan: boolean =
     true //语音翻译为true,文本翻译为false
 
   change_flax_yuyinfanyi_chachaobudaoyuyan() {
-    console.warn('无法翻译到对应目标语言');
+    promptAction.showToast({ message: '无法翻译到对应目标语言', backgroundColor: Color.Red, duration: 3000 });
   }
 
   @Watch('change_flax_huacifanyi') @StorageLink('flax_huacifanyi') flax_huacifanyi: boolean =
     true //语音翻译为true,文本翻译为false
 
   change_flax_huacifanyi() {
-    console.warn('未识别到选中划词');
+    promptAction.showToast({ message: '未识别到选中划词', backgroundColor: Color.Red });
+  }
 
+  // 页面销毁时清理资源
+  onDestroy(): void {
+    if (this.translateDebounceTimer) {
+      clearTimeout(this.translateDebounceTimer);
+      this.translateDebounceTimer = null;
+    }
   }
 }

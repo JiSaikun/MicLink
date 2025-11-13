@@ -488,7 +488,14 @@ struct Index {
 
       Image($r('app.media.create_Command_Ai'))
     }.onKeyEvent((event: KeyEvent) => {
-      globalShortcutService.handleGlobalKeyEvent(event)
+      // 异步处理按键事件，避免阻塞UI渲染
+      setTimeout(() => {
+        try {
+          globalShortcutService.handleGlobalKeyEvent(event)
+        } catch (error) {
+          console.error('按键事件处理失败:', error)
+        }
+      }, 0)
     })
   }
 

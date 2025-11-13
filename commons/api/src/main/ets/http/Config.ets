@@ -6,7 +6,7 @@ import { logger } from './Logger';
 // 创建实例：移除 Content-Type: application/json 头
 const instance: AxiosInstance = axios.create({
   baseURL: 'http://att.miclink.net',
-  timeout: 100000,
+  timeout: 15000, // 15秒超时，避免主线程长时间阻塞
   headers: {
     'Content-Language': 'zh_CN' // 仅保留语言头，删除 JSON 格式头
   },

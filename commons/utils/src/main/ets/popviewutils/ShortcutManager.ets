@@ -14,6 +14,10 @@ class GlobalShortcutService {
   private static flax: boolean=false
   private currentPressedKeys: number[] = []
   private shortcutCallbacks: Map<number, () => void> = new Map()
+  // 缓存快捷键配置，避免每次按键都读取存储
+  private cachedShortcutConfigs: Map<number, number[]> | null = null
+  private lastConfigUpdateTime: number = 0
+  private readonly CONFIG_CACHE_DURATION = 5000 // 5秒缓存
 
   static getInstance(): GlobalShortcutService {
     if (!GlobalShortcutService.instance) {
@@ -22,8 +26,15 @@ class GlobalShortcutService {
     return GlobalShortcutService.instance
   }
 
-  // 获取当前快捷键配置（每次从持久化存储读取）
+  // 获取当前快捷键配置（使用缓存优化性能）
   private getShortcutConfigs(): Map<number, number[]> {
+    const now = Date.now()
+
+    // 检查缓存是否有效
+    if (this.cachedShortcutConfigs && (now - this.lastConfigUpdateTime) < this.CONFIG_CACHE_DURATION) {
+      return this.cachedShortcutConfigs
+    }
+
     const configs = new Map<number, number[]>()
 
     try {
@@ -48,12 +59,22 @@ class GlobalShortcutService {
       console.error('读取快捷键配置失败:', error)
     }
 
+    // 更新缓存
+    this.cachedShortcutConfigs = configs
+    this.lastConfigUpdateTime = now
+
     return configs
   }
 
   // 注册快捷键触发回调
   registerCallback(shortcutType: number, callback: () => void) {
     this.shortcutCallbacks.set(shortcutType, callback)
+  }
+
+  // 刷新快捷键配置缓存（当配置变更时调用）
+  refreshShortcutConfigs() {
+    this.cachedShortcutConfigs = null
+    this.lastConfigUpdateTime = 0
   }
 
   // 处理全局按键事件
@@ -85,62 +106,91 @@ class GlobalShortcutService {
     // 对当前按下的键进行标准化和排序（确保比较的一致性）
     const currentKeys = [...this.currentPressedKeys].sort()
 
-    // 每次检查时都从持久化存储读取最新配置
+    // 使用缓存的配置，避免每次读取存储
     const shortcutConfigs = this.getShortcutConfigs()
 
     // 检查所有已配置的快捷键
-    shortcutConfigs.forEach((shortcutKeys: number[], shortcutType: number) => {
+    for (const entry of shortcutConfigs.entries()) {
+      const shortcutType: number = entry[0]
+      const shortcutKeys: number[] = entry[1]
       if (shortcutKeys.length > 0 && this.arraysEqual(shortcutKeys, currentKeys)) {
         this.triggerShortcut(shortcutType)
         // 匹配成功后清空当前按键状态，避免连续触发
         this.currentPressedKeys = []
-        return
+        return true // 找到匹配时立即返回
       }
-    })
-    return GlobalShortcutService.flax
+    }
+    return false
   }
 
   // 触发快捷键
   private triggerShortcut(shortcutType: number) {
     console.log(`触发全局快捷键: 类型${shortcutType}`)
 
-    // 显示弹窗提示
-    this.showShortcutPrompt(shortcutType)
+    // 异步执行，避免阻塞UI线程
+    setTimeout(() => {
+      // 显示弹窗提示（移到异步执行）
+      this.showShortcutPrompt(shortcutType)
 
-    // 执行注册的回调函数
-    const callback = this.shortcutCallbacks.get(shortcutType)
-    if (callback) {
-      callback()
-    }
+      // 执行注册的回调函数
+      const callback = this.shortcutCallbacks.get(shortcutType)
+      if (callback) {
+        try {
+          callback()
+        } catch (error) {
+          console.error(`快捷键回调执行失败 (${shortcutType}):`, error)
+        }
+      }
+    }, 0)
   }
 
   // 显示快捷键提示弹窗
   private showShortcutPrompt(shortcutType: number) {
-    let message = ''
+    // 执行快捷键对应的操作
     switch (shortcutType) {
       case 1:
-        message = '触发语音识别快捷键'
-        _KeyMethodConfig.voiceInput()
-        GlobalShortcutService.flax=true
+        try {
+          _KeyMethodConfig.voiceInput()
+          GlobalShortcutService.flax = true
+        } catch (error) {
+          console.error('语音识别快捷键执行失败:', error)
+        }
         break
       case 2:
-        message = '触发语音翻译快捷键'
-        _KeyMethodConfig.voiceInput(1)
-        GlobalShortcutService.flax=true
+        try {
+          _KeyMethodConfig.voiceInput(1)
+          GlobalShortcutService.flax = true
+        } catch (error) {
+          console.error('语音翻译快捷键执行失败:', error)
+        }
         break
       case 3:
-        message = '触发截图识别快捷键'
-        GlobalShortcutService.flax=true
+        GlobalShortcutService.flax = true
         break
     }
 
-    try {
-      // prompt.showToast({
-      //   message: message,
-      //   duration: 2000
-      // })
-    } catch (error) {
-      console.error('显示提示失败:', error)
+    // 注释掉耗时的Toast显示，避免阻塞UI
+    // try {
+    //   prompt.showToast({
+    //     message: this.getShortcutMessage(shortcutType),
+    //     duration: 2000
+    //   })
+    // } catch (error) {
+    //   console.error('显示提示失败:', error)
+    // }
+  }
+
+  // 获取快捷键提示消息
+  private getShortcutMessage(shortcutType: number): string {
+    switch (shortcutType) {
+      case 1:
+        return '触发语音识别快捷键'
+      case 2:
+        return '触发语音翻译快捷键'
+      case 3:
+        return '触发截图识别快捷键'
+      default:
+        return '触发快捷键'
     }
   }
 
