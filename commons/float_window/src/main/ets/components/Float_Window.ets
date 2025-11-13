@@ -10,8 +10,25 @@ export class Float_Window {
   static window_hide: window.Window | null = null;
   static showVoiceInput: number = 0 //判断在窗口显示期间再次进行语音输入的话，不必在执行创建，打断60s窗口关闭的倒计时
   static showVoiceTranslation: boolean = false //判断语音翻译窗口是否已将打开
+  static isCreating: boolean = false //防止并发创建窗口
 
   static creat(windowName = 'pages/Overlay', float_window_width = 1100, float_window_height = 300) {
+    // 检查是否正在创建中，防止并发创建
+    if (Float_Window.isCreating) {
+      console.warn('Window creation already in progress, skipping duplicate creation');
+      return;
+    }
+
+    // 检查是否已有窗口存在，如果存在则先销毁
+    if (Float_Window.windowClass) {
+      console.info('Float window already exists, destroying before creating new one');
+      Float_Window.destroyWindow(Float_Window.windowClass);
+      Float_Window.windowClass = null;
+    }
+
+    // 设置创建锁
+    Float_Window.isCreating = true;
+
     // 1.创建悬浮窗。
     let windowClass: window.Window | null = null;
     let config: window.Configuration = {
@@ -21,6 +38,7 @@ export class Float_Window {
       let errCode: number = err.code;
       if (errCode) {
         console.error('Failed to create the floatWindow. Cause: ' + JSON.stringify(err));
+        Float_Window.isCreating = false; // 释放创建锁
         return;
       }
       console.info('Succeeded in creating the floatWindow. Data: ' + JSON.stringify(data));
@@ -49,7 +67,31 @@ export class Float_Window {
       windowClass.setUIContent(windowName, (err: BusinessError) => {
         let errCode: number = err.code;
         if (errCode) {
-          console.error('Failed to load the content. Cause:' + JSON.stringify(err));
+          console.error(`Failed to load the content for ${windowName}. Error code: ${errCode}, message: ${err.message}`);
+          // 如果是timeout错误，尝试重试一次
+          if (errCode === 1003 || err.message?.includes('timeout')) {
+            console.info('UIContent timeout detected, attempting retry after delay');
+            setTimeout(() => {
+              windowClass?.setUIContent(windowName, (retryErr: BusinessError) => {
+                if (retryErr.code) {
+                  console.error(`Retry failed to load content for ${windowName}: ${JSON.stringify(retryErr)}`);
+                  Float_Window.isCreating = false; // 重试失败，释放创建锁
+                  return;
+                }
+                console.info('Retry succeeded in loading the content.');
+                // 显示悬浮窗
+                (windowClass as window.Window).showWindow((showErr: BusinessError) => {
+                  if (showErr.code) {
+                    console.error('Failed to show window after retry: ' + JSON.stringify(showErr));
+                    Float_Window.isCreating = false; // 显示失败，释放创建锁
+                    return;
+                  }
+                  console.info('Succeeded in showing window after retry.');
+                  Float_Window.isCreating = false; // 显示成功，释放创建锁
+                });
+              });
+            }, 100);
+          }
           return;
         }
         console.info('Succeeded in loading the content.');
@@ -58,9 +100,11 @@ export class Float_Window {
           let errCode: number = err.code;
           if (errCode) {
             console.error('Failed to show the window. Cause: ' + JSON.stringify(err));
+            Float_Window.isCreating = false; // 释放创建锁
             return;
           }
           console.info('Succeeded in showing the window.');
+          Float_Window.isCreating = false; // 释放创建锁
         });
       });
     });
@@ -68,6 +112,13 @@ export class Float_Window {
 
   static creat_VoiceTranslation(windowName = 'pages/VoiceTranslation', float_window_width = 1100,
     float_window_height = this.screen_height / 2) {
+    // 检查是否已有语音翻译窗口存在，如果存在则先销毁
+    if (Float_Window.window_VoiceTranslation) {
+      console.info('Voice translation window already exists, destroying before creating new one');
+      Float_Window.destroyWindow(Float_Window.window_VoiceTranslation);
+      Float_Window.window_VoiceTranslation = null;
+    }
+
     // 1.创建悬浮窗。
     let windowClass: window.Window | null = null;
     let config: window.Configuration = {
@@ -105,7 +156,31 @@ export class Float_Window {
       windowClass.setUIContent(windowName, (err: BusinessError) => {
         let errCode: number = err.code;
         if (errCode) {
-          console.error('Failed to load the content. Cause:' + JSON.stringify(err));
+          console.error(`Failed to load the content for ${windowName}. Error code: ${errCode}, message: ${err.message}`);
+          // 如果是timeout错误，尝试重试一次
+          if (errCode === 1003 || err.message?.includes('timeout')) {
+            console.info('UIContent timeout detected, attempting retry after delay');
+            setTimeout(() => {
+              windowClass?.setUIContent(windowName, (retryErr: BusinessError) => {
+                if (retryErr.code) {
+                  console.error(`Retry failed to load content for ${windowName}: ${JSON.stringify(retryErr)}`);
+                  Float_Window.isCreating = false; // 重试失败，释放创建锁
+                  return;
+                }
+                console.info('Retry succeeded in loading the content.');
+                // 显示悬浮窗
+                (windowClass as window.Window).showWindow((showErr: BusinessError) => {
+                  if (showErr.code) {
+                    console.error('Failed to show window after retry: ' + JSON.stringify(showErr));
+                    Float_Window.isCreating = false; // 显示失败，释放创建锁
+                    return;
+                  }
+                  console.info('Succeeded in showing window after retry.');
+                  Float_Window.isCreating = false; // 显示成功，释放创建锁
+                });
+              });
+            }, 100);
+          }
           return;
         }
         console.info('Succeeded in loading the content.');
@@ -123,6 +198,13 @@ export class Float_Window {
   }
 
   static creat_hide(windowName = 'pages/FloatingWindow', float_window_width = 130, float_window_height = 130) {
+    // 检查是否已有隐藏窗口存在，如果存在则先销毁
+    if (Float_Window.window_hide) {
+      console.info('Hide window already exists, destroying before creating new one');
+      Float_Window.destroyWindow(Float_Window.window_hide);
+      Float_Window.window_hide = null;
+    }
+
     // 1.创建悬浮窗。
     let windowClass: window.Window | null = null;
     let config: window.Configuration = {
@@ -159,7 +241,31 @@ export class Float_Window {
       windowClass.setUIContent(windowName, (err: BusinessError) => {
         let errCode: number = err.code;
         if (errCode) {
-          console.error('Failed to load the content. Cause:' + JSON.stringify(err));
+          console.error(`Failed to load the content for ${windowName}. Error code: ${errCode}, message: ${err.message}`);
+          // 如果是timeout错误，尝试重试一次
+          if (errCode === 1003 || err.message?.includes('timeout')) {
+            console.info('UIContent timeout detected, attempting retry after delay');
+            setTimeout(() => {
+              windowClass?.setUIContent(windowName, (retryErr: BusinessError) => {
+                if (retryErr.code) {
+                  console.error(`Retry failed to load content for ${windowName}: ${JSON.stringify(retryErr)}`);
+                  Float_Window.isCreating = false; // 重试失败，释放创建锁
+                  return;
+                }
+                console.info('Retry succeeded in loading the content.');
+                // 显示悬浮窗
+                (windowClass as window.Window).showWindow((showErr: BusinessError) => {
+                  if (showErr.code) {
+                    console.error('Failed to show window after retry: ' + JSON.stringify(showErr));
+                    Float_Window.isCreating = false; // 显示失败，释放创建锁
+                    return;
+                  }
+                  console.info('Succeeded in showing window after retry.');
+                  Float_Window.isCreating = false; // 显示成功，释放创建锁
+                });
+              });
+            }, 100);
+          }
           return;
         }
         console.info('Succeeded in loading the content.');

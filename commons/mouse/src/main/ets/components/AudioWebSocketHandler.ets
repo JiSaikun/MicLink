@@ -579,8 +579,8 @@ export class AudioWebSocketHandler {
     return this.base64Encode(byteArray);
   }
 
-  // 将音频数据分片为1024字节的块
-  private chunkAudioData(audioData: Int16Array[]): Int16Array[] {
+  // 将音频数据分片为1024字节的块（异步处理避免阻塞主线程）
+  private async chunkAudioDataAsync(audioData: Int16Array[]): Promise<Int16Array[]> {
     const chunks: Int16Array[] = [];
 
     // 将所有音频数据合并为一个大的Int16Array
@@ -589,7 +589,51 @@ export class AudioWebSocketHandler {
       totalLength += frame.length;
     }
 
-    console.log(`2.4G分片前总采样点数: ${totalLength}, 总字节数: ${totalLength * 2}`);
+    // 减少详细日志输出以提高性能
+    // console.log(`2.4G分片前总采样点数: ${totalLength}, 总字节数: ${totalLength * 2}`);
+
+    const combinedData = new Int16Array(totalLength);
+    let offset = 0;
+    for (const frame of audioData) {
+      combinedData.set(frame, offset);
+      offset += frame.length;
+
+      // 每处理100帧数据，让出主线程控制权
+      if (offset % 100 === 0) {
+        await this.delay(1);
+      }
+    }
+
+    // 按512个采样点（1024字节）分块，异步处理
+    for (let i = 0; i < combinedData.length; i += this.SAMPLES_PER_CHUNK) {
+      const endIndex = Math.min(i + this.SAMPLES_PER_CHUNK, combinedData.length);
+      const chunk = combinedData.slice(i, endIndex);
+      chunks.push(chunk);
+
+      // 每处理10个分片，让出主线程控制权
+      if (chunks.length % 10 === 0) {
+        await this.delay(1);
+      }
+    }
+
+      // console.log(`2.4G总共生成 ${chunks.length} 个分片`);
+
+    return chunks;
+  }
+
+  // 保留同步版本用于兼容性，但添加警告
+  private chunkAudioData(audioData: Int16Array[]): Int16Array[] {
+    console.warn('使用同步chunkAudioData方法，可能阻塞主线程。建议使用chunkAudioDataAsync');
+    return this.chunkAudioDataSync(audioData);
+  }
+
+  private chunkAudioDataSync(audioData: Int16Array[]): Int16Array[] {
+    const chunks: Int16Array[] = [];
+
+    let totalLength = 0;
+    for (const frame of audioData) {
+      totalLength += frame.length;
+    }
 
     const combinedData = new Int16Array(totalLength);
     let offset = 0;
@@ -598,15 +642,12 @@ export class AudioWebSocketHandler {
       offset += frame.length;
     }
 
-    // 按512个采样点（1024字节）分块
     for (let i = 0; i < combinedData.length; i += this.SAMPLES_PER_CHUNK) {
       const endIndex = Math.min(i + this.SAMPLES_PER_CHUNK, combinedData.length);
       const chunk = combinedData.slice(i, endIndex);
       chunks.push(chunk);
-      console.log(`2.4G生成分片 ${chunks.length}: ${chunk.length}采样点 (${chunk.length * 2}字节)`);
     }
 
-    console.log(`2.4G总共生成 ${chunks.length} 个分片`);
     return chunks;
   }
 
@@ -641,7 +682,7 @@ export class AudioWebSocketHandler {
       this.isSending = true;
 
       // 分片处理现有数据为1024字节块
-      const chunks = this.chunkAudioData(this.audioData);
+      const chunks = await this.chunkAudioDataAsync(this.audioData);
       console.log(`生成 ${chunks.length} 个1024字节分片`);
 
       for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
@@ -694,7 +735,7 @@ export class AudioWebSocketHandler {
       this.isSending = true;
 
       const newData = this.audioData.slice(this.lastSentIndex);
-      const chunks = this.chunkAudioData(newData);
+      const chunks = await this.chunkAudioDataAsync(newData);
 
       if (chunks.length > 0) {
         console.log(`发送 ${chunks.length} 个新数据分片`);
