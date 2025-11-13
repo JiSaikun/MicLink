@@ -78,7 +78,7 @@ export class AudioWebSocketHandler_ble {
   private sendIntervalId: number | null = null;
   private isSending: boolean = false;
   private pendingChunks: Int16Array[][] = [];
-  private lastSentIndex: number = 0; // 记录已发送的位置
+  private lastSentSampleIndex: number = 0; // 记录已发送的采样点位置（全局）
   private completionCheckId: number | null = null;
   private isClosing: boolean = false; // 新增：标记是否正在关闭
 
@@ -98,7 +98,7 @@ export class AudioWebSocketHandler_ble {
     }
     this.wending = false
     this.isSending = false;
-    this.lastSentIndex = 0;
+    this.lastSentSampleIndex = 0;
     this.isClosing = false;
   }
 
@@ -537,7 +537,7 @@ export class AudioWebSocketHandler_ble {
     return this.base64Encode(byteArray);
   }
 
-  // 将音频数据分片为1024字节的块
+  // 将音频数据分片为1024字节的块（连续分片，避免数据断开）
   private chunkAudioData(audioData: Int16Array[]): Int16Array[] {
     const chunks: Int16Array[] = [];
 
@@ -565,6 +565,41 @@ export class AudioWebSocketHandler_ble {
     }
 
     console.log(`蓝牙总共生成 ${chunks.length} 个分片`);
+    return chunks;
+  }
+
+  // 获取连续的音频分片，从全局采样点位置开始
+  private getContinuousAudioChunks(): Int16Array[] {
+    const chunks: Int16Array[] = [];
+
+    // 计算总采样点数
+    let totalSamples = 0;
+    for (let i = 0; i < this.audioData.length; i++) {
+      totalSamples += this.audioData[i].length;
+    }
+
+    // 如果没有新数据，返回空数组
+    if (totalSamples <= this.lastSentSampleIndex) {
+      return chunks;
+    }
+
+    // 创建合并的数据缓冲区
+    const combinedData = new Int16Array(totalSamples);
+    let offset = 0;
+    for (const frame of this.audioData) {
+      combinedData.set(frame, offset);
+      offset += frame.length;
+    }
+
+    // 从上次发送的位置开始连续分片
+    for (let i = this.lastSentSampleIndex; i < combinedData.length; i += SAMPLES_PER_CHUNK) {
+      const endIndex = Math.min(i + SAMPLES_PER_CHUNK, combinedData.length);
+      const chunk = combinedData.slice(i, endIndex);
+      chunks.push(chunk);
+      console.log(`蓝牙连续分片 ${chunks.length}: 从采样点${i}到${endIndex-1}, 大小: ${chunk.length}采样点`);
+    }
+
+    console.log(`蓝牙连续分片总共生成 ${chunks.length} 个分片，从全局采样点${this.lastSentSampleIndex}开始`);
     return chunks;
   }
 
@@ -598,9 +633,9 @@ export class AudioWebSocketHandler_ble {
     try {
       this.isSending = true;
 
-      // 分片处理现有数据为1024字节块
-      const chunks = this.chunkAudioData(this.audioData);
-      console.log(`生成 ${chunks.length} 个1024字节分片`);
+      // 使用连续分片处理现有数据
+      const chunks = this.getContinuousAudioChunks();
+      console.log(`生成 ${chunks.length} 个连续1024字节分片`);
 
       for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
         if (this.isClosing) {
@@ -611,14 +646,16 @@ export class AudioWebSocketHandler_ble {
         console.log(`蓝牙发送分片 ${chunkIndex + 1}/${chunks.length}, 大小: ${chunk.length} 采样点`);
         await this.sendAudioChunk(chunk, chunkIndex, chunks.length);
 
+        // 更新全局采样点位置
+        this.lastSentSampleIndex += chunk.length;
+
         // 控制发送速率
         if (chunkIndex < chunks.length - 1) {
           await this.delay(SEND_INTERVAL_MS);
         }
       }
 
-      this.lastSentIndex = this.audioData.length;
-      console.log(`现有数据发送完成，最后发送位置: ${this.lastSentIndex}`);
+      console.log(`现有数据发送完成，最后发送采样点位置: ${this.lastSentSampleIndex}`);
 
 
     } catch (error) {
@@ -636,27 +673,37 @@ export class AudioWebSocketHandler_ble {
         return;
       }
 
-      // 检查是否有新数据
-      if (this.audioData.length > this.lastSentIndex) {
+      // 检查是否有新数据（基于采样点总数）
+      let totalSamples = 0;
+      for (let i = 0; i < this.audioData.length; i++) {
+        totalSamples += this.audioData[i].length;
+      }
+
+      if (totalSamples > this.lastSentSampleIndex) {
         await this.sendNewDataImmediately();
       }
     }, CHECK_INTERVAL_MS) as number;
   }
 
   private async sendNewDataImmediately(): Promise<void> {
-    const newDataCount = this.audioData.length - this.lastSentIndex;
-    if (newDataCount <= 0 || this.isSending || this.isClosing) {
+    // 计算总采样点数来检查是否有新数据
+    let totalSamples = 0;
+    for (let i = 0; i < this.audioData.length; i++) {
+      totalSamples += this.audioData[i].length;
+    }
+
+    if (totalSamples <= this.lastSentSampleIndex || this.isSending || this.isClosing) {
       return;
     }
 
     try {
       this.isSending = true;
 
-      const newData = this.audioData.slice(this.lastSentIndex);
-      const chunks = this.chunkAudioData(newData);
+      // 使用连续分片获取新数据
+      const chunks = this.getContinuousAudioChunks();
 
       if (chunks.length > 0) {
-        console.log(`发送 ${chunks.length} 个新数据分片`);
+        console.log(`发送 ${chunks.length} 个新数据连续分片`);
 
         for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
           if (this.isClosing) {
@@ -666,6 +713,9 @@ export class AudioWebSocketHandler_ble {
           const chunk = chunks[chunkIndex];
           await this.sendAudioChunk(chunk, chunkIndex, chunks.length);
 
+          // 更新全局采样点位置
+          this.lastSentSampleIndex += chunk.length;
+
           // 最小延迟
           if (chunkIndex < chunks.length - 1) {
             await this.delay(SEND_INTERVAL_MS);
@@ -673,7 +723,7 @@ export class AudioWebSocketHandler_ble {
         }
       }
 
-      this.lastSentIndex = this.audioData.length;
+      console.log(`新数据发送完成，当前采样点位置: ${this.lastSentSampleIndex}`);
 
 
     } catch (error) {
@@ -686,7 +736,11 @@ export class AudioWebSocketHandler_ble {
   private setupCompletionDetection(): void {
     console.log('设置完成检测');
 
-    let lastDataLength = this.audioData.length;
+    let lastTotalSamples = 0;
+    // 计算初始总采样点数
+    for (let i = 0; i < this.audioData.length; i++) {
+      lastTotalSamples += this.audioData[i].length;
+    }
     let stableCount = 0;
 
     this.completionCheckId = setInterval(() => {
@@ -695,15 +749,19 @@ export class AudioWebSocketHandler_ble {
         return;
       }
 
-      const currentLength = this.audioData.length;
+      // 计算当前总采样点数
+      let currentTotalSamples = 0;
+      for (let i = 0; i < this.audioData.length; i++) {
+        currentTotalSamples += this.audioData[i].length;
+      }
 
-      // 只有在至少有指定数量的数据包后才开始检测完成
-      if (currentLength < MIN_DATA_PACKETS) {
-        console.log(`蓝牙数据包不足(${currentLength})，继续等待...`);
+      // 只有在至少有指定数量的采样点后才开始检测完成（降低阈值）
+      if (currentTotalSamples < SAMPLES_PER_CHUNK) { // 至少有1个分片的数据量
+        console.log(`蓝牙采样点不足(${currentTotalSamples})，继续等待...`);
         return;
       }
 
-      if (currentLength === lastDataLength) {
+      if (currentTotalSamples === lastTotalSamples) {
         stableCount++;
         console.log(`蓝牙数据稳定计数: ${stableCount}/${MAX_STABLE_COUNT}`);
 
@@ -714,8 +772,8 @@ export class AudioWebSocketHandler_ble {
         }
       } else {
         stableCount = 0;
-        lastDataLength = currentLength;
-        console.log(`蓝牙接收到新数据，当前长度: ${currentLength}`);
+        lastTotalSamples = currentTotalSamples;
+        console.log(`蓝牙接收到新数据，当前采样点数: ${currentTotalSamples}`);
       }
     }, CHECK_INTERVAL_MS) as number;
   }
@@ -738,7 +796,7 @@ export class AudioWebSocketHandler_ble {
 
       console.log(`蓝牙分片 ${chunkIndex} Base64长度: ${base64Audio.length}, 前50字符: ${base64Audio.substring(0, 50)}`);
 
-      const isStart = (chunkIndex === 0 && this.lastSentIndex === 0);
+      const isStart = (chunkIndex === 0 && this.lastSentSampleIndex === 0);
       const isEnd = false;
 
       const inputMessage: inputMessageModel = {
@@ -799,7 +857,7 @@ export class AudioWebSocketHandler_ble {
     this.pendingChunks = [];
     this.isSending = false;
     this.ws = null;
-    this.lastSentIndex = 0;
+    this.lastSentSampleIndex = 0;
     this.isClosing = false;
     console.log('AudioWebSocketHandler资源已完全清理');
   }

@@ -25,9 +25,7 @@ export struct ConfigPage3 {
   @State getModelInfo: getModelInfoModel =AppStorage.get('getModelInfo') as getModelInfoModel
   @StorageLink('languages') languages: string = 'ZH_CN'
   @State reportRate: SelectOption[] = [{ value: '125' }, { value: '250' }, { value: '500' }, { value: '1000' }]
-  @State DPI: SelectOption[] =
-    [{ value: '1000' }, { value: '1200' }, { value: '1600' }, { value: '2400' }, { value: '4000' }, { value: '4800' },
-      { value: '6000' }]
+  @State DPI: SelectOption[] = []
   @Prop currportRate: number
   @Watch('change_LEDstate') @State currLED: boolean =false
   @Watch('change_reportRate') @State reportRate_currIndex: number = 0
@@ -133,11 +131,11 @@ export struct ConfigPage3 {
           .fontWeight(400)
           .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
         Select(this.DPI)
-          .value(this.DPI[this.DPI_currInfo ? this.DPI_currInfo?.curr : this.DPI_currIndex].value)
+          .value(this.DPI && this.DPI.length > 0 ? this.DPI[Math.min(Math.max(0, this.DPI_currIndex), this.DPI.length - 1)]?.value : '')
           .onSelect((index: number) => {
             this.DPI_currIndex = index
           })
-          .selected(this.DPI_currInfo ? this.DPI_currInfo?.curr : this.DPI_currIndex)
+          .selected(this.DPI && this.DPI.length > 0 ? Math.min(Math.max(0, this.DPI_currIndex), this.DPI.length - 1) : 0)
           .width('100%')
           .font({ size: $r('app.float.default_text_font_size_14'), weight: 400 })
           .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
@@ -152,11 +150,11 @@ export struct ConfigPage3 {
           .fontWeight(400)
           .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
         Select(this.reportRate)
-          .value(this.reportRate[this.reportRate_currIndex].value)
+          .value(this.reportRate && this.reportRate.length > 0 ? this.reportRate[Math.max(0, Math.min(this.reportRate_currIndex, this.reportRate.length - 1))]?.value : '')
           .onSelect((index: number) => {
             this.reportRate_currIndex = index
           })
-          .selected(this.reportRate_currIndex)
+          .selected(this.reportRate && this.reportRate.length > 0 ? Math.max(0, Math.min(this.reportRate_currIndex, this.reportRate.length - 1)) : 0)
           .width('100%')
           .font({ size: $r('app.float.default_text_font_size_14'), weight: 400 })
           .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
@@ -284,6 +282,9 @@ export struct ConfigPage3 {
   }
 
   onDidBuild(): void {
+    // Ensure DPI array is initialized with default values
+    this.DPI = [{ value: '1000' }, { value: '1200' }, { value: '1600' }, { value: '2400' }, { value: '4000' }, { value: '4800' }, { value: '6000' }]
+
     const icType =
       this.device_isBle ? this.devices[AppStorage.get('device_show_currIndex') as number||0].mouseconfig?.icType :
         ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number||0].mouseconfig?.icType
@@ -347,6 +348,11 @@ export struct ConfigPage3 {
         break;
       case MouseICType.MouseICTypeFCT3065XY_M3S: {
         this.DPI = [{ value: '800' }, { value: '1200' }, { value: '1600' }];
+      }
+        break;
+      default: {
+        // Keep the default DPI values if icType doesn't match any case
+        this.DPI = [{ value: '1000' }, { value: '1200' }, { value: '1600' }, { value: '2400' }, { value: '4000' }, { value: '4800' }, { value: '6000' }];
       }
         break;
     }

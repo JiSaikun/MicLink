@@ -213,7 +213,7 @@ export class BlueTooth_devices {
 
             // 7. 固件版本（协议：byte19）
             this.deviceInfo.firmwareVersion = data[19].toString();
-            this.devices[this.device_currIndex].mouseconfig = this.deviceInfo;
+            (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].mouseconfig = this.deviceInfo;
 
             if (!(AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].getModelInfo) {
               // 深拷贝更新设备列表以触发UI更新
@@ -222,8 +222,8 @@ export class BlueTooth_devices {
               AppStorage.setOrCreate('devices', newList);
               this.devices = newList;
             } else {
-              if (!this.devices[this.device_currIndex].KeymethodConfig.length) {
-                this.devices[this.device_currIndex].KeymethodConfig = [
+              if (!(AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig.length) {
+                (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig = [
                   { key: KeyPressType.VOICE_CLICK, currIndex: 0 },
                   { key: KeyPressType.VOICE_LONG_PRESS_DOWN, currIndex: 0 },
                   { key: KeyPressType.SEARCH_CLICK, currIndex: 0 },
@@ -237,49 +237,59 @@ export class BlueTooth_devices {
                 ];
 
                 for (let item
-                  of this.devices[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[]) {
+                  of (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[]) {
                   for (let childs of item.childs) {
                     childs.childs.forEach((keyInfos_childs_childsModel, index) => {
                       if (keyInfos_childs_childsModel.first === 1) {
                         switch (item.key) {
                           case 'voice_key': //语音键
                             if (childs.operation === 'sk') { //单击
-                              this.devices[this.device_currIndex].KeymethodConfig[0].currIndex = index;
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[0].currIndex =
+                                index;
                             }
                             if (childs.operation === 'lk') { //长按
-                              this.devices[this.device_currIndex].KeymethodConfig[1].currIndex = index;
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[1].currIndex =
+                                index;
                             }
                             break;
                           case 'search_key': //搜索键
                             if (childs.operation === 'sk') {
-                              this.devices[this.device_currIndex].KeymethodConfig[2].currIndex = index;
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[2].currIndex =
+                                index;
                             }
                             if (childs.operation === 'lk') { //长按
-                              this.devices[this.device_currIndex].KeymethodConfig[3].currIndex = index;
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[3].currIndex =
+                                index;
                             }
                             break;
                           case 'translate_key': //翻译键
                             if (childs.operation === 'sk') {
-                              this.devices[this.device_currIndex].KeymethodConfig[4].currIndex = index;
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[4].currIndex =
+                                index;
                             }
                             if (childs.operation === 'lk') { //长按
-                              this.devices[this.device_currIndex].KeymethodConfig[5].currIndex = index;
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[5].currIndex =
+                                index;
                             }
                             break;
                           case 'AI_key': //AI键
                             if (childs.operation === 'sk') {
-                              this.devices[this.device_currIndex].KeymethodConfig[6].currIndex = index;
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[6].currIndex =
+                                index;
                             }
                             if (childs.operation === 'lk') { //长按
-                              this.devices[this.device_currIndex].KeymethodConfig[7].currIndex = index;
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[7].currIndex =
+                                index;
                             }
                             break;
                           case 'M_key': //AI键
                             if (childs.operation === 'sk') {
-                              this.devices[this.device_currIndex].KeymethodConfig[8].currIndex = index;
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[8].currIndex =
+                                index;
                             }
                             if (childs.operation === 'lk') { //长按
-                              this.devices[this.device_currIndex].KeymethodConfig[9].currIndex = index;
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[9].currIndex =
+                                index;
                             }
                             break;
                         }
@@ -326,7 +336,7 @@ export class BlueTooth_devices {
               this.deviceInfo.atmosphereLight = false;
             }
 
-            this.devices[this.device_currIndex].mouseconfig = this.deviceInfo;
+            (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].mouseconfig = this.deviceInfo;
 
             if (!(AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].getModelInfo) {
               // 深拷贝更新设备列表以触发UI更新
@@ -335,8 +345,8 @@ export class BlueTooth_devices {
               AppStorage.setOrCreate('devices', newList);
               this.devices = newList;
             } else {
-              if (!this.devices[this.device_currIndex].KeymethodConfig.length) {
-                this.devices[this.device_currIndex].KeymethodConfig = [
+              if (!(AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig.length) {
+                (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig = [
                   { key: KeyPressType.VOICE_CLICK, currIndex: 0 },
                   { key: KeyPressType.VOICE_LONG_PRESS_DOWN, currIndex: 0 },
                   { key: KeyPressType.SEARCH_CLICK, currIndex: 0 },
@@ -350,49 +360,59 @@ export class BlueTooth_devices {
                 ];
 
                 for (let item
-                  of this.devices[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[]) {
+                  of (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[]) {
                   for (let childs of item.childs) {
                     childs.childs.forEach((keyInfos_childs_childsModel, index) => {
                       if (keyInfos_childs_childsModel.first === 1) {
                         switch (item.key) {
                           case 'voice_key': //语音键
                             if (childs.operation === 'sk') { //单击
-                              this.devices[this.device_currIndex].KeymethodConfig[0].currIndex = index;
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[0].currIndex =
+                                index;
                             }
                             if (childs.operation === 'lk') { //长按
-                              this.devices[this.device_currIndex].KeymethodConfig[1].currIndex = index;
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[1].currIndex =
+                                index;
                             }
                             break;
                           case 'search_key': //搜索键
                             if (childs.operation === 'sk') {
-                              this.devices[this.device_currIndex].KeymethodConfig[2].currIndex = index;
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[2].currIndex =
+                                index;
                             }
                             if (childs.operation === 'lk') { //长按
-                              this.devices[this.device_currIndex].KeymethodConfig[3].currIndex = index;
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[3].currIndex =
+                                index;
                             }
                             break;
                           case 'translate_key': //翻译键
                             if (childs.operation === 'sk') {
-                              this.devices[this.device_currIndex].KeymethodConfig[4].currIndex = index;
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[4].currIndex =
+                                index;
                             }
                             if (childs.operation === 'lk') { //长按
-                              this.devices[this.device_currIndex].KeymethodConfig[5].currIndex = index;
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[5].currIndex =
+                                index;
                             }
                             break;
                           case 'AI_key': //AI键
                             if (childs.operation === 'sk') {
-                              this.devices[this.device_currIndex].KeymethodConfig[6].currIndex = index;
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[6].currIndex =
+                                index;
                             }
                             if (childs.operation === 'lk') { //长按
-                              this.devices[this.device_currIndex].KeymethodConfig[7].currIndex = index;
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[7].currIndex =
+                                index;
                             }
                             break;
                           case 'M_key': //AI键
                             if (childs.operation === 'sk') {
-                              this.devices[this.device_currIndex].KeymethodConfig[8].currIndex = index;
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[8].currIndex =
+                                index;
                             }
                             if (childs.operation === 'lk') { //长按
-                              this.devices[this.device_currIndex].KeymethodConfig[9].currIndex = index;
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[9].currIndex =
+                                index;
                             }
                             break;
                         }
@@ -1116,7 +1136,7 @@ export class BlueTooth_devices {
         }
 
       } catch (error) {
-        console.warn(JSON.stringify(this.devices[this.device_currIndex].KeymethodConfig));
+        console.warn(JSON.stringify((AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig));
         console.error('解析设备信息错误:', error);
       }
 
@@ -1142,10 +1162,11 @@ export class BlueTooth_devices {
               console.warn('获取到设备模型信息，开始更新设备数据');
 
               // 检查设备索引是否有效
-              if (this.device_currIndex >= 0 && this.device_currIndex < this.devices.length &&
-              this.devices[this.device_currIndex]) {
+              if (this.device_currIndex >= 0 &&
+                this.device_currIndex < (AppStorage.get('devices') as DeviceArrayType_Ble[]).length &&
+              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex]) {
                 // 首先更新本地设备数据
-                this.devices[this.device_currIndex].getModelInfo = getModelInfo;
+                (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].getModelInfo = getModelInfo;
                 console.warn('设备模型信息已设置');
 
                 // 直接更新本地设备数据，然后强制创建全新的AppStorage数据
@@ -1153,8 +1174,8 @@ export class BlueTooth_devices {
 
                 // 创建一个全新的设备数组，确保引用完全不同
                 const freshDevices: DeviceArrayType_Ble[] = [];
-                for (let i = 0; i < this.devices.length; i++) {
-                  const device = this.devices[i];
+                for (let i = 0; i < (AppStorage.get('devices') as DeviceArrayType_Ble[]).length; i++) {
+                  const device = (AppStorage.get('devices') as DeviceArrayType_Ble[])[i];
                   const newDevice: DeviceArrayType_Ble = {
                     BlueTooth_devices: device.BlueTooth_devices,
                     mouseconfig: device.mouseconfig,
@@ -1191,14 +1212,17 @@ export class BlueTooth_devices {
               }
 
               // 在索引检查后，判断当前设备是否是键盘
-              if (this.device_currIndex >= 0 && this.device_currIndex < this.devices.length &&
-              this.devices[this.device_currIndex] && this.devices[this.device_currIndex].getModelInfo) {
-                const currentDevice = this.devices[this.device_currIndex];
+              if (this.device_currIndex >= 0 &&
+                this.device_currIndex < (AppStorage.get('devices') as DeviceArrayType_Ble[]).length &&
+              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex] &&
+              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].getModelInfo) {
+                const currentDevice = (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex];
                 if ((currentDevice.getModelInfo as getModelInfoModel).functions &&
                   (currentDevice.getModelInfo as getModelInfoModel).functions.length !== 0) {
                   for (let item of (currentDevice.getModelInfo as getModelInfoModel).functions) {
                     if (item.code === 'keyboard') {
-                      currentDevice.PRODUCT_TYPE = PRODUCT_TYPE.keyboard;
+                      (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].PRODUCT_TYPE =
+                        PRODUCT_TYPE.keyboard;
                       console.warn('设备类型已设置为键盘');
                       break;
                     }
@@ -1375,9 +1399,11 @@ export class BlueTooth_devices {
 
       // 更新设备连接状态
       try {
-        if (this.devices && this.devices.length > 0 && this.device_currIndex >= 0 && this.device_currIndex < this.devices.length) {
-          if (this.devices[this.device_currIndex].mouseconfig) {
-            this.devices[this.device_currIndex].mouseconfig!.isConnected = true;
+        if ((AppStorage.get('devices') as DeviceArrayType_Ble[]) &&
+          (AppStorage.get('devices') as DeviceArrayType_Ble[]).length > 0 && this.device_currIndex >= 0 &&
+          this.device_currIndex < (AppStorage.get('devices') as DeviceArrayType_Ble[]).length) {
+          if ((AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].mouseconfig) {
+            (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].mouseconfig!.isConnected = true;
           }
         }
       } catch (err) {
@@ -1387,9 +1413,12 @@ export class BlueTooth_devices {
       console.info('检测到蓝牙连接断开');
       // 连接断开时更新设备连接状态
       try {
-        if (this.devices && this.devices.length > 0 && this.device_currIndex >= 0 && this.device_currIndex < this.devices.length) {
-          if (this.devices[this.device_currIndex].mouseconfig) {
-            this.devices[this.device_currIndex].mouseconfig!.isConnected = false;
+        if ((AppStorage.get('devices') as DeviceArrayType_Ble[]) &&
+          (AppStorage.get('devices') as DeviceArrayType_Ble[]).length > 0 && this.device_currIndex >= 0 &&
+          this.device_currIndex < (AppStorage.get('devices') as DeviceArrayType_Ble[]).length) {
+          if ((AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].mouseconfig) {
+            (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].mouseconfig!.isConnected =
+              false;
           }
         }
       } catch (err) {
@@ -1410,6 +1439,7 @@ export class BlueTooth_devices {
       .then((result: Array<ble.GattService>) => {
         console.info('获取服务成功，发现', result.length, '个服务');
         for (let item of result) {
+          // console.warn(JSON.stringify(item))
           if (item.serviceUuid === '00010203-0405-0607-0809-0a0b0c0d1911') {
             for (let characteristic of item.characteristics) {
               if (characteristic.characteristicUuid === '00010203-0405-0607-0809-0A0B0C0D2B18') {
@@ -1429,8 +1459,9 @@ export class BlueTooth_devices {
             console.info('device name err ' + JSON.stringify(err));
             console.error('device name' + data);
             // 安全检查设备索引
-            if (this.devices && this.device_currIndex >= 0 && this.device_currIndex < this.devices.length) {
-              this.devices[this.device_currIndex].name = data
+            if ((AppStorage.get('devices') as DeviceArrayType_Ble[]) && this.device_currIndex >= 0 &&
+              this.device_currIndex < (AppStorage.get('devices') as DeviceArrayType_Ble[]).length) {
+              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].name = data
             }
           })
         }
@@ -1450,33 +1481,33 @@ export class BlueTooth_devices {
           PRODUCT_TYPE: PRODUCT_TYPE.DEFAULT,
           name: ''
         }
-              // 更新设备列表，确保UI正确显示
-              const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || [];
-              currentDevices.push(device);
-              // 使用深拷贝确保UI更新
-              const newDevices = deepCopyDevices(currentDevices);
-              AppStorage.setOrCreate('devices', newDevices);
-              this.devices = newDevices;
-              this.device_currIndex = this.devices.length - 1;
+        // 更新设备列表，确保UI正确显示
+        const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || [];
+        currentDevices.push(device);
+        // 使用深拷贝确保UI更新
+        const newDevices = deepCopyDevices(currentDevices);
+        AppStorage.setOrCreate('devices', newDevices);
+        this.devices = newDevices;
+        this.device_currIndex = this.devices.length - 1;
 
-              // 立即触发UI更新，确保新设备立即显示
-              console.info('新设备添加完成，立即触发UI更新');
-              setTimeout(() => {
-                // 再次更新AppStorage以触发@Watch监听器
-                AppStorage.setOrCreate('devices', deepCopyDevices(newDevices));
-              }, 100);
+        // 立即触发UI更新，确保新设备立即显示
+        console.info('新设备添加完成，立即触发UI更新');
+        setTimeout(() => {
+          // 再次更新AppStorage以触发@Watch监听器
+          AppStorage.setOrCreate('devices', deepCopyDevices(newDevices));
+        }, 100);
 
         //client端启用或者禁用接收server端特征值内容变更通知的能力
         console.info('开始设置特征值变更通知');
         this.setCharacteristicChangeNotification()
       }).catch((err: BusinessError) => {
-        console.error('获取服务失败:', err.code, err.message);
-        if (this.gattClient) {
-          this.gattClient.getDeviceName((err: BusinessError, data: string) => {
-            console.warn('设备暂未连接设备蓝牙:', data)
-          })
-        }
-      })
+      console.error('获取服务失败:', err.code, err.message);
+      if (this.gattClient) {
+        this.gattClient.getDeviceName((err: BusinessError, data: string) => {
+          console.warn('设备暂未连接设备蓝牙:', data)
+        })
+      }
+    })
   }
 
   /**

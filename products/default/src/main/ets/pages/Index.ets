@@ -92,7 +92,7 @@ struct Index {
   @StorageLink("isShowFixedText_pop") isShowFixedText_pop: boolean = false
   @StorageLink("isShow_webUrlToOpen_pop") isShow_webUrlToOpen_pop: boolean = false
   @StorageLink("isShow_passwordModification_pop") isShow_passwordModification_pop: boolean = false
-  @StorageLink("isShow_bluetoothConnect_pop") isShow_bluetoothConnect_pop: boolean = false
+  @Watch('a') @StorageLink("isShow_bluetoothConnect_pop") isShow_bluetoothConnect_pop: boolean = false
   @StorageLink("isBluetoothConnect_state") isBluetoothConnect_state: boolean = false //蓝牙检索状态
   @State shortcut_pop: boolean = false
   @State isNavigationLibActive: boolean = true //导航库重置
@@ -101,6 +101,17 @@ struct Index {
   @StorageLink("paletteTheme") paletteTheme: string = ThemeConfig.PaletteTheme
   @StorageLink("resolutionScale") @Watch('onResolutionChange') resolutionScale: string = 'followSystem'
   @State scaleValue: number = 1.0
+
+  a() {
+    if (!this.isShow_bluetoothConnect_pop) {
+      if (this.isBluetoothConnect_state) {
+        setTimeout(() => {
+          this.isDeviceSettingsActive = false
+          setTimeout(()=>this.isDeviceSettingsActive = true,20)
+        }, 100)
+      }
+    }
+  }
 
   // TabsControllerIndex 变化监听
   onTabsControllerIndexChange(): void {
@@ -116,8 +127,8 @@ struct Index {
       // 设备设置逻辑 - 每次进入都刷新状态，触发重新渲染
       if (this.tabsControllerIndex === 7) {
         // 使用setTimeout确保状态变化生效后再设置为true，触发重新渲染
-          this.isDeviceSettingsActive = true
-      }else{
+        this.isDeviceSettingsActive = true
+      } else {
         this.isDeviceSettingsActive = false
       }
       this.tabsController.changeIndex(this.tabsControllerIndex)
@@ -161,7 +172,7 @@ struct Index {
     } else {
       this.scaleValue = parseFloat(this.resolutionScale) / 100
     }
-    console.info(`全局应用缩放比例: ${this.scaleValue}`)
+    // console.info(`全局应用缩放比例: ${this.scaleValue}`)
   }
 
   // 监听设备列表变化

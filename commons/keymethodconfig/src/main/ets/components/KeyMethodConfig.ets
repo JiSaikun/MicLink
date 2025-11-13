@@ -159,10 +159,10 @@ export class _KeyMethodConfig {
             /**
              * 语音数据处理
              */
-            // 保存本地PCM文件
-            const context = AppStorage.get('context') as common.UIAbilityContext;
-            let a: AudioFileManager = new AudioFileManager(Communication.audioData, context)
-            console.log(Communication.audioData.length.toString(), '语音数据结束*****模拟')
+            // // 保存本地PCM文件
+            // const context = AppStorage.get('context') as common.UIAbilityContext;
+            // let a: AudioFileManager = new AudioFileManager(Communication.audioData, context)
+            // console.log(Communication.audioData.length.toString(), '语音数据结束*****模拟')
           })
       }
       if (!state) {

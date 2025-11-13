@@ -62,7 +62,7 @@ export struct LeftBar {
   // 获取带透明度的颜色（每次调用都会重新计算）
   getPaletteThemeWithOpacity(): string {
     const result = this.addOpacityToHex(this.paletteTheme, 0.1)
-    console.log('当前主题颜色:', this.paletteTheme, '带透明度:', result)
+    // console.log('当前主题颜色:', this.paletteTheme, '带透明度:', result)
     this.debugInfo = `主题: ${this.paletteTheme}, 带透明度: ${result}`
     return result
   }
@@ -77,8 +77,8 @@ export struct LeftBar {
   @Link web: string
 
   aboutToAppear(): void {
-    console.log('AiModel_data length:', this.aiModelData.length)
-    console.log('初始主题颜色:', this.paletteTheme)
+    // console.log('AiModel_data length:', this.aiModelData.length)
+    // console.log('初始主题颜色:', this.paletteTheme)
   }
 
   build() {

@@ -219,7 +219,7 @@ export struct DeviceSettings {
                     }
                   })
                   .onClick(() => {
-                    if (item.mouseconfig?.sn && item.getModelInfo) {
+                    if (item.getModelInfo) {
                       AppStorage.setOrCreate('device_show_currIndex', index)
                       AppStorage.setOrCreate('getModelInfo',
                         ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo)
@@ -317,7 +317,7 @@ export struct DeviceSettings {
                     }
                   })
                   .onClick(() => {
-                    if (item.mouseconfig?.sn && item.getModelInfo) { // 只要有设备信息就可以点击
+                    if (item.getModelInfo) { // 只要有设备信息就可以点击
                       AppStorage.setOrCreate('device_show_currIndex', index)
                       AppStorage.setOrCreate('getModelInfo',
                         this.devices[AppStorage.get('device_show_currIndex') as number].getModelInfo)
