@@ -87,9 +87,10 @@ export class AudioWebSocketHandler {
   private readonly CHUNK_SIZE_BYTES = 1024; // 目标分片大小
   private readonly SAMPLES_PER_CHUNK = 512; // 1024字节 / 2字节每采样点 = 512个采样点
   private readonly SEND_INTERVAL_MS = 0; // 发送间隔（立即发送）
-  private readonly CHECK_INTERVAL_MS = 3; // 检查间隔
+  private readonly CHECK_INTERVAL_MS = 20; // 检查间隔（从3ms增加到20ms，减少检测频率）
   private readonly COMPLETION_CHECK_MS = 100; // 完成检查间隔
   private readonly MAX_BUFFER_SIZE = 50; // 最大缓冲分片数
+  private readonly MIN_SAMPLES_FOR_COMPLETION = 1024; // 最小采样点数才开始检测完成（约0.064秒@16kHz）
 
   // Base64编码表
   private base64Chars: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
@@ -769,7 +770,7 @@ export class AudioWebSocketHandler {
 
     let lastDataLength = this.audioData.length;
     let stableCount = 0;
-    const maxStableCount = 5; // 100ms无新数据 (20ms * 5)
+    const maxStableCount = 50; // 1000ms无新数据 (20ms * 50) - 增加到1秒，防止长语音截断
 
     this.completionCheckId = setInterval(() => {
       if (this.isClosing) {
@@ -779,15 +780,31 @@ export class AudioWebSocketHandler {
 
       const currentLength = this.audioData.length;
 
+      // 计算总采样点数
+      let totalSamples = 0;
+      for (const frame of this.audioData) {
+        totalSamples += frame.length;
+      }
+
+      // 只有在至少有最小数据量后才开始检测完成，避免误判
+      if (totalSamples < this.MIN_SAMPLES_FOR_COMPLETION) {
+        console.log(`2.4G采样点不足(${totalSamples}/${this.MIN_SAMPLES_FOR_COMPLETION})，继续等待...`);
+        return;
+      }
+
       if (currentLength === lastDataLength) {
         stableCount++;
+        console.log(`2.4G数据稳定计数: ${stableCount}/${maxStableCount} (${stableCount * this.CHECK_INTERVAL_MS}ms)`);
 
         if (stableCount >= maxStableCount) {
-          console.log('数据稳定，发送结束标记');
+          console.log(`2.4G数据稳定超过${maxStableCount * this.CHECK_INTERVAL_MS}ms，发送结束标记`);
           this.sendEndMarker();
           this.cleanupIntervals();
         }
       } else {
+        if (stableCount > 0) {
+          console.log(`2.4G接收到新数据，重置稳定计数 (之前: ${stableCount})`);
+        }
         stableCount = 0;
         lastDataLength = currentLength;
       }

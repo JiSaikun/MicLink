@@ -43,14 +43,15 @@ const SERVER_URL: string = "ws://asr.miclink.net/ws";
 const CHUNK_SIZE_BYTES: number = 1024;
 const SAMPLES_PER_CHUNK: number = 512;
 const SEND_INTERVAL_MS: number = 0;
-const CHECK_INTERVAL_MS: number = 3;
+const CHECK_INTERVAL_MS: number = 20; // 从3ms增加到20ms，减少检测频率
 const COMPLETION_CHECK_MS: number = 100;
 const DISCONNECT_TIMEOUT_MS: number = 5000;
 const END_MARKER_DELAY_MS: number = 100;
 const PASTEBOARD_CLEAR_DELAY_MS: number = 2000;
 const TRANSLATION_EXECUTE_DELAY_MS: number = 50;
 const MIN_DATA_PACKETS: number = 3;
-const MAX_STABLE_COUNT: number = 25;
+const MAX_STABLE_COUNT: number = 75; // 从50增加到75次（1500ms无新数据），防止长语音截断
+const MIN_SAMPLES_FOR_COMPLETION: number = 1024; // 最小采样点数才开始检测完成（约0.064秒@16kHz）
 const BASE64_CHARS: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 const LOG_LEVEL: string = 'info';
 
@@ -755,25 +756,31 @@ export class AudioWebSocketHandler_ble {
         currentTotalSamples += this.audioData[i].length;
       }
 
-      // 只有在至少有指定数量的采样点后才开始检测完成（降低阈值）
-      if (currentTotalSamples < SAMPLES_PER_CHUNK) { // 至少有1个分片的数据量
-        console.log(`蓝牙采样点不足(${currentTotalSamples})，继续等待...`);
+      // 只有在至少有最小数据量后才开始检测完成，避免误判
+      if (currentTotalSamples < MIN_SAMPLES_FOR_COMPLETION) {
+        console.log(`蓝牙采样点不足(${currentTotalSamples}/${MIN_SAMPLES_FOR_COMPLETION})，继续等待...`);
         return;
       }
 
       if (currentTotalSamples === lastTotalSamples) {
         stableCount++;
-        console.log(`蓝牙数据稳定计数: ${stableCount}/${MAX_STABLE_COUNT}`);
+        
+        // 每100ms输出一次日志，减少日志量
+        if (stableCount % 5 === 0 || stableCount >= MAX_STABLE_COUNT) {
+          console.log(`蓝牙数据稳定计数: ${stableCount}/${MAX_STABLE_COUNT} (${stableCount * CHECK_INTERVAL_MS}ms)`);
+        }
 
         if (stableCount >= MAX_STABLE_COUNT) {
-          console.log('蓝牙数据稳定，发送结束标记');
+          console.log(`蓝牙数据稳定超过${MAX_STABLE_COUNT * CHECK_INTERVAL_MS}ms，发送结束标记`);
           this.sendEndMarker();
           this.cleanupIntervals();
         }
       } else {
+        if (stableCount > 0) {
+          console.log(`蓝牙接收到新数据，重置稳定计数 (之前: ${stableCount})，当前采样点数: ${currentTotalSamples}`);
+        }
         stableCount = 0;
         lastTotalSamples = currentTotalSamples;
-        console.log(`蓝牙接收到新数据，当前采样点数: ${currentTotalSamples}`);
       }
     }, CHECK_INTERVAL_MS) as number;
   }
