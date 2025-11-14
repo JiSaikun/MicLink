@@ -3,7 +3,7 @@ import { pasteboard } from '@kit.BasicServicesKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 // import { inputMethodEngine } from '@kit.IMEKit';
 import { getModelInfoModel } from 'config'
-import {_translate, translate_Params, translate_Response, inputMessageModel } from 'mouse'
+import { _translate, translate_Params, translate_Response, inputMessageModel } from 'mouse'
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
 import { Float_Window } from 'float_window';
 import { DeviceArrayType_Ble } from './BlueTooth_devices';
@@ -101,6 +101,7 @@ export class AudioWebSocketHandler_ble {
         transText: '',
         text: ''
       })
+      AppStorage.setOrCreate('changeText', false)
     } else {
       AppStorage.setOrCreate('voiceInputText', '')
       AppStorage.setOrCreate('linshi', '')
@@ -134,7 +135,7 @@ export class AudioWebSocketHandler_ble {
           console.log("连接已打开");
           console.log('语音数据长度：', this.audioData.length);
 
-                  this.sessionStartTime = Date.now();
+          this.sessionStartTime = Date.now();
           // 使用优化的实时发送方式
           this.startRealTimeAudioSending();
         } else {
@@ -270,7 +271,8 @@ export class AudioWebSocketHandler_ble {
         const devices = AppStorage.get('devices') as DeviceArrayType_Ble[];
         const deviceIndex = AppStorage.get('device_currIndex') as number || 0;
 
-        if (devices && devices.length > 0 && deviceIndex >= 0 && deviceIndex < devices.length && devices[deviceIndex]?.BlueTooth_devices) {
+        if (devices && devices.length > 0 && deviceIndex >= 0 && deviceIndex < devices.length &&
+          devices[deviceIndex]?.BlueTooth_devices) {
           devices[deviceIndex].BlueTooth_devices.send([0x20, 0x01, 0x19])
             .then(() => {
               setTimeout(() => {
@@ -317,12 +319,16 @@ export class AudioWebSocketHandler_ble {
     _translate(params).then((res) => {
       console.log('翻译请求成功————翻译结果：' + res.data?.transText, type);
       if (res.data) {
-        let dataArray = AppStorage.get('voiceTranslationText') as translate_Response;
-        dataArray = {
+        let dataArray : translate_Response = {
           transText: res.data?.transText as string,
           text: res.data?.text as string,
         };
         AppStorage.setOrCreate('voiceTranslationText', dataArray);
+        if (this.wending) {
+          setTimeout(() => {
+            AppStorage.setOrCreate('changeText', true)
+          }, 2000)
+        }
         systemPasteboard.clearData();
         // console.error('翻译文本已复制到剪贴板: ' + dataArray);
         // console.error('翻译文本已复制到剪贴板: ' + AppStorage.get('isAutoCloseVoiceTransPop')+(type === 'LAST' || type === "FIN"));
@@ -344,7 +350,8 @@ export class AudioWebSocketHandler_ble {
                         Float_Window.showVoiceTranslation = false;
                         if (currentDevice.BlueTooth_devices.audioDataState) {
                           currentDevice.BlueTooth_devices.send([0x63]);
-                          currentDevice.BlueTooth_devices.audioDataState = !currentDevice.BlueTooth_devices.audioDataState;
+                          currentDevice.BlueTooth_devices.audioDataState =
+                            !currentDevice.BlueTooth_devices.audioDataState;
                         }
                         setTimeout(() => {
                           systemPasteboard.clearData();
@@ -381,7 +388,7 @@ export class AudioWebSocketHandler_ble {
 
         // 先发送结束标记（在设置isClosing之前）
         this.sendEndMarker();
-        
+
         // 然后清理定时器和状态
         this.cleanupIntervals();
         this.isSending = false;
@@ -606,7 +613,7 @@ export class AudioWebSocketHandler_ble {
       const endIndex = Math.min(i + SAMPLES_PER_CHUNK, combinedData.length);
       const chunk = combinedData.slice(i, endIndex);
       chunks.push(chunk);
-      console.log(`蓝牙连续分片 ${chunks.length}: 从采样点${i}到${endIndex-1}, 大小: ${chunk.length}采样点`);
+      console.log(`蓝牙连续分片 ${chunks.length}: 从采样点${i}到${endIndex - 1}, 大小: ${chunk.length}采样点`);
     }
 
     console.log(`蓝牙连续分片总共生成 ${chunks.length} 个分片，从全局采样点${this.lastSentSampleIndex}开始`);
@@ -917,7 +924,7 @@ export class AudioWebSocketHandler_ble {
       "deviceNo": this.inputMessage.deviceNo,
       "content": ""
     };
-    console.error('发送结束标记',JSON.stringify(endMessage.rate));
+    console.error('发送结束标记', JSON.stringify(endMessage.rate));
 
     this.sendMessage(endMessage);
     this.wending = true;

@@ -14,7 +14,7 @@ import { DeviceArrayType_Ble } from 'bluetooth';
 @Component
 struct VoiceTranslation {
   @State getModelInfo: getModelInfoModel = AppStorage.get('getModelInfo') as getModelInfoModel
-  @StorageLink('voiceTranslationText') voiceTranslationText: translate_Response = {
+  @Watch('a') @StorageLink('voiceTranslationText') voiceTranslationText: translate_Response = {
     transText: '',
     text: ''
   }
@@ -24,16 +24,21 @@ struct VoiceTranslation {
   @Watch('changeLanguages') @StorageLink('to_languages') to_languages: string = 'EN_US' //翻译目标语言
   @Watch('changeLanguages') @StorageLink('wordScan_from_languages') wordScan_from_languages: string = 'ZH_CN' //翻译源语言
   @Watch('changeLanguages') @StorageLink('wordScan_to_languages') wordScan_to_languages: string = 'EN_US' //翻译目标语言
-
+  @StorageLink('changeText') changeText: boolean = false //语音翻译为true,文本翻译为false
   // 初始化控制标志，避免启动时的@Watch触发
   private isInitialized: boolean = false
   private initializationTimer: number | null = null
-
   // 防抖定时器，避免频繁触发翻译请求
   private translateDebounceTimer: number | null = null
   // 1. 初始化滚动控制器
   private scroller_to: Scroller = new Scroller();
   private scroller_from: Scroller = new Scroller();
+
+  a() {
+    if (this.changeText) {
+      this.changeLanguages()
+    }
+  }
 
   private initializeDeviceInfo(): void {
     try {
@@ -43,7 +48,8 @@ struct VoiceTranslation {
             0].getModelInfo as getModelInfoModel
       } else {
         this.getModelInfo =
-          ConnectDevice.Communication[AppStorage.get('device_currIndex') as number || 0].getModelInfo as getModelInfoModel
+          ConnectDevice.Communication[AppStorage.get('device_currIndex') as number ||
+            0].getModelInfo as getModelInfoModel
       }
     } catch (error) {
       console.error('Failed to initialize device info:', error)
@@ -80,7 +86,8 @@ struct VoiceTranslation {
           0].Communication.deviceInfo.productType.toString(), //产品编码
         sno: AppStorage.get('device_isBle') ?
         (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-          0].BlueTooth_devices.deviceInfo.sn : ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+          0].BlueTooth_devices.deviceInfo.sn :
+        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
           0].Communication.deviceInfo.sn, //设备号
         text: this.voiceTranslationText.text, //翻译内容
         to: this.voiceOrText ? AppStorage.get('to_languages') as string :
@@ -353,7 +360,7 @@ struct VoiceTranslation {
 
     // 检查缓存是否有效
     if (this.languageFieldMap.size === 0 || !this.languageFieldMap.has('currentLang') ||
-        this.languageFieldMap.get('currentLang') !== currentLang) {
+      this.languageFieldMap.get('currentLang') !== currentLang) {
       // 清空旧缓存
       this.languageFieldMap.clear();
       this.languageFieldMap.set('currentLang', currentLang);

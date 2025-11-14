@@ -106,6 +106,7 @@ export class AudioWebSocketHandler {
         transText: '',
         text: ''
       })
+      AppStorage.setOrCreate('changeText', false)
     } else {
       AppStorage.setOrCreate('voiceInputText', '')
       AppStorage.setOrCreate('linshi', '')
@@ -222,11 +223,10 @@ export class AudioWebSocketHandler {
             if (res.data.type === 'LAST' || res.data.type === "FIN") {
               this.handleTextResult(audioToText_res, res.data.type);
             }
-           return
+            return
           }
           this.handleTextResult(audioToText_res, res.data.type);
-        }
-        else {
+        } else {
           this.handleTextResult(audioToText_res, res.data.type);
         }
 
@@ -293,7 +293,8 @@ export class AudioWebSocketHandler {
 
   private handleTranslation(text: string, systemPasteboard: pasteboard.SystemPasteboard, type: string): void {
     let params: translate_Params = {
-      appkey: (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].getModelInfo as getModelInfoModel).appkey,
+      appkey: (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+        0].getModelInfo as getModelInfoModel).appkey,
       from: AppStorage.get('from_languages') ? AppStorage.get('from_languages') as string : 'ZH_CN',
       productCode: ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
         0].Communication.deviceInfo.productType.toString(),
@@ -303,14 +304,18 @@ export class AudioWebSocketHandler {
     };
 
     _translate(params).then((res) => {
-      console.log('翻译请求成功————翻译结果：' + res.data?.transText,type);
+      console.log('翻译请求成功————翻译结果：' + res.data?.transText, type);
       if (res.data) {
-        let dataArray = AppStorage.get('voiceTranslationText') as translate_Response;
-        dataArray = {
+        let dataArray : translate_Response = {
           transText: res.data?.transText as string,
           text: res.data?.text as string,
         };
         AppStorage.setOrCreate('voiceTranslationText', dataArray);
+        if (this.wending) {
+          setTimeout(() => {
+            AppStorage.setOrCreate('changeText', true)
+          }, 2000)
+        }
         systemPasteboard.clearData();
         // console.error('翻译文本已复制到剪贴板: ' + dataArray);
         // console.error('翻译文本已复制到剪贴板: ' + AppStorage.get('isAutoCloseVoiceTransPop')+(type === 'LAST' || type === "FIN"));
@@ -331,9 +336,14 @@ export class AudioWebSocketHandler {
                     .then(() => {
                       console.error('执行粘贴操作: ' + dataArray.transText);
                       Float_Window.showVoiceTranslation = false
-                      if (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState) {
-                        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x63])
-                        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState = !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState
+                      if (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+                        0].Communication.audioDataState) {
+                        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+                          0].Communication.getDeviceInfo([0x63])
+                        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+                          0].Communication.audioDataState =
+                          !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+                            0].Communication.audioDataState
                       }
                       setTimeout(() => {
                         systemPasteboard.clearData();
@@ -367,7 +377,7 @@ export class AudioWebSocketHandler {
 
         // 先发送结束标记（在设置isClosing之前）
         this.sendEndMarker();
-        
+
         // 然后清理定时器和状态
         this.cleanupIntervals();
         this.isSending = false;
@@ -622,7 +632,7 @@ export class AudioWebSocketHandler {
       }
     }
 
-      // console.log(`2.4G总共生成 ${chunks.length} 个分片`);
+    // console.log(`2.4G总共生成 ${chunks.length} 个分片`);
 
     return chunks;
   }
@@ -670,7 +680,9 @@ export class AudioWebSocketHandler {
     // 延迟一小段时间，让音频数据有时间积累
     const initTimerId = setTimeout(async () => {
       // 检查对象是否仍然有效
-      if (this.isClosing || !this.ws || this.lastSentIndex < 0) return;
+      if (this.isClosing || !this.ws || this.lastSentIndex < 0) {
+        return;
+      }
 
       // 发送现有数据（如果有的话）
       await this.sendExistingDataIfAvailable();
@@ -849,7 +861,8 @@ export class AudioWebSocketHandler {
         return;
       }
 
-      console.log(`2.4G分片 ${chunkIndex} Base64长度: ${base64Audio.length}, 前50字符: ${base64Audio.substring(0, 50)}`);
+      console.log(`2.4G分片 ${chunkIndex} Base64长度: ${base64Audio.length}, 前50字符: ${base64Audio.substring(0,
+        50)}`);
 
       const isStart = (chunkIndex === 0 && this.lastSentIndex === 0);
       const isEnd = false;
