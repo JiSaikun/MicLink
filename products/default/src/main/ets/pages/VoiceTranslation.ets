@@ -45,10 +45,7 @@ struct VoiceTranslation {
     // 防抖处理，避免频繁请求（500ms延迟）
     this.translateDebounceTimer = setTimeout(() => {
       let params: translate_Params = {
-        appkey: AppStorage.get('device_isBle') ?
-        ((AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-          0].getModelInfo as getModelInfoModel).appkey :
-        (AppStorage.get('getModelInfo') as getModelInfoModel).appkey, //获取用户按键模式详情中得到
+        appkey: this.getModelInfo.appkey, //获取用户按键模式详情中得到
         from: this.voiceOrText ? AppStorage.get('from_languages') as string :
           AppStorage.get('wordScan_from_languages') as string, //源语言___后面配置
         productCode: AppStorage.get('device_isBle') ?
@@ -66,6 +63,7 @@ struct VoiceTranslation {
       }
 
       _translate(params).then((res) => {
+        console.warn(JSON.stringify(res.data))
         if (res.data) {
           console.log('翻译请求成功————翻译结果：' + res.data?.transText)
           let data: translate_Response = {
@@ -74,7 +72,7 @@ struct VoiceTranslation {
           }
           AppStorage.setOrCreate('voiceTranslationText', data)
         } else {
-          promptAction.showToast({ message: '无法翻译到对应目标语言' });
+          promptAction.showToast({ message: '无法翻译到对应目标语言1111' });
         }
       }).catch((error: BusinessError) => {
         console.error('翻译请求失败:', error);
