@@ -922,6 +922,9 @@ export class AudioWebSocketHandler {
     this.lastSentIndex = -1; // 无效标记
     this.isClosing = true;
 
+    // 立即清理所有定时器，防止SIGSEGV
+    this.cleanupIntervals();
+
     this.disconnectAsync().then(() => {
       // 清理音频数据
       this.audioData = [];

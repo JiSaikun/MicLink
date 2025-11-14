@@ -933,7 +933,14 @@ export class AudioWebSocketHandler_ble {
 
   // 清理资源
   public destroy(): void {
-    console.log('开始销毁AudioWebSocketHandler');
+    console.log('开始销毁AudioWebSocketHandler_ble');
+
+    // 立即标记对象为无效状态，防止定时器回调继续执行
+    this.isClosing = true;
+
+    // 立即清理所有定时器，防止SIGSEGV
+    this.cleanupIntervals();
+
     this.disconnect();
     // 清理音频数据
     this.audioData = [];
@@ -941,7 +948,6 @@ export class AudioWebSocketHandler_ble {
     this.isSending = false;
     this.ws = null;
     this.lastSentSampleIndex = 0;
-    this.isClosing = false;
-    console.log('AudioWebSocketHandler资源已完全清理');
+    console.log('AudioWebSocketHandler_ble资源已完全清理');
   }
 }
