@@ -563,7 +563,19 @@ export class Communication {
     }
 
     this.heartbeatTimer = setInterval((): void => {
-      this.checkHeartbeat();
+      try {
+        // 检查对象是否仍然有效（防止GC后的访问）
+        if (!this || !this.checkHeartbeat) {
+          return;
+        }
+        this.checkHeartbeat();
+      } catch (error) {
+        console.error('心跳检测回调异常:', error);
+        // 如果出现异常，停止心跳检测
+        if (this && this.stopHeartbeatCheck) {
+          this.stopHeartbeatCheck();
+        }
+      }
     }, this.HEARTBEAT_CHECK_INTERVAL) as number;
 
     console.log('心跳检测已启动');

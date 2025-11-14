@@ -27,7 +27,6 @@ struct VoiceTranslation {
   @StorageLink('changeText') changeText: boolean = false //语音翻译为true,文本翻译为false
   // 初始化控制标志，避免启动时的@Watch触发
   private isInitialized: boolean = false
-  private initializationTimer: number | null = null
   // 防抖定时器，避免频繁触发翻译请求
   private translateDebounceTimer: number | null = null
   // 1. 初始化滚动控制器
@@ -42,18 +41,31 @@ struct VoiceTranslation {
 
   private initializeDeviceInfo(): void {
     try {
+      const deviceIndex = (AppStorage.get('device_currIndex') as number) || 0;
       if (AppStorage.get('device_isBle')) {
-        this.getModelInfo =
-          (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number ||
-            0].getModelInfo as getModelInfoModel
+        const devices = AppStorage.get('devices') as DeviceArrayType_Ble[];
+        if (devices && Array.isArray(devices) && deviceIndex >= 0 && deviceIndex < devices.length &&
+        devices[deviceIndex]) {
+          this.getModelInfo = devices[deviceIndex].getModelInfo as getModelInfoModel;
+        } else {
+          console.warn('initializeDeviceInfo: invalid BLE device access',
+            { deviceIndex, devicesLength: devices?.length });
+        }
       } else {
-        this.getModelInfo =
-          ConnectDevice.Communication[AppStorage.get('device_currIndex') as number ||
-            0].getModelInfo as getModelInfoModel
+        if (ConnectDevice.Communication && deviceIndex >= 0 && deviceIndex < ConnectDevice.Communication.length &&
+        ConnectDevice.Communication[deviceIndex]) {
+          this.getModelInfo = ConnectDevice.Communication[deviceIndex].getModelInfo as getModelInfoModel;
+        } else {
+          console.warn('initializeDeviceInfo: invalid USB device access',
+            { deviceIndex, communicationLength: ConnectDevice.Communication?.length });
+        }
       }
     } catch (error) {
-      console.error('Failed to initialize device info:', error)
+      console.error('Failed to initialize device info:', error);
     }
+
+    // 设备信息更新后，刷新语言选项缓存
+    this.invalidateLanguageCache();
   }
 
   changeLanguages() {
@@ -75,20 +87,48 @@ struct VoiceTranslation {
 
     // 防抖处理，避免频繁请求（500ms延迟）
     this.translateDebounceTimer = setTimeout(() => {
+      // 安全检查：确保getModelInfo存在
+      if (!this.getModelInfo?.appkey) {
+        console.error('changeLanguages: getModelInfo or appkey is missing');
+        return;
+      }
+
+      const deviceIndex = (AppStorage.get('device_currIndex') as number) || 0;
+      let productCode = '';
+      let sno = '';
+
+      try {
+        if (AppStorage.get('device_isBle')) {
+          const devices = AppStorage.get('devices') as DeviceArrayType_Ble[];
+          if (devices && Array.isArray(devices) && deviceIndex >= 0 && deviceIndex < devices.length &&
+            devices[deviceIndex]?.BlueTooth_devices?.deviceInfo) {
+            productCode = devices[deviceIndex].BlueTooth_devices.deviceInfo.productType.toString();
+            sno = devices[deviceIndex].BlueTooth_devices.deviceInfo.sn;
+          } else {
+            console.error('changeLanguages: invalid BLE device access');
+            return;
+          }
+        } else {
+          if (ConnectDevice.Communication && deviceIndex >= 0 && deviceIndex < ConnectDevice.Communication.length &&
+            ConnectDevice.Communication[deviceIndex]?.Communication?.deviceInfo) {
+            productCode = ConnectDevice.Communication[deviceIndex].Communication.deviceInfo.productType.toString();
+            sno = ConnectDevice.Communication[deviceIndex].Communication.deviceInfo.sn;
+          } else {
+            console.error('changeLanguages: invalid USB device access');
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('changeLanguages: failed to get device info', error);
+        return;
+      }
+
       let params: translate_Params = {
         appkey: this.getModelInfo.appkey, //获取用户按键模式详情中得到
         from: this.voiceOrText ? AppStorage.get('from_languages') as string :
           AppStorage.get('wordScan_from_languages') as string, //源语言___后面配置
-        productCode: AppStorage.get('device_isBle') ?
-        (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-          0].BlueTooth_devices.deviceInfo.productType.toString() :
-        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-          0].Communication.deviceInfo.productType.toString(), //产品编码
-        sno: AppStorage.get('device_isBle') ?
-        (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-          0].BlueTooth_devices.deviceInfo.sn :
-        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-          0].Communication.deviceInfo.sn, //设备号
+        productCode: productCode, //产品编码
+        sno: sno, //设备号
         text: this.voiceTranslationText.text, //翻译内容
         to: this.voiceOrText ? AppStorage.get('to_languages') as string :
           AppStorage.get('wordScan_to_languages') as string //翻译语言___后面配置
@@ -114,19 +154,26 @@ struct VoiceTranslation {
   }
 
   aboutToAppear(): void {
-    // 延迟初始化，避免阻塞UI内容设置
-    this.initializationTimer = setTimeout(() => {
-      try {
-        // 异步初始化设备信息
-        this.initializeDeviceInfo()
-        // 标记初始化完成，允许@Watch触发器工作
-        this.isInitialized = true
-      } catch (error) {
-        console.error('VoiceTranslation initialization failed:', error)
-        // 即使初始化失败，也标记为完成以避免无限等待
-        this.isInitialized = true
-      }
-    }, 100) as number
+    // 使用Promise异步初始化，避免阻塞主线程
+    this.asyncInitialize();
+  }
+
+  // 异步初始化方法
+  private async asyncInitialize(): Promise<void> {
+    try {
+      // 短暂延迟，让UI先渲染完成
+      await new Promise<void>((resolve) => setTimeout(resolve, 50));
+
+      // 在后台线程中初始化设备信息
+      this.initializeDeviceInfo();
+
+      // 标记初始化完成，允许@Watch触发器工作
+      this.isInitialized = true;
+    } catch (error) {
+      console.error('VoiceTranslation initialization failed:', error);
+      // 即使初始化失败，也标记为完成以避免无限等待
+      this.isInitialized = true;
+    }
   }
 
   build() {
@@ -162,25 +209,25 @@ struct VoiceTranslation {
               transText: '',
               text: ''
             }
+            const deviceIndex = (AppStorage.get('device_currIndex') as number) || 0;
             if (AppStorage.get('device_isBle')) {
-              if ((AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-                0].BlueTooth_devices.audioDataState) {
-                (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-                  0].BlueTooth_devices.send([0x63]);
-                (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-                  0].BlueTooth_devices.audioDataState =
-                  !(AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-                    0].BlueTooth_devices.audioDataState
+              const devices = AppStorage.get('devices') as DeviceArrayType_Ble[];
+              if (devices && Array.isArray(devices) && deviceIndex >= 0 && deviceIndex < devices.length &&
+                devices[deviceIndex]?.BlueTooth_devices) {
+                if (devices[deviceIndex].BlueTooth_devices.audioDataState) {
+                  devices[deviceIndex].BlueTooth_devices.send([0x63]);
+                  devices[deviceIndex].BlueTooth_devices.audioDataState =
+                    !devices[deviceIndex].BlueTooth_devices.audioDataState;
+                }
               }
             } else {
-              if (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-                0].Communication.audioDataState) {
-                ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-                  0].Communication.getDeviceInfo([0x63])
-                ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-                  0].Communication.audioDataState =
-                  !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-                    0].Communication.audioDataState
+              if (ConnectDevice.Communication && deviceIndex >= 0 && deviceIndex < ConnectDevice.Communication.length &&
+                ConnectDevice.Communication[deviceIndex]?.Communication) {
+                if (ConnectDevice.Communication[deviceIndex].Communication.audioDataState) {
+                  ConnectDevice.Communication[deviceIndex].Communication.getDeviceInfo([0x63]);
+                  ConnectDevice.Communication[deviceIndex].Communication.audioDataState =
+                    !ConnectDevice.Communication[deviceIndex].Communication.audioDataState;
+                }
               }
             }
 
@@ -248,6 +295,13 @@ struct VoiceTranslation {
               .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo?.transLanguages?.[this.getDefaultSelectedIndex_from(this.voiceOrText ?
               this.from_languages : this.wordScan_from_languages)]))
               .onSelect((index: number) => {
+                // 安全检查：确保getModelInfo和transLanguages存在且索引有效
+                if (!this.getModelInfo?.transLanguages || index < 0 ||
+                  index >= this.getModelInfo.transLanguages.length) {
+                  console.error('onSelect: invalid language access',
+                    { index, length: this.getModelInfo?.transLanguages?.length });
+                  return;
+                }
                 if (this.voiceOrText) {
                   this.from_languages = this.getModelInfo.transLanguages[index].code
                 } else {
@@ -272,6 +326,13 @@ struct VoiceTranslation {
               .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo?.transLanguages?.[this.getDefaultSelectedIndex_from(this.voiceOrText ?
               this.to_languages : this.wordScan_to_languages)]))
               .onSelect((index: number) => {
+                // 安全检查：确保getModelInfo和transLanguages存在且索引有效
+                if (!this.getModelInfo?.transLanguages || index < 0 ||
+                  index >= this.getModelInfo.transLanguages.length) {
+                  console.error('onSelect: invalid language access',
+                    { index, length: this.getModelInfo?.transLanguages?.length });
+                  return;
+                }
                 if (this.voiceOrText) {
                   this.to_languages = this.getModelInfo.transLanguages[index].code
                 } else {
@@ -352,57 +413,103 @@ struct VoiceTranslation {
     })
   }
 
-  // 语言映射缓存，避免每次渲染都重新计算
+  // 语言选项缓存，避免每次渲染都重新计算
+  private languageOptionsCache: SelectOption[] | null = null;
+  private lastLanguageCache: string = '';
   private languageFieldMap: Map<string, string> = new Map();
 
   convert_ttsLanguagesToOptions(): SelectOption[] {
     const currentLang = AppStorage.get('languages') as string;
 
-    // 检查缓存是否有效
-    if (this.languageFieldMap.size === 0 || !this.languageFieldMap.has('currentLang') ||
-      this.languageFieldMap.get('currentLang') !== currentLang) {
-      // 清空旧缓存
-      this.languageFieldMap.clear();
-      this.languageFieldMap.set('currentLang', currentLang);
+    // 安全检查：确保getModelInfo和transLanguages存在
+    if (!this.getModelInfo?.transLanguages || this.getModelInfo.transLanguages.length === 0) {
+      console.warn('convert_ttsLanguagesToOptions: transLanguages is empty or undefined');
+      return [{ value: '加载中...' }];
     }
 
-    return this.getModelInfo.transLanguages.map((item) => {
-      // 使用缓存获取语言字段
-      const cacheKey = `${item.code}_${currentLang}`;
-      let languageField = this.languageFieldMap.get(cacheKey);
+    // 检查缓存是否仍然有效
+    if (this.languageOptionsCache && this.lastLanguageCache === currentLang &&
+        this.languageOptionsCache.length === this.getModelInfo.transLanguages.length) {
+      return this.languageOptionsCache;
+    }
 
-      if (!languageField) {
-        // 高效的语言字段获取，使用Map替代switch
-        const langMap = new Map([
-          ['FIL_PH', item.nameFil_ph],
-          ['ES_ES', item.nameEs_es],
-          ['JA_JP', item.nameJp],
-          ['ZH_TW', item.nameTw],
-          ['UYGUR', item.nameUygur],
-          ['MO_MO', item.nameMo_mo],
-          ['RU_RU', item.nameRu_ru],
-          ['IT_IT', item.nameIt_it],
-          ['ZH_TI', item.nameZh_ti],
-          ['EN_US', item.nameEn],
-          ['MAY_MAY', item.nameMay_may],
-          ['AR_SA', item.nameAr_sa],
-          ['DE_DE', item.nameDe_de],
-          ['KO_KR', item.nameKo_kr],
-          ['ID_ID', item.nameId_id],
-          ['TR_TR', item.nameTr_tr],
-          ['KA_KA', item.nameKa_ka],
-          ['FR_FR', item.nameFr_fr],
-          ['MN_MN', item.nameMn_mn],
-          ['TH_TH', item.nameTh_th],
-          ['VI_VN', item.nameVi_vn]
-        ]);
+    // 更新缓存标识
+    this.lastLanguageCache = currentLang;
 
-        languageField = langMap.get(currentLang) || item.name; // 默认中文简体
-        this.languageFieldMap.set(cacheKey, languageField);
+    // 异步计算语言选项，避免阻塞主线程
+    this.updateLanguageOptionsCache(currentLang);
+
+    // 如果缓存还没有准备好，返回临时的默认选项
+    if (!this.languageOptionsCache) {
+      return [{ value: '加载中...' }];
+    }
+
+    return this.languageOptionsCache;
+  }
+
+  // 强制刷新语言选项缓存（当设备信息更新时调用）
+  private invalidateLanguageCache(): void {
+    this.languageOptionsCache = null;
+    this.lastLanguageCache = '';
+  }
+
+  // 异步更新语言选项缓存
+  private updateLanguageOptionsCache(currentLang: string): void {
+    if (this.languageOptionsCache && this.lastLanguageCache === currentLang) {
+      return; // 缓存已是最新的
+    }
+
+    try {
+      // 检查语言字段缓存是否需要更新
+      if (this.languageFieldMap.size === 0 || !this.languageFieldMap.has('currentLang') ||
+        this.languageFieldMap.get('currentLang') !== currentLang) {
+        // 清空旧缓存
+        this.languageFieldMap.clear();
+        this.languageFieldMap.set('currentLang', currentLang);
       }
 
-      return { value: languageField } as SelectOption;
-    });
+      // 计算语言选项
+      this.languageOptionsCache = this.getModelInfo!.transLanguages.map((item) => {
+        // 使用缓存获取语言字段
+        const cacheKey = `${item.code}_${currentLang}`;
+        let languageField = this.languageFieldMap.get(cacheKey);
+
+        if (!languageField) {
+          // 高效的语言字段获取，使用Map替代switch
+          const langMap = new Map([
+            ['FIL_PH', item.nameFil_ph],
+            ['ES_ES', item.nameEs_es],
+            ['JA_JP', item.nameJp],
+            ['ZH_TW', item.nameTw],
+            ['UYGUR', item.nameUygur],
+            ['MO_MO', item.nameMo_mo],
+            ['RU_RU', item.nameRu_ru],
+            ['IT_IT', item.nameIt_it],
+            ['ZH_TI', item.nameZh_ti],
+            ['EN_US', item.nameEn],
+            ['MAY_MAY', item.nameMay_may],
+            ['AR_SA', item.nameAr_sa],
+            ['DE_DE', item.nameDe_de],
+            ['KO_KR', item.nameKo_kr],
+            ['ID_ID', item.nameId_id],
+            ['TR_TR', item.nameTr_tr],
+            ['KA_KA', item.nameKa_ka],
+            ['FR_FR', item.nameFr_fr],
+            ['MN_MN', item.nameMn_mn],
+            ['TH_TH', item.nameTh_th],
+            ['VI_VN', item.nameVi_vn]
+          ]);
+
+          languageField = langMap.get(currentLang) || item.name; // 默认中文简体
+          this.languageFieldMap.set(cacheKey, languageField);
+        }
+
+        return { value: languageField } as SelectOption;
+      });
+    } catch (error) {
+      console.error('updateLanguageOptionsCache error:', error);
+      this.languageOptionsCache = [{ value: '错误' }];
+    }
   }
 
   /**
@@ -485,11 +592,9 @@ struct VoiceTranslation {
       this.translateDebounceTimer = null;
     }
 
-    // 清理初始化定时器
-    if (this.initializationTimer) {
-      clearTimeout(this.initializationTimer);
-      this.initializationTimer = null;
-    }
+    // 清理语言选项缓存
+    this.languageOptionsCache = null;
+    this.languageFieldMap.clear();
 
     // 清理所有设备相关的资源
     try {

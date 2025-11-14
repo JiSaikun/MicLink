@@ -704,29 +704,44 @@ export class AudioWebSocketHandler_ble {
     console.log('设置实时监听器');
 
     this.sendIntervalId = setInterval(async () => {
-      if (this.isSending || this.isClosing) {
-        return;
-      }
+      try {
+        // 检查对象是否仍然有效（防止GC后的访问）
+        if (!this || this.isClosing) {
+          return;
+        }
 
-      // 添加节流控制：确保最小发送间隔
-      const currentTime = Date.now();
-      if (currentTime - this.lastSendTime < this.MIN_SEND_INTERVAL) {
-        return;
-      }
+        if (this.isSending) {
+          return;
+        }
 
-      // 检查会话是否超时，强制清理资源
-      if (currentTime - this.sessionStartTime > this.MAX_SESSION_DURATION) {
-        console.warn('音频处理会话超时，强制清理资源');
-        this.cleanupIntervals();
-        return;
-      }
+        // 添加节流控制：确保最小发送间隔
+        const currentTime = Date.now();
+        if (currentTime - this.lastSendTime < this.MIN_SEND_INTERVAL) {
+          return;
+        }
 
-      // 检查是否有新数据（基于采样点总数）
-      const totalSamples = this.getTotalSamples();
+        // 检查会话是否超时，强制清理资源
+        if (currentTime - this.sessionStartTime > this.MAX_SESSION_DURATION) {
+          console.warn('音频处理会话超时，强制清理资源');
+          if (this && this.cleanupIntervals) {
+            this.cleanupIntervals();
+          }
+          return;
+        }
 
-      if (totalSamples > this.lastSentSampleIndex) {
-        this.lastSendTime = currentTime;
-        await this.sendNewDataImmediately();
+        // 检查是否有新数据（基于采样点总数）
+        const totalSamples = this.getTotalSamples();
+
+        if (totalSamples > this.lastSentSampleIndex) {
+          this.lastSendTime = currentTime;
+          await this.sendNewDataImmediately();
+        }
+      } catch (error) {
+        console.error('蓝牙实时监听器回调异常:', error);
+        // 如果出现异常，清理定时器
+        if (this && this.cleanupIntervals) {
+          this.cleanupIntervals();
+        }
       }
     }, CHECK_INTERVAL_MS) as number;
   }
@@ -783,57 +798,70 @@ export class AudioWebSocketHandler_ble {
     let stableCount = 0;
 
     this.completionCheckId = setInterval(() => {
-      if (this.isClosing) {
-        this.cleanupIntervals();
-        return;
-      }
-
-      // 添加节流控制：确保最小检查间隔
-      const currentTime = Date.now();
-      if (currentTime - this.lastCheckTime < this.MIN_CHECK_INTERVAL) {
-        return;
-      }
-
-      // 检查会话是否超时，强制清理资源
-      if (currentTime - this.sessionStartTime > this.MAX_SESSION_DURATION) {
-        console.warn('完成检测会话超时，强制清理资源');
-        this.cleanupIntervals();
-        return;
-      }
-
-      this.lastCheckTime = currentTime;
-
-      // 计算当前总采样点数
-      const currentTotalSamples = this.getTotalSamples();
-
-      // 只有在至少有最小数据量后才开始检测完成，避免误判
-      if (currentTotalSamples < MIN_SAMPLES_FOR_COMPLETION) {
-        // 减少日志输出频率
-        if (stableCount % 10 === 0) {
-          console.log(`蓝牙采样点不足(${currentTotalSamples}/${MIN_SAMPLES_FOR_COMPLETION})，继续等待...`);
-        }
-        return;
-      }
-
-      if (currentTotalSamples === lastTotalSamples) {
-        stableCount++;
-
-        // 每200ms输出一次日志，减少日志量
-        if (stableCount % 10 === 0 || stableCount >= MAX_STABLE_COUNT) {
-          console.log(`蓝牙数据稳定计数: ${stableCount}/${MAX_STABLE_COUNT} (${stableCount * CHECK_INTERVAL_MS}ms)`);
+      try {
+        // 检查对象是否仍然有效（防止GC后的访问）
+        if (!this || this.isClosing) {
+          if (this && this.cleanupIntervals) {
+            this.cleanupIntervals();
+          }
+          return;
         }
 
-        if (stableCount >= MAX_STABLE_COUNT) {
-          console.log(`蓝牙数据稳定超过${MAX_STABLE_COUNT * CHECK_INTERVAL_MS}ms，发送结束标记`);
-          this.sendEndMarker();
+        // 添加节流控制：确保最小检查间隔
+        const currentTime = Date.now();
+        if (currentTime - this.lastCheckTime < this.MIN_CHECK_INTERVAL) {
+          return;
+        }
+
+        // 检查会话是否超时，强制清理资源
+        if (currentTime - this.sessionStartTime > this.MAX_SESSION_DURATION) {
+          console.warn('完成检测会话超时，强制清理资源');
+          if (this && this.cleanupIntervals) {
+            this.cleanupIntervals();
+          }
+          return;
+        }
+
+        this.lastCheckTime = currentTime;
+
+        // 计算当前总采样点数
+        const currentTotalSamples = this.getTotalSamples();
+
+        // 只有在至少有最小数据量后才开始检测完成，避免误判
+        if (currentTotalSamples < MIN_SAMPLES_FOR_COMPLETION) {
+          // 减少日志输出频率
+          if (stableCount % 10 === 0) {
+            console.log(`蓝牙采样点不足(${currentTotalSamples}/${MIN_SAMPLES_FOR_COMPLETION})，继续等待...`);
+          }
+          return;
+        }
+
+        if (currentTotalSamples === lastTotalSamples) {
+          stableCount++;
+
+          // 每200ms输出一次日志，减少日志量
+          if (stableCount % 10 === 0 || stableCount >= MAX_STABLE_COUNT) {
+            console.log(`蓝牙数据稳定计数: ${stableCount}/${MAX_STABLE_COUNT} (${stableCount * CHECK_INTERVAL_MS}ms)`);
+          }
+
+          if (stableCount >= MAX_STABLE_COUNT) {
+            console.log(`蓝牙数据稳定超过${MAX_STABLE_COUNT * CHECK_INTERVAL_MS}ms，发送结束标记`);
+            this.sendEndMarker();
+            this.cleanupIntervals();
+          }
+        } else {
+          if (stableCount > 0 && stableCount % 5 === 0) { // 减少日志输出
+            console.log(`蓝牙接收到新数据，重置稳定计数 (之前: ${stableCount})，当前采样点数: ${currentTotalSamples}`);
+          }
+          stableCount = 0;
+          lastTotalSamples = currentTotalSamples;
+        }
+      } catch (error) {
+        console.error('蓝牙完成检测回调异常:', error);
+        // 如果出现异常，清理定时器
+        if (this && this.cleanupIntervals) {
           this.cleanupIntervals();
         }
-      } else {
-        if (stableCount > 0 && stableCount % 5 === 0) { // 减少日志输出
-          console.log(`蓝牙接收到新数据，重置稳定计数 (之前: ${stableCount})，当前采样点数: ${currentTotalSamples}`);
-        }
-        stableCount = 0;
-        lastTotalSamples = currentTotalSamples;
       }
     }, CHECK_INTERVAL_MS) as number;
   }

@@ -741,13 +741,26 @@ export class AudioWebSocketHandler {
     console.log('设置实时监听器');
 
     this.sendIntervalId = setInterval(async () => {
-      if (this.isSending || this.isClosing || this.lastSentIndex < 0 || !this.ws) {
-        return;
-      }
+      try {
+        // 检查对象是否仍然有效（防止GC后的访问）
+        if (!this || this.isClosing || this.lastSentIndex < 0 || !this.ws) {
+          return;
+        }
 
-      // 检查是否有新数据
-      if (this.audioData.length > this.lastSentIndex) {
-        await this.sendNewDataImmediately();
+        if (this.isSending) {
+          return;
+        }
+
+        // 检查是否有新数据
+        if (this.audioData && this.audioData.length > this.lastSentIndex) {
+          await this.sendNewDataImmediately();
+        }
+      } catch (error) {
+        console.error('实时监听器回调异常:', error);
+        // 如果出现异常，清理定时器
+        if (this && this.cleanupIntervals) {
+          this.cleanupIntervals();
+        }
       }
     }, this.CHECK_INTERVAL_MS) as number;
   }
@@ -801,10 +814,14 @@ export class AudioWebSocketHandler {
     const initialDelayMax = 25; // 500ms初始延迟 (20ms * 25)
 
     this.completionCheckId = setInterval(() => {
-      if (this.isClosing || this.lastSentIndex < 0 || !this.ws) {
-        this.cleanupIntervals();
-        return;
-      }
+      try {
+        // 检查对象是否仍然有效（防止GC后的访问）
+        if (!this || this.isClosing || this.lastSentIndex < 0 || !this.ws) {
+          if (this && this.cleanupIntervals) {
+            this.cleanupIntervals();
+          }
+          return;
+        }
 
       // 初始延迟，让数据有时间积累
       initialDelayCount++;
@@ -841,6 +858,13 @@ export class AudioWebSocketHandler {
         }
         stableCount = 0;
         lastDataLength = currentLength;
+      }
+      } catch (error) {
+        console.error('完成检测回调异常:', error);
+        // 如果出现异常，清理定时器
+        if (this && this.cleanupIntervals) {
+          this.cleanupIntervals();
+        }
       }
     }, this.CHECK_INTERVAL_MS) as number;
   }
