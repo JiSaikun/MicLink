@@ -470,13 +470,37 @@ struct VoiceTranslation {
 
   // 页面销毁时清理资源
   onDestroy(): void {
+    console.log('VoiceTranslation页面正在销毁，清理所有资源...');
+
+    // 清理翻译防抖定时器
     if (this.translateDebounceTimer) {
       clearTimeout(this.translateDebounceTimer);
       this.translateDebounceTimer = null;
     }
+
+    // 清理初始化定时器
     if (this.initializationTimer) {
       clearTimeout(this.initializationTimer);
       this.initializationTimer = null;
     }
+
+    // 清理所有Communication对象的资源
+    try {
+      if (ConnectDevice && ConnectDevice.Communication) {
+        for (let i = 0; i < ConnectDevice.Communication.length; i++) {
+          const comm = ConnectDevice.Communication[i];
+          if (comm && comm.Communication && typeof comm.Communication.dispose === 'function') {
+            console.log(`清理Communication对象 ${i}...`);
+            comm.Communication.dispose();
+          }
+        }
+        // 清空数组
+        ConnectDevice.Communication = [];
+      }
+    } catch (error) {
+      console.error('清理Communication对象时出错:', error);
+    }
+
+    console.log('VoiceTranslation页面资源清理完成');
   }
 }

@@ -382,11 +382,47 @@ export class Communication {
   // 心跳重连机制相关属性 - 使用 number 类型代替 NodeJS.Timeout
   private heartbeatTimer: number | null = null;
   private lastReceivedTime: number = 0;
+  private lastHeartbeatSentTime: number = 0; // 最后发送心跳包的时间
   private readonly HEARTBEAT_CHECK_INTERVAL: number = 5000; // 5秒检查一次
   private readonly HEARTBEAT_TIMEOUT: number = 15000; // 15秒超时
+  private readonly HEARTBEAT_SEND_INTERVAL: number = 15000; // 两次心跳包发送间隔15秒
   private isHeartbeatRunning: boolean = false;
   private reconnectAttempts: number = 0;
   private readonly MAX_RECONNECT_ATTEMPTS: number = 5;
+  private consecutiveFailures: number = 0;
+  private readonly MAX_CONSECUTIVE_FAILURES: number = 10; // 连续失败10次后停止通信
+
+  // 清理所有定时器和资源
+  public dispose(): void {
+    console.log('Communication对象正在清理资源...');
+
+    // 停止心跳检测
+    this.stopHeartbeatCheck();
+
+    // 清理所有待处理的定时器
+    if (this.heartbeatTimer !== null) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
+
+    // 关闭USB连接
+    if (this.devicePipe) {
+      try {
+        usbManager.closePipe(this.devicePipe);
+        this.devicePipe = null;
+      } catch (error) {
+        console.error('清理USB连接时出错:', error);
+      }
+    }
+
+    // 重置状态
+    this.sendState = false;
+    this.readState = false;
+    this.isHeartbeatRunning = false;
+    this.consecutiveFailures = 0;
+
+    console.log('Communication对象资源清理完成');
+  }
 
   // 构建命令帧的通用方法
   private buildCommandFrame(cmd: number[], length: number): Uint8Array {
@@ -435,12 +471,23 @@ export class Communication {
     }
 
     try {
-      this.devicePipe = usbManager.connectDevice(this.targetDevice);
+      // USB设备连接可能耗时，添加超时保护
+      const usbConnectTimeout = 5000; // 5秒超时，USB连接需要更长时间
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('USB设备连接超时')), usbConnectTimeout);
+      });
+
+      const connectPromise = Promise.resolve().then(() => {
+        return usbManager.connectDevice(this.targetDevice);
+      });
+
+      this.devicePipe = await Promise.race([connectPromise, timeoutPromise]);
       console.log('设备连接成功', JSON.stringify(this.devicePipe));
       hilog.info(0x0000, 'USB', 'Device connected successfully');
 
-      // 重置重连尝试次数
+      // 重置重连尝试次数和连续失败计数器
       this.reconnectAttempts = 0;
+      this.consecutiveFailures = 0;
 
       AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DEFAULT)
 
@@ -467,7 +514,7 @@ export class Communication {
 
       // 连接成功后启动心跳检测
       this.startHeartbeatCheck();
-      this.getDeviceInfo()
+      await this.getDeviceInfo()
     } catch (error) {
       console.error('设备连接失败:', error);
       await this.handleConnectionError();
@@ -478,6 +525,7 @@ export class Communication {
     this.device_currIndex = device_currIndex;
     this.targetDevice = targetDevice;
     this.lastReceivedTime = Date.now(); // 初始化最后接收时间
+    this.lastHeartbeatSentTime = Date.now(); // 初始化最后心跳发送时间
   }
 
   // 启动心跳检测
@@ -525,13 +573,19 @@ export class Communication {
 
     const currentTime = Date.now();
     const timeSinceLastReceive = currentTime - this.lastReceivedTime;
+    const timeSinceLastHeartbeat = currentTime - this.lastHeartbeatSentTime;
 
-    console.log(`心跳检查: 上次接收时间 ${timeSinceLastReceive}ms 前`);
+    console.log(`心跳检查: 上次接收时间 ${timeSinceLastReceive}ms 前，上次心跳发送 ${timeSinceLastHeartbeat}ms 前`);
 
-    if (timeSinceLastReceive > this.HEARTBEAT_TIMEOUT) {
-      console.log(`心跳超时（${timeSinceLastReceive}ms 未收到消息），发送心跳包查询设备信息`);
+    // 检查是否满足发送心跳包的条件：
+    // 1. 距离上次接收数据超过15秒（超时）
+    // 2. 距离上次发送心跳包超过15秒（避免频繁发送）
+    if (timeSinceLastReceive > this.HEARTBEAT_TIMEOUT && timeSinceLastHeartbeat > this.HEARTBEAT_SEND_INTERVAL) {
+      console.log(`心跳超时（${timeSinceLastReceive}ms 未收到消息，且距离上次心跳发送已过${timeSinceLastHeartbeat}ms），发送心跳包查询设备信息`);
       // 发送心跳包，查询设备信息，发送成功后会自动更新lastReceivedTime
       this.sendHeartbeatTest();
+    } else if (timeSinceLastReceive > this.HEARTBEAT_TIMEOUT) {
+      console.log(`心跳超时但距离上次心跳发送不足${this.HEARTBEAT_SEND_INTERVAL}ms（还需等待${this.HEARTBEAT_SEND_INTERVAL - timeSinceLastHeartbeat}ms），跳过此次心跳包发送`);
     } else {
       // 连接正常，不需要发送心跳包
       console.log('连接正常，无需发送心跳包');
@@ -542,6 +596,8 @@ export class Communication {
   private sendHeartbeatTest(): void {
     if (!this.sendState && this.devicePipe) {
       console.log('发送心跳包: 0x61命令（获取设备基本信息）');
+      // 记录心跳包发送时间
+      this.lastHeartbeatSentTime = Date.now();
       this.getDeviceInfo([0x61]); // 使用获取设备基本信息作为心跳测试
     } else {
       console.log('当前正在发送数据或设备未连接，跳过心跳包发送');
@@ -701,26 +757,73 @@ export class Communication {
       return -1;
     }
 
+    // 检查连续失败次数，如果超过阈值则停止通信
+    if (this.consecutiveFailures >= this.MAX_CONSECUTIVE_FAILURES) {
+      console.error(`连续通信失败次数达到 ${this.MAX_CONSECUTIVE_FAILURES} 次，停止USB通信`);
+      this.sendState = false;
+      this.readState = false;
+      return -1;
+    }
+
     try {
       const claimResult = usbManager.claimInterface(this.devicePipe, iface, true);
       console.log('================================================发送建立信息发送通道信息前，建立信息发送通道：',
         claimResult);
 
       if (claimResult === 0) {
-        const cmdData = this.buildCommandFrame(command, length);
-        const cmdData_21 = this.buildCommandFrame(command, 21);
-        const hexString = Array.from(cmdData).map(b => b.toString(16).padStart(2, '0')).join(' ');
-        const hexString_21 = Array.from(cmdData_21).map(b => b.toString(16).padStart(2, '0')).join(' ');
-        console.log('\n', `发送命令 0x${command[0].toString(16)}:`, hexString, '\n',
-          `发送命令 0x${command[0].toString(16)}:`, hexString_21);
+        // 异步构建命令帧，避免大数据处理阻塞
+        const cmdDataPromise = Promise.resolve().then(() => this.buildCommandFrame(command, length));
+        const cmdData21Promise = Promise.resolve().then(() => this.buildCommandFrame(command, 21));
+
+        const results = await Promise.all([cmdDataPromise, cmdData21Promise]);
+        const cmdData = results[0];
+        const cmdData_21 = results[1];
+        // 优化日志输出，避免大数据时的性能问题
+        if (cmdData.length <= 64) { // 只在小数据量时输出详细日志
+          const hexString = Array.from(cmdData).map(b => b.toString(16).padStart(2, '0')).join(' ');
+          const hexString_21 = Array.from(cmdData_21).map(b => b.toString(16).padStart(2, '0')).join(' ');
+          console.log('\n', `发送命令 0x${command[0].toString(16)}:`, hexString, '\n',
+            `发送命令 0x${command[0].toString(16)}:`, hexString_21);
+        } else {
+          console.log(`发送命令 0x${command[0].toString(16)}: ${cmdData.length}字节`);
+        }
         console.log('`````````````````````````````````````````````````````````````等待发送的命令:',
           this.sendDataList.length);
 
-        const result = await usbManager.bulkTransfer(this.devicePipe, endpoint, cmdData, 2000);
-        const result_21 = await usbManager.bulkTransfer(this.devicePipe, endpoint, cmdData_21, 2000);
+        // 增加超时时间，避免USB设备响应慢时频繁超时，并添加额外超时保护
+        const usbTimeout = 2000; // 2秒额外超时保护
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error('USB发送超时')), usbTimeout);
+        });
 
-        console.log('发送命令成功:33-----usbManager.bulkTransfer()返回发送的数据的长度:', result);
-        console.log('发送命令成功:21-----usbManager.bulkTransfer()返回发送的数据的长度:', result_21);
+        let result = -1;
+        let result_21 = -1;
+
+        try {
+          const sendPromise = usbManager.bulkTransfer(this.devicePipe, endpoint, cmdData, 500);
+          result = await Promise.race([sendPromise, timeoutPromise]);
+          console.log('发送命令成功:33-----usbManager.bulkTransfer()返回发送的数据的长度:', result);
+          this.consecutiveFailures = 0; // 成功时重置连续失败计数器
+        } catch (error) {
+          console.error('USB发送33字节命令超时或失败:', error);
+          this.sendState = false;
+          this.consecutiveFailures++;
+          console.log(`连续通信失败次数: ${this.consecutiveFailures}/${this.MAX_CONSECUTIVE_FAILURES}`);
+          return -1;
+        }
+
+        try {
+          const sendPromise21 = usbManager.bulkTransfer(this.devicePipe, endpoint, cmdData_21, 500);
+          result_21 = await Promise.race([sendPromise21, timeoutPromise]);
+          console.log('发送命令成功:21-----usbManager.bulkTransfer()返回发送的数据的长度:', result_21);
+          this.consecutiveFailures = 0; // 成功时重置连续失败计数器
+        } catch (error) {
+          console.error('USB发送21字节命令超时或失败:', error);
+          this.sendState = false;
+          this.consecutiveFailures++;
+          console.log(`连续通信失败次数: ${this.consecutiveFailures}/${this.MAX_CONSECUTIVE_FAILURES}`);
+          return -1;
+        }
 
         this.sendState = false;
 
@@ -754,6 +857,14 @@ export class Communication {
       return -1;
     }
 
+    // 检查连续失败次数，如果超过阈值则停止通信
+    if (this.consecutiveFailures >= this.MAX_CONSECUTIVE_FAILURES) {
+      console.error(`连续通信失败次数达到 ${this.MAX_CONSECUTIVE_FAILURES} 次，停止USB通信`);
+      this.sendState = false;
+      this.readState = false;
+      return -1;
+    }
+
     this.readState = true;
 
     try {
@@ -764,13 +875,34 @@ export class Communication {
 
       if (claimResult === 0) {
         const buffer = new Uint8Array(64);
-        const result = await usbManager.bulkTransfer(this.devicePipe, endpoint, buffer, 5000);
+        // 增加超时时间，避免USB设备响应慢时频繁超时，并添加额外超时保护
+        const usbReadTimeout = 2500; // 2.5秒额外超时保护
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error('USB读取超时')), usbReadTimeout);
+        });
 
-        console.log('读取数据结果,读取到的数据的长度:', result);
+        let result: number;
+        try {
+          const readPromise = usbManager.bulkTransfer(this.devicePipe, endpoint, buffer, 1000);
+          result = await Promise.race([readPromise, timeoutPromise]);
+          console.log('读取数据结果,读取到的数据的长度:', result);
+          this.consecutiveFailures = 0; // 成功时重置连续失败计数器
+        } catch (error) {
+          console.error('USB读取数据超时或失败:', error);
+          this.readState = false;
+          this.consecutiveFailures++;
+          console.log(`连续通信失败次数: ${this.consecutiveFailures}/${this.MAX_CONSECUTIVE_FAILURES}`);
+          return -1;
+        }
 
         if (result > 0) {
-          const hexData = Array.from(buffer.slice(0, result)).map(b => b.toString(16).padStart(2, '0')).join(' ');
-          console.log('接收到的数据展示:', hexData);
+          // 优化日志输出，避免大数据时的性能问题
+          if (result <= 64) { // 只在小数据量时输出详细日志
+            const hexData = Array.from(buffer.slice(0, result)).map(b => b.toString(16).padStart(2, '0')).join(' ');
+            console.log('接收到的数据展示:', hexData);
+          } else {
+            console.log(`接收到数据: ${result}字节`);
+          }
 
           // 更新最后接收时间 - 重要：每次成功接收数据都更新
           this.updateLastReceivedTime();
@@ -870,7 +1002,11 @@ export class Communication {
       return;
     }
 
-    const hexData = Array.from(data).map(b => b.toString(16).padStart(2, '0')).join(' ');
+    // 优化大数据日志输出性能
+    let hexData = '';
+    if (data.length <= 64) {
+      hexData = Array.from(data).map(b => b.toString(16).padStart(2, '0')).join(' ');
+    }
 
     try {
       // 检查帧头F
@@ -878,7 +1014,19 @@ export class Communication {
         if (this.audioDataState) {
           console.log('****************************语音数据****************************');
           console.log('接收到音频数据');
-          this.processAudioData(data);
+          // 异步处理音频数据，避免阻塞主线程
+          const audioProcessingTimeout = 2000; // 2秒超时
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error('音频处理超时')), audioProcessingTimeout);
+          });
+
+          const processPromise = Promise.resolve().then(() => {
+            this.processAudioData(data);
+          });
+
+          Promise.race([processPromise, timeoutPromise]).catch(() => {
+            console.error('音频处理失败或超时:');
+          });
         }
         return;
       }
@@ -1907,7 +2055,10 @@ export class Communication {
 
       if (pcmData) {
         // 处理PCM数据（播放或保存）
-        console.log(`解码得到PCM数据: ${pcmData.length}个样本`, '\n', '具体数据：', pcmData);
+        // 减少日志输出以提高性能，只在调试时启用
+        if (pcmData.length > 0) {
+          console.log(`解码得到PCM数据: ${pcmData.length}个样本`);
+        }
         // 这里可以添加播放或保存PCM数据的逻辑
         Communication.audioData.push(pcmData);
       }
