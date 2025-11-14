@@ -81,6 +81,7 @@ export class AudioWebSocketHandler {
   private pendingChunks: Int16Array[][] = [];
   private lastSentIndex: number = 0; // 记录已发送的位置
   private completionCheckId: number | null = null;
+  private pendingInitTimerId: number | null = null; // 初始化延迟定时器
   private isClosing: boolean = false; // 新增：标记是否正在关闭
 
   // 优化配置 - 1024字节分片
@@ -489,6 +490,10 @@ export class AudioWebSocketHandler {
       clearInterval(this.completionCheckId);
       this.completionCheckId = null;
     }
+    if (this.pendingInitTimerId !== null) {
+      clearTimeout(this.pendingInitTimerId);
+      this.pendingInitTimerId = null;
+    }
   }
 
   public sendMessage(inputMessage: inputMessageModel): boolean {
@@ -662,18 +667,27 @@ export class AudioWebSocketHandler {
   private startRealTimeAudioSending(): void {
     console.log('开始实时音频发送 - 1024字节分片');
 
-    // 立即发送现有数据
-    this.sendExistingDataImmediately();
+    // 延迟一小段时间，让音频数据有时间积累
+    const initTimerId = setTimeout(async () => {
+      // 检查对象是否仍然有效
+      if (this.isClosing || !this.ws || this.lastSentIndex < 0) return;
 
-    // 设置实时监听新数据
-    this.setupRealTimeListener();
+      // 发送现有数据（如果有的话）
+      await this.sendExistingDataIfAvailable();
 
-    // 设置完成检测
-    this.setupCompletionDetection();
+      // 设置实时监听新数据
+      this.setupRealTimeListener();
+
+      // 设置完成检测
+      this.setupCompletionDetection();
+    }, 500); // 500ms延迟，让数据有时间积累
+
+    // 存储初始化定时器ID以便清理
+    this.pendingInitTimerId = initTimerId;
   }
 
-  private async sendExistingDataImmediately(): Promise<void> {
-    if (this.audioData.length === 0) {
+  private async sendExistingDataIfAvailable(): Promise<void> {
+    if (this.audioData.length === 0 || this.isClosing || this.lastSentIndex < 0 || !this.ws) {
       return;
     }
 
@@ -715,7 +729,7 @@ export class AudioWebSocketHandler {
     console.log('设置实时监听器');
 
     this.sendIntervalId = setInterval(async () => {
-      if (this.isSending || this.isClosing) {
+      if (this.isSending || this.isClosing || this.lastSentIndex < 0 || !this.ws) {
         return;
       }
 
@@ -771,11 +785,19 @@ export class AudioWebSocketHandler {
     let lastDataLength = this.audioData.length;
     let stableCount = 0;
     const maxStableCount = 50; // 1000ms无新数据 (20ms * 50) - 增加到1秒，防止长语音截断
+    let initialDelayCount = 0;
+    const initialDelayMax = 25; // 500ms初始延迟 (20ms * 25)
 
     this.completionCheckId = setInterval(() => {
-      if (this.isClosing) {
+      if (this.isClosing || this.lastSentIndex < 0 || !this.ws) {
         this.cleanupIntervals();
         return;
+      }
+
+      // 初始延迟，让数据有时间积累
+      initialDelayCount++;
+      if (initialDelayCount < initialDelayMax) {
+        return; // 跳过初始延迟期间的检查
       }
 
       const currentLength = this.audioData.length;
@@ -882,14 +904,17 @@ export class AudioWebSocketHandler {
   // 清理资源
   public destroy(): void {
     console.log('开始销毁AudioWebSocketHandler');
+
+    // 立即标记对象为无效状态，防止定时器回调继续执行
+    this.lastSentIndex = -1; // 无效标记
+    this.isClosing = true;
+
     this.disconnectAsync().then(() => {
       // 清理音频数据
       this.audioData = [];
       this.pendingChunks = [];
       this.isSending = false;
       this.ws = null;
-      this.lastSentIndex = 0;
-      this.isClosing = false;
       console.log('AudioWebSocketHandler资源已完全清理');
     });
   }

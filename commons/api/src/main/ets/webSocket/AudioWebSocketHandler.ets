@@ -308,6 +308,23 @@ export class AudioWebSocketHandler {
       }
     }
   }
+
+  // 清理资源
+  public destroy(): void {
+    console.log('开始销毁AudioWebSocketHandler (api版本)');
+    if (this.ws) {
+      try {
+        this.ws.close();
+      } catch (error) {
+        console.error('关闭WebSocket连接时出错:', error);
+      }
+    }
+    // 清理音频数据
+    this.audioData = [];
+    this.ws = null;
+    this.isConnected = false;
+    console.log('AudioWebSocketHandler (api版本) 资源已完全清理');
+  }
 }
 
 /**
@@ -359,4 +376,3 @@ export class AudioWebSocketHandler {
 //     "status": 200
 //   }
 // ]
-

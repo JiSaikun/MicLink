@@ -484,21 +484,35 @@ struct VoiceTranslation {
       this.initializationTimer = null;
     }
 
-    // 清理所有Communication对象的资源
+    // 清理所有设备相关的资源
     try {
+      // 清理ConnectDevice.Communication中的USB设备
       if (ConnectDevice && ConnectDevice.Communication) {
         for (let i = 0; i < ConnectDevice.Communication.length; i++) {
-          const comm = ConnectDevice.Communication[i];
-          if (comm && comm.Communication && typeof comm.Communication.dispose === 'function') {
+          const device = ConnectDevice.Communication[i];
+          if (device && device.Communication && typeof device.Communication.dispose === 'function') {
             console.log(`清理Communication对象 ${i}...`);
-            comm.Communication.dispose();
+            device.Communication.dispose();
           }
         }
         // 清空数组
         ConnectDevice.Communication = [];
       }
+
+      // 清理AppStorage中的蓝牙设备
+      const devicesInStorage = AppStorage.get('devices') as DeviceArrayType_Ble[] || [];
+      for (let i = 0; i < devicesInStorage.length; i++) {
+        const device = devicesInStorage[i];
+        if (device && device.BlueTooth_devices && typeof device.BlueTooth_devices.dispose === 'function') {
+          console.log(`清理AppStorage中的BlueTooth_devices对象 ${i}...`);
+          device.BlueTooth_devices.dispose();
+        }
+      }
+      // 清空AppStorage中的设备列表
+      AppStorage.setOrCreate('devices', []);
+
     } catch (error) {
-      console.error('清理Communication对象时出错:', error);
+      console.error('清理设备对象时出错:', error);
     }
 
     console.log('VoiceTranslation页面资源清理完成');

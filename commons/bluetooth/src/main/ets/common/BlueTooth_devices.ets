@@ -15,6 +15,7 @@ import {
   SmartMouseAudioProcessor,
   _getModelInfo
 } from 'mouse';
+import { AudioWebSocketHandler_ble } from './AudioWebSocketHandler_ble';
 
 // // 获取设备连接状态
 // try {
@@ -113,11 +114,21 @@ export class BlueTooth_devices {
   private audioProcessor: SmartMouseAudioProcessor = new SmartMouseAudioProcessor();
   static audioData: Int16Array[] = []
 
+  // 特征值变化超时检测
+  private lastCharacteristicChangeTime: number = 0
+  private characteristicTimeoutTimer: number | null = null
+  private readonly CHARACTERISTIC_TIMEOUT: number = 15000 // 15秒超时
+  private audioWebSocketHandler: AudioWebSocketHandler_ble | null = null // 当前的音频WebSocket处理器
+
   constructor(device_address: string) {
     this.device_address = device_address;
   }
 
   CharacteristicChange = (characteristicChangeReq: ble.BLECharacteristic) => {
+    // 更新最后接收特征值变化的时间
+    this.lastCharacteristicChangeTime = Date.now();
+    this.resetCharacteristicTimeout();
+
     let serviceUuid: string = characteristicChangeReq.serviceUuid;
     let characteristicUuid: string = characteristicChangeReq.characteristicUuid;
     let value: Uint8Array = new Uint8Array(characteristicChangeReq.characteristicValue);
@@ -138,6 +149,94 @@ export class BlueTooth_devices {
 
   public closeconnectDevice() {
     this.gattClient?.close()
+    this.stopCharacteristicTimeout();
+  }
+
+  // 设置音频WebSocket处理器
+  public setAudioWebSocketHandler(handler: AudioWebSocketHandler_ble): void {
+    // 如果有旧的处理器，先销毁它
+    if (this.audioWebSocketHandler && this.audioWebSocketHandler !== handler) {
+      console.log('清理旧的音频WebSocket处理器...');
+      this.audioWebSocketHandler.destroy();
+    }
+    this.audioWebSocketHandler = handler;
+  }
+
+  // 清理所有定时器和资源
+  public dispose(): void {
+    console.log('BlueTooth_devices对象正在清理资源...');
+
+    // 停止特征值变化超时检测
+    this.stopCharacteristicTimeout();
+
+    // 清理音频WebSocket处理器
+    if (this.audioWebSocketHandler) {
+      console.log('清理音频WebSocket处理器...');
+      this.audioWebSocketHandler.destroy();
+      this.audioWebSocketHandler = null;
+    }
+
+    // 关闭蓝牙连接
+    this.closeconnectDevice();
+
+    console.log('BlueTooth_devices对象资源清理完成');
+  }
+
+  // 启动特征值变化超时检测
+  private startCharacteristicTimeout(): void {
+    this.lastCharacteristicChangeTime = Date.now();
+    this.stopCharacteristicTimeout(); // 确保之前的定时器被清理
+
+    this.characteristicTimeoutTimer = setTimeout(() => {
+      console.warn(`蓝牙设备 ${this.device_address} 15秒内未收到特征值变化，移除设备`);
+      this.removeDeviceFromList();
+    }, this.CHARACTERISTIC_TIMEOUT) as number;
+  }
+
+  // 重置特征值变化超时检测
+  private resetCharacteristicTimeout(): void {
+    if (this.characteristicTimeoutTimer !== null) {
+      clearTimeout(this.characteristicTimeoutTimer);
+      this.characteristicTimeoutTimer = null;
+    }
+
+    // 重新启动超时检测
+    this.characteristicTimeoutTimer = setTimeout(() => {
+      console.warn(`蓝牙设备 ${this.device_address} 15秒内未收到特征值变化，移除设备`);
+      this.removeDeviceFromList();
+    }, this.CHARACTERISTIC_TIMEOUT) as number;
+  }
+
+  // 停止特征值变化超时检测
+  private stopCharacteristicTimeout(): void {
+    if (this.characteristicTimeoutTimer !== null) {
+      clearTimeout(this.characteristicTimeoutTimer);
+      this.characteristicTimeoutTimer = null;
+    }
+  }
+
+  // 从设备列表中移除设备
+  private removeDeviceFromList(): void {
+    try {
+      const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || [];
+      const deviceIndex = currentDevices.findIndex(device =>
+        device.BlueTooth_devices?.device_address === this.device_address
+      );
+
+      if (deviceIndex !== -1) {
+        console.log(`从设备列表中移除蓝牙设备: ${this.device_address}`);
+        currentDevices.splice(deviceIndex, 1);
+
+        // 更新AppStorage以触发UI更新
+        const newDevices = deepCopyDevices(currentDevices);
+        AppStorage.setOrCreate('devices', newDevices);
+
+        // 清理连接
+        this.closeconnectDevice();
+      }
+    } catch (error) {
+      console.error('移除蓝牙设备时出错:', error);
+    }
   }
 
   public parseDeviceInfo(data: Uint8Array): void {
@@ -1391,6 +1490,8 @@ export class BlueTooth_devices {
     // 连接状态: 0=断开, 1=连接中, 2=已连接, 3=断开中
     if (connectState === 2) {
       console.info('蓝牙设备连接成功，准备获取服务');
+      // 连接成功时启动特征值变化超时检测
+      this.startCharacteristicTimeout();
       // 连接成功时，延迟一小段时间再获取服务，确保连接完全稳定
       const self = this;
       setTimeout(() => {
@@ -1411,6 +1512,8 @@ export class BlueTooth_devices {
       }
     } else if (connectState === 0) {
       console.info('检测到蓝牙连接断开');
+      // 连接断开时停止特征值变化超时检测
+      this.stopCharacteristicTimeout();
       // 连接断开时更新设备连接状态
       try {
         if ((AppStorage.get('devices') as DeviceArrayType_Ble[]) &&

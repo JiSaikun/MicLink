@@ -391,6 +391,17 @@ export class Communication {
   private readonly MAX_RECONNECT_ATTEMPTS: number = 5;
   private consecutiveFailures: number = 0;
   private readonly MAX_CONSECUTIVE_FAILURES: number = 10; // 连续失败10次后停止通信
+  private audioWebSocketHandler: AudioWebSocketHandler | null = null // 当前的音频WebSocket处理器
+
+  // 设置音频WebSocket处理器
+  public setAudioWebSocketHandler(handler: AudioWebSocketHandler): void {
+    // 如果有旧的处理器，先销毁它
+    if (this.audioWebSocketHandler && this.audioWebSocketHandler !== handler && typeof this.audioWebSocketHandler.destroy === 'function') {
+      console.log('清理旧的音频WebSocket处理器...');
+      this.audioWebSocketHandler.destroy();
+    }
+    this.audioWebSocketHandler = handler;
+  }
 
   // 清理所有定时器和资源
   public dispose(): void {
@@ -403,6 +414,13 @@ export class Communication {
     if (this.heartbeatTimer !== null) {
       clearInterval(this.heartbeatTimer);
       this.heartbeatTimer = null;
+    }
+
+    // 清理音频WebSocket处理器
+    if (this.audioWebSocketHandler && typeof this.audioWebSocketHandler.destroy === 'function') {
+      console.log('清理音频WebSocket处理器...');
+      this.audioWebSocketHandler.destroy();
+      this.audioWebSocketHandler = null;
     }
 
     // 关闭USB连接
