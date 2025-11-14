@@ -59,7 +59,7 @@ export class _KeyMethodConfig {
               "language": state ? AppStorage.get('from_languages') as string :
               (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages,
               "end": false,
-              "rate": "8k",
+              "rate": (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_show_currIndex') as number].BlueTooth_devices.deviceInfo.sampleRate?"16k":"8k",
               "deviceNo": "6c:b1:33:9f:b9:8b",
               content: ''
             }
@@ -75,13 +75,6 @@ export class _KeyMethodConfig {
             Communication.audioData = []
             ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState =
               !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState
-            /**
-             * 语音数据处理
-             */
-            //保存本地PCM文件
-            // const context = AppStorage.get('context') as common.UIAbilityContext;
-            // let a: AudioFileManager = new AudioFileManager(Communication.audioData, context)
-            // console.log(Communication.audioData.length.toString(), '语音数据结束*****模拟')
             //WebSocket  语音数据处理
             let inputMessage: inputMessageModel = {
               start: false,
@@ -97,7 +90,7 @@ export class _KeyMethodConfig {
               "language": state ? AppStorage.get('from_languages') as string :
               ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages,
               "end": false,
-              "rate": "16k",
+              "rate":ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.deviceInfo.sampleRate? "16k":"8k",
               "deviceNo": "6c:b1:33:9f:b9:8b",
               content: ''
             }
@@ -237,7 +230,7 @@ export class _KeyMethodConfig {
         "language": state ? AppStorage.get('from_languages') as string :
         (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages,
         "end": false,
-        "rate": "8k",
+        "rate": (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_show_currIndex') as number].BlueTooth_devices.deviceInfo.sampleRate?"16k":"8k",
         "deviceNo": "6c:b1:33:9f:b9:8b",
         content: ''
       }
@@ -261,7 +254,7 @@ export class _KeyMethodConfig {
         "language": state ? AppStorage.get('from_languages') as string :
         ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages,
         "end": false,
-        "rate": "16k",
+        "rate": ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.deviceInfo.sampleRate? "16k":"8k",
         "deviceNo": "6c:b1:33:9f:b9:8b",
         content: ''
       }
