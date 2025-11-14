@@ -25,13 +25,38 @@ struct VoiceTranslation {
   @Watch('changeLanguages') @StorageLink('wordScan_from_languages') wordScan_from_languages: string = 'ZH_CN' //翻译源语言
   @Watch('changeLanguages') @StorageLink('wordScan_to_languages') wordScan_to_languages: string = 'EN_US' //翻译目标语言
 
+  // 初始化控制标志，避免启动时的@Watch触发
+  private isInitialized: boolean = false
+  private initializationTimer: number | null = null
+
   // 防抖定时器，避免频繁触发翻译请求
   private translateDebounceTimer: number | null = null
   // 1. 初始化滚动控制器
   private scroller_to: Scroller = new Scroller();
   private scroller_from: Scroller = new Scroller();
 
+  private initializeDeviceInfo(): void {
+    try {
+      if (AppStorage.get('device_isBle')) {
+        this.getModelInfo =
+          (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number ||
+            0].getModelInfo as getModelInfoModel
+      } else {
+        this.getModelInfo =
+          ConnectDevice.Communication[AppStorage.get('device_currIndex') as number || 0].getModelInfo as getModelInfoModel
+      }
+    } catch (error) {
+      console.error('Failed to initialize device info:', error)
+    }
+  }
+
   changeLanguages() {
+    // 在初始化完成前跳过@Watch触发，避免阻塞UI加载
+    if (!this.isInitialized) {
+      console.log('Skipping changeLanguages during initialization')
+      return
+    }
+
     // 清除之前的定时器
     if (this.translateDebounceTimer) {
       clearTimeout(this.translateDebounceTimer);
@@ -82,14 +107,19 @@ struct VoiceTranslation {
   }
 
   aboutToAppear(): void {
-    if (AppStorage.get('device_isBle')) {
-      this.getModelInfo =
-        (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-          0].getModelInfo as getModelInfoModel
-    } else {
-      this.getModelInfo =
-        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].getModelInfo as getModelInfoModel
-    }
+    // 延迟初始化，避免阻塞UI内容设置
+    this.initializationTimer = setTimeout(() => {
+      try {
+        // 异步初始化设备信息
+        this.initializeDeviceInfo()
+        // 标记初始化完成，允许@Watch触发器工作
+        this.isInitialized = true
+      } catch (error) {
+        console.error('VoiceTranslation initialization failed:', error)
+        // 即使初始化失败，也标记为完成以避免无限等待
+        this.isInitialized = true
+      }
+    }, 100) as number
   }
 
   build() {
@@ -208,7 +238,7 @@ struct VoiceTranslation {
 
           Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
             Select(this.convert_ttsLanguagesToOptions())
-              .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.voiceOrText ?
+              .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo?.transLanguages?.[this.getDefaultSelectedIndex_from(this.voiceOrText ?
               this.from_languages : this.wordScan_from_languages)]))
               .onSelect((index: number) => {
                 if (this.voiceOrText) {
@@ -232,7 +262,7 @@ struct VoiceTranslation {
               .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
               .padding({ left: 20, right: 20 })
             Select(this.convert_ttsLanguagesToOptions())
-              .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.voiceOrText ?
+              .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo?.transLanguages?.[this.getDefaultSelectedIndex_from(this.voiceOrText ?
               this.to_languages : this.wordScan_to_languages)]))
               .onSelect((index: number) => {
                 if (this.voiceOrText) {
@@ -292,14 +322,26 @@ struct VoiceTranslation {
     .height('100%')
     .backgroundColor('#f8f8f8')
     .onKeyEvent((event: KeyEvent) => {
-      // 异步处理按键事件，避免阻塞UI渲染
-      setTimeout(() => {
+      // 优化输入事件处理，完全异步且带超时保护
+      const handleKeyEvent = async () => {
         try {
-          globalShortcutService.handleGlobalKeyEvent(event)
+          // 添加超时保护，防止输入处理无限阻塞
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error('输入事件处理超时')), 1000)
+          })
+
+          const processPromise = Promise.resolve().then(() => {
+            return globalShortcutService.handleGlobalKeyEvent(event)
+          })
+
+          await Promise.race([processPromise, timeoutPromise])
         } catch (error) {
-          console.error('按键事件处理失败:', error)
+          console.error('按键事件处理失败或超时:', error)
         }
-      }, 0)
+      }
+
+      // 异步执行，不阻塞输入线程
+      handleKeyEvent()
     })
   }
 
@@ -362,15 +404,26 @@ struct VoiceTranslation {
   /**
    * 获取默认选中索引（childs中first=1的项为默认选中）
    */
-  private getDefaultSelectedIndex_from(from_languages: string):
-    number {
+  private getDefaultSelectedIndex_from(from_languages: string): number {
+    // 添加数组空值检查
+    if (!this.getModelInfo?.transLanguages || this.getModelInfo.transLanguages.length === 0) {
+      console.error('getDefaultSelectedIndex_from: transLanguages is empty or undefined');
+      return 0;
+    }
+
     const index = this.getModelInfo.transLanguages.findIndex((item) => {
       return item.code === from_languages;
     });
     return index !== -1 ? index : 0; // 找到返回索引，否则返回0
   }
 
-  private getDefaultSelectedIndex_fromText(item: languagesModel): string {
+  private getDefaultSelectedIndex_fromText(item: languagesModel | undefined): string {
+    // 添加空值检查，防止崩溃
+    if (!item) {
+      console.error('getDefaultSelectedIndex_fromText: item is undefined');
+      return '';
+    }
+
     const currentLang = AppStorage.get('languages') as string;
 
     // 使用Map提升性能，避免长switch语句
@@ -420,6 +473,10 @@ struct VoiceTranslation {
     if (this.translateDebounceTimer) {
       clearTimeout(this.translateDebounceTimer);
       this.translateDebounceTimer = null;
+    }
+    if (this.initializationTimer) {
+      clearTimeout(this.initializationTimer);
+      this.initializationTimer = null;
     }
   }
 }

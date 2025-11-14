@@ -43,14 +43,14 @@ const SERVER_URL: string = "ws://asr.miclink.net/ws";
 const CHUNK_SIZE_BYTES: number = 1024;
 const SAMPLES_PER_CHUNK: number = 512;
 const SEND_INTERVAL_MS: number = 0;
-const CHECK_INTERVAL_MS: number = 20; // 从3ms增加到20ms，减少检测频率
+const CHECK_INTERVAL_MS: number = 50; // 从20ms增加到50ms，减少检测频率
 const COMPLETION_CHECK_MS: number = 100;
 const DISCONNECT_TIMEOUT_MS: number = 5000;
 const END_MARKER_DELAY_MS: number = 100;
 const PASTEBOARD_CLEAR_DELAY_MS: number = 2000;
 const TRANSLATION_EXECUTE_DELAY_MS: number = 50;
 const MIN_DATA_PACKETS: number = 3;
-const MAX_STABLE_COUNT: number = 75; // 从50增加到75次（1500ms无新数据），防止长语音截断
+const MAX_STABLE_COUNT: number = 30; // 从75减少到30次（1500ms无新数据），减少检测次数
 const MIN_SAMPLES_FOR_COMPLETION: number = 1024; // 最小采样点数才开始检测完成（约0.064秒@16kHz）
 const BASE64_CHARS: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 const LOG_LEVEL: string = 'info';
@@ -82,6 +82,14 @@ export class AudioWebSocketHandler_ble {
   private lastSentSampleIndex: number = 0; // 记录已发送的采样点位置（全局）
   private completionCheckId: number | null = null;
   private isClosing: boolean = false; // 新增：标记是否正在关闭
+  private lastSendTime: number = 0; // 添加：记录上次发送时间
+  private lastCheckTime: number = 0; // 添加：记录上次检查时间
+  private readonly MIN_SEND_INTERVAL: number = 10; // 最小发送间隔10ms
+  private readonly MIN_CHECK_INTERVAL: number = 25; // 最小检查间隔25ms
+  private cachedTotalSamples: number = 0; // 缓存总采样点数
+  private lastCacheUpdateTime: number = 0; // 缓存更新时间
+  private sessionStartTime: number = 0; // 会话开始时间
+  private readonly MAX_SESSION_DURATION: number = 30000; // 最大会话持续时间30秒
 
   constructor(serverUrl: string, audioData: Int16Array[], state: number, inputMessage: inputMessageModel) {
     this.serverUrl = serverUrl || SERVER_URL;
@@ -126,6 +134,7 @@ export class AudioWebSocketHandler_ble {
           console.log("连接已打开");
           console.log('语音数据长度：', this.audioData.length);
 
+                  this.sessionStartTime = Date.now();
           // 使用优化的实时发送方式
           this.startRealTimeAudioSending();
         } else {
@@ -366,17 +375,17 @@ export class AudioWebSocketHandler_ble {
   public disconnect(): void {
     console.log('开始断开WebSocket连接');
 
-    // 立即清理定时器和状态
-    this.cleanupIntervals();
-    this.isSending = false;
-    this.isClosing = true;
-
     if (this.ws && this.isConnected) {
       try {
         console.log('正在关闭WebSocket连接...');
 
-        // 先发送结束标记
+        // 先发送结束标记（在设置isClosing之前）
         this.sendEndMarker();
+        
+        // 然后清理定时器和状态
+        this.cleanupIntervals();
+        this.isSending = false;
+        this.isClosing = true;
 
         // 延迟一段时间确保结束标记发送完成
         setTimeout(() => {
@@ -609,6 +618,24 @@ export class AudioWebSocketHandler_ble {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  // 获取总采样点数（带缓存优化）
+  private getTotalSamples(): number {
+    const currentTime = Date.now();
+    // 缓存5ms内的计算结果，避免频繁计算
+    if (currentTime - this.lastCacheUpdateTime < 5) {
+      return this.cachedTotalSamples;
+    }
+
+    let totalSamples = 0;
+    for (let i = 0; i < this.audioData.length; i++) {
+      totalSamples += this.audioData[i].length;
+    }
+
+    this.cachedTotalSamples = totalSamples;
+    this.lastCacheUpdateTime = currentTime;
+    return totalSamples;
+  }
+
   // ========== 优化的1024字节分片发送方法 ==========
 
   private startRealTimeAudioSending(): void {
@@ -674,13 +701,24 @@ export class AudioWebSocketHandler_ble {
         return;
       }
 
-      // 检查是否有新数据（基于采样点总数）
-      let totalSamples = 0;
-      for (let i = 0; i < this.audioData.length; i++) {
-        totalSamples += this.audioData[i].length;
+      // 添加节流控制：确保最小发送间隔
+      const currentTime = Date.now();
+      if (currentTime - this.lastSendTime < this.MIN_SEND_INTERVAL) {
+        return;
       }
 
+      // 检查会话是否超时，强制清理资源
+      if (currentTime - this.sessionStartTime > this.MAX_SESSION_DURATION) {
+        console.warn('音频处理会话超时，强制清理资源');
+        this.cleanupIntervals();
+        return;
+      }
+
+      // 检查是否有新数据（基于采样点总数）
+      const totalSamples = this.getTotalSamples();
+
       if (totalSamples > this.lastSentSampleIndex) {
+        this.lastSendTime = currentTime;
         await this.sendNewDataImmediately();
       }
     }, CHECK_INTERVAL_MS) as number;
@@ -688,10 +726,7 @@ export class AudioWebSocketHandler_ble {
 
   private async sendNewDataImmediately(): Promise<void> {
     // 计算总采样点数来检查是否有新数据
-    let totalSamples = 0;
-    for (let i = 0; i < this.audioData.length; i++) {
-      totalSamples += this.audioData[i].length;
-    }
+    const totalSamples = this.getTotalSamples();
 
     if (totalSamples <= this.lastSentSampleIndex || this.isSending || this.isClosing) {
       return;
@@ -737,11 +772,7 @@ export class AudioWebSocketHandler_ble {
   private setupCompletionDetection(): void {
     console.log('设置完成检测');
 
-    let lastTotalSamples = 0;
-    // 计算初始总采样点数
-    for (let i = 0; i < this.audioData.length; i++) {
-      lastTotalSamples += this.audioData[i].length;
-    }
+    let lastTotalSamples = this.getTotalSamples();
     let stableCount = 0;
 
     this.completionCheckId = setInterval(() => {
@@ -750,23 +781,38 @@ export class AudioWebSocketHandler_ble {
         return;
       }
 
-      // 计算当前总采样点数
-      let currentTotalSamples = 0;
-      for (let i = 0; i < this.audioData.length; i++) {
-        currentTotalSamples += this.audioData[i].length;
+      // 添加节流控制：确保最小检查间隔
+      const currentTime = Date.now();
+      if (currentTime - this.lastCheckTime < this.MIN_CHECK_INTERVAL) {
+        return;
       }
+
+      // 检查会话是否超时，强制清理资源
+      if (currentTime - this.sessionStartTime > this.MAX_SESSION_DURATION) {
+        console.warn('完成检测会话超时，强制清理资源');
+        this.cleanupIntervals();
+        return;
+      }
+
+      this.lastCheckTime = currentTime;
+
+      // 计算当前总采样点数
+      const currentTotalSamples = this.getTotalSamples();
 
       // 只有在至少有最小数据量后才开始检测完成，避免误判
       if (currentTotalSamples < MIN_SAMPLES_FOR_COMPLETION) {
-        console.log(`蓝牙采样点不足(${currentTotalSamples}/${MIN_SAMPLES_FOR_COMPLETION})，继续等待...`);
+        // 减少日志输出频率
+        if (stableCount % 10 === 0) {
+          console.log(`蓝牙采样点不足(${currentTotalSamples}/${MIN_SAMPLES_FOR_COMPLETION})，继续等待...`);
+        }
         return;
       }
 
       if (currentTotalSamples === lastTotalSamples) {
         stableCount++;
-        
-        // 每100ms输出一次日志，减少日志量
-        if (stableCount % 5 === 0 || stableCount >= MAX_STABLE_COUNT) {
+
+        // 每200ms输出一次日志，减少日志量
+        if (stableCount % 10 === 0 || stableCount >= MAX_STABLE_COUNT) {
           console.log(`蓝牙数据稳定计数: ${stableCount}/${MAX_STABLE_COUNT} (${stableCount * CHECK_INTERVAL_MS}ms)`);
         }
 
@@ -776,7 +822,7 @@ export class AudioWebSocketHandler_ble {
           this.cleanupIntervals();
         }
       } else {
-        if (stableCount > 0) {
+        if (stableCount > 0 && stableCount % 5 === 0) { // 减少日志输出
           console.log(`蓝牙接收到新数据，重置稳定计数 (之前: ${stableCount})，当前采样点数: ${currentTotalSamples}`);
         }
         stableCount = 0;
@@ -795,39 +841,62 @@ export class AudioWebSocketHandler_ble {
         return;
       }
 
-      const base64Audio = this.int16ToBase64(chunk);
+      // 添加超时控制，防止长时间阻塞
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('发送音频分片超时')), 2000);
+      });
 
-      if (!base64Audio) {
-        return;
-      }
+      const sendPromise = new Promise<void>((resolve) => {
+        try {
+          const base64Audio = this.int16ToBase64(chunk);
 
-      console.log(`蓝牙分片 ${chunkIndex} Base64长度: ${base64Audio.length}, 前50字符: ${base64Audio.substring(0, 50)}`);
+          if (!base64Audio) {
+            resolve();
+            return;
+          }
 
-      const isStart = (chunkIndex === 0 && this.lastSentSampleIndex === 0);
-      const isEnd = false;
+          // 减少日志输出频率，避免阻塞
+          if (chunkIndex % 10 === 0 || chunkIndex < 3) {
+            console.log(`蓝牙分片 ${chunkIndex}/${totalChunks} Base64长度: ${base64Audio.length}`);
+          }
 
-      const inputMessage: inputMessageModel = {
-        "start": isStart,
-        "clientId": this.inputMessage.clientId,
-        "ptt": this.inputMessage.ptt,
-        "serialNo": this.inputMessage.serialNo,
-        "phrases": this.inputMessage.phrases,
-        "format": this.inputMessage.format || "pcm",
-        "apiKey": this.inputMessage.apiKey,
-        "language": this.inputMessage.language,
-        "end": isEnd,
-        "rate": this.inputMessage.rate,
-        "deviceNo": this.inputMessage.deviceNo,
-        "content": base64Audio
-      };
+          const isStart = (chunkIndex === 0 && this.lastSentSampleIndex === 0);
+          const isEnd = false;
 
-      const success = this.sendMessage(inputMessage);
-      if (!success) {
-        console.error('发送音频数据失败');
-      }
+          const inputMessage: inputMessageModel = {
+            "start": isStart,
+            "clientId": this.inputMessage.clientId,
+            "ptt": this.inputMessage.ptt,
+            "serialNo": this.inputMessage.serialNo,
+            "phrases": this.inputMessage.phrases,
+            "format": this.inputMessage.format || "pcm",
+            "apiKey": this.inputMessage.apiKey,
+            "language": this.inputMessage.language,
+            "end": isEnd,
+            "rate": this.inputMessage.rate,
+            "deviceNo": this.inputMessage.deviceNo,
+            "content": base64Audio
+          };
+
+          const success = this.sendMessage(inputMessage);
+          if (!success) {
+            console.error('发送音频数据失败');
+          }
+          resolve();
+        } catch (error) {
+          console.error(`音频分片处理错误:`, error);
+          resolve(); // 继续执行，不中断整个流程
+        }
+      });
+
+      await Promise.race([sendPromise, timeoutPromise]);
 
     } catch (error) {
       console.error(`发送音频分片错误:`, error);
+      // 如果是超时错误，标记为需要重试或跳过
+      if (error.message && error.message.includes('超时')) {
+        console.warn('音频分片发送超时，跳过此分片');
+      }
     }
   }
 

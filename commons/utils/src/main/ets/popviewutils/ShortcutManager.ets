@@ -77,107 +77,147 @@ class GlobalShortcutService {
     this.lastConfigUpdateTime = 0
   }
 
-  // 处理全局按键事件
-  handleGlobalKeyEvent(event: KeyEvent):boolean {
-    if (event.type === KeyType.Down) {
-      // 标准化按键并记录
-      const normalizedKey = this.normalizeModifierKey(event.keyCode)
-      if (!this.currentPressedKeys.includes(normalizedKey)) {
-        this.currentPressedKeys.push(normalizedKey)
+  // 处理全局按键事件（优化版本，避免阻塞）
+  handleGlobalKeyEvent(event: KeyEvent): boolean {
+    try {
+      if (event.type === KeyType.Down) {
+        // 标准化按键并记录
+        const normalizedKey = this.normalizeModifierKey(event.keyCode)
+        if (!this.currentPressedKeys.includes(normalizedKey)) {
+          this.currentPressedKeys.push(normalizedKey)
+        }
+      } else if (event.type === KeyType.Up) {
+        // 移除松开的键
+        const normalizedKey = this.normalizeModifierKey(event.keyCode)
+        this.currentPressedKeys = this.currentPressedKeys.filter(
+          key => key !== normalizedKey
+        )
       }
-    } else if (event.type === KeyType.Up) {
-      // 移除松开的键
-      const normalizedKey = this.normalizeModifierKey(event.keyCode)
-      this.currentPressedKeys = this.currentPressedKeys.filter(
-        key => key !== normalizedKey
-      )
-    }
 
-    // 检查是否匹配任何快捷键
-   return this.checkShortcutMatch()
-  }
+      // 异步检查快捷键匹配，避免阻塞输入线程
+      Promise.resolve().then(() => {
+        try {
+          this.checkShortcutMatchAsync()
+        } catch (error) {
+          console.error('异步快捷键检查失败:', error)
+        }
+      })
 
-  // 检查快捷键匹配
-  private checkShortcutMatch() :boolean{
-    if (this.currentPressedKeys.length === 0) {
+      // 立即返回，避免阻塞输入事件
+      return false
+    } catch (error) {
+      console.error('按键事件处理异常:', error)
       return false
     }
+  }
 
-    // 对当前按下的键进行标准化和排序（确保比较的一致性）
-    const currentKeys = [...this.currentPressedKeys].sort()
-
-    // 使用缓存的配置，避免每次读取存储
-    const shortcutConfigs = this.getShortcutConfigs()
-
-    // 检查所有已配置的快捷键
-    for (const entry of shortcutConfigs.entries()) {
-      const shortcutType: number = entry[0]
-      const shortcutKeys: number[] = entry[1]
-      if (shortcutKeys.length > 0 && this.arraysEqual(shortcutKeys, currentKeys)) {
-        this.triggerShortcut(shortcutType)
-        // 匹配成功后清空当前按键状态，避免连续触发
-        this.currentPressedKeys = []
-        return true // 找到匹配时立即返回
-      }
+  // 异步检查快捷键匹配（避免阻塞输入线程）
+  private async checkShortcutMatchAsync(): Promise<void> {
+    if (this.currentPressedKeys.length === 0) {
+      return
     }
+
+    try {
+      // 对当前按下的键进行标准化和排序（确保比较的一致性）
+      const currentKeys = [...this.currentPressedKeys].sort()
+
+      // 使用缓存的配置，避免每次读取存储
+      const shortcutConfigs = this.getShortcutConfigs()
+
+      // 检查所有已配置的快捷键
+      for (const entry of shortcutConfigs.entries()) {
+        const shortcutType: number = entry[0]
+        const shortcutKeys: number[] = entry[1]
+        if (shortcutKeys.length > 0 && this.arraysEqual(shortcutKeys, currentKeys)) {
+          // 匹配成功后清空当前按键状态，避免连续触发
+          this.currentPressedKeys = []
+
+          // 异步触发快捷键，避免阻塞
+          setTimeout(() => {
+            try {
+              this.triggerShortcut(shortcutType)
+            } catch (error) {
+              console.error('快捷键触发失败:', error)
+            }
+          }, 10) // 小延迟确保输入事件处理完成
+
+          return // 找到匹配时退出
+        }
+      }
+    } catch (error) {
+      console.error('快捷键匹配检查失败:', error)
+    }
+  }
+
+  // 保留原同步方法以向后兼容（已废弃，建议使用异步版本）
+  private checkShortcutMatch(): boolean {
+    console.warn('checkShortcutMatch() 方法已废弃，请使用异步版本')
     return false
   }
 
-  // 触发快捷键
+  // 触发快捷键（完全异步处理）
   private triggerShortcut(shortcutType: number) {
     console.log(`触发全局快捷键: 类型${shortcutType}`)
 
-    // 异步执行，避免阻塞UI线程
-    setTimeout(() => {
-      // 显示弹窗提示（移到异步执行）
-      this.showShortcutPrompt(shortcutType)
-
-      // 执行注册的回调函数
-      const callback = this.shortcutCallbacks.get(shortcutType)
-      if (callback) {
-        try {
-          callback()
-        } catch (error) {
-          console.error(`快捷键回调执行失败 (${shortcutType}):`, error)
+    // 使用Promise链式异步执行，避免阻塞UI线程
+    Promise.resolve<void>(undefined).then((): Promise<void> | void => {
+      try {
+        // 优先执行回调函数，确保功能正常
+        const callback = this.shortcutCallbacks.get(shortcutType)
+        if (callback) {
+          return Promise.resolve<void>(undefined).then((): void => {
+            callback()
+          })
         }
+        return Promise.resolve<void>(undefined)
+      } catch (error) {
+        console.error(`快捷键回调执行失败 (${shortcutType}):`)
+        return Promise.resolve<void>(undefined)
       }
-    }, 0)
+    }).then((): Promise<void> => {
+      // 延迟显示提示，避免影响主要功能
+      return new Promise<void>((resolve: () => void) => {
+        setTimeout(() => {
+          try {
+            this.showShortcutPrompt(shortcutType)
+          } catch (error) {
+            console.error('显示快捷键提示失败:', error)
+          }
+          resolve()
+        }, 100) // 100ms延迟，确保主要功能完成
+      })
+    }).catch(() => {
+      console.error(`快捷键触发过程异常 (${shortcutType}):`, )
+    })
   }
 
-  // 显示快捷键提示弹窗
+  // 显示快捷键提示弹窗（优化版本）
   private showShortcutPrompt(shortcutType: number) {
-    // 执行快捷键对应的操作
-    switch (shortcutType) {
-      case 1:
-        try {
-          _KeyMethodConfig.voiceInput()
-          GlobalShortcutService.flax = true
-        } catch (error) {
-          console.error('语音识别快捷键执行失败:', error)
-        }
-        break
-      case 2:
-        try {
-          _KeyMethodConfig.voiceInput(1)
-          GlobalShortcutService.flax = true
-        } catch (error) {
-          console.error('语音翻译快捷键执行失败:', error)
-        }
-        break
-      case 3:
-        GlobalShortcutService.flax = true
-        break
-    }
+    try {
+      GlobalShortcutService.flax = true
 
-    // 注释掉耗时的Toast显示，避免阻塞UI
-    // try {
-    //   prompt.showToast({
-    //     message: this.getShortcutMessage(shortcutType),
-    //     duration: 2000
-    //   })
-    // } catch (error) {
-    //   console.error('显示提示失败:', error)
-    // }
+      // 异步执行快捷键操作，避免阻塞
+      setTimeout(() => {
+        try {
+          switch (shortcutType) {
+            case 1:
+              _KeyMethodConfig.voiceInput()
+              break
+            case 2:
+              _KeyMethodConfig.voiceInput(1)
+              break
+            case 3:
+              // 截图识别快捷键处理
+              break
+          }
+        } catch (error) {
+          console.error(`快捷键操作执行失败 (${shortcutType}):`, error)
+        }
+      }, 50) // 50ms延迟，确保UI响应完成
+
+    } catch (error) {
+      console.error('快捷键提示处理失败:', error)
+    }
   }
 
   // 获取快捷键提示消息

@@ -360,17 +360,17 @@ export class AudioWebSocketHandler {
   public disconnect(): void {
     console.log('开始断开WebSocket连接');
 
-    // 立即清理定时器和状态
-    this.cleanupIntervals();
-    this.isSending = false;
-    this.isClosing = true;
-
     if (this.ws && this.isConnected) {
       try {
         console.log('正在关闭WebSocket连接...');
 
-        // 先发送结束标记
+        // 先发送结束标记（在设置isClosing之前）
         this.sendEndMarker();
+        
+        // 然后清理定时器和状态
+        this.cleanupIntervals();
+        this.isSending = false;
+        this.isClosing = true;
 
         // 延迟一段时间确保结束标记发送完成
         setTimeout(() => {

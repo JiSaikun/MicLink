@@ -64,54 +64,12 @@ export class Float_Window {
         console.info('Succeeded in changing the window size.');
       });
       // 3.为悬浮窗加载对应的目标页面。
-      windowClass.setUIContent(windowName, (err: BusinessError) => {
-        let errCode: number = err.code;
-        if (errCode) {
-          console.error(`Failed to load the content for ${windowName}. Error code: ${errCode}, message: ${err.message}`);
-          // 如果是timeout错误，尝试重试一次
-          if (errCode === 1003 || err.message?.includes('timeout')) {
-            console.info('UIContent timeout detected, attempting retry after delay');
-            setTimeout(() => {
-              windowClass?.setUIContent(windowName, (retryErr: BusinessError) => {
-                if (retryErr.code) {
-                  console.error(`Retry failed to load content for ${windowName}: ${JSON.stringify(retryErr)}`);
-                  Float_Window.isCreating = false; // 重试失败，释放创建锁
-                  return;
-                }
-                console.info('Retry succeeded in loading the content.');
-                // 显示悬浮窗
-                (windowClass as window.Window).showWindow((showErr: BusinessError) => {
-                  if (showErr.code) {
-                    console.error('Failed to show window after retry: ' + JSON.stringify(showErr));
-                    Float_Window.isCreating = false; // 显示失败，释放创建锁
-                    return;
-                  }
-                  console.info('Succeeded in showing window after retry.');
-                  Float_Window.isCreating = false; // 显示成功，释放创建锁
-                });
-              });
-            }, 100);
-          }
-          return;
-        }
-        console.info('Succeeded in loading the content.');
-        // 3.显示悬浮窗。
-        (windowClass as window.Window).showWindow((err: BusinessError) => {
-          let errCode: number = err.code;
-          if (errCode) {
-            console.error('Failed to show the window. Cause: ' + JSON.stringify(err));
-            Float_Window.isCreating = false; // 释放创建锁
-            return;
-          }
-          console.info('Succeeded in showing the window.');
-          Float_Window.isCreating = false; // 释放创建锁
-        });
-      });
+      Float_Window.loadUIContentWithRetry(windowClass, windowName, 3, 200);
     });
   }
 
   static creat_VoiceTranslation(windowName = 'pages/VoiceTranslation', float_window_width = 1100,
-    float_window_height = this.screen_height / 2) {
+    float_window_height = Float_Window.screen_height / 2) {
     // 检查是否已有语音翻译窗口存在，如果存在则先销毁
     if (Float_Window.window_VoiceTranslation) {
       console.info('Voice translation window already exists, destroying before creating new one');
@@ -153,47 +111,7 @@ export class Float_Window {
         console.info('Succeeded in changing the window size.');
       });
       // 3.为悬浮窗加载对应的目标页面。
-      windowClass.setUIContent(windowName, (err: BusinessError) => {
-        let errCode: number = err.code;
-        if (errCode) {
-          console.error(`Failed to load the content for ${windowName}. Error code: ${errCode}, message: ${err.message}`);
-          // 如果是timeout错误，尝试重试一次
-          if (errCode === 1003 || err.message?.includes('timeout')) {
-            console.info('UIContent timeout detected, attempting retry after delay');
-            setTimeout(() => {
-              windowClass?.setUIContent(windowName, (retryErr: BusinessError) => {
-                if (retryErr.code) {
-                  console.error(`Retry failed to load content for ${windowName}: ${JSON.stringify(retryErr)}`);
-                  Float_Window.isCreating = false; // 重试失败，释放创建锁
-                  return;
-                }
-                console.info('Retry succeeded in loading the content.');
-                // 显示悬浮窗
-                (windowClass as window.Window).showWindow((showErr: BusinessError) => {
-                  if (showErr.code) {
-                    console.error('Failed to show window after retry: ' + JSON.stringify(showErr));
-                    Float_Window.isCreating = false; // 显示失败，释放创建锁
-                    return;
-                  }
-                  console.info('Succeeded in showing window after retry.');
-                  Float_Window.isCreating = false; // 显示成功，释放创建锁
-                });
-              });
-            }, 100);
-          }
-          return;
-        }
-        console.info('Succeeded in loading the content.');
-        // 3.显示悬浮窗。
-        (windowClass as window.Window).showWindow((err: BusinessError) => {
-          let errCode: number = err.code;
-          if (errCode) {
-            console.error('Failed to show the window. Cause: ' + JSON.stringify(err));
-            return;
-          }
-          console.info('Succeeded in showing the window.');
-        });
-      });
+      Float_Window.loadUIContentWithRetry(windowClass, windowName, 5, 300);
     });
   }
 
@@ -334,5 +252,57 @@ export class Float_Window {
       }
       console.info('Succeeded in showing the window.');
     });
+  }
+
+  // 增强的UI内容加载方法，带重试和超时处理
+  private static loadUIContentWithRetry(windowClass: window.Window, windowName: string, maxRetries: number, baseDelay: number) {
+    let retryCount = 0;
+
+    const attemptLoad = () => {
+      retryCount++;
+      console.log(`Attempting to load UI content for ${windowName}, attempt ${retryCount}/${maxRetries + 1}`);
+
+      windowClass.setUIContent(windowName, (err: BusinessError) => {
+        const errCode: number = err.code;
+        if (errCode) {
+          console.error(`Failed to load content for ${windowName}. Error code: ${errCode}, message: ${err.message}`);
+
+          // 检查是否是超时错误且还有重试次数
+          const isTimeoutError = errCode === 1003 || err.message?.includes('timeout') || err.message?.includes('SetUIContent timeout');
+          const shouldRetry = isTimeoutError && retryCount <= maxRetries;
+
+          if (shouldRetry) {
+            // 指数退避重试策略
+            const delay = baseDelay * Math.pow(2, retryCount - 1);
+            console.info(`UIContent timeout detected, retrying in ${delay}ms (attempt ${retryCount}/${maxRetries + 1})`);
+
+            setTimeout(() => {
+              attemptLoad();
+            }, delay);
+          } else {
+            // 重试失败或非超时错误
+            console.error(`Failed to load UI content after ${retryCount} attempts`);
+            Float_Window.isCreating = false; // 释放创建锁
+          }
+          return;
+        }
+
+        console.info('Succeeded in loading the content.');
+        // 显示悬浮窗
+        (windowClass as window.Window).showWindow((showErr: BusinessError) => {
+          const showErrCode: number = showErr.code;
+          if (showErrCode) {
+            console.error('Failed to show the window after content load: ' + JSON.stringify(showErr));
+            Float_Window.isCreating = false; // 释放创建锁
+            return;
+          }
+          console.info('Succeeded in showing the window.');
+          Float_Window.isCreating = false; // 释放创建锁
+        });
+      });
+    };
+
+    // 开始首次尝试
+    attemptLoad();
   }
 }
