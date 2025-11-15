@@ -6,9 +6,8 @@ import { UserLoginInfo } from '../model/UserLoginInfo'
 export struct Topbar {
   @State isDown: boolean = false
   @StorageLink('languages') languages: string = 'ZH_CN' //语言适配
-  @StorageLink('userLoginInfo') userLoginInfo:UserLoginInfo =  AppStorage.get('userLoginInfo') as UserLoginInfo  //语言适配
+  @StorageLink('userLoginInfo') userLoginInfo: UserLoginInfo = AppStorage.get('userLoginInfo') as UserLoginInfo //语言适配
   @Consume('pageInfo') pageInfo: NavPathStack
-
 
   @Styles
   textStyle(){
@@ -115,6 +114,7 @@ export struct Topbar {
     }
     .justifyContent(FlexAlign.End)
     .alignItems(VerticalAlign.Center)
+    .backgroundColor(Color.White)
     // .backgroundColor(Color.Blue)
     .height(64)
     .width('100%')
