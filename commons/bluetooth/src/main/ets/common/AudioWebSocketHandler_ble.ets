@@ -89,7 +89,7 @@ export class AudioWebSocketHandler_ble {
   private cachedTotalSamples: number = 0; // 缓存总采样点数
   private lastCacheUpdateTime: number = 0; // 缓存更新时间
   private sessionStartTime: number = 0; // 会话开始时间
-  private readonly MAX_SESSION_DURATION: number = 30000; // 最大会话持续时间30秒
+  private readonly MAX_SESSION_DURATION: number = Number.MAX_SAFE_INTEGER; // 禁用会话超时，支持长时语音传输
   private hasSentStart: boolean = false; // 标记是否已经发送过start消息
   private hasSentEnd: boolean = false; // 标记是否已经发送过end消息
 
@@ -801,10 +801,7 @@ export class AudioWebSocketHandler_ble {
         // 更新全局采样点位置
         this.lastSentSampleIndex += chunk.length;
 
-        // 控制发送速率
-        if (chunkIndex < chunks.length - 1) {
-          await this.delay(SEND_INTERVAL_MS);
-        }
+        // 立即发送，不延迟，提高实时性
       }
 
       console.log(`现有数据发送完成，最后发送采样点位置: ${this.lastSentSampleIndex}`);
@@ -834,15 +831,6 @@ export class AudioWebSocketHandler_ble {
         // 添加节流控制：确保最小发送间隔
         const currentTime = Date.now();
         if (currentTime - this.lastSendTime < this.MIN_SEND_INTERVAL) {
-          return;
-        }
-
-        // 检查会话是否超时，强制清理资源
-        if (currentTime - this.sessionStartTime > this.MAX_SESSION_DURATION) {
-          console.warn('音频处理会话超时，强制清理资源');
-          if (this && this.cleanupIntervals) {
-            this.cleanupIntervals();
-          }
           return;
         }
 
@@ -891,10 +879,7 @@ export class AudioWebSocketHandler_ble {
           // 更新全局采样点位置
           this.lastSentSampleIndex += chunk.length;
 
-          // 最小延迟
-          if (chunkIndex < chunks.length - 1) {
-            await this.delay(SEND_INTERVAL_MS);
-          }
+          // 立即发送，不延迟
         }
       }
 
@@ -918,15 +903,6 @@ export class AudioWebSocketHandler_ble {
       try {
         // 检查对象是否仍然有效（防止GC后的访问）
         if (!this || this.isClosing) {
-          if (this && this.cleanupIntervals) {
-            this.cleanupIntervals();
-          }
-          return;
-        }
-
-        // 检查会话是否超时，强制清理资源
-        if (Date.now() - this.sessionStartTime > this.MAX_SESSION_DURATION) {
-          console.warn('完成检测会话超时，强制清理资源');
           if (this && this.cleanupIntervals) {
             this.cleanupIntervals();
           }
