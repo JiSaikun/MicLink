@@ -950,9 +950,11 @@ export class AudioWebSocketHandler {
         50)}`);
 
       // 确保整个会话只发送一次start=true
-      const isStart = !this.hasSentStart && (chunkIndex === 0);
+      // 只依赖hasSentStart标志，不依赖chunkIndex（因为chunkIndex在不同方法中会重置）
+      const isStart = !this.hasSentStart;
       if (isStart) {
         this.hasSentStart = true;
+        console.log('🎤 2.4G发送开始标志 start=true，当前索引位置:', this.lastSentIndex);
       }
       const isEnd = false;
 

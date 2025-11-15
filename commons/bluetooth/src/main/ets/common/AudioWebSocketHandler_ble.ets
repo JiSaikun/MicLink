@@ -43,14 +43,14 @@ const SERVER_URL: string = "ws://asr.miclink.net/ws";
 const CHUNK_SIZE_BYTES: number = 1024;
 const SAMPLES_PER_CHUNK: number = 512;
 const SEND_INTERVAL_MS: number = 0;
-const CHECK_INTERVAL_MS: number = 50; // 从20ms增加到50ms，减少检测频率
+const CHECK_INTERVAL_MS: number = 20; // 保持20ms与2.4G版本一致，确保及时发送结束标记
 const COMPLETION_CHECK_MS: number = 100;
 const DISCONNECT_TIMEOUT_MS: number = 5000;
 const END_MARKER_DELAY_MS: number = 100;
 const PASTEBOARD_CLEAR_DELAY_MS: number = 2000;
 const TRANSLATION_EXECUTE_DELAY_MS: number = 50;
 const MIN_DATA_PACKETS: number = 3;
-const MAX_STABLE_COUNT: number = 20; // 减少到20次（1000ms无新数据），与2.4G版本保持一致
+const MAX_STABLE_COUNT: number = 50; // 50次×20ms=1000ms（1秒无新数据），与2.4G版本完全一致
 const MIN_SAMPLES_FOR_COMPLETION: number = 1024; // 最小采样点数才开始检测完成（约0.064秒@16kHz）
 const BASE64_CHARS: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 const LOG_LEVEL: string = 'info';
@@ -84,8 +84,8 @@ export class AudioWebSocketHandler_ble {
   private isClosing: boolean = false; // 新增：标记是否正在关闭
   private lastSendTime: number = 0; // 添加：记录上次发送时间
   private lastCheckTime: number = 0; // 添加：记录上次检查时间
-  private readonly MIN_SEND_INTERVAL: number = 10; // 最小发送间隔10ms
-  private readonly MIN_CHECK_INTERVAL: number = 25; // 最小检查间隔25ms
+  private readonly MIN_SEND_INTERVAL: number = 10; // 最小发送间隔10ms，保持响应性
+  private readonly MIN_CHECK_INTERVAL: number = 50; // 最小检查间隔50ms，平衡性能和响应
   private cachedTotalSamples: number = 0; // 缓存总采样点数
   private lastCacheUpdateTime: number = 0; // 缓存更新时间
   private sessionStartTime: number = 0; // 会话开始时间
@@ -127,9 +127,24 @@ export class AudioWebSocketHandler_ble {
 
       console.log('开始WebSocket连接');
 
-      // 清理之前的连接
-      this.disconnect();
+      // 清理之前的连接 - 等待完全断开，避免资源竞争
+      this.disconnectAsync().then(() => {
+        // 重置会话标志，确保每次新连接都是全新会话
+        this.hasSentStart = false;
+        this.hasSentEnd = false;
+        this.lastSentSampleIndex = 0;
 
+        this.createAndConnectWebSocket();
+      });
+    } catch (error) {
+      console.error('连接异常:', error);
+      this.cleanupIntervals();
+      this.isConnected = false;
+    }
+  }
+
+  private createAndConnectWebSocket(): void {
+    try {
       this.ws = webSocket.createWebSocket();
 
       this.ws.on('open', (err: BusinessError, value: Object) => {
@@ -323,7 +338,7 @@ export class AudioWebSocketHandler_ble {
     _translate(params).then((res) => {
       console.log('翻译请求成功————翻译结果：' + res.data?.transText, type);
       if (res.data) {
-        let dataArray : translate_Response = {
+        let dataArray: translate_Response = {
           transText: res.data?.transText as string,
           text: res.data?.text as string,
         };
@@ -360,6 +375,9 @@ export class AudioWebSocketHandler_ble {
                         setTimeout(() => {
                           systemPasteboard.clearData();
                         }, PASTEBOARD_CLEAR_DELAY_MS);
+                      })
+                      .catch((err: BusinessError) => {
+                        console.error('翻译文本复制失败: ' + err.message);
                       });
                   } else {
                     console.warn('设备对象无效，跳过粘贴操作');
@@ -449,6 +467,63 @@ export class AudioWebSocketHandler_ble {
         this.ws = null;
       }
     }
+  }
+
+  // 异步断开连接（用于回连时等待旧连接完全关闭）
+  private disconnectAsync(): Promise<void> {
+    return new Promise((resolve) => {
+      console.log('开始异步断开WebSocket连接');
+
+      this.cleanupIntervals();
+      this.isSending = false;
+      this.isClosing = true;
+
+      if (!this.ws || !this.isConnected) {
+        console.log('WebSocket未连接，直接完成');
+        this.isConnected = false;
+        this.isClosing = false;
+        resolve();
+        return;
+      }
+
+      // 设置超时保护
+      const timeoutId = setTimeout(() => {
+        console.warn('蓝牙WebSocket关闭超时，强制断开');
+        this.forceDisconnect();
+        resolve();
+      }, 5000);
+
+      try {
+        // 发送结束标记
+        this.sendEndMarker();
+
+        setTimeout(() => {
+          this.ws!.close({
+            code: 1000,
+            reason: "客户端主动关闭"
+          }, (err: BusinessError, value: boolean) => {
+            clearTimeout(timeoutId);
+            if (!err) {
+              console.log('蓝牙连接已成功关闭');
+            } else {
+              console.error('蓝牙关闭连接失败:', JSON.stringify(err));
+            }
+            this.ws = null;
+            this.isConnected = false;
+            this.isClosing = false;
+            resolve();
+          });
+        }, END_MARKER_DELAY_MS);
+
+      } catch (error) {
+        clearTimeout(timeoutId);
+        console.error('蓝牙异步断开异常:', error);
+        this.ws = null;
+        this.isConnected = false;
+        this.isClosing = false;
+        resolve();
+      }
+    });
   }
 
   private cleanupIntervals(): void {
@@ -667,13 +742,15 @@ export class AudioWebSocketHandler_ble {
   // 获取总采样点数（带缓存优化）
   private getTotalSamples(): number {
     const currentTime = Date.now();
-    // 缓存5ms内的计算结果，避免频繁计算
-    if (currentTime - this.lastCacheUpdateTime < 5) {
+    // 缓存100ms内的计算结果，避免频繁计算，减少主线程开销
+    if (currentTime - this.lastCacheUpdateTime < 100) {
       return this.cachedTotalSamples;
     }
 
     let totalSamples = 0;
-    for (let i = 0; i < this.audioData.length; i++) {
+    const length = this.audioData.length;
+    // 批量计算，减少循环开销
+    for (let i = 0; i < length; i++) {
       totalSamples += this.audioData[i].length;
     }
 
@@ -847,22 +924,14 @@ export class AudioWebSocketHandler_ble {
           return;
         }
 
-        // 添加节流控制：确保最小检查间隔
-        const currentTime = Date.now();
-        if (currentTime - this.lastCheckTime < this.MIN_CHECK_INTERVAL) {
-          return;
-        }
-
         // 检查会话是否超时，强制清理资源
-        if (currentTime - this.sessionStartTime > this.MAX_SESSION_DURATION) {
+        if (Date.now() - this.sessionStartTime > this.MAX_SESSION_DURATION) {
           console.warn('完成检测会话超时，强制清理资源');
           if (this && this.cleanupIntervals) {
             this.cleanupIntervals();
           }
           return;
         }
-
-        this.lastCheckTime = currentTime;
 
         // 检查当前数组长度
         const currentLength = this.audioData.length;
@@ -951,9 +1020,11 @@ export class AudioWebSocketHandler_ble {
           }
 
           // 确保整个会话只发送一次start=true
-          const isStart = !this.hasSentStart && (chunkIndex === 0);
+          // 只依赖hasSentStart标志，不依赖chunkIndex（因为chunkIndex在不同方法中会重置）
+          const isStart = !this.hasSentStart;
           if (isStart) {
             this.hasSentStart = true;
+            console.log('🎤 发送开始标志 start=true，当前采样点位置:', this.lastSentSampleIndex);
           }
           const isEnd = false;
 
