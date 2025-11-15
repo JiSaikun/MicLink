@@ -83,6 +83,8 @@ export class AudioWebSocketHandler {
   private completionCheckId: number | null = null;
   private pendingInitTimerId: number | null = null; // 初始化延迟定时器
   private isClosing: boolean = false; // 新增：标记是否正在关闭
+  private noDataTimeoutId: number | null = null; // 音频数据超时定时器
+  private readonly NO_DATA_TIMEOUT_MS = 30000; // 30秒无数据超时
 
   // 优化配置 - 1024字节分片
   private readonly CHUNK_SIZE_BYTES = 1024; // 目标分片大小
@@ -504,6 +506,10 @@ export class AudioWebSocketHandler {
       clearTimeout(this.pendingInitTimerId);
       this.pendingInitTimerId = null;
     }
+    if (this.noDataTimeoutId !== null) {
+      clearTimeout(this.noDataTimeoutId);
+      this.noDataTimeoutId = null;
+    }
   }
 
   public sendMessage(inputMessage: inputMessageModel): boolean {
@@ -692,6 +698,9 @@ export class AudioWebSocketHandler {
 
       // 设置完成检测
       this.setupCompletionDetection();
+
+      // 设置无数据超时检测
+      this.setupNoDataTimeout();
     }, 500); // 500ms延迟，让数据有时间积累
 
     // 存储初始化定时器ID以便清理
@@ -770,6 +779,9 @@ export class AudioWebSocketHandler {
     if (newDataCount <= 0 || this.isSending || this.isClosing) {
       return;
     }
+
+    // 有新数据时重置超时
+    this.resetNoDataTimeout();
 
     try {
       this.isSending = true;
@@ -869,6 +881,41 @@ export class AudioWebSocketHandler {
     }, this.CHECK_INTERVAL_MS) as number;
   }
 
+  private setupNoDataTimeout(): void {
+    console.log(`设置无数据超时检测: ${this.NO_DATA_TIMEOUT_MS}ms`);
+
+    this.noDataTimeoutId = setTimeout(() => {
+      try {
+        // 检查对象是否仍然有效（防止GC后的访问）
+        if (!this || this.isClosing || this.lastSentIndex < 0 || !this.ws) {
+          return;
+        }
+
+        console.warn(`2.4G音频数据超时: ${this.NO_DATA_TIMEOUT_MS}ms内未收到任何音频数据`);
+        console.log(`当前音频数据状态: 帧数=${this.audioData.length}, 已发送索引=${this.lastSentIndex}`);
+
+        // 发送结束标记并停止语音输入
+        this.sendEndMarker();
+        this.cleanupIntervals();
+
+      } catch (error) {
+        console.error('无数据超时处理异常:', error);
+        if (this && this.cleanupIntervals) {
+          this.cleanupIntervals();
+        }
+      }
+    }, this.NO_DATA_TIMEOUT_MS) as number;
+  }
+
+  private resetNoDataTimeout(): void {
+    if (this.noDataTimeoutId !== null) {
+      clearTimeout(this.noDataTimeoutId);
+      this.noDataTimeoutId = null;
+    }
+    // 重新启动超时检测
+    this.setupNoDataTimeout();
+  }
+
   private async sendAudioChunk(chunk: Int16Array, chunkIndex: number, totalChunks: number): Promise<void> {
     try {
       if (this.isClosing) {
@@ -936,6 +983,7 @@ export class AudioWebSocketHandler {
 
     this.sendMessage(endMessage);
     this.wending = true;
+    console.error(this.wending+'\t'+'发送结束标记', JSON.stringify(endMessage.rate));
   }
 
   // 清理资源

@@ -202,10 +202,13 @@ export class _KeyMethodConfig {
    * 语音输入_长按按下
    */
   static voiceInput_long(state: number = 0, isAI_assistant: boolean = false) {
+    console.log('[语音调试] voiceInput_long 开始，state:', state, 'isAI_assistant:', isAI_assistant);
     if (AppStorage.get('device_isBle')) {
       BlueTooth_devices.audioData = []
+      console.log('[语音调试] 清空蓝牙音频数据');
     } else {
       Communication.audioData = []
+      console.log('[语音调试] 清空2.4G音频数据');
     }
     /**
      * 语音数据处理
@@ -276,12 +279,17 @@ export class _KeyMethodConfig {
             0].BlueTooth_devices.audioDataState
       }
     } else {
-      if (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-        0].Communication.audioDataState) { //若开始长按时，有通过0x62命令开启的语音输入等，先进行关闭 ...否则改变audioDataState 采集状态，确保1b数据被放到语音数据里 ——————手动发起0x62收集录音数据
+      const currentState = ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState;
+      console.log('[语音调试] 当前2.4G audioDataState状态:', currentState);
+
+      if (currentState) { //若开始长按时，有通过0x62命令开启的语音输入等，先进行关闭 ...否则改变audioDataState 采集状态，确保1b数据被放到语音数据里 ——————手动发起0x62收集录音数据
+        console.log('[语音调试] audioDataState为true，先发送0x62命令停止当前语音输入');
         ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x62])
       } else {
+        console.log('[语音调试] audioDataState为false，翻转状态开始音频采集');
         ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState =
-          !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState
+          !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState;
+        console.log('[语音调试] 新的audioDataState状态:', ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState);
       }
     }
     if (state) {
@@ -337,7 +345,9 @@ export class _KeyMethodConfig {
    * 语音输入_长按抬起
    */
   static endvoiceInput_long(state: number = 0) {
+    console.log('[语音调试] endvoiceInput_long 开始，state:', state);
     if (AppStorage.get('device_isBle')) {
+      console.log('[语音调试] 结束蓝牙语音输入');
       (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
         0].BlueTooth_devices.audioDataState =
         !(AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
@@ -345,8 +355,11 @@ export class _KeyMethodConfig {
       (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
         0].BlueTooth_devices.send([0x63])
     } else {
+      console.log('[语音调试] 结束2.4G语音输入');
+      const oldState = ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState;
       ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState =
-        !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState
+        !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState;
+      console.log('[语音调试] audioDataState从', oldState, '翻转为', ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState);
       ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x63])
     }
     if (!state) {

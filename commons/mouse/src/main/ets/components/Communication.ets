@@ -675,6 +675,13 @@ export class Communication {
       this.devicePipe = null;
     }
 
+    // USB重连时停止语音输入，防止语音状态悬空
+    if (this.audioDataState) {
+      console.log('[2.4G调试] USB重连时停止语音输入');
+      this.audioDataState = false;
+      Communication.audioData = []; // 清空音频数据
+    }
+
     // 等待一小段时间再重连
     await new Promise<void>((resolve: () => void) => setTimeout(resolve, 1000));
 
@@ -830,7 +837,7 @@ export class Communication {
         let result_21 = -1;
 
         try {
-          const sendPromise = usbManager.bulkTransfer(this.devicePipe, endpoint, cmdData, 500);
+          const sendPromise = usbManager.bulkTransfer(this.devicePipe, endpoint, cmdData, 5000);
           result = await Promise.race([sendPromise, timeoutPromise]);
           console.log('发送命令成功:33-----usbManager.bulkTransfer()返回发送的数据的长度:', result);
           this.consecutiveFailures = 0; // 成功时重置连续失败计数器
@@ -883,6 +890,7 @@ export class Communication {
       '*******************************************************************************接收鼠标发送的消息');
 
     if (!this.devicePipe) {
+      console.log('[USB调试] 设备管道不存在，无法读取数据');
       this.readState = false;
       return -1;
     }
@@ -898,30 +906,40 @@ export class Communication {
     this.readState = true;
 
     try {
+      console.log(`[USB调试] 尝试声明接口 (iface: ${iface.id}, endpoint: ${endpoint.address}, direction: ${endpoint.direction})`);
       const claimResult = usbManager.claimInterface(this.devicePipe, iface, true);
-      console.log('声明接口结果:', claimResult);
+      console.log('[USB调试] 声明接口结果:', claimResult);
       console.log('***************************************************************************创建通信接口：',
         claimResult);
 
       if (claimResult === 0) {
         const buffer = new Uint8Array(64);
         // 增加超时时间，避免USB设备响应慢时频繁超时，并添加额外超时保护
-        const usbReadTimeout = 2500; // 2.5秒额外超时保护
+        const usbReadTimeout = 6000; // 2.5秒额外超时保护
         const timeoutPromise = new Promise<never>((_, reject) => {
           setTimeout(() => reject(new Error('USB读取超时')), usbReadTimeout);
         });
 
         let result: number;
         try {
+          console.log('[USB调试] 开始USB批量传输读取 (buffer长度: 64, 超时: 1000ms)');
           const readPromise = usbManager.bulkTransfer(this.devicePipe, endpoint, buffer, 1000);
           result = await Promise.race([readPromise, timeoutPromise]);
-          console.log('读取数据结果,读取到的数据的长度:', result);
-          this.consecutiveFailures = 0; // 成功时重置连续失败计数器
+          console.log('[USB调试] USB读取完成，结果长度:', result);
+
+          if (result > 0) {
+            console.log('[USB调试] 读取成功，重置连续失败计数器');
+            this.consecutiveFailures = 0; // 成功时重置连续失败计数器
+          } else {
+            console.log('[USB调试] 读取返回0或负数，增加连续失败计数器');
+            this.consecutiveFailures++;
+          }
         } catch (error) {
-          console.error('USB读取数据超时或失败:', error);
+          console.error('[USB调试] USB读取数据超时或失败:', error);
+          console.log('[USB调试] 错误详情:', JSON.stringify(error));
           this.readState = false;
           this.consecutiveFailures++;
-          console.log(`连续通信失败次数: ${this.consecutiveFailures}/${this.MAX_CONSECUTIVE_FAILURES}`);
+          console.log(`[USB调试] 连续通信失败次数: ${this.consecutiveFailures}/${this.MAX_CONSECUTIVE_FAILURES}`);
           return -1;
         }
 
@@ -1039,11 +1057,15 @@ export class Communication {
     }
 
     try {
-      // 检查帧头F
+      // 检查音频帧头 (0x1b)
       if (data.length > 0 && data[0] === 0x1b) {
+        console.log('[2.4G调试] 检测到音频帧头 0x1b，数据长度:', data.length);
+        console.log('[2.4G调试] audioDataState 状态:', this.audioDataState);
+        console.log('[2.4G调试] 当前 Communication.audioData 长度:', Communication.audioData.length);
+
         if (this.audioDataState) {
           console.log('****************************语音数据****************************');
-          console.log('接收到音频数据');
+          console.log('[2.4G调试] 开始处理音频数据');
           // 异步处理音频数据，避免阻塞主线程
           const audioProcessingTimeout = 2000; // 2秒超时
           const timeoutPromise = new Promise<never>((_, reject) => {
@@ -1055,8 +1077,10 @@ export class Communication {
           });
 
           Promise.race([processPromise, timeoutPromise]).catch(() => {
-            console.error('音频处理失败或超时:');
+            console.error('[2.4G调试] 音频处理失败或超时:');
           });
+        } else {
+          console.log('[2.4G调试] audioDataState 为 false，跳过音频数据处理');
         }
         return;
       }
@@ -2071,29 +2095,37 @@ export class Communication {
   // 处理音频数据
   private processAudioData(data: Uint8Array): void {
     try {
+      console.log('[2.4G调试] 开始处理音频数据帧，原始长度:', data.length);
+
       // 移除帧头(0x1b)
       let audioFrame = data.subarray(1);
+      console.log('[2.4G调试] 移除帧头后音频帧长度:', audioFrame.length);
+
       if (Number(this.deviceInfo.firmwareVersion) > 23) {
+        console.log('[2.4G调试] 固件版本 > 23，开始解密音频数据');
         // 解密音频数据
         const decryptedData = this.audioProcessor.miclinkDecrypt(audioFrame);
-        // 这里可以添加播放或保存PCM数据的逻辑
+        console.log('[2.4G调试] 解密后数据长度:', decryptedData.length);
         audioFrame = decryptedData;
+      } else {
+        console.log('[2.4G调试] 固件版本 <= 23，跳过解密');
       }
 
       // 解码为PCM
+      console.log('[2.4G调试] 开始ADPCM到PCM解码');
       const pcmData = this.audioProcessor.processVoiceData(audioFrame);
+      console.log('[2.4G调试] PCM解码结果:', pcmData ? `成功，长度: ${pcmData.length}` : '失败，返回null');
 
       if (pcmData) {
         // 处理PCM数据（播放或保存）
-        // 减少日志输出以提高性能，只在调试时启用
-        if (pcmData.length > 0) {
-          console.log(`解码得到PCM数据: ${pcmData.length}个样本`);
-        }
-        // 这里可以添加播放或保存PCM数据的逻辑
+        console.log(`[2.4G调试] 将PCM数据添加到 Communication.audioData，之前长度: ${Communication.audioData.length}`);
         Communication.audioData.push(pcmData);
+        console.log(`[2.4G调试] 添加后 Communication.audioData 长度: ${Communication.audioData.length}`);
+      } else {
+        console.error('[2.4G调试] PCM解码失败，无法添加音频数据');
       }
     } catch (error) {
-      console.error('处理音频数据失败:', error);
+      console.error('[2.4G调试] 处理音频数据异常:', error);
     }
   }
 }

@@ -952,10 +952,11 @@ export class AudioWebSocketHandler_ble {
       "deviceNo": this.inputMessage.deviceNo,
       "content": ""
     };
-    console.error('发送结束标记', JSON.stringify(endMessage.rate));
 
     this.sendMessage(endMessage);
     this.wending = true;
+    console.error(this.wending+'\t'+'发送结束标记', JSON.stringify(endMessage.rate));
+
   }
 
 
