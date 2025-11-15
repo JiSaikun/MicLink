@@ -99,6 +99,18 @@
     {
       "name": "personal_center",
       "srcPath": "./features/personal_center"
+    },
+    {
+      "name": "phone",
+      "srcPath": "./products/phone",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
     }
   ]
 }
