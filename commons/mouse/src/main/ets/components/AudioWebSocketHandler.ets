@@ -85,6 +85,8 @@ export class AudioWebSocketHandler {
   private isClosing: boolean = false; // 新增：标记是否正在关闭
   private noDataTimeoutId: number | null = null; // 音频数据超时定时器
   private readonly NO_DATA_TIMEOUT_MS = 30000; // 30秒无数据超时
+  private hasSentStart: boolean = false; // 标记是否已经发送过start消息
+  private hasSentEnd: boolean = false; // 标记是否已经发送过end消息
 
   // 优化配置 - 1024字节分片
   private readonly CHUNK_SIZE_BYTES = 1024; // 目标分片大小
@@ -117,6 +119,8 @@ export class AudioWebSocketHandler {
     this.isSending = false;
     this.lastSentIndex = 0;
     this.isClosing = false;
+    this.hasSentStart = false;
+    this.hasSentEnd = false;
   }
 
   public connect(): void {
@@ -717,8 +721,9 @@ export class AudioWebSocketHandler {
     try {
       this.isSending = true;
 
-      // 分片处理现有数据为1024字节块
-      const chunks = await this.chunkAudioDataAsync(this.audioData);
+      // 创建音频数据的快照，避免并发修改问题
+      const audioDataSnapshot = [...this.audioData];
+      const chunks = await this.chunkAudioDataAsync(audioDataSnapshot);
       console.log(`生成 ${chunks.length} 个1024字节分片`);
 
       for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
@@ -821,7 +826,7 @@ export class AudioWebSocketHandler {
 
     let lastDataLength = this.audioData.length;
     let stableCount = 0;
-    const maxStableCount = 50; // 1000ms无新数据 (20ms * 50) - 增加到1秒，防止长语音截断
+    const maxStableCount = 50; // 1秒无新数据 (20ms * 50) - 缩短检测时间
     let initialDelayCount = 0;
     const initialDelayMax = 25; // 500ms初始延迟 (20ms * 25)
 
@@ -835,42 +840,51 @@ export class AudioWebSocketHandler {
           return;
         }
 
-      // 初始延迟，让数据有时间积累
-      initialDelayCount++;
-      if (initialDelayCount < initialDelayMax) {
-        return; // 跳过初始延迟期间的检查
-      }
-
-      const currentLength = this.audioData.length;
-
-      // 计算总采样点数
-      let totalSamples = 0;
-      for (const frame of this.audioData) {
-        totalSamples += frame.length;
-      }
-
-      // 只有在至少有最小数据量后才开始检测完成，避免误判
-      if (totalSamples < this.MIN_SAMPLES_FOR_COMPLETION) {
-        console.log(`2.4G采样点不足(${totalSamples}/${this.MIN_SAMPLES_FOR_COMPLETION})，继续等待...`);
-        return;
-      }
-
-      if (currentLength === lastDataLength) {
-        stableCount++;
-        console.log(`2.4G数据稳定计数: ${stableCount}/${maxStableCount} (${stableCount * this.CHECK_INTERVAL_MS}ms)`);
-
-        if (stableCount >= maxStableCount) {
-          console.log(`2.4G数据稳定超过${maxStableCount * this.CHECK_INTERVAL_MS}ms，发送结束标记`);
-          this.sendEndMarker();
-          this.cleanupIntervals();
+        // 初始延迟，让数据有时间积累
+        initialDelayCount++;
+        if (initialDelayCount < initialDelayMax) {
+          return; // 跳过初始延迟期间的检查
         }
-      } else {
-        if (stableCount > 0) {
-          console.log(`2.4G接收到新数据，重置稳定计数 (之前: ${stableCount})`);
+
+        const currentLength = this.audioData.length;
+
+        // 计算总采样点数
+        let totalSamples = 0;
+        for (const frame of this.audioData) {
+          totalSamples += frame.length;
         }
-        stableCount = 0;
-        lastDataLength = currentLength;
-      }
+
+        // 只有在至少有最小数据量后才开始检测完成，避免误判
+        if (totalSamples < this.MIN_SAMPLES_FOR_COMPLETION) {
+          if (stableCount % 50 === 0) { // 减少日志频率
+            console.log(`2.4G采样点不足(${totalSamples}/${this.MIN_SAMPLES_FOR_COMPLETION})，继续等待...`);
+          }
+          return;
+        }
+
+        // 检查音频采集是否已停止（关键修复）
+        const audioDataState = ConnectDevice.Communication[AppStorage.get('device_currIndex') as number || 0]?.Communication?.audioDataState || false;
+
+        if (currentLength === lastDataLength) {
+          stableCount++;
+
+          if (stableCount % 25 === 0 || stableCount >= maxStableCount) { // 减少日志频率
+            console.log(`2.4G数据稳定计数: ${stableCount}/${maxStableCount} (${stableCount * this.CHECK_INTERVAL_MS}ms), audioDataState: ${audioDataState}`);
+          }
+
+          // 如果音频采集已停止且数据稳定超过阈值，发送结束标记
+          if (stableCount >= maxStableCount) {
+            console.log(`2.4G数据稳定超过${maxStableCount * this.CHECK_INTERVAL_MS}ms，发送结束标记`);
+            this.sendEndMarker();
+            this.cleanupIntervals();
+          }
+        } else {
+          if (stableCount > 0 && stableCount % 10 === 0) { // 减少日志频率
+            console.log(`2.4G接收到新数据，重置稳定计数 (之前: ${stableCount})`);
+          }
+          stableCount = 0;
+          lastDataLength = currentLength;
+        }
       } catch (error) {
         console.error('完成检测回调异常:', error);
         // 如果出现异常，清理定时器
@@ -935,7 +949,11 @@ export class AudioWebSocketHandler {
       console.log(`2.4G分片 ${chunkIndex} Base64长度: ${base64Audio.length}, 前50字符: ${base64Audio.substring(0,
         50)}`);
 
-      const isStart = (chunkIndex === 0 && this.lastSentIndex === 0);
+      // 确保整个会话只发送一次start=true
+      const isStart = !this.hasSentStart && (chunkIndex === 0);
+      if (isStart) {
+        this.hasSentStart = true;
+      }
       const isEnd = false;
 
       const inputMessage: inputMessageModel = {
@@ -964,7 +982,14 @@ export class AudioWebSocketHandler {
   }
 
   private sendEndMarker(): void {
+    // 防止重复发送结束标记
+    if (this.hasSentEnd) {
+      console.log('结束标记已发送，跳过重复发送');
+      return;
+    }
+
     console.log('发送结束标记');
+    this.hasSentEnd = true;
 
     const endMessage: inputMessageModel = {
       "start": false,
@@ -993,6 +1018,8 @@ export class AudioWebSocketHandler {
     // 立即标记对象为无效状态，防止定时器回调继续执行
     this.lastSentIndex = -1; // 无效标记
     this.isClosing = true;
+    this.hasSentStart = false; // 重置start标志，为下次会话做准备
+    this.hasSentEnd = false; // 重置end标志，为下次会话做准备
 
     // 立即清理所有定时器，防止SIGSEGV
     this.cleanupIntervals();

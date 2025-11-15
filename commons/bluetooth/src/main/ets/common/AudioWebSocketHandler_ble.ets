@@ -50,7 +50,7 @@ const END_MARKER_DELAY_MS: number = 100;
 const PASTEBOARD_CLEAR_DELAY_MS: number = 2000;
 const TRANSLATION_EXECUTE_DELAY_MS: number = 50;
 const MIN_DATA_PACKETS: number = 3;
-const MAX_STABLE_COUNT: number = 30; // 从75减少到30次（1500ms无新数据），减少检测次数
+const MAX_STABLE_COUNT: number = 20; // 减少到20次（1000ms无新数据），与2.4G版本保持一致
 const MIN_SAMPLES_FOR_COMPLETION: number = 1024; // 最小采样点数才开始检测完成（约0.064秒@16kHz）
 const BASE64_CHARS: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 const LOG_LEVEL: string = 'info';
@@ -90,6 +90,8 @@ export class AudioWebSocketHandler_ble {
   private lastCacheUpdateTime: number = 0; // 缓存更新时间
   private sessionStartTime: number = 0; // 会话开始时间
   private readonly MAX_SESSION_DURATION: number = 30000; // 最大会话持续时间30秒
+  private hasSentStart: boolean = false; // 标记是否已经发送过start消息
+  private hasSentEnd: boolean = false; // 标记是否已经发送过end消息
 
   constructor(serverUrl: string, audioData: Int16Array[], state: number, inputMessage: inputMessageModel) {
     this.serverUrl = serverUrl || SERVER_URL;
@@ -110,6 +112,8 @@ export class AudioWebSocketHandler_ble {
     this.isSending = false;
     this.lastSentSampleIndex = 0;
     this.isClosing = false;
+    this.hasSentStart = false;
+    this.hasSentEnd = false;
   }
 
 
@@ -585,6 +589,41 @@ export class AudioWebSocketHandler_ble {
     return chunks;
   }
 
+  // 获取连续的音频分片，从全局采样点位置开始（使用快照）
+  private getContinuousAudioChunksFromSnapshot(audioDataSnapshot: Int16Array[]): Int16Array[] {
+    const chunks: Int16Array[] = [];
+
+    // 计算总采样点数
+    let totalSamples = 0;
+    for (let i = 0; i < audioDataSnapshot.length; i++) {
+      totalSamples += audioDataSnapshot[i].length;
+    }
+
+    // 如果没有新数据，返回空数组
+    if (totalSamples <= this.lastSentSampleIndex) {
+      return chunks;
+    }
+
+    // 创建合并的数据缓冲区
+    const combinedData = new Int16Array(totalSamples);
+    let offset = 0;
+    for (const frame of audioDataSnapshot) {
+      combinedData.set(frame, offset);
+      offset += frame.length;
+    }
+
+    // 从上次发送的位置开始连续分片
+    for (let i = this.lastSentSampleIndex; i < combinedData.length; i += SAMPLES_PER_CHUNK) {
+      const endIndex = Math.min(i + SAMPLES_PER_CHUNK, combinedData.length);
+      const chunk = combinedData.slice(i, endIndex);
+      chunks.push(chunk);
+      console.log(`蓝牙连续分片 ${chunks.length}: 从采样点${i}到${endIndex - 1}, 大小: ${chunk.length}采样点`);
+    }
+
+    console.log(`蓝牙连续分片总共生成 ${chunks.length} 个分片，从全局采样点${this.lastSentSampleIndex}开始`);
+    return chunks;
+  }
+
   // 获取连续的音频分片，从全局采样点位置开始
   private getContinuousAudioChunks(): Int16Array[] {
     const chunks: Int16Array[] = [];
@@ -668,8 +707,9 @@ export class AudioWebSocketHandler_ble {
     try {
       this.isSending = true;
 
-      // 使用连续分片处理现有数据
-      const chunks = this.getContinuousAudioChunks();
+      // 创建音频数据的快照，避免并发修改问题
+      const audioDataSnapshot = [...this.audioData];
+      const chunks = this.getContinuousAudioChunksFromSnapshot(audioDataSnapshot);
       console.log(`生成 ${chunks.length} 个连续1024字节分片`);
 
       for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
@@ -792,9 +832,9 @@ export class AudioWebSocketHandler_ble {
   }
 
   private setupCompletionDetection(): void {
-    console.log('设置完成检测');
+    console.log('蓝牙设置完成检测');
 
-    let lastTotalSamples = this.getTotalSamples();
+    let lastDataLength = this.audioData.length;
     let stableCount = 0;
 
     this.completionCheckId = setInterval(() => {
@@ -824,37 +864,52 @@ export class AudioWebSocketHandler_ble {
 
         this.lastCheckTime = currentTime;
 
-        // 计算当前总采样点数
+        // 检查当前数组长度
+        const currentLength = this.audioData.length;
+
+        // 计算总采样点数，用于最小数据量检查
         const currentTotalSamples = this.getTotalSamples();
 
         // 只有在至少有最小数据量后才开始检测完成，避免误判
         if (currentTotalSamples < MIN_SAMPLES_FOR_COMPLETION) {
-          // 减少日志输出频率
-          if (stableCount % 10 === 0) {
+          if (stableCount % 50 === 0) { // 减少日志频率
             console.log(`蓝牙采样点不足(${currentTotalSamples}/${MIN_SAMPLES_FOR_COMPLETION})，继续等待...`);
           }
           return;
         }
 
-        if (currentTotalSamples === lastTotalSamples) {
+        // 检查音频采集是否已停止（关键修复）
+        const devices = AppStorage.get('devices') as DeviceArrayType_Ble[];
+        const deviceIndex = AppStorage.get('device_currIndex') as number || 0;
+
+        let audioDataState = false;
+        if (devices && devices[deviceIndex] && devices[deviceIndex].BlueTooth_devices) {
+          audioDataState = devices[deviceIndex].BlueTooth_devices.audioDataState;
+        }
+
+        if (stableCount % 50 === 0) { // 每秒输出一次状态
+          console.log(`蓝牙完成检测状态 - 数组长度: ${currentLength}, audioDataState: ${audioDataState}, 稳定计数: ${stableCount}, deviceIndex: ${deviceIndex}, devices存在: ${!!devices}`);
+        }
+
+        if (currentLength === lastDataLength) {
           stableCount++;
 
-          // 每200ms输出一次日志，减少日志量
-          if (stableCount % 10 === 0 || stableCount >= MAX_STABLE_COUNT) {
-            console.log(`蓝牙数据稳定计数: ${stableCount}/${MAX_STABLE_COUNT} (${stableCount * CHECK_INTERVAL_MS}ms)`);
+          if (stableCount % 25 === 0 || stableCount >= MAX_STABLE_COUNT) { // 减少日志频率
+            console.log(`蓝牙数据稳定计数: ${stableCount}/${MAX_STABLE_COUNT} (${stableCount * CHECK_INTERVAL_MS}ms), audioDataState: ${audioDataState}`);
           }
 
+          // 如果数据稳定超过阈值，发送结束标记
           if (stableCount >= MAX_STABLE_COUNT) {
             console.log(`蓝牙数据稳定超过${MAX_STABLE_COUNT * CHECK_INTERVAL_MS}ms，发送结束标记`);
             this.sendEndMarker();
             this.cleanupIntervals();
           }
         } else {
-          if (stableCount > 0 && stableCount % 5 === 0) { // 减少日志输出
-            console.log(`蓝牙接收到新数据，重置稳定计数 (之前: ${stableCount})，当前采样点数: ${currentTotalSamples}`);
+          if (stableCount > 0 && stableCount % 10 === 0) { // 减少日志频率
+            console.log(`蓝牙接收到新数据，重置稳定计数 (之前: ${stableCount})，当前数组长度: ${currentLength}`);
           }
           stableCount = 0;
-          lastTotalSamples = currentTotalSamples;
+          lastDataLength = currentLength;
         }
       } catch (error) {
         console.error('蓝牙完成检测回调异常:', error);
@@ -895,7 +950,11 @@ export class AudioWebSocketHandler_ble {
             console.log(`蓝牙分片 ${chunkIndex}/${totalChunks} Base64长度: ${base64Audio.length}`);
           }
 
-          const isStart = (chunkIndex === 0 && this.lastSentSampleIndex === 0);
+          // 确保整个会话只发送一次start=true
+          const isStart = !this.hasSentStart && (chunkIndex === 0);
+          if (isStart) {
+            this.hasSentStart = true;
+          }
           const isEnd = false;
 
           const inputMessage: inputMessageModel = {
@@ -936,7 +995,14 @@ export class AudioWebSocketHandler_ble {
   }
 
   private sendEndMarker(): void {
+    // 防止重复发送结束标记
+    if (this.hasSentEnd) {
+      console.log('结束标记已发送，跳过重复发送');
+      return;
+    }
+
     console.log('发送结束标记');
+    this.hasSentEnd = true;
 
     const endMessage: inputMessageModel = {
       "start": false,
@@ -966,6 +1032,8 @@ export class AudioWebSocketHandler_ble {
 
     // 立即标记对象为无效状态，防止定时器回调继续执行
     this.isClosing = true;
+    this.hasSentStart = false; // 重置start标志，为下次会话做准备
+    this.hasSentEnd = false; // 重置end标志，为下次会话做准备
 
     // 立即清理所有定时器，防止SIGSEGV
     this.cleanupIntervals();
