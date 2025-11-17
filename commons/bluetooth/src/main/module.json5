@@ -3,6 +3,7 @@
     "name": "bluetooth",
     "type": "har",
     "deviceTypes": [
+      "phone",
       "tablet",
       "2in1"
     ],

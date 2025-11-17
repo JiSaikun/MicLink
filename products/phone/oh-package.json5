@@ -5,6 +5,10 @@
   "main": "",
   "author": "",
   "license": "",
-  "dependencies": {}
+  "dependencies": {
+    "keymethodconfig": "file:../../commons/keymethodconfig",
+    "mouse": "file:../../commons/mouse",
+    "bluetooth": "file:../../commons/bluetooth"
+  }
 }
 

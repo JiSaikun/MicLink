@@ -3,6 +3,7 @@
     "name": "mouse",
     "type": "har",
     "deviceTypes": [
+      "phone",
       "tablet",
       "2in1"
     ]

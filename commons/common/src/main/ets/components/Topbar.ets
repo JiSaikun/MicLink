@@ -114,7 +114,6 @@ export struct Topbar {
     }
     .justifyContent(FlexAlign.End)
     .alignItems(VerticalAlign.Center)
-    .backgroundColor(Color.White)
     // .backgroundColor(Color.Blue)
     .height(64)
     .width('100%')

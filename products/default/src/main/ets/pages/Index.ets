@@ -92,22 +92,23 @@ struct Index {
   @StorageLink("isShowFixedText_pop") isShowFixedText_pop: boolean = false
   @StorageLink("isShow_webUrlToOpen_pop") isShow_webUrlToOpen_pop: boolean = false
   @StorageLink("isShow_passwordModification_pop") isShow_passwordModification_pop: boolean = false
-  @Watch('a') @StorageLink("isShow_bluetoothConnect_pop") isShow_bluetoothConnect_pop: boolean = false
+  @Watch('change_isShow_bluetoothConnect_pop') @StorageLink("isShow_bluetoothConnect_pop") isShow_bluetoothConnect_pop: boolean =
+    false
   @StorageLink("isBluetoothConnect_state") isBluetoothConnect_state: boolean = false //蓝牙检索状态
   @State shortcut_pop: boolean = false
   @State isNavigationLibActive: boolean = true //导航库重置
   @State isDeviceSettingsActive: boolean = true //设备设置状态
-  @StorageLink('devices') @Watch('onDevicesChange') devices: DeviceArrayType_Ble[] = []
+  @Watch('onDevicesChange') @StorageLink('devices') devices: DeviceArrayType_Ble[] = []
   @StorageLink("paletteTheme") paletteTheme: string = ThemeConfig.PaletteTheme
-  @StorageLink("resolutionScale") @Watch('onResolutionChange') resolutionScale: string = 'followSystem'
+  @Watch('onResolutionChange') @StorageLink("resolutionScale") resolutionScale: string = 'followSystem'
   @State scaleValue: number = 1.0
 
-  a() {
+  change_isShow_bluetoothConnect_pop() {
     if (!this.isShow_bluetoothConnect_pop) {
       if (this.isBluetoothConnect_state) {
         setTimeout(() => {
           this.isDeviceSettingsActive = false
-          setTimeout(()=>this.isDeviceSettingsActive = true,20)
+          setTimeout(() => this.isDeviceSettingsActive = true, 20)
         }, 100)
       }
     }

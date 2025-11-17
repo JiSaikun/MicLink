@@ -1,0 +1,10 @@
+export class CommonConfig {
+  static readonly commonBackgroundColor: string = '#F8F8F8' //通用背景色
+  static readonly hintTextColor: string = '#999' //提示文字颜色
+  static readonly hintTextColor_select: string = '#333333' //提示文字颜色
+  static readonly fontSize_11: number = 11 //提示文字
+  static readonly fontSize_12: number = 12 //小正文
+  static readonly fontSize_14: number = 14 //正文
+  static readonly fontSize_16: number = 16 //小标题
+  static readonly fontSize_18: number = 18 //大标题
+}

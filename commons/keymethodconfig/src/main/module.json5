@@ -3,6 +3,7 @@
     "name": "keymethodconfig",
     "type": "har",
     "deviceTypes": [
+      "phone",
       "tablet",
       "2in1"
     ],
