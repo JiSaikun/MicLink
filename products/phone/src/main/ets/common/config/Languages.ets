@@ -2,7 +2,7 @@ import { LanguageNames } from './GetModelInfoModel'
 
 export class Languages {
   /**
-   * 底部选项卡
+   * 手机版
    */
   static readonly tab_device: LanguageNames = {
     "DE_DE": "",

@@ -83,18 +83,35 @@ export struct PersonalCenter {
           Scroll() {
             Flex({ direction: FlexDirection.Column, space: { main: LengthMetrics.px(24) } }) {
               Row() {
-                Image(this.userLoginInfo.avatar ? this.userLoginInfo.avatar : $r('app.media.avatar'))
-                  .width(80)
-                  .height(80)
-                  .borderRadius(100)
-                  .objectFit(ImageFit.Fill)
-                  .borderWidth(1)
-                  .margin({ right: 24 })
-                  .onClick(() => {
-                    if (this.userLoginInfo.token) {
-                      updateAvatar()
-                    }
-                  })
+                Stack(){
+                  Image(this.userLoginInfo?.avatar ? this.userLoginInfo.avatar : $r('app.media.avatar'))
+                    .width(80)
+                    .height(80)
+                    .borderRadius(100)
+                    .objectFit(ImageFit.Fill)
+
+                  Stack(){
+                    Row()
+                      .width(24)
+                      .height(24)
+                      .borderRadius('50%')
+                      .backgroundColor(Color.White)
+                    Image($r('app.media.Ellipse_47'))
+                      .width(16)
+                      .height(16)
+                      .objectFit(ImageFit.Fill)
+                  }
+
+
+                }
+                .margin({ right: 24 })
+                .align(Alignment.BottomEnd)
+                .onClick(() => {
+                  if (this.userLoginInfo?.token) {
+                    updateAvatar()
+                  }
+                })
+
                 Column() {
                   Row() {
                     Column() {

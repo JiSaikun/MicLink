@@ -34,7 +34,7 @@ export struct Topbar {
     Row() {
       RelativeContainer() {
         Row() {
-          Image(this.userLoginInfo?this.userLoginInfo.avatar: $r('app.media.avatar'))
+          Image(this.userLoginInfo?.avatar?this.userLoginInfo.avatar: $r('app.media.avatar'))
             .width(32)
             .height(32)
             .borderRadius(100)
