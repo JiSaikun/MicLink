@@ -111,6 +111,10 @@
           ]
         }
       ]
+    },
+    {
+      "name": "components_phone",
+      "srcPath": "./commons/components_phone",
     }
   ]
 }

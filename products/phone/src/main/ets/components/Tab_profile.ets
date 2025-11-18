@@ -13,25 +13,27 @@ interface bottListType {
 export struct Tab_profile {
   @State userLoginInfo: UserLoginInfo = AppStorage.get('userLoginInfo') as UserLoginInfo
   @StorageLink('languages') languages: string = 'ZH_CN'
-  @State bottList: bottListType[] = [
-    {
-      icon: 'soundSetting',
-      title: '音色设置',
-      name: 'soundSetting'
-    }, {
-    icon: 'fileManagement',
-    title: '文件管理',
-    name: 'fileManagement'
-  }, {
-    icon: 'userFeedback',
-    title: '用户反馈',
-    name: 'userFeedback'
-  }, {
-    icon: 'aboutSoftware',
-    title: '关于软件',
-    name: 'aboutSoftware'
+  getBottList(): bottListType[] {
+    return [
+      {
+        icon: 'soundSetting',
+        title: Languages.soundSetting[this.languages],
+        name: 'soundSetting'
+      }, {
+        icon: 'fileManagement',
+        title: Languages.fileManagement[this.languages],
+        name: 'fileManagement'
+      }, {
+        icon: 'userFeedback',
+        title: Languages.userFeedback[this.languages],
+        name: 'userFeedback'
+      }, {
+        icon: 'aboutSoftware',
+        title: Languages.aboutSoftware[this.languages],
+        name: 'aboutSoftware'
+      }
+    ]
   }
-  ]
 
   @Builder
   TextGradient(text: string) {
@@ -67,7 +69,7 @@ export struct Tab_profile {
 
       Blank()
       Row() {
-        Text('查看')
+        Text(Languages.view[this.languages])
           .fontSize(CommonConfig.fontSize_12)
           .fontColor('#8C6000')
           .fontWeight(CommonConfig.fontWeight_400)
@@ -121,7 +123,7 @@ export struct Tab_profile {
           .margin({ right: 16 })
         Column() {
           Row() {
-            Text(this.userLoginInfo ? this.userLoginInfo.name : '用户名称')
+            Text(this.userLoginInfo ? this.userLoginInfo.name : Languages.username[this.languages])
               .fontSize(CommonConfig.fontSize_14)
               .fontColor(CommonConfig.hintTextColor_select)
               .margin({ right: 8 })
@@ -185,7 +187,7 @@ export struct Tab_profile {
 
             Column() {
               Row({ space: 4 }) {
-                this.TextGradient('成长值')
+                this.TextGradient(Languages.growthValue[this.languages])
                 this.TextGradient('6713')
                 this.TextGradient('/')
                 Text('10000')
@@ -225,25 +227,25 @@ export struct Tab_profile {
         .padding({ left: 16, right: 16 })
 
         Column() {
-          Text('文件转写')
+          Text(Languages.fileTranscription[this.languages])
             .fontSize(CommonConfig.fontSize_14)
             .fontColor(CommonConfig.hintTextColor)
             .fontWeight(CommonConfig.fontWeight_400)
             .margin({ bottom: 12 })
-          Flex({ space: { main: LengthMetrics.px(30), cross: LengthMetrics.px(12) }, wrap: FlexWrap.Wrap }) {
-            this.Product(2, '小时卡')
-            this.Product(50, '月卡')
-            this.Product(150, '季卡')
-            this.Product(450, '年卡')
+          Flex({ space: { main: LengthMetrics.px(30), cross: LengthMetrics.px(24) }, wrap: FlexWrap.Wrap }) {
+            this.Product(2, Languages.hourCard[this.languages])
+            this.Product(50, Languages.monthCard[this.languages])
+            this.Product(150, Languages.seasonCard[this.languages])
+            this.Product(450, Languages.yearCard[this.languages])
           }
 
-          Text('音色定制')
+          Text(Languages.voiceCustomization[this.languages])
             .fontSize(CommonConfig.fontSize_14)
             .fontColor(CommonConfig.hintTextColor)
             .fontWeight(CommonConfig.fontWeight_400)
             .margin({ bottom: 12, top: 16 })
           Flex({ space: { main: LengthMetrics.px(30), cross: LengthMetrics.px(12) }, wrap: FlexWrap.Wrap }) {
-            this.Product(9.9, '终身卡')
+            this.Product(9.9, Languages.lifetimeCard[this.languages])
             Row()
               .padding({
                 left: 12,
@@ -269,8 +271,8 @@ export struct Tab_profile {
         .margin({ bottom: 12 })
 
         Column({space:8}) {
-          ForEach(this.bottList, (item: bottListType) => {
-            Flex({alignItems:ItemAlign.Center}){
+          ForEach(this.getBottList(), (item: bottListType) => {
+            Flex({alignItems:ItemAlign.Center}) {
               Image($r(`app.media.${item.icon}`))
                 .width(24)
                 .padding({right:12})
