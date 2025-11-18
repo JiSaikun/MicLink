@@ -2,23 +2,21 @@ import { CommonConfig } from "../common/CommonConfig"
 import { TopTitle } from "../common/TopTitle"
 
 @Builder
-export function SettingPageBuilder() {
-  SettingPage()
+export function ColorThemeBuilder() {
+  ColorTheme()
 }
 
 @Component
-struct SettingPage {
+struct ColorTheme {
   @StorageLink("paletteTheme") paletteTheme: string = CommonConfig.PaletteTheme
-  @Consume('pageInfo') pageInfo: NavPathStack
-  @StorageLink('languages') languages: string = 'ZH_CN'
 
   build() {
     NavDestination() {
       Flex({ direction: FlexDirection.Column }) {
-        TopTitle({ title: '设置' })
+        TopTitle({ title: '主题' })
           .margin({ bottom: 12 })
         Column() {
-          Row() {
+          Row(){
             Text('色彩主题')
               .fontSize(CommonConfig.fontSize_14)
               .fontColor(CommonConfig.hintTextColor_select)
@@ -31,11 +29,7 @@ struct SettingPage {
           .width('100%')
           .alignItems(VerticalAlign.Center)
           .padding({ top: 12, bottom: 12 })
-          .onClick(() => {
-            this.pageInfo.pushPath({ "name": 'ColorTheme' })
-          })
-
-          Row() {
+          Row(){
             Text('界面语言')
               .fontSize(CommonConfig.fontSize_14)
               .fontColor(CommonConfig.hintTextColor_select)
@@ -45,12 +39,11 @@ struct SettingPage {
               .width(16)
               .height(16)
           }
-          .border({ width: { top: 1, bottom: 1 }, color: CommonConfig.commonBackgroundColor })
+          .border({width:{top:1,bottom:1},color:CommonConfig.commonBackgroundColor})
           .width('100%')
           .alignItems(VerticalAlign.Center)
           .padding({ top: 12, bottom: 12 })
-
-          Row() {
+          Row(){
             Text('后台保持运行')
               .fontSize(CommonConfig.fontSize_14)
               .fontColor(CommonConfig.hintTextColor_select)
@@ -70,32 +63,13 @@ struct SettingPage {
         .padding({ left: 12, right: 12 })
         .borderRadius(12)
         .backgroundColor(Color.White)
-
-        Blank()
-        Row() {
-          Text('退出登录')
-            .fontSize(CommonConfig.fontSize_14)
-            .fontWeight(CommonConfig.fontWeight_400)
-            .fontColor('#FF3B30')
-            .width('100%')
-            .textAlign(TextAlign.Center)
-            .onClick(() => {
-              this.pageInfo.pushPath({ "name": 'login&phone' })
-              AppStorage.setOrCreate('login', false)
-              AppStorage.setOrCreate('userLoginInfo', null)
-            })
-        }
-        .padding({ top: 12, bottom: 12 })
-        .borderRadius(8)
-        .backgroundColor(Color.White)
-        .width('100%')
       }
       .width('100%')
-      .height('100%')
     }
     .padding(16)
     .backgroundColor(CommonConfig.commonBackgroundColor)
-    .hideTitleBar(true)
-    .hideToolBar(true)
+    // .hideTitleBar(true)
+    // .hideToolBar(true)
+    .title('ashdjkh')
   }
 }

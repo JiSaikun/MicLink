@@ -158,7 +158,7 @@ export struct Tab_profile {
               .fontSize(CommonConfig.fontSize_12)
               .fontWeight(CommonConfig.fontWeight_400)
               .fontColor(CommonConfig.hintTextColor)
-            Text('123 **** **89')
+            Text(this.userLoginInfo ? this.userLoginInfo.account :'123 **** **89')
               .fontSize(CommonConfig.fontSize_12)
               .fontWeight(CommonConfig.fontWeight_400)
               .fontColor(CommonConfig.hintTextColor)

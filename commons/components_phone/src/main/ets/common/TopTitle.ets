@@ -20,6 +20,7 @@ export struct TopTitle {
 
       Text()
     }
+    .alignItems(VerticalAlign.Center)
     .justifyContent(FlexAlign.SpaceBetween)
     .width('100%')
     .padding({ top: 6, bottom: 6 })
