@@ -13,3 +13,4 @@ export { observeSystemLanguageChanges } from './src/main/ets/common/ObserveSyste
 
 export { ThemeConfig } from './src/main/ets/common/ThemeConfig'
 export { UserLoginInfo } from './src/main/ets/model/UserLoginInfo'
+export { register_Response,updateAvatar } from './src/main/ets/common/UpdateAvatar'

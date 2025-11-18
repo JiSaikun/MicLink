@@ -1,8 +1,8 @@
 import { http } from 'api'
+import { register_Response } from 'common';
 import {
   getCode_Params, //获取验证码
   register_Params, //注册登录
-  register_Response,
   login_Params, //密码登录
   resetPwd_Params, //修改密码
 } from '../model/UserModel'

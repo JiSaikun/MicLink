@@ -1,4 +1,4 @@
-import { DeviceArrayType_Ble } from 'bluetooth'
+import { connectDevice, DeviceArrayType_Ble } from 'bluetooth'
 import { _change_keyboard_KeyPressType, _change_mouse_KeyPressType } from 'keymethodconfig'
 import { ConnectDevice, DeviceArrayType, KeyPressType, PRODUCT_TYPE } from 'mouse'
 import { CommonConfig } from '../common/config/CommonConfig'
@@ -8,6 +8,9 @@ import { Tab_command } from '../components/Tab_command'
 import { Tab_device } from '../components/Tab_device'
 import { Tab_library } from '../components/Tab_library'
 import { Tab_profile } from '../components/Tab_profile'
+import { inputDevice } from '@kit.InputKit'
+import { Reset } from 'common'
+import { common } from '@kit.AbilityKit'
 
 interface BarType {
   img: string
@@ -42,8 +45,55 @@ struct Index {
   ]
   private controller: TabsController = new TabsController()
 
-  onPageShow(): void {
+  aboutToAppear(): void {
+    const context = getContext(this) as common.UIAbilityContext;
+    AppStorage.setOrCreate('context', context);
+    AppStorage.setOrCreate('currpageIsAI', true);
 
+    let isPhysicalKeyboardExist = true;
+    try {
+      inputDevice.on("change", (data: inputDevice.DeviceListener) => {
+        Reset()
+        console.log(`Device event info: ${JSON.stringify(data)}`);
+        inputDevice.getKeyboardType(data.deviceId, (err: Error, type: inputDevice.KeyboardType) => {
+          console.log("The keyboard type is: " + type);
+          if (type == inputDevice.KeyboardType.ALPHABETIC_KEYBOARD && data.type == 'add') {
+            isPhysicalKeyboardExist = true;
+            ConnectDevice.connectDevice().then(() => {
+              for (let item of ConnectDevice.Communication) {
+                item.Communication.changPhysicalKeyboardExistState(isPhysicalKeyboardExist)
+              }
+            })
+          } else if (type == inputDevice.KeyboardType.ALPHABETIC_KEYBOARD && data.type == 'remove') {
+            isPhysicalKeyboardExist = false;
+            for (let item of ConnectDevice.Communication) {
+              item.Communication.changPhysicalKeyboardExistState(isPhysicalKeyboardExist)
+            }
+            ConnectDevice.connectDevice().then(() => {
+              for (let item of ConnectDevice.Communication) {
+                item.Communication.changPhysicalKeyboardExistState(true)
+              }
+            })
+          }
+        });
+      });
+    } catch (error) {
+      console.error(`Get device info failed, error: ${JSON.stringify(error, ['code', 'message'])}`);
+    }
+  }
+
+  onPageShow(): void {
+    try {
+      ConnectDevice.connectDevice()
+      const context: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
+      connectDevice(context)
+    } catch (e) {
+      console.log(e)
+    }
+    this.pageInfo.disableAnimation(true)
+    if (!this.login) {
+      this.pageInfo.pushPath({ 'name': 'login' })
+    }
   }
 
   change_mouse_KeyPressType() {
@@ -98,6 +148,7 @@ struct Index {
         }
         .animationDuration(0)
         .layoutWeight(1)
+        .barHeight(0)
 
         Flex({ justifyContent: FlexAlign.SpaceBetween }) {
           ForEach(this.barList, (item: BarType, index) => {
@@ -121,10 +172,13 @@ struct Index {
         .padding(10)
         .backgroundColor(Color.White)
         .borderRadius(8)
-      }.padding({ left: 16, right: 16 })
+      }
+      .padding({ left: 16, right: 16 })
       .backgroundColor(CommonConfig.commonBackgroundColor)
       .width('100%')
       .height('100%')
+      .backgroundImage(this.currPageIndex === 4 ? $r('app.media.background_1') : '')
+      .backgroundImageSize({ width: '100%', height: '100%' })
     }
     .hideToolBar(true)
     .hideTitleBar(true)

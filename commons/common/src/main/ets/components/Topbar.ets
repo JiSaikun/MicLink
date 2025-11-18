@@ -34,8 +34,11 @@ export struct Topbar {
     Row() {
       RelativeContainer() {
         Row() {
-          Image($r('app.media.avatar'))
+          Image(this.userLoginInfo?this.userLoginInfo.avatar: $r('app.media.avatar'))
             .width(32)
+            .height(32)
+            .borderRadius(100)
+            .objectFit(ImageFit.Fill)
             .margin({ right: 10 })
           Text(this.userLoginInfo ? this.userLoginInfo.name : '迷人的Justin')
             .fontSize(14)

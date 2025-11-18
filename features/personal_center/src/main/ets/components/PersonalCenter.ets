@@ -1,4 +1,4 @@
-import { ThemeConfig, UserLoginInfo } from 'common'
+import { ThemeConfig, updateAvatar, UserLoginInfo } from 'common'
 import { Languages } from 'config'
 import { LengthMetrics } from '@kit.ArkUI'
 import { RechargeRecord } from './RechargeRecord '
@@ -83,11 +83,18 @@ export struct PersonalCenter {
           Scroll() {
             Flex({ direction: FlexDirection.Column, space: { main: LengthMetrics.px(24) } }) {
               Row() {
-                Image($r('app.media.avatar'))
+                Image(this.userLoginInfo.avatar ? this.userLoginInfo.avatar : $r('app.media.avatar'))
                   .width(80)
-                  .borderRadius('50%')
+                  .height(80)
+                  .borderRadius(100)
+                  .objectFit(ImageFit.Fill)
+                  .borderWidth(1)
                   .margin({ right: 24 })
-                  .padding({ right: 8 })
+                  .onClick(() => {
+                    if (this.userLoginInfo.token) {
+                      updateAvatar()
+                    }
+                  })
                 Column() {
                   Row() {
                     Column() {

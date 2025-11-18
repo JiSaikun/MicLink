@@ -1,8 +1,9 @@
 import { config, Languages } from 'config'
 import { promptAction } from '@kit.ArkUI'
-import { register_Params, register_Response, login_Params, resetPwd_Params } from '../model/UserModel' //数据响应模型
+import { register_Params, login_Params, resetPwd_Params } from '../model/UserModel' //数据响应模型
 import { _register, _login, _resetPwd } from '../viewmodel/UserViewModel'
 import { AxiosError } from '@ohos/axios';
+import { register_Response } from 'common';
 
 @Extend(Text)
 function textDefaultStyle() {

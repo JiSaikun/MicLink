@@ -7,4 +7,7 @@ export class CommonConfig {
   static readonly fontSize_14: number = 14 //正文
   static readonly fontSize_16: number = 16 //小标题
   static readonly fontSize_18: number = 18 //大标题
+  static readonly fontSize_24: number = 24
+  static readonly fontWeight_400: number = 400
+  static readonly fontWeight_700: number = 700
 }
