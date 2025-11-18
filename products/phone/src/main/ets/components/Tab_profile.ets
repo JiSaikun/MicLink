@@ -1,7 +1,7 @@
 import { UserLoginInfo } from "common"
-import { CommonConfig } from "../common/config/CommonConfig"
 import { Languages } from "../common/config/Languages"
 import { LengthMetrics } from "@kit.ArkUI"
+import { CommonConfig } from "components_phone"
 
 interface bottListType {
   icon: string
@@ -13,6 +13,7 @@ interface bottListType {
 export struct Tab_profile {
   @State userLoginInfo: UserLoginInfo = AppStorage.get('userLoginInfo') as UserLoginInfo
   @StorageLink('languages') languages: string = 'ZH_CN'
+  @Consume('pageInfo') pageInfo: NavPathStack
   getBottList(): bottListType[] {
     return [
       {
@@ -34,6 +35,7 @@ export struct Tab_profile {
       }
     ]
   }
+
 
   @Builder
   TextGradient(text: string) {
@@ -110,6 +112,9 @@ export struct Tab_profile {
         Image($r('app.media.Frame_2570'))
           .width(40)
           .height(40)
+          .onClick(()=>{
+            this.pageInfo.pushPath({"name":'Setting'})
+          })
       }
       .width('100%')
       .padding({ bottom: 24 })
@@ -117,10 +122,12 @@ export struct Tab_profile {
       .flexShrink(1)
 
       Flex({ alignItems: ItemAlign.Center }) {
-        Image($r('app.media.avatar'))
+        Image(this.userLoginInfo?.avatar ? this.userLoginInfo.avatar :$r('app.media.avatar'))
           .width(60)
           .height(60)
           .margin({ right: 16 })
+          .borderRadius(100)
+          .objectFit(ImageFit.Fill)
         Column() {
           Row() {
             Text(this.userLoginInfo ? this.userLoginInfo.name : Languages.username[this.languages])

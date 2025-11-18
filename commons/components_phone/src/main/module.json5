@@ -2,6 +2,8 @@
   "module": {
     "name": "components_phone",
     "type": "har",
+    "requestPermissions": [{"name": 'ohos.permission.INTERNET'}],
+    "routerMap": "$profile:route_map",
     "deviceTypes": [
       "default",
       "tablet",

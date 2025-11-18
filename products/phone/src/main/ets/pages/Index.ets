@@ -1,7 +1,6 @@
 import { connectDevice, DeviceArrayType_Ble } from 'bluetooth'
 import { _change_keyboard_KeyPressType, _change_mouse_KeyPressType } from 'keymethodconfig'
 import { ConnectDevice, DeviceArrayType, KeyPressType, PRODUCT_TYPE } from 'mouse'
-import { CommonConfig } from '../common/config/CommonConfig'
 import { Languages } from '../common/config/Languages'
 import { Tab_ai } from '../components/Tab_ai'
 import { Tab_command } from '../components/Tab_command'
@@ -11,6 +10,7 @@ import { Tab_profile } from '../components/Tab_profile'
 import { inputDevice } from '@kit.InputKit'
 import { Reset } from 'common'
 import { common } from '@kit.AbilityKit'
+import { CommonConfig } from 'components_phone'
 
 interface BarType {
   img: string
@@ -23,13 +23,14 @@ PersistentStorage.persistProp("login", false)
 PersistentStorage.persistProp("device_currIndex", 0) //设备信息接收与发送
 PersistentStorage.persistProp("device_isBle", false) //是否是蓝牙连接设备
 PersistentStorage.persistProp("device_show_currIndex", 0) //设备信息展示
+PersistentStorage.persistProp("userLoginInfo", null) //用户信息
 
 @Entry
 @Component
 struct Index {
   @StorageLink("login") login: boolean = true
   @Provide('pageInfo') pageInfo: NavPathStack = new NavPathStack()
-  @StorageLink("pageInfo") pageInfo_: NavPathStack = this.pageInfo
+  // @StorageLink("pageInfo") pageInfo_: NavPathStack = this.pageInfo
   @StorageLink('languages') languages: string = 'ZH_CN'
   @Watch('change_mouse_KeyPressType') @StorageLink("mouse_KeyPressType") mouse_KeyPressType: KeyPressType =
     KeyPressType.DEFAULT
@@ -92,7 +93,7 @@ struct Index {
     }
     this.pageInfo.disableAnimation(true)
     if (!this.login) {
-      this.pageInfo.pushPath({ 'name': 'login' })
+      this.pageInfo.pushPath({ 'name': 'login&phone' })
     }
   }
 
@@ -123,7 +124,7 @@ struct Index {
   }
 
   build() {
-    Navigation() {
+    Navigation(this.pageInfo) {
       Column() {
         Tabs({ controller: this.controller }) {
           TabContent() {
@@ -149,6 +150,7 @@ struct Index {
         .animationDuration(0)
         .layoutWeight(1)
         .barHeight(0)
+        .scrollable(false)
 
         Flex({ justifyContent: FlexAlign.SpaceBetween }) {
           ForEach(this.barList, (item: BarType, index) => {
@@ -182,6 +184,5 @@ struct Index {
     }
     .hideToolBar(true)
     .hideTitleBar(true)
-    .mode(NavigationMode.Stack)
   }
 }

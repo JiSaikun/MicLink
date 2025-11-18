@@ -12,7 +12,14 @@
       "pageSourceFile": "src/main/ets/page/Shortcut_pop.ets",
       "buildFunction": "Shortcut_popBuilder",
       "data": {
-        "description": "登录"
+        "description": "按键监听"
+      }
+    }, {
+      "name": "login&phone",
+      "pageSourceFile": "src/main/ets/page/Login_phone.ets",
+      "buildFunction": "LoginBuilder",
+      "data": {
+        "description": "按键监听"
       }
     }
   ]
