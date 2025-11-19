@@ -38,6 +38,14 @@ interface res_data_moudel {
   "type": string
 }
 
+interface MetricsModel {
+  totalChunksSent: number;
+  totalBytesSent: number;
+  failedChunks: number;
+  sessionStartTime: number;
+  lastChunkTime: number;
+}
+
 // 配置常量
 const SERVER_URL: string = "ws://asr.miclink.net/ws";
 const CHUNK_SIZE_BYTES: number = 1024;
@@ -93,6 +101,25 @@ export class AudioWebSocketHandler_ble {
   private hasSentStart: boolean = false; // 标记是否已经发送过start消息
   private hasSentEnd: boolean = false; // 标记是否已经发送过end消息
 
+  // 网络重试机制
+  private readonly MAX_SEND_RETRIES = 3; // 最大重试次数
+  private failedChunksCount: number = 0; // 失败分片计数
+
+  // 心跳机制
+  private heartbeatIntervalId: number | null = null;
+  private lastHeartbeatTime: number = 0;
+  private readonly HEARTBEAT_INTERVAL_MS = 5000; // 5秒心跳间隔
+  private readonly HEARTBEAT_TIMEOUT_MS = 15000; // 15秒心跳超时
+
+  // 性能指标
+  private metrics: MetricsModel = {
+    totalChunksSent: 0,
+    totalBytesSent: 0,
+    failedChunks: 0,
+    sessionStartTime: 0,
+    lastChunkTime: 0
+  };
+
   constructor(serverUrl: string, audioData: Int16Array[], state: number, inputMessage: inputMessageModel) {
     this.serverUrl = serverUrl || SERVER_URL;
     this.audioData = audioData;
@@ -114,6 +141,8 @@ export class AudioWebSocketHandler_ble {
     this.isClosing = false;
     this.hasSentStart = false;
     this.hasSentEnd = false;
+    this.failedChunksCount = 0;
+    this.metrics.sessionStartTime = Date.now();
   }
 
 

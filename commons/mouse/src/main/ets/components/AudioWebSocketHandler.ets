@@ -55,6 +55,29 @@ interface res_data_moudel {
   "type": string
 }
 
+// 性能指标接口
+interface MetricsModel {
+  totalChunksSent: number;
+  totalBytesSent: number;
+  failedChunks: number;
+  sessionStartTime: number;
+  lastChunkTime: number;
+}
+
+// 扩展性能指标接口（用于getMetrics返回值）
+interface ExtendedMetricsModel {
+  totalChunksSent: number;
+  totalBytesSent: number;
+  failedChunks: number;
+  sessionStartTime: number;
+  lastChunkTime: number;
+  sessionDuration: number;
+  failedChunksCount: number;
+  currentBufferFrames: number;
+  totalSamplesCached: number;
+  isConnected: boolean;
+}
+
 export class AudioWebSocketHandler {
   public isConnected: boolean = false;
   private ws: webSocket.WebSocket | null = null;
@@ -87,6 +110,30 @@ export class AudioWebSocketHandler {
   private readonly NO_DATA_TIMEOUT_MS = 30000; // 30秒无数据超时
   private hasSentStart: boolean = false; // 标记是否已经发送过start消息
   private hasSentEnd: boolean = false; // 标记是否已经发送过end消息
+
+  // 性能优化：增量计算总采样点，避免重复遍历
+  private totalSamplesCache: number = 0;
+  private readonly MAX_BUFFER_FRAMES = 150; // 最大缓冲帧数，防止内存泄漏
+  private readonly FRAMES_TO_KEEP = 30; // 清理后保留的帧数
+
+  // 网络重试机制
+  private readonly MAX_SEND_RETRIES = 3; // 最大重试次数
+  private failedChunksCount: number = 0; // 失败分片计数
+
+  // 心跳机制
+  private heartbeatIntervalId: number | null = null;
+  private lastHeartbeatTime: number = 0;
+  private readonly HEARTBEAT_INTERVAL_MS = 5000; // 5秒心跳间隔
+  private readonly HEARTBEAT_TIMEOUT_MS = 15000; // 15秒心跳超时
+
+  // 性能指标
+  private metrics: MetricsModel = {
+    totalChunksSent: 0,
+    totalBytesSent: 0,
+    failedChunks: 0,
+    sessionStartTime: 0,
+    lastChunkTime: 0
+  };
 
   // 优化配置 - 1024字节分片
   private readonly CHUNK_SIZE_BYTES = 1024; // 目标分片大小
@@ -121,6 +168,9 @@ export class AudioWebSocketHandler {
     this.isClosing = false;
     this.hasSentStart = false;
     this.hasSentEnd = false;
+    this.totalSamplesCache = 0;
+    this.failedChunksCount = 0;
+    this.metrics.sessionStartTime = Date.now();
   }
 
   public connect(): void {
@@ -144,6 +194,9 @@ export class AudioWebSocketHandler {
           this.isClosing = false;
           console.log("连接已打开，状态:" + JSON.stringify(value));
           console.log('*******************************语音数据长度：', this.audioData.length);
+
+          // 启动心跳机制
+          this.setupHeartbeat();
 
           // 使用优化的实时发送方式
           this.startRealTimeAudioSending();
@@ -200,6 +253,9 @@ export class AudioWebSocketHandler {
 
   private handleWebSocketMessage(message: string): void {
     try {
+      // 更新心跳时间
+      this.updateHeartbeat();
+
       let res: res_moudel = JSON.parse(message);
       if (res.data.text === '') {
         return
@@ -514,6 +570,108 @@ export class AudioWebSocketHandler {
       clearTimeout(this.noDataTimeoutId);
       this.noDataTimeoutId = null;
     }
+    if (this.heartbeatIntervalId !== null) {
+      clearInterval(this.heartbeatIntervalId);
+      this.heartbeatIntervalId = null;
+    }
+  }
+
+  private cleanupOldAudioData(): void {
+    if (this.audioData.length > this.MAX_BUFFER_FRAMES) {
+      const framesToRemove = this.audioData.length - this.FRAMES_TO_KEEP;
+      for (let i = 0; i < framesToRemove; i++) {
+        this.totalSamplesCache -= this.audioData[i].length;
+      }
+      this.audioData.splice(0, framesToRemove);
+      this.lastSentIndex = Math.max(0, this.lastSentIndex - framesToRemove);
+      console.log(`🧹 内存清理：删除${framesToRemove}帧旧数据`);
+    }
+  }
+
+  public addAudioFrame(frame: Int16Array): void {
+    this.audioData.push(frame);
+    this.totalSamplesCache += frame.length;
+    if (this.audioData.length % 50 === 0) {
+      this.cleanupOldAudioData();
+    }
+  }
+
+  private getTotalSamples(): number {
+    return this.totalSamplesCache;
+  }
+
+  private setupHeartbeat(): void {
+    this.lastHeartbeatTime = Date.now();
+    this.heartbeatIntervalId = setInterval(() => {
+      if (!this.isConnected || this.isClosing) {
+        return;
+      }
+      const now = Date.now();
+      const timeSinceLastHeartbeat = now - this.lastHeartbeatTime;
+      if (timeSinceLastHeartbeat > this.HEARTBEAT_TIMEOUT_MS) {
+        console.warn(`💔 心跳超时(${timeSinceLastHeartbeat}ms)，尝试重连`);
+        this.reconnect();
+        return;
+      }
+      if (timeSinceLastHeartbeat > this.HEARTBEAT_INTERVAL_MS) {
+        console.log('💓 发送心跳');
+        this.lastHeartbeatTime = now;
+      }
+    }, this.HEARTBEAT_INTERVAL_MS) as number;
+  }
+
+  private updateHeartbeat(): void {
+    this.lastHeartbeatTime = Date.now();
+  }
+
+  private async reconnect(): Promise<void> {
+    console.log('🔄 开始重连WebSocket...');
+    try {
+      await this.disconnectAsync();
+      await this.delay(1000);
+      this.connect();
+    } catch (error) {
+      console.error('重连失败:', error);
+    }
+  }
+
+  private sendMessageWithRetry(
+    inputMessage: inputMessageModel,
+    retries: number = this.MAX_SEND_RETRIES
+  ): boolean {
+    for (let attempt = 0; attempt < retries; attempt++) {
+      const success = this.sendMessage(inputMessage);
+      if (success) {
+        return true;
+      }
+      // 同步重试（简化版本，避免async问题）
+      if (attempt < retries - 1) {
+        console.warn(`发送失败，立即重试 (${attempt + 1}/${retries})`);
+      }
+    }
+    console.error(`✖️ 消息发送失败，已重试${retries}次`);
+    this.failedChunksCount++;
+    this.metrics.failedChunks++;
+    return false;
+  }
+
+  /**
+   * 获取性能指标
+   */
+  public getMetrics(): ExtendedMetricsModel {
+    const result: ExtendedMetricsModel = {
+      totalChunksSent: this.metrics.totalChunksSent,
+      totalBytesSent: this.metrics.totalBytesSent,
+      failedChunks: this.metrics.failedChunks,
+      sessionStartTime: this.metrics.sessionStartTime,
+      lastChunkTime: this.metrics.lastChunkTime,
+      sessionDuration: Date.now() - this.metrics.sessionStartTime,
+      failedChunksCount: this.failedChunksCount,
+      currentBufferFrames: this.audioData.length,
+      totalSamplesCached: this.totalSamplesCache,
+      isConnected: this.isConnected
+    };
+    return result;
   }
 
   public sendMessage(inputMessage: inputMessageModel): boolean {
@@ -931,6 +1089,8 @@ export class AudioWebSocketHandler {
   }
 
   private async sendAudioChunk(chunk: Int16Array, chunkIndex: number, totalChunks: number): Promise<void> {
+    const startTime = Date.now();
+    
     try {
       if (this.isClosing) {
         return;
@@ -946,8 +1106,10 @@ export class AudioWebSocketHandler {
         return;
       }
 
-      console.log(`2.4G分片 ${chunkIndex} Base64长度: ${base64Audio.length}, 前50字符: ${base64Audio.substring(0,
-        50)}`);
+      // 降低日志频率，避免性能开销
+      if (chunkIndex % 10 === 0 || chunkIndex < 3) {
+        console.log(`2.4G分片 ${chunkIndex}/${totalChunks} Base64长度: ${base64Audio.length}`);
+      }
 
       // 确保整个会话只发送一次start=true
       // 只依赖hasSentStart标志，不依赖chunkIndex（因为chunkIndex在不同方法中会重置）
@@ -973,13 +1135,21 @@ export class AudioWebSocketHandler {
         "content": base64Audio
       };
 
-      const success = this.sendMessage(inputMessage);
-      if (!success) {
-        console.error('发送音频数据失败');
+      // 使用带重试的发送方法
+      const success = this.sendMessageWithRetry(inputMessage);
+      
+      if (success) {
+        // 更新性能指标
+        this.metrics.totalChunksSent++;
+        this.metrics.totalBytesSent += chunk.length * 2;
+        this.metrics.lastChunkTime = Date.now();
+      } else {
+        console.error(`❌ 发送音频分片失败: ${chunkIndex}/${totalChunks}`);
       }
 
     } catch (error) {
       console.error(`发送音频分片错误:`, error);
+      this.metrics.failedChunks++;
     }
   }
 
