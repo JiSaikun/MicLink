@@ -14,6 +14,27 @@
       "data": {
         "description": "主题"
       }
+    }, {
+      "name": "InterfaceLanguage",
+      "pageSourceFile": "src/main/ets/components/InterfaceLanguage.ets",
+      "buildFunction": "InterfaceLanguageBuilder",
+      "data": {
+        "description": "语言"
+      }
+    }, {
+      "name": "PersonalProfile",
+      "pageSourceFile": "src/main/ets/components/PersonalProfile.ets",
+      "buildFunction": "PersonalProfileBuilder",
+      "data": {
+        "description": "编辑个人资料"
+      }
+    }, {
+      "name": "ProductDetails",
+      "pageSourceFile": "src/main/ets/components/ProductDetails.ets",
+      "buildFunction": "ProductDetailsBuilder",
+      "data": {
+        "description": "会员套餐"
+      }
     }
   ]
 }

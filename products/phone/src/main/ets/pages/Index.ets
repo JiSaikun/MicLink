@@ -1,7 +1,6 @@
 import { connectDevice, DeviceArrayType_Ble } from 'bluetooth'
 import { _change_keyboard_KeyPressType, _change_mouse_KeyPressType } from 'keymethodconfig'
 import { ConnectDevice, DeviceArrayType, KeyPressType, PRODUCT_TYPE } from 'mouse'
-import { Languages } from '../common/config/Languages'
 import { Tab_ai } from '../components/Tab_ai'
 import { Tab_command } from '../components/Tab_command'
 import { Tab_device } from '../components/Tab_device'
@@ -10,7 +9,7 @@ import { Tab_profile } from '../components/Tab_profile'
 import { inputDevice } from '@kit.InputKit'
 import { Reset } from 'common'
 import { common } from '@kit.AbilityKit'
-import { CommonConfig } from 'components_phone'
+import { CommonConfig, Languages } from 'components_phone'
 
 interface BarType {
   img: string

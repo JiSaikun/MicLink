@@ -16,47 +16,79 @@ struct ColorTheme {
         TopTitle({ title: '主题' })
           .margin({ bottom: 12 })
         Column() {
-          Row(){
-            Text('色彩主题')
+          Row() {
+            Text('主色')
               .fontSize(CommonConfig.fontSize_14)
               .fontColor(CommonConfig.hintTextColor_select)
               .fontWeight(CommonConfig.fontWeight_400)
+              .margin({ right: 8 })
+            Row()
+              .width(12)
+              .height(12)
+              .borderRadius('50%')
+              .backgroundColor('#00AECC')
             Blank()
-            Image($r('app.media.Arrow_to_the_right'))
-              .width(16)
-              .height(16)
+            if (this.paletteTheme === '#00AECC') {
+              Image($r('app.media.Frame_2538'))
+                .width(16)
+                .height(16)
+            }
           }
           .width('100%')
           .alignItems(VerticalAlign.Center)
           .padding({ top: 12, bottom: 12 })
-          Row(){
-            Text('界面语言')
+          .onClick(() => {
+            this.paletteTheme = '#00AECC'
+          })
+
+          Row() {
+            Text('黑色')
               .fontSize(CommonConfig.fontSize_14)
               .fontColor(CommonConfig.hintTextColor_select)
               .fontWeight(CommonConfig.fontWeight_400)
+              .margin({ right: 8 })
+            Row()
+              .width(12)
+              .height(12)
+              .borderRadius('50%')
+              .backgroundColor('#000')
             Blank()
-            Image($r('app.media.Arrow_to_the_right'))
-              .width(16)
-              .height(16)
+            if (this.paletteTheme === '#000') {
+              Image($r('app.media.Frame_2538'))
+                .width(16)
+                .height(16)
+            }
           }
-          .border({width:{top:1,bottom:1},color:CommonConfig.commonBackgroundColor})
+          .border({ width: { top: 1, bottom: 1 }, color: CommonConfig.commonBackgroundColor })
           .width('100%')
           .alignItems(VerticalAlign.Center)
           .padding({ top: 12, bottom: 12 })
-          Row(){
-            Text('后台保持运行')
+          .onClick(() => {
+            this.paletteTheme = '#000'
+          })
+
+          Row() {
+            Text('白色')
               .fontSize(CommonConfig.fontSize_14)
               .fontColor(CommonConfig.hintTextColor_select)
               .fontWeight(CommonConfig.fontWeight_400)
+              .margin({ right: 8 })
+            Row()
+              .width(12)
+              .height(12)
+              .border({ width: 1, color: '#EAEAEA' })
+            // .borderColor('#00AECC')
+              .borderRadius('50%')
             Blank()
-            Toggle({ type: ToggleType.Switch, isOn: true }).onChange((value: boolean) => {
-              // 处理开关逻辑
-            })
-              .selectedColor(this.paletteTheme)
-              .height(22)
-              .width(44)
+            if (this.paletteTheme === '#fff') {
+              Image($r('app.media.Frame_2538'))
+                .width(16)
+                .height(16)
+            }
           }
-          .width('100%')
+          .width('100%').onClick(() => {
+            this.paletteTheme = '#fff'
+          })
           .alignItems(VerticalAlign.Center)
           .padding({ top: 12, bottom: 12 })
         }
@@ -68,8 +100,7 @@ struct ColorTheme {
     }
     .padding(16)
     .backgroundColor(CommonConfig.commonBackgroundColor)
-    // .hideTitleBar(true)
-    // .hideToolBar(true)
-    .title('ashdjkh')
+    .hideTitleBar(true)
+    .hideToolBar(true)
   }
 }

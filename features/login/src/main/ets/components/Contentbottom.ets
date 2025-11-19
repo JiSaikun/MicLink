@@ -270,7 +270,7 @@ export struct Contentbottom {
                     let userLoginInfo: register_Response = res.data as register_Response
                     AppStorage.setOrCreate('userLoginInfo', userLoginInfo)
                     AppStorage.setOrCreate("login", true)
-                    this.pageInfo.pop()
+                    this.pageInfo.clear()
                   }
                   // let userLoginInfo: register_Response = res.data as register_Response
                   // AppStorage.setOrCreate('userLoginInfo', userLoginInfo)
@@ -281,7 +281,7 @@ export struct Contentbottom {
               break
             case 1:
               AppStorage.setOrCreate("login", true)
-              this.pageInfo.pop()
+              this.pageInfo.clear()
               break
             case 2:
               const params3: register_Params = {
@@ -297,7 +297,7 @@ export struct Contentbottom {
                     let userLoginInfo: register_Response = res.data as register_Response
                     AppStorage.setOrCreate('userLoginInfo', userLoginInfo)
                     AppStorage.setOrCreate("login", true)
-                    this.pageInfo.pop()
+                    this.pageInfo.clear()
                   } else {
                     return
                   }
