@@ -1054,6 +1054,8 @@ export class AudioWebSocketHandler {
         if (totalSamples < this.MIN_SAMPLES_FOR_COMPLETION) {
           if (stableCount % 50 === 0) { // 减少日志频率
             console.log(`2.4G采样点不足(${totalSamples}/${this.MIN_SAMPLES_FOR_COMPLETION})，继续等待...`);
+            console.log(`[2.4G调试] 当前audioData帧数: ${this.audioData.length}, currentLength: ${currentLength}`);
+            console.log(`[2.4G调试] audioDataState: ${ConnectDevice.Communication[AppStorage.get('device_currIndex') as number || 0]?.Communication?.audioDataState}`);
           }
           return;
         }
