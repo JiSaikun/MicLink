@@ -156,12 +156,19 @@ export class AudioWebSocketHandler_ble {
 
       console.log('开始WebSocket连接');
 
+      // 保存当前start标志状态（用于重连场景）
+      const preserveStartFlag = this.hasSentStart;
+
       // 清理之前的连接 - 等待完全断开，避免资源竞争
       this.disconnectAsync().then(() => {
-        // 重置会话标志，确保每次新连接都是全新会话
-        this.hasSentStart = false;
-        this.hasSentEnd = false;
-        this.lastSentSampleIndex = 0;
+        // 保持start标志（避免重连时重复发送start）
+        // 注意：hasSentEnd不保存，每次连接都应该能够发送新的结束标记
+        this.hasSentStart = preserveStartFlag;
+        this.hasSentEnd = false; // 重置结束标志，允许发送新的结束标记
+        // 仅在真正新会话时重置采样点位置
+        if (!preserveStartFlag) {
+          this.lastSentSampleIndex = 0;
+        }
 
         this.createAndConnectWebSocket();
       });

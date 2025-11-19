@@ -182,9 +182,20 @@ export class AudioWebSocketHandler {
       }
 
       console.log('*************************进入webSocket连接************************');
+      console.log(`🔍 连接前会话状态: hasSentStart=${this.hasSentStart}, hasSentEnd=${this.hasSentEnd}`);
+
+      // 保存当前start标志状态（用于重连场景）
+      const preserveStartFlag = this.hasSentStart;
 
       // 清理之前的连接
-      this.disconnect();
+      this.cleanupConnection();
+      
+      // 恢复start标志（避免重连时重复发送start）
+      // 注意：hasSentEnd不保存，每次连接都应该能够发送新的结束标记
+      this.hasSentStart = preserveStartFlag;
+      this.hasSentEnd = false; // 重置结束标志，允许发送新的结束标记
+      
+      console.log(`🔍 连接后会话状态: hasSentStart=${this.hasSentStart}, hasSentEnd=${this.hasSentEnd}`);
 
       this.ws = webSocket.createWebSocket();
 
@@ -430,6 +441,30 @@ export class AudioWebSocketHandler {
       });
   }
 
+  /**
+   * 清理WebSocket连接但保持会话状态（用于重连）
+   */
+  private cleanupConnection(): void {
+    console.log('清理WebSocket连接资源');
+    
+    this.cleanupIntervals();
+    this.isSending = false;
+    
+    if (this.ws) {
+      try {
+        if (this.isConnected) {
+          this.ws.close({ code: 1000, reason: "准备重连" });
+        }
+      } catch (error) {
+        console.error('清理连接异常:', error);
+      }
+      this.ws = null;
+    }
+    
+    this.isConnected = false;
+    this.isClosing = false;
+  }
+
   public disconnect(): void {
     console.log('开始断开WebSocket连接');
 
@@ -625,11 +660,14 @@ export class AudioWebSocketHandler {
   }
 
   private async reconnect(): Promise<void> {
-    console.log('🔄 开始重连WebSocket...');
+    console.log('🔄 开始重连WebSocket...（保持start状态，重置end状态）');
     try {
-      await this.disconnectAsync();
+      // 使用cleanupConnection而不是disconnect，避免发送结束标记
+      this.cleanupConnection();
       await this.delay(1000);
+      // connect()会保留hasSentStart并重置hasSentEnd，确保重连后可以发送新的结束标记
       this.connect();
+      console.log(`🔄 重连完成，会话状态: start=${this.hasSentStart}, end=${this.hasSentEnd}`);
     } catch (error) {
       console.error('重连失败:', error);
     }
@@ -1117,6 +1155,11 @@ export class AudioWebSocketHandler {
       if (isStart) {
         this.hasSentStart = true;
         console.log('🎤 2.4G发送开始标志 start=true，当前索引位置:', this.lastSentIndex);
+        console.log('🎤 ⚠️ 这是本会话第一次发送start标志');
+      } else {
+        if (chunkIndex % 50 === 0) {
+          console.log('✓ start标志已发送过，跳过（hasSentStart=true）');
+        }
       }
       const isEnd = false;
 
