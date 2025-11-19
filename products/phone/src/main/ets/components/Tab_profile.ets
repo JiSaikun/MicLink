@@ -8,14 +8,37 @@ interface bottListType {
   name: string
 }
 
+interface ProductType {
+  price: number
+  name: string
+}
+
 @Component
 export struct Tab_profile {
   @State userLoginInfo: UserLoginInfo = AppStorage.get('userLoginInfo') as UserLoginInfo
-  @StorageLink('languages') languages: string = 'ZH_CN'
+  @StorageLink('languages') @Watch('onLanguagesChange') languages: string = 'ZH_CN'
   @Consume('pageInfo') pageInfo: NavPathStack
 
-  getBottList(): bottListType[] {
-    return [
+  @State bottList: bottListType[] = []
+  @State fileTranscriptionProducts: ProductType[] = []
+  @State voiceCustomizationProducts: ProductType[] = []
+
+  aboutToAppear(): void {
+    this.updateBottList()
+    this.updateFileTranscriptionProducts()
+    this.updateVoiceCustomizationProducts()
+  }
+
+  // 监听语言变化
+  onLanguagesChange(): void {
+    this.updateBottList()
+    this.updateFileTranscriptionProducts()
+    this.updateVoiceCustomizationProducts()
+  }
+
+  updateBottList(): void {
+    // 创建新的数组引用以确保UI更新
+    const newList: bottListType[] = [
       {
         icon: 'soundSetting',
         title: Languages.soundSetting[this.languages],
@@ -34,6 +57,26 @@ export struct Tab_profile {
       name: 'aboutSoftware'
     }
     ]
+    this.bottList = newList
+  }
+
+  updateFileTranscriptionProducts(): void {
+    // 创建新的数组引用以确保UI更新
+    const newProducts: ProductType[] = [
+      { price: 2, name: Languages.hourCard[this.languages] },
+      { price: 50, name: Languages.monthCard[this.languages] },
+      { price: 150, name: Languages.seasonCard[this.languages] },
+      { price: 450, name: Languages.yearCard[this.languages] }
+    ]
+    this.fileTranscriptionProducts = newProducts
+  }
+
+  updateVoiceCustomizationProducts(): void {
+    // 创建新的数组引用以确保UI更新
+    const newProducts: ProductType[] = [
+      { price: 9.9, name: Languages.lifetimeCard[this.languages] }
+    ]
+    this.voiceCustomizationProducts = newProducts
   }
 
   @Builder
@@ -54,7 +97,7 @@ export struct Tab_profile {
   @Builder
   Product(price: number, name: string) {
     Row() {
-      Column() {
+      Flex({direction:FlexDirection.Column,alignItems:ItemAlign.Start,justifyContent:FlexAlign.Center}) {
         Text(price + '￥')
           .fontSize(CommonConfig.fontSize_12)
           .fontColor('#8C6000')
@@ -65,11 +108,12 @@ export struct Tab_profile {
           .fontColor('#CBA24A')
           .fontWeight(CommonConfig.fontWeight_400)
           .padding({ bottom: 4 })
+          .width('80')
       }
-      .alignItems(HorizontalAlign.Start)
+      .height(41)
 
       Blank()
-      Row() {
+      Flex() {
         Text(Languages.view[this.languages])
           .fontSize(CommonConfig.fontSize_12)
           .fontColor('#8C6000')
@@ -81,6 +125,8 @@ export struct Tab_profile {
             bottom: 6
           })
       }
+      .width(40)
+      .height(24)
       .borderRadius('50%')
       .linearGradient({
         direction: GradientDirection.Right,
@@ -245,10 +291,9 @@ export struct Tab_profile {
             .fontWeight(CommonConfig.fontWeight_400)
             .margin({ bottom: 12 })
           Flex({ space: { main: LengthMetrics.px(30), cross: LengthMetrics.px(24) }, wrap: FlexWrap.Wrap }) {
-            this.Product(2, Languages.hourCard[this.languages])
-            this.Product(50, Languages.monthCard[this.languages])
-            this.Product(150, Languages.seasonCard[this.languages])
-            this.Product(450, Languages.yearCard[this.languages])
+            ForEach(this.fileTranscriptionProducts, (product: ProductType) => {
+              this.Product(product.price, product.name)
+            }, (product: ProductType) => `${product.price}_${this.languages}`)
           }
 
           Text(Languages.voiceCustomization[this.languages])
@@ -257,7 +302,9 @@ export struct Tab_profile {
             .fontWeight(CommonConfig.fontWeight_400)
             .margin({ bottom: 12, top: 16 })
           Flex({ space: { main: LengthMetrics.px(30), cross: LengthMetrics.px(12) }, wrap: FlexWrap.Wrap }) {
-            this.Product(9.9, Languages.lifetimeCard[this.languages])
+            ForEach(this.voiceCustomizationProducts, (product: ProductType) => {
+              this.Product(product.price, product.name)
+            }, (product: ProductType) => `${product.price}_${this.languages}`)
             Row()
               .padding({
                 left: 12,
@@ -283,7 +330,7 @@ export struct Tab_profile {
         .margin({ bottom: 12 })
 
         Column({ space: 8 }) {
-          ForEach(this.getBottList(), (item: bottListType) => {
+          ForEach(this.bottList, (item: bottListType) => {
             Flex({ alignItems: ItemAlign.Center }) {
               Image($r(`app.media.${item.icon}`))
                 .width(24)
@@ -297,7 +344,7 @@ export struct Tab_profile {
             .borderRadius(8)
             .width('100%')
             .padding({ left: 12, bottom: 10, top: 10 })
-          }, (item: bottListType) => item.name)
+          }, (item: bottListType) => `${item.name}_${this.languages}`)
         }
         .padding(8)
         .backgroundColor('#F8F8F8')

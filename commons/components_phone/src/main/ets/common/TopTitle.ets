@@ -4,6 +4,7 @@ import { CommonConfig } from "./CommonConfig";
 export struct TopTitle {
   @Consume('pageInfo') pageInfo: NavPathStack
   @Prop title: string = ''
+  @Prop isback: boolean = true
 
   build() {
     Row() {
@@ -24,6 +25,6 @@ export struct TopTitle {
     .justifyContent(FlexAlign.SpaceBetween)
     .width('100%')
     .padding({ top: 6, bottom: 6 })
-    .backgroundColor(CommonConfig.commonBackgroundColor)
+    .backgroundColor(this.isback?CommonConfig.commonBackgroundColor:'')
   }
 }

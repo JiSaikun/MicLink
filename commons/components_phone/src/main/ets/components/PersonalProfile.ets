@@ -1,4 +1,5 @@
 import { CommonConfig } from "../common/CommonConfig"
+import { Languages } from "../common/Languages"
 import { TopTitle } from "../common/TopTitle"
 
 @Builder
@@ -12,9 +13,11 @@ struct PersonalProfile {
   @Consume('pageInfo') pageInfo: NavPathStack
   @StorageLink('languages') languages: string = 'ZH_CN'
 
+
+
   build() {
     NavDestination() {
-      TopTitle({ title: '编辑个人资料' })
+      TopTitle({ title: Languages.editProfile[this.languages]})
         .margin({ bottom: 12 })
     }
     .padding(16)

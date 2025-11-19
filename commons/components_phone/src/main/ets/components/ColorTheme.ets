@@ -1,4 +1,5 @@
 import { CommonConfig } from "../common/CommonConfig"
+import { Languages } from "../common/Languages"
 import { TopTitle } from "../common/TopTitle"
 
 @Builder
@@ -9,15 +10,16 @@ export function ColorThemeBuilder() {
 @Component
 struct ColorTheme {
   @StorageLink("paletteTheme") paletteTheme: string = CommonConfig.PaletteTheme
+  @StorageLink('languages') languages: string = 'ZH_CN'
 
   build() {
     NavDestination() {
       Flex({ direction: FlexDirection.Column }) {
-        TopTitle({ title: '主题' })
+        TopTitle({ title:  Languages.theme[this.languages] })
           .margin({ bottom: 12 })
         Column() {
           Row() {
-            Text('主色')
+            Text(Languages.primaryColor[this.languages])
               .fontSize(CommonConfig.fontSize_14)
               .fontColor(CommonConfig.hintTextColor_select)
               .fontWeight(CommonConfig.fontWeight_400)
@@ -42,7 +44,7 @@ struct ColorTheme {
           })
 
           Row() {
-            Text('黑色')
+            Text(Languages.black[this.languages])
               .fontSize(CommonConfig.fontSize_14)
               .fontColor(CommonConfig.hintTextColor_select)
               .fontWeight(CommonConfig.fontWeight_400)
@@ -68,7 +70,7 @@ struct ColorTheme {
           })
 
           Row() {
-            Text('白色')
+            Text( Languages.white[this.languages])
               .fontSize(CommonConfig.fontSize_14)
               .fontColor(CommonConfig.hintTextColor_select)
               .fontWeight(CommonConfig.fontWeight_400)

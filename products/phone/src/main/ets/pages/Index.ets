@@ -31,7 +31,7 @@ struct Index {
   @StorageLink("login") login: boolean = true
   @Provide('pageInfo') pageInfo: NavPathStack = new NavPathStack()
   @StorageLink("pageInfo") pageInfo_: NavPathStack = this.pageInfo
-  @StorageLink('languages') languages: string = 'ZH_CN'
+  @Watch('onLanguagesChange') @StorageLink('languages') languages: string = 'ZH_CN'
   @Watch('change_mouse_KeyPressType') @StorageLink("mouse_KeyPressType") mouse_KeyPressType: KeyPressType =
     KeyPressType.DEFAULT
   @StorageLink("device_isBle") device_isBle: boolean = false
@@ -45,6 +45,17 @@ struct Index {
     { img: 'un_tab_profile', selectImg: 'tab_profile', title: Languages.tab_profile[this.languages] },
   ]
   private controller: TabsController = new TabsController()
+
+  // 当语言改变时，更新底部导航栏标题
+  onLanguagesChange() {
+    this.barList = [
+      { img: 'un_tab_device', selectImg: 'tab_device', title: Languages.tab_device[this.languages] },
+      { img: 'un_tab_command', selectImg: 'tab_command', title: Languages.tab_command[this.languages] },
+      { img: 'un_tab_ai', selectImg: 'tab_ai', title: Languages.tab_ai[this.languages] },
+      { img: 'un_tab_library', selectImg: 'tab_library', title: Languages.tab_library[this.languages] },
+      { img: 'un_tab_profile', selectImg: 'tab_profile', title: Languages.tab_profile[this.languages] },
+    ];
+  }
 
   aboutToAppear(): void {
     const context = getContext(this) as common.UIAbilityContext;
@@ -181,7 +192,8 @@ struct Index {
       .height('100%')
       .backgroundImage(this.currPageIndex === 4 ? $r('app.media.background_1') : '')
       .backgroundImageSize({ width: '100%', height: '100%' })
-    }
+    }.backgroundImage(this.currPageIndex === 4 ? $r('app.media.background_1') : '')
+    .backgroundImageSize({ width: '100%', height: '100%' })
     .hideToolBar(true)
     .hideTitleBar(true)
   }
