@@ -200,40 +200,26 @@ struct Index {
   change_mouse_KeyPressType() {
     if (this.login) {
       let PRODUCT_TYPE_: PRODUCT_TYPE = PRODUCT_TYPE.DEFAULT
-      console.warn('***************************鼠标11',this.device_isBle)
       if (this.device_isBle) {
         /**
          * BLE
          */
-        console.warn('***************************鼠标11',this.device_isBle,
-        '\n',JSON.stringify((this.devices[AppStorage.get('device_currIndex')as number]).PRODUCT_TYPE))
-
         PRODUCT_TYPE_ = (this.devices[AppStorage.get('device_currIndex')as number]).PRODUCT_TYPE
-        console.warn('***************************BLE','\n',JSON.stringify((ConnectDevice.Communication[AppStorage.get('device_currIndex')as number] as DeviceArrayType).PRODUCT_TYPE))
-
       } else {
         /**
          * 2.4G
          */
         PRODUCT_TYPE_ =
           (ConnectDevice.Communication[AppStorage.get('device_currIndex')as number] as DeviceArrayType).PRODUCT_TYPE
-        console.warn('***************************2.4G','\n',JSON.stringify((ConnectDevice.Communication[AppStorage.get('device_currIndex')as number] as DeviceArrayType).PRODUCT_TYPE))
-
       }
-
       switch (PRODUCT_TYPE_) {
         case PRODUCT_TYPE.DEFAULT: //鼠标
-          console.log('***************************dsahjashdjh')
-          console.warn('***************************鼠标')
           _change_mouse_KeyPressType()
           break
         case PRODUCT_TYPE.keyboard: //键盘
-          console.log('***************************dsahjashdjh')
-          console.warn('***************************键盘')
           _change_keyboard_KeyPressType()
           break
       }
-
     }
   }
 
@@ -503,14 +489,19 @@ struct Index {
 
       Image($r('app.media.create_Command_Ai'))
     }.onKeyEvent((event: KeyEvent) => {
-      // 异步处理按键事件，避免阻塞UI渲染
-      setTimeout(() => {
+      // 异步处理按键事件，避免阻塞UI渲染，添加超时保护
+      const timeoutId = setTimeout(() => {
         try {
           globalShortcutService.handleGlobalKeyEvent(event)
         } catch (error) {
           console.error('按键事件处理失败:', error)
         }
       }, 0)
+
+      // 如果处理时间过长，取消执行
+      setTimeout(() => {
+        clearTimeout(timeoutId)
+      }, 100) // 100ms超时保护
     })
   }
 

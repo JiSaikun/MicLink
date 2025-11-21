@@ -113,6 +113,7 @@ export class BlueTooth_devices {
   private flax_yuyin: boolean = true //标记：防止鼠标上来直接开启了语音输入————先发送一次0x63命令
   private audioProcessor: SmartMouseAudioProcessor = new SmartMouseAudioProcessor();
   static audioData: Int16Array[] = []
+
   // 特征值变化超时检测
   private lastCharacteristicChangeTime: number = 0
   private characteristicTimeoutTimer: number | null = null
@@ -193,6 +194,7 @@ export class BlueTooth_devices {
           return;
         }
         console.warn(`蓝牙设备 ${this.device_address} 15秒内未收到特征值变化，移除设备`);
+        this.send([0x69])
         // this.removeDeviceFromList();
       } catch (error) {
         console.error('蓝牙设备超时回调异常:', error);
@@ -216,6 +218,7 @@ export class BlueTooth_devices {
         }
         console.warn(`蓝牙设备 ${this.device_address} 15秒内未收到特征值变化，移除设备`);
         // this.removeDeviceFromList();
+        this.send([0x69])
       } catch (error) {
         console.error('蓝牙设备超时回调异常:', error);
       }
@@ -235,7 +238,7 @@ export class BlueTooth_devices {
     try {
       const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || [];
       const deviceIndex = currentDevices.findIndex(device =>
-      device.BlueTooth_devices?.device_address === this.device_address
+        device.BlueTooth_devices?.device_address === this.device_address
       );
 
       if (deviceIndex !== -1) {
@@ -255,11 +258,10 @@ export class BlueTooth_devices {
   }
 
   public parseDeviceInfo(data: Uint8Array): void {
-    // 安全检查设备数组和索引
-    const devices = AppStorage.get('devices') as DeviceArrayType_Ble[];
+    // 使用实例变量而不是每次从AppStorage获取，确保数据一致性
+    const devices = this.devices;
     if (!devices || !Array.isArray(devices) || this.device_currIndex < 0 || this.device_currIndex >= devices.length) {
-      console.error('设备数组或索引无效:',
-        { devices: !!devices, deviceIndex: this.device_currIndex, length: devices?.length });
+      console.error('设备数组或索引无效:', { devices: !!devices, deviceIndex: this.device_currIndex, length: devices?.length });
       return;
     }
 
@@ -335,7 +337,7 @@ export class BlueTooth_devices {
 
             // 7. 固件版本（协议：byte19）
             this.deviceInfo.firmwareVersion = data[19].toString();
-            devices[this.device_currIndex].mouseconfig = this.deviceInfo;
+            (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].mouseconfig = this.deviceInfo;
 
             if (!devices[this.device_currIndex].getModelInfo) {
               // 深拷贝更新设备列表以触发UI更新
@@ -344,8 +346,8 @@ export class BlueTooth_devices {
               AppStorage.setOrCreate('devices', newList);
               this.devices = newList;
             } else {
-              if (!devices[this.device_currIndex].KeymethodConfig.length) {
-                devices[this.device_currIndex].KeymethodConfig = [
+              if (!(AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig.length) {
+                (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig = [
                   { key: KeyPressType.VOICE_CLICK, currIndex: 0 },
                   { key: KeyPressType.VOICE_LONG_PRESS_DOWN, currIndex: 0 },
                   { key: KeyPressType.SEARCH_CLICK, currIndex: 0 },
@@ -358,7 +360,7 @@ export class BlueTooth_devices {
                   { key: KeyPressType.CUSTOM_LONG_PRESS_DOWN, currIndex: 0 },
                 ];
 
-                const keyInfos = devices[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[];
+                const keyInfos = (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[];
                 if (!keyInfos || !Array.isArray(keyInfos)) {
                   console.warn('keyInfos无效或为空，跳过配置初始化');
                   return;
@@ -383,51 +385,51 @@ export class BlueTooth_devices {
                         switch (item.key) {
                           case 'voice_key': //语音键
                             if (childs.operation === 'sk') { //单击
-                              devices[this.device_currIndex].KeymethodConfig[0].currIndex =
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[0].currIndex =
                                 index;
                             }
                             if (childs.operation === 'lk') { //长按
-                              devices[this.device_currIndex].KeymethodConfig[1].currIndex =
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[1].currIndex =
                                 index;
                             }
                             break;
                           case 'search_key': //搜索键
                             if (childs.operation === 'sk') {
-                              devices[this.device_currIndex].KeymethodConfig[2].currIndex =
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[2].currIndex =
                                 index;
                             }
                             if (childs.operation === 'lk') { //长按
-                              devices[this.device_currIndex].KeymethodConfig[3].currIndex =
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[3].currIndex =
                                 index;
                             }
                             break;
                           case 'translate_key': //翻译键
                             if (childs.operation === 'sk') {
-                              devices[this.device_currIndex].KeymethodConfig[4].currIndex =
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[4].currIndex =
                                 index;
                             }
                             if (childs.operation === 'lk') { //长按
-                              devices[this.device_currIndex].KeymethodConfig[5].currIndex =
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[5].currIndex =
                                 index;
                             }
                             break;
                           case 'AI_key': //AI键
                             if (childs.operation === 'sk') {
-                              devices[this.device_currIndex].KeymethodConfig[6].currIndex =
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[6].currIndex =
                                 index;
                             }
                             if (childs.operation === 'lk') { //长按
-                              devices[this.device_currIndex].KeymethodConfig[7].currIndex =
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[7].currIndex =
                                 index;
                             }
                             break;
                           case 'M_key': //AI键
                             if (childs.operation === 'sk') {
-                              devices[this.device_currIndex].KeymethodConfig[8].currIndex =
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[8].currIndex =
                                 index;
                             }
                             if (childs.operation === 'lk') { //长按
-                              devices[this.device_currIndex].KeymethodConfig[9].currIndex =
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[9].currIndex =
                                 index;
                             }
                             break;
@@ -437,6 +439,7 @@ export class BlueTooth_devices {
                   }
                 }
               }
+
             }
           }
 
@@ -475,7 +478,8 @@ export class BlueTooth_devices {
               this.deviceInfo.atmosphereLight = false;
             }
 
-            devices[this.device_currIndex].mouseconfig = this.deviceInfo;
+            (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].mouseconfig = this.deviceInfo;
+
 
             if (!devices[this.device_currIndex].getModelInfo) {
               // 深拷贝更新设备列表以触发UI更新
@@ -484,8 +488,8 @@ export class BlueTooth_devices {
               AppStorage.setOrCreate('devices', newList);
               this.devices = newList;
             } else {
-              if (!devices[this.device_currIndex].KeymethodConfig.length) {
-                devices[this.device_currIndex].KeymethodConfig = [
+              if (!(AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig.length) {
+                (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig = [
                   { key: KeyPressType.VOICE_CLICK, currIndex: 0 },
                   { key: KeyPressType.VOICE_LONG_PRESS_DOWN, currIndex: 0 },
                   { key: KeyPressType.SEARCH_CLICK, currIndex: 0 },
@@ -498,7 +502,7 @@ export class BlueTooth_devices {
                   { key: KeyPressType.CUSTOM_LONG_PRESS_DOWN, currIndex: 0 },
                 ];
 
-                const keyInfos = devices[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[];
+                const keyInfos = (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[];
                 if (!keyInfos || !Array.isArray(keyInfos)) {
                   console.warn('keyInfos无效或为空，跳过配置初始化');
                   return;
@@ -523,51 +527,51 @@ export class BlueTooth_devices {
                         switch (item.key) {
                           case 'voice_key': //语音键
                             if (childs.operation === 'sk') { //单击
-                              devices[this.device_currIndex].KeymethodConfig[0].currIndex =
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[0].currIndex =
                                 index;
                             }
                             if (childs.operation === 'lk') { //长按
-                              devices[this.device_currIndex].KeymethodConfig[1].currIndex =
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[1].currIndex =
                                 index;
                             }
                             break;
                           case 'search_key': //搜索键
                             if (childs.operation === 'sk') {
-                              devices[this.device_currIndex].KeymethodConfig[2].currIndex =
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[2].currIndex =
                                 index;
                             }
                             if (childs.operation === 'lk') { //长按
-                              devices[this.device_currIndex].KeymethodConfig[3].currIndex =
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[3].currIndex =
                                 index;
                             }
                             break;
                           case 'translate_key': //翻译键
                             if (childs.operation === 'sk') {
-                              devices[this.device_currIndex].KeymethodConfig[4].currIndex =
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[4].currIndex =
                                 index;
                             }
                             if (childs.operation === 'lk') { //长按
-                              devices[this.device_currIndex].KeymethodConfig[5].currIndex =
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[5].currIndex =
                                 index;
                             }
                             break;
                           case 'AI_key': //AI键
                             if (childs.operation === 'sk') {
-                              devices[this.device_currIndex].KeymethodConfig[6].currIndex =
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[6].currIndex =
                                 index;
                             }
                             if (childs.operation === 'lk') { //长按
-                              devices[this.device_currIndex].KeymethodConfig[7].currIndex =
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[7].currIndex =
                                 index;
                             }
                             break;
                           case 'M_key': //AI键
                             if (childs.operation === 'sk') {
-                              devices[this.device_currIndex].KeymethodConfig[8].currIndex =
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[8].currIndex =
                                 index;
                             }
                             if (childs.operation === 'lk') { //长按
-                              devices[this.device_currIndex].KeymethodConfig[9].currIndex =
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[9].currIndex =
                                 index;
                             }
                             break;
@@ -577,6 +581,7 @@ export class BlueTooth_devices {
                   }
                 }
               }
+
             }
           }
 
@@ -592,164 +597,124 @@ export class BlueTooth_devices {
             console.log('****************************语音键单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.VOICE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.VOICE_CLICK)
           }
           if (data[3] === 0x40) {
             console.log('****************************语音键双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.VOICE_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.VOICE_DOUBLE_CLICK)
           }
           if (data[3] === 0x37) {
             console.log('****************************语音键长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.VOICE_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.VOICE_LONG_PRESS_DOWN)
           }
           if (data[3] === 0x38) {
             console.log('****************************语音键长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.VOICE_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.VOICE_LONG_PRESS_UP)
           }
           if (data[3] === 0x35) {
             console.log('****************************搜索键单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SEARCH_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SEARCH_CLICK)
           }
           if (data[3] === 0x41) {
             console.log('****************************搜索键双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SEARCH_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SEARCH_DOUBLE_CLICK)
           }
           if (data[3] === 0x31) {
             console.log('****************************搜索键长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SEARCH_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SEARCH_LONG_PRESS_DOWN)
           }
           if (data[3] === 0x32) {
             console.log('****************************搜索键长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SEARCH_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SEARCH_LONG_PRESS_UP)
           }
 
           if (data[3] === 0x42) {
             console.log('****************************翻译键单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TRANSLATE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TRANSLATE_CLICK)
           }
           if (data[3] === 0x43) {
             console.log('****************************翻译键双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TRANSLATE_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TRANSLATE_DOUBLE_CLICK)
           }
           if (data[3] === 0x44) {
             console.log('****************************翻译键长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TRANSLATE_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TRANSLATE_LONG_PRESS_DOWN)
           }
           if (data[3] === 0x45) {
             console.log('****************************翻译键长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TRANSLATE_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TRANSLATE_LONG_PRESS_UP)
           }
 
           if (data[3] === 0x46) {
             console.log('****************************自定义键——M键单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM_CLICK)
           }
           if (data[3] === 0x47) {
             console.log('****************************自定义键——M键双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM_DOUBLE_CLICK)
           }
           if (data[3] === 0x48) {
             console.log('****************************自定义键——M键长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM_LONG_PRESS_DOWN)
           }
           if (data[3] === 0x49) {
             console.log('****************************自定义键——M键长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM_LONG_PRESS_UP)
           }
 
           if (data[3] === 0x50) {
             console.log('****************************AI键单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_CLICK)
           }
           if (data[3] === 0x51) {
             console.log('****************************AI键双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_DOUBLE_CLICK)
           }
           if (data[3] === 0x52) {
             console.log('****************************AI键长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_LONG_PRESS_DOWN)
           }
           if (data[3] === 0x53) {
             console.log('****************************AI键长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_LONG_PRESS_UP)
           }
 
           /**
@@ -760,33 +725,25 @@ export class BlueTooth_devices {
             console.log('****************************截图翻译键单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SCREENSHOT_TRANSLATE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SCREENSHOT_TRANSLATE_CLICK)
           }
           if (data[3] === 0x81) {
             console.log('****************************截图翻译键双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SCREENSHOT_TRANSLATE_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SCREENSHOT_TRANSLATE_DOUBLE_CLICK)
           }
           if (data[3] === 0x82) {
             console.log('****************************截图翻译键长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SCREENSHOT_TRANSLATE_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SCREENSHOT_TRANSLATE_LONG_PRESS_DOWN)
           }
           if (data[3] === 0x83) {
             console.log('****************************截图翻译键长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SCREENSHOT_TRANSLATE_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SCREENSHOT_TRANSLATE_LONG_PRESS_UP)
           }
 
           // AI绘画键
@@ -794,33 +751,25 @@ export class BlueTooth_devices {
             console.log('****************************AI绘画键单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_PAINTING_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_PAINTING_CLICK)
           }
           if (data[3] === 0x85) {
             console.log('****************************AI绘画键双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_PAINTING_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_PAINTING_DOUBLE_CLICK)
           }
           if (data[3] === 0x86) {
             console.log('****************************AI绘画键长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_PAINTING_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_PAINTING_LONG_PRESS_DOWN)
           }
           if (data[3] === 0x87) {
             console.log('****************************AI绘画键长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_PAINTING_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.AI_PAINTING_LONG_PRESS_UP)
           }
 
           // 图片分析键改文档转换
@@ -828,33 +777,25 @@ export class BlueTooth_devices {
             console.log('****************************文档转换键单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_CONVERSION_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_CONVERSION_CLICK)
           }
           if (data[3] === 0x89) {
             console.log('****************************文档转换键双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_CONVERSION_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_CONVERSION_DOUBLE_CLICK)
           }
           if (data[3] === 0x8A) {
             console.log('****************************文档转换键长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_CONVERSION_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_CONVERSION_LONG_PRESS_DOWN)
           }
           if (data[3] === 0x8B) {
             console.log('****************************文档转换键长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_CONVERSION_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_CONVERSION_LONG_PRESS_UP)
           }
 
           // 思维导图键
@@ -862,33 +803,25 @@ export class BlueTooth_devices {
             console.log('****************************思维导图键单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.MIND_MAP_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.MIND_MAP_CLICK)
           }
           if (data[3] === 0x8D) {
             console.log('****************************思维导图键双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.MIND_MAP_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.MIND_MAP_DOUBLE_CLICK)
           }
           if (data[3] === 0x8E) {
             console.log('****************************思维导图键长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.MIND_MAP_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.MIND_MAP_LONG_PRESS_DOWN)
           }
           if (data[3] === 0x8F) {
             console.log('****************************思维导图键长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.MIND_MAP_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.MIND_MAP_LONG_PRESS_UP)
           }
 
           // 工作总结键
@@ -896,33 +829,25 @@ export class BlueTooth_devices {
             console.log('****************************工作总结键单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WORK_SUMMARY_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WORK_SUMMARY_CLICK)
           }
           if (data[3] === 0x91) {
             console.log('****************************工作总结键双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WORK_SUMMARY_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WORK_SUMMARY_DOUBLE_CLICK)
           }
           if (data[3] === 0x92) {
             console.log('****************************工作总结键长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WORK_SUMMARY_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WORK_SUMMARY_LONG_PRESS_DOWN)
           }
           if (data[3] === 0x93) {
             console.log('****************************工作总结键长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WORK_SUMMARY_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WORK_SUMMARY_LONG_PRESS_UP)
           }
 
           // 模版下载键
@@ -930,33 +855,25 @@ export class BlueTooth_devices {
             console.log('****************************模版下载键单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TEMPLATE_DOWNLOAD_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TEMPLATE_DOWNLOAD_CLICK)
           }
           if (data[3] === 0x95) {
             console.log('****************************模版下载键双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TEMPLATE_DOWNLOAD_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TEMPLATE_DOWNLOAD_DOUBLE_CLICK)
           }
           if (data[3] === 0x96) {
             console.log('****************************模版下载键长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TEMPLATE_DOWNLOAD_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TEMPLATE_DOWNLOAD_LONG_PRESS_DOWN)
           }
           if (data[3] === 0x97) {
             console.log('****************************模版下载键长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TEMPLATE_DOWNLOAD_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TEMPLATE_DOWNLOAD_LONG_PRESS_UP)
           }
 
           // 阅读理解键
@@ -964,33 +881,25 @@ export class BlueTooth_devices {
             console.log('****************************阅读理解键单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.READING_COMPREHENSION_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.READING_COMPREHENSION_CLICK)
           }
           if (data[3] === 0x99) {
             console.log('****************************阅读理解键双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.READING_COMPREHENSION_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.READING_COMPREHENSION_DOUBLE_CLICK)
           }
           if (data[3] === 0x9A) {
             console.log('****************************阅读理解键长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.READING_COMPREHENSION_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.READING_COMPREHENSION_LONG_PRESS_DOWN)
           }
           if (data[3] === 0x9B) {
             console.log('****************************阅读理解键长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.READING_COMPREHENSION_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.READING_COMPREHENSION_LONG_PRESS_UP)
           }
 
           // 表格键
@@ -998,33 +907,25 @@ export class BlueTooth_devices {
             console.log('****************************表格键单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TABLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TABLE_CLICK)
           }
           if (data[3] === 0x9D) {
             console.log('****************************表格键双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TABLE_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TABLE_DOUBLE_CLICK)
           }
           if (data[3] === 0x9E) {
             console.log('****************************表格键长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TABLE_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TABLE_LONG_PRESS_DOWN)
           }
           if (data[3] === 0x9F) {
             console.log('****************************表格键长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TABLE_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.TABLE_LONG_PRESS_UP)
           }
 
           // 代码键
@@ -1032,33 +933,25 @@ export class BlueTooth_devices {
             console.log('****************************代码键单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CODE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CODE_CLICK)
           }
           if (data[3] === 0xA1) {
             console.log('****************************代码键双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CODE_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CODE_DOUBLE_CLICK)
           }
           if (data[3] === 0xA2) {
             console.log('****************************代码键长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CODE_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CODE_LONG_PRESS_DOWN)
           }
           if (data[3] === 0xA3) {
             console.log('****************************代码键长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CODE_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CODE_LONG_PRESS_UP)
           }
 
           // 演讲稿键
@@ -1066,33 +959,25 @@ export class BlueTooth_devices {
             console.log('****************************演讲稿键单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SPEECH_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SPEECH_CLICK)
           }
           if (data[3] === 0xA5) {
             console.log('****************************演讲稿键双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SPEECH_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SPEECH_DOUBLE_CLICK)
           }
           if (data[3] === 0xA6) {
             console.log('****************************演讲稿键长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SPEECH_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SPEECH_LONG_PRESS_DOWN)
           }
           if (data[3] === 0xA7) {
             console.log('****************************演讲稿键长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SPEECH_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.SPEECH_LONG_PRESS_UP)
           }
 
           // 写作键
@@ -1100,33 +985,25 @@ export class BlueTooth_devices {
             console.log('****************************写作键单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WRITING_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WRITING_CLICK)
           }
           if (data[3] === 0xA9) {
             console.log('****************************写作键双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WRITING_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WRITING_DOUBLE_CLICK)
           }
           if (data[3] === 0xAA) {
             console.log('****************************写作键长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WRITING_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WRITING_LONG_PRESS_DOWN)
           }
           if (data[3] === 0xAB) {
             console.log('****************************写作键长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WRITING_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WRITING_LONG_PRESS_UP)
           }
 
           // PPT键
@@ -1134,33 +1011,25 @@ export class BlueTooth_devices {
             console.log('****************************PPT键单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PPT_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PPT_CLICK)
           }
           if (data[3] === 0xAD) {
             console.log('****************************PPT键双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PPT_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PPT_DOUBLE_CLICK)
           }
           if (data[3] === 0xAE) {
             console.log('****************************PPT键长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PPT_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PPT_LONG_PRESS_DOWN)
           }
           if (data[3] === 0xAF) {
             console.log('****************************PPT键长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PPT_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PPT_LONG_PRESS_UP)
           }
 
           // 自定义键1
@@ -1168,33 +1037,25 @@ export class BlueTooth_devices {
             console.log('****************************自定义键1单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM1_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM1_CLICK)
           }
           if (data[3] === 0xB1) {
             console.log('****************************自定义键1双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM1_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM1_DOUBLE_CLICK)
           }
           if (data[3] === 0xB2) {
             console.log('****************************自定义键1长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM1_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM1_LONG_PRESS_DOWN)
           }
           if (data[3] === 0xB3) {
             console.log('****************************自定义键1长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM1_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM1_LONG_PRESS_UP)
           }
 
           // 自定义键2
@@ -1202,33 +1063,25 @@ export class BlueTooth_devices {
             console.log('****************************自定义键2单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM2_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM2_CLICK)
           }
           if (data[3] === 0xB5) {
             console.log('****************************自定义键2双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM2_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM2_DOUBLE_CLICK)
           }
           if (data[3] === 0xB6) {
             console.log('****************************自定义键2长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM2_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM2_LONG_PRESS_DOWN)
           }
           if (data[3] === 0xB7) {
             console.log('****************************自定义键2长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM2_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM2_LONG_PRESS_UP)
           }
 
           // 自定义键3
@@ -1236,33 +1089,25 @@ export class BlueTooth_devices {
             console.log('****************************自定义键3单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM3_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM3_CLICK)
           }
           if (data[3] === 0xB9) {
             console.log('****************************自定义键3双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM3_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM3_DOUBLE_CLICK)
           }
           if (data[3] === 0xBA) {
             console.log('****************************自定义键3长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM3_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM3_LONG_PRESS_DOWN)
           }
           if (data[3] === 0xBB) {
             console.log('****************************自定义键3长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM3_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM3_LONG_PRESS_UP)
           }
 
           // 朋友圈手册
@@ -1270,33 +1115,25 @@ export class BlueTooth_devices {
             console.log('****************************朋友圈手册单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.FRIENDS_MANUAL_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.FRIENDS_MANUAL_CLICK)
           }
           if (data[3] === 0xC1) {
             console.log('****************************朋友圈手册双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.FRIENDS_MANUAL_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.FRIENDS_MANUAL_DOUBLE_CLICK)
           }
           if (data[3] === 0xC2) {
             console.log('****************************朋友圈手册长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.FRIENDS_MANUAL_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.FRIENDS_MANUAL_LONG_PRESS_DOWN)
           }
           if (data[3] === 0xC3) {
             console.log('****************************朋友圈手册长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.FRIENDS_MANUAL_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.FRIENDS_MANUAL_LONG_PRESS_UP)
           }
 
           // 长文翻译
@@ -1304,33 +1141,25 @@ export class BlueTooth_devices {
             console.log('****************************长文翻译单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.LONG_TEXT_TRANSLATION_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.LONG_TEXT_TRANSLATION_CLICK)
           }
           if (data[3] === 0xC5) {
             console.log('****************************长文翻译双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.LONG_TEXT_TRANSLATION_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.LONG_TEXT_TRANSLATION_DOUBLE_CLICK)
           }
           if (data[3] === 0xC6) {
             console.log('****************************长文翻译长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.LONG_TEXT_TRANSLATION_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.LONG_TEXT_TRANSLATION_LONG_PRESS_DOWN)
           }
           if (data[3] === 0xC7) {
             console.log('****************************长文翻译长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.LONG_TEXT_TRANSLATION_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.LONG_TEXT_TRANSLATION_LONG_PRESS_UP)
           }
 
           // 一键抠图
@@ -1338,33 +1167,25 @@ export class BlueTooth_devices {
             console.log('****************************一键抠图单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.ONE_CLICK_CUTOUT_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.ONE_CLICK_CUTOUT_CLICK)
           }
           if (data[3] === 0xC9) {
             console.log('****************************一键抠图双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.ONE_CLICK_CUTOUT_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.ONE_CLICK_CUTOUT_DOUBLE_CLICK)
           }
           if (data[3] === 0xCA) {
             console.log('****************************一键抠图长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.ONE_CLICK_CUTOUT_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.ONE_CLICK_CUTOUT_LONG_PRESS_DOWN)
           }
           if (data[3] === 0xCB) {
             console.log('****************************一键抠图长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.ONE_CLICK_CUTOUT_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.ONE_CLICK_CUTOUT_LONG_PRESS_UP)
           }
 
           // 微博文案小助手
@@ -1372,33 +1193,25 @@ export class BlueTooth_devices {
             console.log('****************************微博文案小助手单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WEIBO_COPY_ASSISTANT_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WEIBO_COPY_ASSISTANT_CLICK)
           }
           if (data[3] === 0xCD) {
             console.log('****************************微博文案小助手双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WEIBO_COPY_ASSISTANT_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WEIBO_COPY_ASSISTANT_DOUBLE_CLICK)
           }
           if (data[3] === 0xCE) {
             console.log('****************************微博文案小助手长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WEIBO_COPY_ASSISTANT_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WEIBO_COPY_ASSISTANT_LONG_PRESS_DOWN)
           }
           if (data[3] === 0xCF) {
             console.log('****************************微博文案小助手长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WEIBO_COPY_ASSISTANT_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.WEIBO_COPY_ASSISTANT_LONG_PRESS_UP)
           }
 
           // 自定义键4
@@ -1406,33 +1219,25 @@ export class BlueTooth_devices {
             console.log('****************************自定义键4单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM4_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM4_CLICK)
           }
           if (data[3] === 0xE1) {
             console.log('****************************自定义键4双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM4_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM4_DOUBLE_CLICK)
           }
           if (data[3] === 0xE2) {
             console.log('****************************自定义键4长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM4_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM4_LONG_PRESS_DOWN)
           }
           if (data[3] === 0xE3) {
             console.log('****************************自定义键4长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM4_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.CUSTOM4_LONG_PRESS_UP)
           }
 
           // 拍照键
@@ -1440,33 +1245,25 @@ export class BlueTooth_devices {
             console.log('****************************拍照键单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PHOTO_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PHOTO_CLICK)
           }
           if (data[3] === 0xE6) {
             console.log('****************************拍照键双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PHOTO_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PHOTO_DOUBLE_CLICK)
           }
           if (data[3] === 0xE7) {
             console.log('****************************拍照键长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PHOTO_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PHOTO_LONG_PRESS_DOWN)
           }
           if (data[3] === 0xE8) {
             console.log('****************************拍照键长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PHOTO_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.PHOTO_LONG_PRESS_UP)
           }
 
           // 文稿校对
@@ -1474,33 +1271,25 @@ export class BlueTooth_devices {
             console.log('****************************文稿校对单击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_PROOFREADING_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_PROOFREADING_CLICK)
           }
           if (data[3] === 0xEA) {
             console.log('****************************文稿校对双击按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_PROOFREADING_DOUBLE_CLICK)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_PROOFREADING_DOUBLE_CLICK)
           }
           if (data[3] === 0xEB) {
             console.log('****************************文稿校对长按按下****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_PROOFREADING_LONG_PRESS_DOWN)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_PROOFREADING_LONG_PRESS_DOWN)
           }
           if (data[3] === 0xEC) {
             console.log('****************************文稿校对长按抬起****************************')
             AppStorage.setOrCreate('device_currIndex', this.device_currIndex)
             AppStorage.setOrCreate('device_isBle', true)
-            if (devices[this.device_currIndex].BlueTooth_devices.deviceInfo.sn) {
-              AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_PROOFREADING_LONG_PRESS_UP)
-            }
+            AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DOCUMENT_PROOFREADING_LONG_PRESS_UP)
           }
 
         } else {
@@ -1598,8 +1387,11 @@ export class BlueTooth_devices {
                 if ((currentDevice.getModelInfo as getModelInfoModel).functions &&
                   (currentDevice.getModelInfo as getModelInfoModel).functions.length !== 0) {
                   for (let item of (currentDevice.getModelInfo as getModelInfoModel).functions) {
+                    console.error(JSON.stringify((currentDevice.getModelInfo as getModelInfoModel).functions))
                     if (item.code === 'keyboard') {
                       devices[this.device_currIndex].PRODUCT_TYPE =
+                        PRODUCT_TYPE.keyboard;
+                      (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].PRODUCT_TYPE =
                         PRODUCT_TYPE.keyboard;
                       console.warn('设备类型已设置为键盘');
                       break;
@@ -1607,6 +1399,100 @@ export class BlueTooth_devices {
                   }
                 }
               }
+              if (!(AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig.length) {
+                (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig = [
+                  { key: KeyPressType.VOICE_CLICK, currIndex: 0 },
+                  { key: KeyPressType.VOICE_LONG_PRESS_DOWN, currIndex: 0 },
+                  { key: KeyPressType.SEARCH_CLICK, currIndex: 0 },
+                  { key: KeyPressType.SEARCH_LONG_PRESS_DOWN, currIndex: 0 },
+                  { key: KeyPressType.TRANSLATE_CLICK, currIndex: 0 },
+                  { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
+                  { key: KeyPressType.AI_CLICK, currIndex: 0 },
+                  { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
+                  { key: KeyPressType.CUSTOM_CLICK, currIndex: 0 },
+                  { key: KeyPressType.CUSTOM_LONG_PRESS_DOWN, currIndex: 0 },
+                ];
+
+                const keyInfos = (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[];
+                if (!keyInfos || !Array.isArray(keyInfos)) {
+                  console.warn('keyInfos无效或为空，跳过配置初始化');
+                  return;
+                }
+
+                for (let item of keyInfos) {
+                  if (!item.childs || !Array.isArray(item.childs)) {
+                    console.warn('item.childs无效，跳过此项');
+                    continue;
+                  }
+                  for (let childs of item.childs) {
+                    if (!childs.childs || !Array.isArray(childs.childs)) {
+                      console.warn('childs.childs无效，跳过此项');
+                      continue;
+                    }
+                    childs.childs.forEach((keyInfos_childs_childsModel, index) => {
+                      if (!keyInfos_childs_childsModel) {
+                        console.warn('keyInfos_childs_childsModel为undefined，跳过');
+                        return;
+                      }
+                      if (keyInfos_childs_childsModel.first === 1) {
+                        switch (item.key) {
+                          case 'voice_key': //语音键
+                            if (childs.operation === 'sk') { //单击
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[0].currIndex =
+                                index;
+                            }
+                            if (childs.operation === 'lk') { //长按
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[1].currIndex =
+                                index;
+                            }
+                            break;
+                          case 'search_key': //搜索键
+                            if (childs.operation === 'sk') {
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[2].currIndex =
+                                index;
+                            }
+                            if (childs.operation === 'lk') { //长按
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[3].currIndex =
+                                index;
+                            }
+                            break;
+                          case 'translate_key': //翻译键
+                            if (childs.operation === 'sk') {
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[4].currIndex =
+                                index;
+                            }
+                            if (childs.operation === 'lk') { //长按
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[5].currIndex =
+                                index;
+                            }
+                            break;
+                          case 'AI_key': //AI键
+                            if (childs.operation === 'sk') {
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[6].currIndex =
+                                index;
+                            }
+                            if (childs.operation === 'lk') { //长按
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[7].currIndex =
+                                index;
+                            }
+                            break;
+                          case 'M_key': //AI键
+                            if (childs.operation === 'sk') {
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[8].currIndex =
+                                index;
+                            }
+                            if (childs.operation === 'lk') { //长按
+                              (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].KeymethodConfig[9].currIndex =
+                                index;
+                            }
+                            break;
+                        }
+                      }
+                    });
+                  }
+                }
+              }
+
             }
           }).catch(() => {
             console.log('获取设备模型信息请求失败');
@@ -1763,9 +1649,14 @@ export class BlueTooth_devices {
 
   //监听连接状态改变
   ConnectStateChanged(state: ble.BLEConnectionChangeState) {
+    setTimeout(()=>{
+      if(!this.deviceInfo.sn){
+        this.send()
+      }
+    },500)
     let connectState: number = state.state;
     console.info('bluetooth connect state changed', connectState);
-    this.send()
+
     // 连接状态: 0=断开, 1=连接中, 2=已连接, 3=断开中
     if (connectState === 2) {
       console.info('蓝牙设备连接成功，准备获取服务');
@@ -1776,6 +1667,7 @@ export class BlueTooth_devices {
       setTimeout(() => {
         self.getServicesAfterConnection();
       }, 100);
+
       // 更新设备连接状态
       try {
         if ((AppStorage.get('devices') as DeviceArrayType_Ble[]) &&
@@ -1987,7 +1879,7 @@ export class BlueTooth_devices {
         ble.GattWriteType.WRITE_NO_RESPONSE
       ).then(() => {
         console.info('写入特征值成功');
-        let bufferCCC = this.buildCommandFrame(command, 33);
+        let bufferCCC = this.buildCommandFrame(command,33);
         const hexString = Array.from(bufferCCC).map(b => b.toString(16).padStart(2, '0')).join(' ');
         console.log(`发送命令 0x${command[0].toString(16)}:`, hexString, '\t发送数据长度', bufferCCC.length);
 

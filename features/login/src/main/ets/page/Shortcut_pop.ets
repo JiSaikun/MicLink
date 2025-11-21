@@ -404,19 +404,13 @@ struct Shortcut_pop {
   // 处理自定义快捷键按键（限制一个主键一个辅助键）
   private handleCustomShortcutKey(event: KeyEvent, keyName: string, isModifier: boolean) {
     if (isModifier) {
-      // 使用getModifierType过滤同类修饰键
-      const modifierType = this.getModifierType(event.keyCode);
-      if (modifierType) {
-        // 移除当前类别下的所有修饰键
-        this.pressedKeys = this.pressedKeys.filter(key => {
-          return this.getModifierType(key) !== modifierType;
-        });
-      }
-      // 添加新的修饰键
+      // 移除所有现有的辅助键（确保只能有一个辅助键）
+      this.pressedKeys = this.pressedKeys.filter(keyCode => !this.IsModifierKey(keyCode))
+      // 添加新的辅助键
       this.pressedKeys.push(event.keyCode);
     } else {
       // 如果按下的是主键
-      // 移除所有非修饰键（主键）
+      // 移除所有非修饰键（主键），但保留现有的辅助键
       this.pressedKeys = this.pressedKeys.filter(keyCode => this.IsModifierKey(keyCode))
       // 添加新的主键
       this.pressedKeys.push(event.keyCode)
