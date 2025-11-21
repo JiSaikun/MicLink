@@ -200,26 +200,40 @@ struct Index {
   change_mouse_KeyPressType() {
     if (this.login) {
       let PRODUCT_TYPE_: PRODUCT_TYPE = PRODUCT_TYPE.DEFAULT
+      console.warn('***************************鼠标11',this.device_isBle)
       if (this.device_isBle) {
         /**
          * BLE
          */
+        console.warn('***************************鼠标11',this.device_isBle,
+        '\n',JSON.stringify((this.devices[AppStorage.get('device_currIndex')as number]).PRODUCT_TYPE))
+
         PRODUCT_TYPE_ = (this.devices[AppStorage.get('device_currIndex')as number]).PRODUCT_TYPE
+        console.warn('***************************BLE','\n',JSON.stringify((ConnectDevice.Communication[AppStorage.get('device_currIndex')as number] as DeviceArrayType).PRODUCT_TYPE))
+
       } else {
         /**
          * 2.4G
          */
         PRODUCT_TYPE_ =
           (ConnectDevice.Communication[AppStorage.get('device_currIndex')as number] as DeviceArrayType).PRODUCT_TYPE
+        console.warn('***************************2.4G','\n',JSON.stringify((ConnectDevice.Communication[AppStorage.get('device_currIndex')as number] as DeviceArrayType).PRODUCT_TYPE))
+
       }
+
       switch (PRODUCT_TYPE_) {
         case PRODUCT_TYPE.DEFAULT: //鼠标
+          console.log('***************************dsahjashdjh')
+          console.warn('***************************鼠标')
           _change_mouse_KeyPressType()
           break
         case PRODUCT_TYPE.keyboard: //键盘
+          console.log('***************************dsahjashdjh')
+          console.warn('***************************键盘')
           _change_keyboard_KeyPressType()
           break
       }
+
     }
   }
 
