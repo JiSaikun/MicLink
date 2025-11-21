@@ -18,7 +18,6 @@ export struct Tab_profile {
   @State userLoginInfo: UserLoginInfo = AppStorage.get('userLoginInfo') as UserLoginInfo
   @StorageLink('languages') @Watch('onLanguagesChange') languages: string = 'ZH_CN'
   @Consume('pageInfo') pageInfo: NavPathStack
-
   @State bottList: bottListType[] = []
   @State fileTranscriptionProducts: ProductType[] = []
   @State voiceCustomizationProducts: ProductType[] = []
@@ -97,7 +96,7 @@ export struct Tab_profile {
   @Builder
   Product(price: number, name: string) {
     Row() {
-      Flex({direction:FlexDirection.Column,alignItems:ItemAlign.Start,justifyContent:FlexAlign.Center}) {
+      Flex({ direction: FlexDirection.Column, alignItems: ItemAlign.Start, justifyContent: FlexAlign.Center }) {
         Text(price + '￥')
           .fontSize(CommonConfig.fontSize_12)
           .fontColor('#8C6000')
@@ -344,6 +343,7 @@ export struct Tab_profile {
             .borderRadius(8)
             .width('100%')
             .padding({ left: 12, bottom: 10, top: 10 })
+            .onClick(() => this.pageInfo.pushPath({ "name": item.name }))
           }, (item: bottListType) => `${item.name}_${this.languages}`)
         }
         .padding(8)

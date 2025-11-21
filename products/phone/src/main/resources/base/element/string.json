@@ -11,6 +11,10 @@
     {
       "name": "PhoneAbility_label",
       "value": "MicLink"
+    },
+    {
+      "name": "WRITE_IMAGEVIDEO",
+      "value": "保存网络图片到本地图库"
     }
   ]
 }

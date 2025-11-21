@@ -7,33 +7,93 @@
       "data": {
         "description": "设置"
       }
-    }, {
+    },
+    {
       "name": "ColorTheme",
       "pageSourceFile": "src/main/ets/components/ColorTheme.ets",
       "buildFunction": "ColorThemeBuilder",
       "data": {
         "description": "主题"
       }
-    }, {
+    },
+    {
       "name": "InterfaceLanguage",
       "pageSourceFile": "src/main/ets/components/InterfaceLanguage.ets",
       "buildFunction": "InterfaceLanguageBuilder",
       "data": {
         "description": "语言"
       }
-    }, {
+    },
+    {
       "name": "PersonalProfile",
       "pageSourceFile": "src/main/ets/components/PersonalProfile.ets",
       "buildFunction": "PersonalProfileBuilder",
       "data": {
         "description": "编辑个人资料"
       }
-    }, {
+    },
+    {
       "name": "ProductDetails",
       "pageSourceFile": "src/main/ets/components/ProductDetails.ets",
       "buildFunction": "ProductDetailsBuilder",
       "data": {
         "description": "会员套餐"
+      }
+    },
+    {
+      "name": "PaymentSuccessful",
+      "pageSourceFile": "src/main/ets/components/PaymentSuccessful.ets",
+      "buildFunction": "PaymentSuccessfulBuilder",
+      "data": {
+        "description": "会员套餐"
+      }
+    },
+    {
+      "name": "soundSetting",
+      "pageSourceFile": "src/main/ets/components/SoundSetting.ets",
+      "buildFunction": "SoundSettingBuilder",
+      "data": {
+        "description": "音色设置"
+      }
+    },
+    {
+      "name": "fileManagement",
+      "pageSourceFile": "src/main/ets/components/FileManagement.ets",
+      "buildFunction": "FileManagementBuilder",
+      "data": {
+        "description": "文件管理"
+      }
+    },
+    {
+      "name": "userFeedback",
+      "pageSourceFile": "src/main/ets/components/UserFeedback.ets",
+      "buildFunction": "UserFeedbackBuilder",
+      "data": {
+        "description": "用户反馈"
+      }
+    },
+    {
+      "name": "aboutSoftware",
+      "pageSourceFile": "src/main/ets/components/AboutSoftware.ets",
+      "buildFunction": "AboutSoftwareBuilder",
+      "data": {
+        "description": "关于软件"
+      }
+    },
+    {
+      "name": "UpdatePhone",
+      "pageSourceFile": "src/main/ets/components/UpdatePhone.ets",
+      "buildFunction": "UpdatePhoneBuilder",
+      "data": {
+        "description": "更换手机号"
+      }
+    },
+    {
+      "name": "AvatarView",
+      "pageSourceFile": "src/main/ets/components/AvatarView.ets",
+      "buildFunction": "AvatarViewBuilder",
+      "data": {
+        "description": "查看修改头像"
       }
     }
   ]

@@ -135,10 +135,6 @@ struct InterfaceLanguage {
                   .fontColor(CommonConfig.hintTextColor_select)
                   .fontWeight(CommonConfig.fontWeight_400)
                   .margin({ right: 8 })
-                  .border({
-                    width: { bottom: langCode === 'UYGUR' ? 0 : 1 },
-                    color: CommonConfig.commonBackgroundColor
-                  })
                 Blank()
                 if (this.languages === langCode) {
                   Image($r('app.media.Frame_2538'))
@@ -149,6 +145,7 @@ struct InterfaceLanguage {
               .width('100%')
               .alignItems(VerticalAlign.Center)
               .padding({ top: 12, bottom: 12 })
+              .border({width:{bottom:index===this.languageCodes.length?0:1},color:CommonConfig.commonBackgroundColor})
               .onClick(() => {
                 this.languages = langCode
               })

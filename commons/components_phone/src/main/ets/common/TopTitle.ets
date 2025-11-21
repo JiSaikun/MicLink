@@ -19,7 +19,9 @@ export struct TopTitle {
         .fontSize(CommonConfig.fontSize_16)
         .fontColor(CommonConfig.hintTextColor_select)
 
-      Text()
+      Image('')
+        .width(32)
+        .height(32)
     }
     .alignItems(VerticalAlign.Center)
     .justifyContent(FlexAlign.SpaceBetween)

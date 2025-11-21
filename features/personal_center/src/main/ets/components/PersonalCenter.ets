@@ -101,8 +101,6 @@ export struct PersonalCenter {
                       .height(16)
                       .objectFit(ImageFit.Fill)
                   }
-
-
                 }
                 .margin({ right: 24 })
                 .align(Alignment.BottomEnd)

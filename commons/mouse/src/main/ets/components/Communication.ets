@@ -354,7 +354,7 @@ export class Communication {
     sn: '', //SN
     micStatus: false, //麦克风状态
     ledStatus: false, //LED状态
-    sampleRate: false, //采样率
+    sampleRate: true, //采样率
     icType: MouseICType.MouseICTypePAW3212, //鼠标光电类型
     dpiLevel: 1, //DPI挡位
     productType: 0, //产品型号

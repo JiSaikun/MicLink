@@ -1772,9 +1772,43 @@ export class BlueTooth_devices {
         ble.GattWriteType.WRITE_NO_RESPONSE
       ).then(() => {
         console.info('写入特征值成功');
+        let bufferCCC = this.buildCommandFrame(command,33);
+        const hexString = Array.from(bufferCCC).map(b => b.toString(16).padStart(2, '0')).join(' ');
+        console.log(`发送命令 0x${command[0].toString(16)}:`, hexString, '\t发送数据长度', bufferCCC.length);
+
+        // 创建 ArrayBuffer
+        let arrayBuffer = new ArrayBuffer(bufferCCC.length);
+        let dataView = new Uint8Array(arrayBuffer);
+        dataView.set(bufferCCC);
+
+        let characteristic: ble.BLECharacteristic = {
+          serviceUuid: this.CUSTOM_SERVICE_UUID,
+          characteristicUuid: this.WRITE_CHAR_UUID,
+          characteristicValue: arrayBuffer,
+          descriptors: this.WRITE_DESCRIPTORS || []
+        };
+
+        // 根据特征值属性选择合适的写入类型
+        // WRITE_CHAR_UUID 的属性是 writeNoResponse: true，所以使用 WRITE_NO_RESPONSE
+        (this.gattClient as ble.GattClientDevice).writeCharacteristicValue(
+          characteristic,
+          ble.GattWriteType.WRITE_NO_RESPONSE
+        ).then(() => {
+          console.info('写入特征值成功');
+        }).catch((err: BusinessError) => {
+          console.error(`写入特征值失败: errCode: ${err.code}, errMessage: ${err.message}`);
+          // 如果 WRITE_NO_RESPONSE 失败，尝试使用 WRITE
+          (this.gattClient as ble.GattClientDevice).writeCharacteristicValue(
+            characteristic,
+            ble.GattWriteType.WRITE
+          ).then(() => {
+            console.info('使用 WRITE 方式写入成功');
+          }).catch((err2: BusinessError) => {
+            console.error(`WRITE 方式也失败: errCode: ${err2.code}, errMessage: ${err2.message}`);
+          });
+        });
       }).catch((err: BusinessError) => {
         console.error(`写入特征值失败: errCode: ${err.code}, errMessage: ${err.message}`);
-
         // 如果 WRITE_NO_RESPONSE 失败，尝试使用 WRITE
         (this.gattClient as ble.GattClientDevice).writeCharacteristicValue(
           characteristic,
