@@ -100,7 +100,7 @@ struct ColorTheme {
       }
       .width('100%')
     }
-    .padding(16)
+    .padding({left:16,right:16})
     .backgroundColor(CommonConfig.commonBackgroundColor)
     .hideTitleBar(true)
     .hideToolBar(true)

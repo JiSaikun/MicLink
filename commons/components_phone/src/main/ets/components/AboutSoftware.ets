@@ -19,7 +19,7 @@ struct AboutSoftware {
   build() {
     NavDestination() {
       TopTitle({ title: Languages.membershipPackage[this.languages], isback: false })
-        .margin({ left: 16, right: 16, bottom: 12 })
+        .margin({  bottom: 12 })
       Column() {
         Image($r('app.media.payment_terminal'))
           .width(163)
@@ -38,7 +38,7 @@ struct AboutSoftware {
         .onClick(()=>this.pageInfo.clear())
 
     }
-    .padding(16)
+    .padding({ left: 16, right: 16 })
     .backgroundColor(CommonConfig.commonBackgroundColor)
     .backgroundImage($r('app.media.background_1'))
     .backgroundImageSize({ width: '100%', height: '100%' })

@@ -156,6 +156,14 @@ struct AvatarView {
       })
       .margin({ left: 16, right: 16, bottom: 12 })
 
+      Column() {
+        Image(this.userLoginInfo?.avatar ? this.userLoginInfo.avatar : $r('app.media.avatar'))
+          .width('100%')
+      }
+      .justifyContent(FlexAlign.Center)
+      .layoutWeight(1)
+      .width('100%')
+
     }
     .backgroundColor(CommonConfig.commonBackgroundColor)
     .hideTitleBar(true)
@@ -179,12 +187,12 @@ struct SelectImageMode {
   @StorageLink('languages') languages: string = 'ZH_CN'
 
   build() {
-    Column() {
+    Column({ space: 8 }) {
       Text('更换头像')
         .fontColor(CommonConfig.hintTextColor_select)
         .fontSize(CommonConfig.fontSize_16)
         .fontWeight(CommonConfig.fontWeight_400)
-        .margin({ bottom: 16 })
+        .margin({ bottom: 8 })
 
       Text('拍照')
         .backgroundColor('#EAEAEA')

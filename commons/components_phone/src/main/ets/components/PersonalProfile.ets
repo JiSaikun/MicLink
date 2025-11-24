@@ -45,12 +45,12 @@ struct PersonalProfile {
           .fontSize(CommonConfig.fontSize_14)
           .fontWeight(CommonConfig.fontWeight_400)
           .fontColor(CommonConfig.hintTextColor_select)
-          .onClick(() => {
-            this.pageInfo.pushPath({"name":'AvatarView'})
-
-          })
       }
       .margin({ bottom: 18 })
+      .onClick(() => {
+        this.pageInfo.pushPath({"name":'AvatarView'})
+
+      })
 
       Text(Languages.name_1[this.languages])
         .fontSize(CommonConfig.fontSize_14)
