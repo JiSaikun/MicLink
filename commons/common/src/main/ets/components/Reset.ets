@@ -47,6 +47,6 @@ export function Reset() {
     // AppStorage.setOrCreate("isEnableLongVoiceRecog", true) //是否开启长语音识别
     // AppStorage.setOrCreate("isWordScan_Translation", true) //是否开启划词翻译功能
     // AppStorage.setOrCreate("isOCR_Translate_Toggle", true) //是否开启截图识别/翻译
-    // AppStorage.setOrCreate("isAutoCloseVoiceTransPop", true) //是否开启语音翻译弹窗自动关闭
+    AppStorage.setOrCreate("devices", []) //是否开启语音翻译弹窗自动关闭
   }
 }
