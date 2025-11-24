@@ -95,7 +95,7 @@
         "minWindowWidth": 1000,
         "icon": "$media:layered_image",
         "label": "$string:EntryAbility_label",
-        "startWindowIcon": "$media:startIcon",
+        "startWindowIcon": "$media:Vector",
         "startWindowBackground": "$color:start_window_background",
         "exported": true,
         "skills": [

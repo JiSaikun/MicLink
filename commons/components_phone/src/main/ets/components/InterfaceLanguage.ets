@@ -12,7 +12,6 @@ export function InterfaceLanguageBuilder() {
 struct InterfaceLanguage {
   @StorageLink("paletteTheme") paletteTheme: string = CommonConfig.PaletteTheme
   @StorageLink('languages') languages: string = 'ZH_CN'
-
   // 固定的语言代码列表（不变）
   private languageCodes: string[] = [
     'ZH_CN', 'EN_US', 'ZH_TW', 'JA_JP', 'VI_VN', 'KO_KR',
@@ -24,7 +23,7 @@ struct InterfaceLanguage {
   // 根据语言代码获取显示名称（响应式）
   getLanguageName(langCode: string): string {
     let langData: Record<string, string> | undefined;
-    
+
     // 根据语言代码获取对应的翻译对象
     switch (langCode) {
       case 'ZH_CN':
@@ -90,32 +89,53 @@ struct InterfaceLanguage {
       default:
         return langCode;
     }
-    
+
     // 从翻译对象中获取当前界面语言对应的文本
     if (langData) {
       // 使用switch根据当前界面语言获取对应文本
       switch (this.languages) {
-        case 'ZH_CN': return langData.ZH_CN || langCode;
-        case 'EN_US': return langData.EN_US || langCode;
-        case 'ZH_TW': return langData.ZH_TW || langCode;
-        case 'JA_JP': return langData.JA_JP || langCode;
-        case 'VI_VN': return langData.VI_VN || langCode;
-        case 'KO_KR': return langData.KO_KR || langCode;
-        case 'ID_ID': return langData.ID_ID || langCode;
-        case 'TH_TH': return langData.TH_TH || langCode;
-        case 'FIL_PH': return langData.FIL_PH || langCode;
-        case 'MAY_MAY': return langData.MAY_MAY || langCode;
-        case 'RU_RU': return langData.RU_RU || langCode;
-        case 'TR_TR': return langData.TR_TR || langCode;
-        case 'FR_FR': return langData.FR_FR || langCode;
-        case 'DE_DE': return langData.DE_DE || langCode;
-        case 'IT_IT': return langData.IT_IT || langCode;
-        case 'ES_ES': return langData.ES_ES || langCode;
-        case 'MN_MN': return langData.MN_MN || langCode;
-        case 'AR_SA': return langData.AR_SA || langCode;
-        case 'KA_KA': return langData.KA_KA || langCode;
-        case 'UYGUR': return langData.UYGUR || langCode;
-        default: return langCode;
+        case 'ZH_CN':
+          return langData.ZH_CN || langCode;
+        case 'EN_US':
+          return langData.EN_US || langCode;
+        case 'ZH_TW':
+          return langData.ZH_TW || langCode;
+        case 'JA_JP':
+          return langData.JA_JP || langCode;
+        case 'VI_VN':
+          return langData.VI_VN || langCode;
+        case 'KO_KR':
+          return langData.KO_KR || langCode;
+        case 'ID_ID':
+          return langData.ID_ID || langCode;
+        case 'TH_TH':
+          return langData.TH_TH || langCode;
+        case 'FIL_PH':
+          return langData.FIL_PH || langCode;
+        case 'MAY_MAY':
+          return langData.MAY_MAY || langCode;
+        case 'RU_RU':
+          return langData.RU_RU || langCode;
+        case 'TR_TR':
+          return langData.TR_TR || langCode;
+        case 'FR_FR':
+          return langData.FR_FR || langCode;
+        case 'DE_DE':
+          return langData.DE_DE || langCode;
+        case 'IT_IT':
+          return langData.IT_IT || langCode;
+        case 'ES_ES':
+          return langData.ES_ES || langCode;
+        case 'MN_MN':
+          return langData.MN_MN || langCode;
+        case 'AR_SA':
+          return langData.AR_SA || langCode;
+        case 'KA_KA':
+          return langData.KA_KA || langCode;
+        case 'UYGUR':
+          return langData.UYGUR || langCode;
+        default:
+          return langCode;
       }
     }
     return langCode;
@@ -145,7 +165,10 @@ struct InterfaceLanguage {
               .width('100%')
               .alignItems(VerticalAlign.Center)
               .padding({ top: 12, bottom: 12 })
-              .border({width:{bottom:index===this.languageCodes.length?0:1},color:CommonConfig.commonBackgroundColor})
+              .border({
+                width: { bottom: index === this.languageCodes.length ? 0 : 1 },
+                color: CommonConfig.commonBackgroundColor
+              })
               .onClick(() => {
                 this.languages = langCode
               })
@@ -158,7 +181,7 @@ struct InterfaceLanguage {
       }
       .width('100%')
     }
-    .padding(16)
+    .padding({ left: 16, right: 16 })
     .backgroundColor(CommonConfig.commonBackgroundColor)
     .hideTitleBar(true)
     .hideToolBar(true)
