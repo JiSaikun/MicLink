@@ -8,6 +8,7 @@
   "dependencies": {
     'utils': 'file:../utils',
     'mouse': 'file:../mouse',
-    'config': 'file:../config'
+    'config': 'file:../config',
+    'bluetooth': 'file:../bluetooth'
   }
 }

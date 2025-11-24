@@ -118,6 +118,10 @@ export class BlueTooth_devices {
   private lastCharacteristicChangeTime: number = 0
   private characteristicTimeoutTimer: number | null = null
   private readonly CHARACTERISTIC_TIMEOUT: number = 15000 // 15秒超时
+  
+  // 设备验证超时检测
+  private deviceValidationTimer: number | null = null
+  private readonly DEVICE_VALIDATION_TIMEOUT: number = 10000 // 10秒超时，如果设备还没有SN就移除
   private audioWebSocketHandler: AudioWebSocketHandler_ble | null = null // 当前的音频WebSocket处理器
 
   constructor(device_address: string) {
@@ -150,6 +154,7 @@ export class BlueTooth_devices {
   public closeconnectDevice() {
     this.gattClient?.close()
     this.stopCharacteristicTimeout();
+    this.stopDeviceValidationTimeout(); // 停止设备验证超时检测
   }
 
   // 设置音频WebSocket处理器
@@ -230,6 +235,38 @@ export class BlueTooth_devices {
     if (this.characteristicTimeoutTimer !== null) {
       clearTimeout(this.characteristicTimeoutTimer);
       this.characteristicTimeoutTimer = null;
+    }
+  }
+
+  // 启动设备验证超时检测
+  private startDeviceValidationTimeout(): void {
+    this.stopDeviceValidationTimeout(); // 确保之前的定时器被清理
+    
+    this.deviceValidationTimer = setTimeout(() => {
+      try {
+        // 检查对象是否仍然有效
+        if (!this || !this.device_address) {
+          return;
+        }
+        
+        // 检查设备是否已经获取到SN
+        if (!this.deviceInfo.sn || this.deviceInfo.sn === '') {
+          console.warn(`蓝牙设备 ${this.device_address} 验证超时，未获取到设备信息，移除设备`);
+          this.removeDeviceFromList();
+        } else {
+          console.info(`蓝牙设备 ${this.device_address} 验证通过，已获取到设备信息: ${this.deviceInfo.sn}`);
+        }
+      } catch (error) {
+        console.error('设备验证超时回调异常:', error);
+      }
+    }, this.DEVICE_VALIDATION_TIMEOUT) as number;
+  }
+  
+  // 停止设备验证超时检测
+  private stopDeviceValidationTimeout(): void {
+    if (this.deviceValidationTimer !== null) {
+      clearTimeout(this.deviceValidationTimer);
+      this.deviceValidationTimer = null;
     }
   }
 
@@ -314,6 +351,10 @@ export class BlueTooth_devices {
 
             this.deviceInfo.sn = snPrefix + snSuffix;
             console.log('SN:', this.deviceInfo.sn);
+            
+            // 成功获取到设备SN，停止设备验证超时检测
+            this.stopDeviceValidationTimeout();
+            console.info(`蓝牙设备 ${this.device_address} 已获取到设备信息，验证通过`);
 
             // 2. 状态字节（协议：byte14）
             const statusByte = data[14];
@@ -1739,6 +1780,7 @@ export class BlueTooth_devices {
           })
         }
 
+        // 先创建设备对象，但先不添加到列表
         let device: DeviceArrayType_Ble = {
           BlueTooth_devices: this.BlueTooth_devices as BlueTooth_devices,
           mouseconfig: null,
@@ -1754,21 +1796,31 @@ export class BlueTooth_devices {
           PRODUCT_TYPE: PRODUCT_TYPE.DEFAULT,
           name: ''
         }
-        // 更新设备列表，确保UI正确显示
+        
+        // 临时添加到列表，但会在获取SN后验证
         const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || [];
-        currentDevices.push(device);
-        // 使用深拷贝确保UI更新
-        const newDevices = deepCopyDevices(currentDevices);
-        AppStorage.setOrCreate('devices', newDevices);
-        this.devices = newDevices;
-        this.device_currIndex = this.devices.length - 1;
-
-        // 立即触发UI更新，确保新设备立即显示
-        console.info('新设备添加完成，立即触发UI更新');
-        setTimeout(() => {
-          // 再次更新AppStorage以触发@Watch监听器
-          AppStorage.setOrCreate('devices', deepCopyDevices(newDevices));
-        }, 100);
+        
+        // 检查设备是否已存在（通过设备地址）
+        const existingIndex = currentDevices.findIndex(d => 
+          d.BlueTooth_devices.device_address === this.device_address
+        );
+        
+        if (existingIndex === -1) {
+          // 设备不存在，临时添加
+          currentDevices.push(device);
+          const newDevices = deepCopyDevices(currentDevices);
+          AppStorage.setOrCreate('devices', newDevices);
+          this.devices = newDevices;
+          this.device_currIndex = this.devices.length - 1;
+          console.info('临时添加设备到列表，等待获取设备信息，设备地址:', this.device_address);
+          
+          // 启动设备验证超时检测，10秒内必须获取到设备信息
+          this.startDeviceValidationTimeout();
+        } else {
+          // 设备已存在，使用现有索引
+          this.device_currIndex = existingIndex;
+          console.info('设备已存在于列表中，设备地址:', this.device_address);
+        }
 
         //client端启用或者禁用接收server端特征值内容变更通知的能力
         console.info('开始设置特征值变更通知');

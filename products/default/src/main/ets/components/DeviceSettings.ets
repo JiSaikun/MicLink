@@ -51,13 +51,26 @@ export struct DeviceSettings {
   }
 
   aboutToAppear() {
-    console.log('DeviceSettings: 页面即将显示，当前设备数量:', this.devices.length)
-    // 确保设备列表数据同步
+    console.log('DeviceSettings: 页面即将显示，当前devices数量:', this.devices.length)
+    console.log('DeviceSettings: 页面即将显示，当前devicesLink数量:', this.devicesLink ? this.devicesLink.length : 0)
+    
+    // 直接从StorageLink同步最新数据，而不是从AppStorage重新读取
     if (this.devicesLink && Array.isArray(this.devicesLink)) {
-      this.devices = [...this.devicesLink]
+      // 如果devicesLink为空数组，确保清空本地devices
+      if (this.devicesLink.length === 0) {
+        this.devices = []
+        console.log('DeviceSettings: devicesLink为空，清空本地devices')
+      } else {
+        this.devices = [...this.devicesLink]
+        console.log('DeviceSettings: 从devicesLink同步设备列表，数量:', this.devices.length)
+      }
     } else {
       this.devices = []
+      console.log('DeviceSettings: devicesLink无效，清空本地devices')
     }
+    
+    // 强制触发一次UI更新
+    this.forceUpdate()
   }
 
   build() {
@@ -79,21 +92,46 @@ export struct DeviceSettings {
                 if (!AppStorage.get('isShow_bluetoothConnect_pop')) {
                   AppStorage.setOrCreate('isShow_bluetoothConnect_pop', true)
                   //检索与连接蓝牙，之前的连接列表清空    蓝牙检索状态:false
-                  console.info('开始重新扫描蓝牙设备，清空现有连接');
-                  for (let item of this.devices) {
+                  console.info('开始重新扫描蓝牙设备，立即清空设备列表');
+                  
+                  // 先复制一份设备列表用于关闭连接
+                  const devicesToClose = [...this.devices]
+                  
+                  // 立即清空设备列表，使用全新的空数组确保引用改变
+                  const emptyDevices: DeviceArrayType_Ble[] = []
+                  this.devices = []
+                  AppStorage.setOrCreate('devices', emptyDevices)
+                  this.forceUpdate()
+                  console.info('设备列表已立即清空，devices数量:', this.devices.length);
+                  
+                  // 关闭之前保存的设备连接
+                  for (let item of devicesToClose) {
                     console.info('关闭设备连接:', item.name);
                     item.BlueTooth_devices.closeconnectDevice()
                   }
                   AppStorage.setOrCreate('isBluetoothConnect_state', false)
-                  // 延迟一点时间确保连接完全关闭
+                  
+                  // 延迟一点时间确保连接完全关闭后再开始扫描
                   setTimeout(() => {
-                    AppStorage.setOrCreate('devices', [])
-                    console.info('设备列表已清空，开始重新扫描');
-
-                    // 强制触发设备列表变化监听，确保UI更新
-                    const tempDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || [];
-                    AppStorage.setOrCreate('devices', [...tempDevices]);
-
+                    // 再次确认设备列表已清空
+                    this.devices = []
+                    const newEmptyDevices: DeviceArrayType_Ble[] = []
+                    AppStorage.setOrCreate('devices', newEmptyDevices)
+                    console.info('二次确认设备列表清空，devices数量:', this.devices.length);
+                    
+                    // 强制触发UI更新
+                    this.forceUpdate()
+                    
+                    // 再次确保清空，防止任何残留数据
+                    setTimeout(() => {
+                      // 使用全新的空数组替换，确保引用完全改变
+                      const emptyDevices: DeviceArrayType_Ble[] = []
+                      AppStorage.setOrCreate('devices', emptyDevices)
+                      this.devices = []
+                      this.forceUpdate()
+                      console.info('二次确认设备列表清空，当前数量:', this.devices.length);
+                    }, 100);
+                    
                     // 在扫描开始后，设置一个定时器来强制更新UI
                     let lastDeviceCount = 0;
                     const updateTimer = setInterval(() => {
@@ -125,7 +163,6 @@ export struct DeviceSettings {
                 }
               })
           }
-          .alignItems(VerticalAlign.Center)
           .padding({ bottom: 15, left: 5, right: 10 })
           .width('100%')
 
@@ -328,12 +365,16 @@ export struct DeviceSettings {
                 }
 
               }
-            }, (item: DeviceArrayType_Ble) => item.BlueTooth_devices.device_address)
+            }, (item: DeviceArrayType_Ble, index: number) => {
+              // 使用复合key：设备地址 + 索引 + 更新触发器，确保列表清空后重建
+              return `${item.BlueTooth_devices.device_address}-${index}-${this.forceUpdateTrigger}`
+            })
           }
           .columnsTemplate('1fr 1fr 1fr') // 每行3个等宽列
           .columnsGap(15) // 列间距
           .rowsGap(30) // 行间距
           .width('100%')
+          .id('device-grid-' + this.forceUpdateTrigger.toString()) // 添加动态ID强制重建
         }
         .padding({
           left: 24,
