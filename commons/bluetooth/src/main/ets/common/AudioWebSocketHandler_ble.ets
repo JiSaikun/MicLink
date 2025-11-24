@@ -100,6 +100,8 @@ export class AudioWebSocketHandler_ble {
   private readonly MAX_SESSION_DURATION: number = Number.MAX_SAFE_INTEGER; // 禁用会话超时，支持长时语音传输
   private hasSentStart: boolean = false; // 标记是否已经发送过start消息
   private hasSentEnd: boolean = false; // 标记是否已经发送过end消息
+  private completionDetectionStartTime: number = 0; // 完成检测开始时间
+  private readonly MAX_NO_DATA_TIMEOUT: number = 10000; // 10秒内没有数据则超时
 
   // 网络重试机制
   private readonly MAX_SEND_RETRIES = 3; // 最大重试次数
@@ -934,6 +936,7 @@ export class AudioWebSocketHandler_ble {
 
     let lastDataLength = this.audioData.length;
     let stableCount = 0;
+    this.completionDetectionStartTime = Date.now(); // 记录开始检测的时间
 
     this.completionCheckId = setInterval(() => {
       try {
@@ -953,9 +956,18 @@ export class AudioWebSocketHandler_ble {
 
         // 只有在至少有最小数据量后才开始检测完成，避免误判
         if (currentTotalSamples < MIN_SAMPLES_FOR_COMPLETION) {
-          if (stableCount % 50 === 0) { // 减少日志频率
-            console.log(`蓝牙采样点不足(${currentTotalSamples}/${MIN_SAMPLES_FOR_COMPLETION})，继续等待...`);
+          // 检查是否超时（10秒内没有数据）
+          const elapsedTime = Date.now() - this.completionDetectionStartTime;
+          if (elapsedTime > this.MAX_NO_DATA_TIMEOUT) {
+            console.warn(`蓝牙设备${this.MAX_NO_DATA_TIMEOUT / 1000}秒内未收到音频数据，停止检测并清理资源`);
+            this.cleanupIntervals();
+            return;
           }
+          
+          if (stableCount % 50 === 0) { // 减少日志频率
+            console.log(`蓝牙采样点不足(${currentTotalSamples}/${MIN_SAMPLES_FOR_COMPLETION})，继续等待...（已等待${Math.floor(elapsedTime / 1000)}秒）`);
+          }
+          stableCount++;
           return;
         }
 
