@@ -39,6 +39,7 @@ struct AboutSoftware {
           }
           .padding({ top: 12, bottom: 12 })
           .alignItems(VerticalAlign.Center)
+          .border({width:{bottom:1},color:CommonConfig.commonBackgroundColor})
           .width("100%")
           Row() {
 
@@ -62,13 +63,17 @@ struct AboutSoftware {
         .borderRadius(12)
         .padding({ left: 12, right: 12 })
         .backgroundColor(Color.White)
+        Blank()
+        Text('软件版本:'+'V2.7.17（14）')
+          .fontWeight(CommonConfig.fontWeight_400)
+          .fontSize(CommonConfig.fontSize_12)
+          .fontColor(CommonConfig.hintTextColor)
       }
+      .height('100%')
 
     }
     .padding({ left: 16, right: 16 })
     .backgroundColor(CommonConfig.commonBackgroundColor)
-    .backgroundImage($r('app.media.background_1'))
-    .backgroundImageSize({ width: '100%', height: '100%' })
     .hideTitleBar(true)
     .hideToolBar(true)
   }

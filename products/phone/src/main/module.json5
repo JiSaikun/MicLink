@@ -32,7 +32,7 @@
         "description": "$string:PhoneAbility_desc",
         "icon": "$media:Icon_App",
         "label": "$string:PhoneAbility_label",
-        "startWindowIcon": "$media:startIcon",
+        "startWindowIcon": "$media:Vector",
         "startWindowBackground": "$color:start_window_background",
         "exported": true,
         "skills": [
