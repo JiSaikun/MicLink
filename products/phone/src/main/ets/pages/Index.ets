@@ -36,7 +36,7 @@ struct Index {
     KeyPressType.DEFAULT
   @StorageLink("device_isBle") device_isBle: boolean = false
   @StorageLink('devices') devices: DeviceArrayType_Ble[] = []
-  @State currPageIndex: number = 2
+  @State currPageIndex: number=2
   @State barList: BarType[] = [
     { img: 'un_tab_device', selectImg: 'tab_device', title: Languages.tab_device[this.languages] },
     { img: 'un_tab_command', selectImg: 'tab_command', title: Languages.tab_command[this.languages] },
@@ -58,6 +58,9 @@ struct Index {
   }
 
   aboutToAppear(): void {
+    setTimeout(()=>{
+      this.controller.changeIndex(2)
+    },10)
     const context = getContext(this) as common.UIAbilityContext;
     AppStorage.setOrCreate('context', context);
     AppStorage.setOrCreate('currpageIsAI', true);
@@ -190,9 +193,9 @@ struct Index {
       .backgroundColor(CommonConfig.commonBackgroundColor)
       .width('100%')
       .height('100%')
-      .backgroundImage(this.currPageIndex === 4 ? $r('app.media.background_1') : '')
+      .backgroundImage(this.currPageIndex === 0 || this.currPageIndex === 4 ? $r('app.media.background_1') : '')
       .backgroundImageSize({ width: '100%', height: '100%' })
-    }.backgroundImage(this.currPageIndex === 4 ? $r('app.media.background_1') : '')
+    }.backgroundImage(this.currPageIndex === 0 || this.currPageIndex === 4 ? $r('app.media.background_1') : '')
     .backgroundImageSize({ width: '100%', height: '100%' })
     .hideToolBar(true)
     .hideTitleBar(true)
