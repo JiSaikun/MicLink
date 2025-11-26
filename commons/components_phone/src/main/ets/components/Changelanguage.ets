@@ -32,7 +32,7 @@ struct Changelanguage {
   build() {
     NavDestination() {
       // TopTitle({ title: Languages.editProfile[this.languages] })
-      TopTitle({ title:this.params?.title})
+      TopTitle({ title: this.params?.title })
         .margin({ bottom: 12 })
       Scroll() {
         Column() {
@@ -60,7 +60,7 @@ struct Changelanguage {
             .onClick(() => {
               this.currOption = index
               switch (this.params?.OperationType) {
-                case 'speech_Recognition_languages'://识别语言
+                case 'speech_Recognition_languages': //识别语言
                   if (this.params.device_isBle) {
                     this.devices[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages =
                       this.getModelInfo.languages[index].code
@@ -69,23 +69,29 @@ struct Changelanguage {
                       this.getModelInfo.languages[index].code
                   }
                   break
-                case 'from_languages'://翻译语言_源语言
+                case 'from_languages': //翻译语言_源语言
                   this.from_languages = this.getModelInfo.transLanguages[index].code
                   break
-                case 'wordScan_from_languages'://划词翻译语言_源语言
+                case 'wordScan_from_languages': //划词翻译语言_源语言
                   this.wordScan_from_languages = this.getModelInfo.transLanguages[index].code
                   break
-                case 'screenshotOCR_from_languages'://截图翻译语言_源语言
+                case 'screenshotOCR_from_languages': //截图翻译语言_源语言
                   this.screenshotOCR_from_languages = this.getModelInfo.transLanguages[index].code
                   break
-                case 'EnhancedBrowserSearch'://语音搜索设置
+                case 'EnhancedBrowserSearch': //语音搜索设置
                   AppStorage.setOrCreate('EnhancedBrowserSearch', index)
                   break
-                case 'typing_input_mode'://打字输入模式
-                  AppStorage.setOrCreate('keystroke_curr',index)
+                case 'typing_input_mode': //打字输入模式
+                  AppStorage.setOrCreate('keystroke_curr', index)
                   break
-                case 'buttonConfiguration'://按键设置
-                  AppStorage.setOrCreate('currentSelectedIndex',index)
+                case 'buttonConfiguration': //按键设置
+                  AppStorage.setOrCreate('currentSelectedIndex', index)
+                  break
+                case 'DPI_currIndex': //修改DPI
+                  AppStorage.setOrCreate('DPI_currIndex', index)
+                  break
+                case 'reportRate_currIndex': //修改回报率
+                  AppStorage.setOrCreate('reportRate_currIndex', index)
                   break
               }
             })
