@@ -261,8 +261,8 @@ struct Index {
               for (let item of ConnectDevice.Communication) {
                 item.Communication.changPhysicalKeyboardExistState(isPhysicalKeyboardExist)
               }
-              const context: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
-              connectDevice(context)
+              // const context: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
+              // connectDevice(context)
             })
 
           } else if (type == inputDevice.KeyboardType.ALPHABETIC_KEYBOARD && data.type == 'remove') {

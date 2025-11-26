@@ -48,7 +48,7 @@ struct PersonalProfile {
       }
       .margin({ bottom: 18 })
       .onClick(() => {
-        this.pageInfo.pushPath({"name":'AvatarView'})
+        this.pageInfo.pushPath({ "name": 'AvatarView' })
 
       })
 
@@ -100,7 +100,7 @@ struct PersonalProfile {
       })
 
     }
-    .padding(16)
+    .padding({ left: 16, right: 16 })
     .backgroundColor(CommonConfig.commonBackgroundColor)
     .hideTitleBar(true)
     .hideToolBar(true)

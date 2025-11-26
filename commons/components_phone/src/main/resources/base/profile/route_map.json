@@ -95,6 +95,30 @@
       "data": {
         "description": "查看修改头像"
       }
+    },
+    {
+      "name": "DevicesConfig",
+      "pageSourceFile": "src/main/ets/components/DevicesConfig.ets",
+      "buildFunction": "DevicesConfigBuilder",
+      "data": {
+        "description": "设备设置"
+      }
+    },
+    {
+      "name": "ContactInformation",
+      "pageSourceFile": "src/main/ets/components/ContactInformation.ets",
+      "buildFunction": "ContactInformationBuilder",
+      "data": {
+        "description": "联系方式"
+      }
+    },
+    {
+      "name": "TypingInputMode",
+      "pageSourceFile": "src/main/ets/components/InstructionsForUse.ets",
+      "buildFunction": "InstructionsForUseBuilder",
+      "data": {
+        "description": "使用说明"
+      }
     }
   ]
 }

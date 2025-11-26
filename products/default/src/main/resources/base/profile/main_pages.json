@@ -2,7 +2,7 @@
   "src": [
     "pages/Index",
     "pages/Overlay",
-    "pages/FloatingWindow",
+    "temp/FloatingWindow",
     "pages/VoiceTranslation"
   ]
 }

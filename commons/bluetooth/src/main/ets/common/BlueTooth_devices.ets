@@ -199,7 +199,7 @@ export class BlueTooth_devices {
           return;
         }
         console.warn(`蓝牙设备 ${this.device_address} 15秒内未收到特征值变化，移除设备`);
-        this.send([0x69])
+        // this.send([0x69])
         // this.removeDeviceFromList();
       } catch (error) {
         console.error('蓝牙设备超时回调异常:', error);
@@ -223,7 +223,7 @@ export class BlueTooth_devices {
         }
         console.warn(`蓝牙设备 ${this.device_address} 15秒内未收到特征值变化，移除设备`);
         // this.removeDeviceFromList();
-        this.send([0x69])
+        // this.send([0x69])
       } catch (error) {
         console.error('蓝牙设备超时回调异常:', error);
       }
