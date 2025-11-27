@@ -14,7 +14,7 @@ import { DeviceArrayType_Ble } from 'bluetooth';
 @Component
 struct VoiceTranslation {
   @State getModelInfo: getModelInfoModel = AppStorage.get('getModelInfo') as getModelInfoModel
-  @Watch('a') @StorageLink('voiceTranslationText') voiceTranslationText: translate_Response = {
+  @Watch('updata') @StorageLink('voiceTranslationText') voiceTranslationText: translate_Response = {
     transText: '',
     text: ''
   }
@@ -33,7 +33,7 @@ struct VoiceTranslation {
   private scroller_to: Scroller = new Scroller();
   private scroller_from: Scroller = new Scroller();
 
-  a() {
+  updata() {
     if (this.changeText) {
       this.changeLanguages()
     }
