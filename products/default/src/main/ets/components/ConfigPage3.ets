@@ -20,7 +20,7 @@ export struct ConfigPage3 {
   @StorageLink('devices') devices: DeviceArrayType_Ble[] = []
   @Consume device_isBle: boolean //该设备是否是蓝牙连接
   // @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null //鼠标信息
-  @StorageLink('DPI_currInfo') DPI_currInfo: DPI_currInfoModel | null = null //DPI信息
+  @Watch('watchDPI_currInfo') @StorageLink('DPI_currInfo') DPI_currInfo: DPI_currInfoModel | null = null //DPI信息
   @StorageLink("lowPowerAlertEnabled") lowPowerAlertEnabled: boolean = true //是否开启低电量提醒
   @State getModelInfo: getModelInfoModel =AppStorage.get('getModelInfo') as getModelInfoModel
   @StorageLink('languages') languages: string = 'ZH_CN'
@@ -30,7 +30,11 @@ export struct ConfigPage3 {
   @Watch('change_LEDstate') @State currLED: boolean =false
   @Watch('change_reportRate') @State reportRate_currIndex: number = 0
   @Watch('change_DPI') @State DPI_currIndex: number = 0
-
+  watchDPI_currInfo() {
+    if (this.DPI_currInfo) {
+      this.DPI_currIndex = this.DPI_currInfo.curr;
+    }
+  }
   // @Link pageshow:boolean
   change_reportRate() {
     setTimeout(() => {

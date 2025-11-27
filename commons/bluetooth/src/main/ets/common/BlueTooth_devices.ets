@@ -113,12 +113,11 @@ export class BlueTooth_devices {
   private flax_yuyin: boolean = true //标记：防止鼠标上来直接开启了语音输入————先发送一次0x63命令
   private audioProcessor: SmartMouseAudioProcessor = new SmartMouseAudioProcessor();
   static audioData: Int16Array[] = []
-
   // 特征值变化超时检测
   private lastCharacteristicChangeTime: number = 0
   private characteristicTimeoutTimer: number | null = null
   private readonly CHARACTERISTIC_TIMEOUT: number = 15000 // 15秒超时
-  
+
   // 设备验证超时检测
   private deviceValidationTimer: number | null = null
   private readonly DEVICE_VALIDATION_TIMEOUT: number = 10000 // 10秒超时，如果设备还没有SN就移除
@@ -241,14 +240,14 @@ export class BlueTooth_devices {
   // 启动设备验证超时检测
   private startDeviceValidationTimeout(): void {
     this.stopDeviceValidationTimeout(); // 确保之前的定时器被清理
-    
+
     this.deviceValidationTimer = setTimeout(() => {
       try {
         // 检查对象是否仍然有效
         if (!this || !this.device_address) {
           return;
         }
-        
+
         // 检查设备是否已经获取到SN
         if (!this.deviceInfo.sn || this.deviceInfo.sn === '') {
           console.warn(`蓝牙设备 ${this.device_address} 验证超时，未获取到设备信息，移除设备`);
@@ -261,7 +260,7 @@ export class BlueTooth_devices {
       }
     }, this.DEVICE_VALIDATION_TIMEOUT) as number;
   }
-  
+
   // 停止设备验证超时检测
   private stopDeviceValidationTimeout(): void {
     if (this.deviceValidationTimer !== null) {
@@ -275,7 +274,7 @@ export class BlueTooth_devices {
     try {
       const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || [];
       const deviceIndex = currentDevices.findIndex(device =>
-        device.BlueTooth_devices?.device_address === this.device_address
+      device.BlueTooth_devices?.device_address === this.device_address
       );
 
       if (deviceIndex !== -1) {
@@ -298,7 +297,8 @@ export class BlueTooth_devices {
     // 使用实例变量而不是每次从AppStorage获取，确保数据一致性
     const devices = this.devices;
     if (!devices || !Array.isArray(devices) || this.device_currIndex < 0 || this.device_currIndex >= devices.length) {
-      console.error('设备数组或索引无效:', { devices: !!devices, deviceIndex: this.device_currIndex, length: devices?.length });
+      console.error('设备数组或索引无效:',
+        { devices: !!devices, deviceIndex: this.device_currIndex, length: devices?.length });
       return;
     }
 
@@ -351,7 +351,7 @@ export class BlueTooth_devices {
 
             this.deviceInfo.sn = snPrefix + snSuffix;
             console.log('SN:', this.deviceInfo.sn);
-            
+
             // 成功获取到设备SN，停止设备验证超时检测
             this.stopDeviceValidationTimeout();
             console.info(`蓝牙设备 ${this.device_address} 已获取到设备信息，验证通过`);
@@ -401,7 +401,8 @@ export class BlueTooth_devices {
                   { key: KeyPressType.CUSTOM_LONG_PRESS_DOWN, currIndex: 0 },
                 ];
 
-                const keyInfos = (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[];
+                const keyInfos =
+                  (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[];
                 if (!keyInfos || !Array.isArray(keyInfos)) {
                   console.warn('keyInfos无效或为空，跳过配置初始化');
                   return;
@@ -543,7 +544,8 @@ export class BlueTooth_devices {
                   { key: KeyPressType.CUSTOM_LONG_PRESS_DOWN, currIndex: 0 },
                 ];
 
-                const keyInfos = (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[];
+                const keyInfos =
+                  (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[];
                 if (!keyInfos || !Array.isArray(keyInfos)) {
                   console.warn('keyInfos无效或为空，跳过配置初始化');
                   return;
@@ -1454,7 +1456,8 @@ export class BlueTooth_devices {
                   { key: KeyPressType.CUSTOM_LONG_PRESS_DOWN, currIndex: 0 },
                 ];
 
-                const keyInfos = (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[];
+                const keyInfos =
+                  (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex]?.getModelInfo?.keyInfos as keyInfosModel[];
                 if (!keyInfos || !Array.isArray(keyInfos)) {
                   console.warn('keyInfos无效或为空，跳过配置初始化');
                   return;
@@ -1690,11 +1693,11 @@ export class BlueTooth_devices {
 
   //监听连接状态改变
   ConnectStateChanged(state: ble.BLEConnectionChangeState) {
-    setTimeout(()=>{
-      if(!this.deviceInfo.sn){
+    setTimeout(() => {
+      if (!this.deviceInfo.sn) {
         this.send()
       }
-    },500)
+    }, 500)
     let connectState: number = state.state;
     console.info('bluetooth connect state changed', connectState);
 
@@ -1796,15 +1799,15 @@ export class BlueTooth_devices {
           PRODUCT_TYPE: PRODUCT_TYPE.DEFAULT,
           name: ''
         }
-        
+
         // 临时添加到列表，但会在获取SN后验证
         const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || [];
-        
+
         // 检查设备是否已存在（通过设备地址）
-        const existingIndex = currentDevices.findIndex(d => 
-          d.BlueTooth_devices.device_address === this.device_address
+        const existingIndex = currentDevices.findIndex(d =>
+        d.BlueTooth_devices.device_address === this.device_address
         );
-        
+
         if (existingIndex === -1) {
           // 设备不存在，临时添加
           currentDevices.push(device);
@@ -1813,7 +1816,7 @@ export class BlueTooth_devices {
           this.devices = newDevices;
           this.device_currIndex = this.devices.length - 1;
           console.info('临时添加设备到列表，等待获取设备信息，设备地址:', this.device_address);
-          
+
           // 启动设备验证超时检测，10秒内必须获取到设备信息
           this.startDeviceValidationTimeout();
         } else {
@@ -1931,41 +1934,43 @@ export class BlueTooth_devices {
         ble.GattWriteType.WRITE_NO_RESPONSE
       ).then(() => {
         console.info('写入特征值成功');
-        let bufferCCC = this.buildCommandFrame(command,33);
+        let bufferCCC = this.buildCommandFrame(command, 33);
         const hexString = Array.from(bufferCCC).map(b => b.toString(16).padStart(2, '0')).join(' ');
         console.log(`发送命令 0x${command[0].toString(16)}:`, hexString, '\t发送数据长度', bufferCCC.length);
 
-        // 创建 ArrayBuffer
-        let arrayBuffer = new ArrayBuffer(bufferCCC.length);
-        let dataView = new Uint8Array(arrayBuffer);
-        dataView.set(bufferCCC);
+        if (this.devices[this.device_currIndex].PRODUCT_TYPE!==PRODUCT_TYPE.keyboard) {
+          // 创建 ArrayBuffer
+          let arrayBuffer = new ArrayBuffer(bufferCCC.length);
+          let dataView = new Uint8Array(arrayBuffer);
+          dataView.set(bufferCCC);
 
-        let characteristic: ble.BLECharacteristic = {
-          serviceUuid: this.CUSTOM_SERVICE_UUID,
-          characteristicUuid: this.WRITE_CHAR_UUID,
-          characteristicValue: arrayBuffer,
-          descriptors: this.WRITE_DESCRIPTORS || []
-        };
+          let characteristic: ble.BLECharacteristic = {
+            serviceUuid: this.CUSTOM_SERVICE_UUID,
+            characteristicUuid: this.WRITE_CHAR_UUID,
+            characteristicValue: arrayBuffer,
+            descriptors: this.WRITE_DESCRIPTORS || []
+          };
 
-        // 根据特征值属性选择合适的写入类型
-        // WRITE_CHAR_UUID 的属性是 writeNoResponse: true，所以使用 WRITE_NO_RESPONSE
-        (this.gattClient as ble.GattClientDevice).writeCharacteristicValue(
-          characteristic,
-          ble.GattWriteType.WRITE_NO_RESPONSE
-        ).then(() => {
-          console.info('写入特征值成功');
-        }).catch((err: BusinessError) => {
-          console.error(`写入特征值失败: errCode: ${err.code}, errMessage: ${err.message}`);
-          // 如果 WRITE_NO_RESPONSE 失败，尝试使用 WRITE
+          // 根据特征值属性选择合适的写入类型
+          // WRITE_CHAR_UUID 的属性是 writeNoResponse: true，所以使用 WRITE_NO_RESPONSE
           (this.gattClient as ble.GattClientDevice).writeCharacteristicValue(
             characteristic,
-            ble.GattWriteType.WRITE
+            ble.GattWriteType.WRITE_NO_RESPONSE
           ).then(() => {
-            console.info('使用 WRITE 方式写入成功');
-          }).catch((err2: BusinessError) => {
-            console.error(`WRITE 方式也失败: errCode: ${err2.code}, errMessage: ${err2.message}`);
+            console.info('写入特征值成功');
+          }).catch((err: BusinessError) => {
+            console.error(`写入特征值失败: errCode: ${err.code}, errMessage: ${err.message}`);
+            // 如果 WRITE_NO_RESPONSE 失败，尝试使用 WRITE
+            (this.gattClient as ble.GattClientDevice).writeCharacteristicValue(
+              characteristic,
+              ble.GattWriteType.WRITE
+            ).then(() => {
+              console.info('使用 WRITE 方式写入成功');
+            }).catch((err2: BusinessError) => {
+              console.error(`WRITE 方式也失败: errCode: ${err2.code}, errMessage: ${err2.message}`);
+            });
           });
-        });
+        }
       }).catch((err: BusinessError) => {
         console.error(`写入特征值失败: errCode: ${err.code}, errMessage: ${err.message}`);
         // 如果 WRITE_NO_RESPONSE 失败，尝试使用 WRITE

@@ -25,6 +25,7 @@ export struct ConfigPage1 {
   @StorageLink('isAutoCloseVoiceTransPop') isAutoCloseVoiceTransPop: boolean = true //是否开启语音翻译弹窗自动关闭
   @State speech_Recognition_languages: string = 'ZH_CN' //语音识别语种
   @State keystroke: SelectOption[] = [{ value: '动态打字模式' }, { value: '兼容打字模式' }] //打字输入模式选项
+  @StorageLink('keystroke_curr') keystroke_curr: number = 0 //打字输入模式选项
   @State searchEngine: SelectOption[] = [{ value: '百度' }, { value: 'Google' }] //搜索引擎
   @StorageLink('from_languages') from_languages: string = 'ZH_CN' //语音翻译源语言
   @StorageLink('to_languages') to_languages: string = 'EN_US' //语音翻译目标语言
@@ -248,12 +249,12 @@ export struct ConfigPage1 {
         .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
 
       Select(this.keystroke)
-        .value(this.keystroke[0].value)
+        .value(this.keystroke[this.keystroke_curr].value)
         .onSelect((index: number) => {
-          // this.DPI_currIndex = index
+          this.keystroke_curr = index
         })
         // .selected(this.DPI_currInfo ? this.DPI_currInfo?.curr : this.DPI_currIndex)
-        .selected(0)
+        .selected(this.keystroke_curr)
         .width('100%')
         .font({ size: $r('app.float.default_text_font_size_14'), weight: 400 })
         .fontColor($r('app.string.DEFAULT_FONT_COLOR'))

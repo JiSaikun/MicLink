@@ -7,10 +7,11 @@ import { BusinessError, pasteboard } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { Communication, ConnectDevice } from 'mouse';
 import { OpenFileWithSystemApp } from 'api';
+import { DeviceArrayType_Ble } from 'bluetooth';
 
 export class AI_Assistant {
   // 相似度阈值常量
-  private readonly SIMILARITY_THRESHOLD: number = 0.6;
+  private readonly SIMILARITY_THRESHOLD: number = 0.8;
   private readonly table_data: tableDataModel[] = AppStorage.get('table_data') as tableDataModel[]
   private readonly HIGH_CONFIDENCE_THRESHOLD: number = 0.8;
   private readonly isAI_assistant: boolean = AppStorage.get('table_data') as boolean;
@@ -304,9 +305,15 @@ export class AI_Assistant {
 
       systemPasteboard.setData(pasteData)
         .then(() => {
-          console.info('文本已复制到剪贴板:', execute);
-          ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20, 0x01,
-            0x19]);
+          console.info('文本已复制到剪贴板1:', execute);
+          if (AppStorage.get('device_isBle')) {
+            (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+              0].BlueTooth_devices.send([0x20, 0x01, 0x19]);
+          }else {
+            ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20, 0x01,
+              0x19]);
+
+          }
 
           setTimeout(() => {
             systemPasteboard.clearData().catch((err: BusinessError) => {

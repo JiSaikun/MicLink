@@ -281,7 +281,9 @@ export class AudioWebSocketHandler_ble {
           }
           this.handleTextResult(audioToText_res, res.data.type);
         } else {
-          this.handleTextResult(audioToText_res, res.data.type);
+          if (!AppStorage.get('isAI_assistant')){
+            this.handleTextResult(audioToText_res, res.data.type);
+          }
         }
 
       } else {
