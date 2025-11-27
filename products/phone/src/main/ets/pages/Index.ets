@@ -39,8 +39,8 @@ struct Index {
   @State currPageIndex: number=2
   @State barList: BarType[] = [
     { img: 'un_tab_device', selectImg: 'tab_device', title: Languages.tab_device[this.languages] },
-    { img: 'un_tab_command', selectImg: 'tab_command', title: Languages.tab_command[this.languages] },
-    { img: 'un_tab_ai', selectImg: 'tab_ai', title: Languages.tab_ai[this.languages] },
+    // { img: 'un_tab_command', selectImg: 'tab_command', title: Languages.tab_command[this.languages] },
+    { img: 'un_tab_ai', selectImg: 'tab_ai', title: "AI"},
     { img: 'un_tab_library', selectImg: 'tab_library', title: Languages.tab_library[this.languages] },
     { img: 'un_tab_profile', selectImg: 'tab_profile', title: Languages.tab_profile[this.languages] },
   ]
