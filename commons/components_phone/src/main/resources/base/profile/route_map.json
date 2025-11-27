@@ -113,7 +113,7 @@
       }
     },
     {
-      "name": "TypingInputMode",
+      "name": "InstructionsForUse",
       "pageSourceFile": "src/main/ets/components/InstructionsForUse.ets",
       "buildFunction": "InstructionsForUseBuilder",
       "data": {

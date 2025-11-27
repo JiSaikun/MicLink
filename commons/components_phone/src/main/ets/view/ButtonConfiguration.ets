@@ -412,6 +412,21 @@ export struct ButtonConfiguration {
           }, (item: keyInfosModel) => item.keyName)
         }
         .width('100%')
+
+        Blank()
+        Column() {
+          Text('固件版本：25')
+            .fontSize(CommonConfig.fontSize_12)
+            .fontColor(CommonConfig.hintTextColor)
+            .fontWeight(CommonConfig.fontWeight_400)
+            .margin({ bottom: 8 })
+          Text('SN：ML2023120604000031')
+            .fontSize(CommonConfig.fontSize_12)
+            .fontColor(CommonConfig.hintTextColor)
+            .fontWeight(CommonConfig.fontWeight_400)
+        }
+        .width('100%')
+        .alignItems(HorizontalAlign.Center)
       } else {
         // 数据加载中的情况
         Column() {

@@ -172,7 +172,7 @@ export struct DeviceSettings {
                   OperationType: 'reportRate_currIndex',
                   currLanguages: this.reportRate && this.reportRate.length > 0 ? Math.max(0, Math.min(this.reportRate_currIndex, this.reportRate.length - 1)) : 0,
                   device_isBle: this.device_isBle,
-                  title:"回报率"
+                  title:Languages.return[this.languages]
                 }
                 this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
               })
