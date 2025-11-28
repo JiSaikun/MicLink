@@ -21,23 +21,19 @@ interface response_interface {
 export struct CreateNewInstruction_pop {
   @StorageLink('languages') @Watch('onLanguagesChange') languages: string = 'ZH_CN'
   @Consume('pageInfo') pageInfo: NavPathStack
-
   // 使用 SelectOption[]
   @State array: SelectOption[] = []
   @State response_: response_interface[] = []
-
   @State currentindex: number = 0
   @Link isShow_CreateNewInstruction_pop: boolean
   @Link isShow_EditInstruction_pop: boolean
   @StorageLink('table_data') table_data: tableDataModel[] = []
   @Prop isParam: boolean = false
   @Prop currIndexParam: number
-
   // 关键修改：category 改为 number 类型，保存索引
   @State category: number = 0
   @State voice: string = ''
   @State execute: string = ''
-
   @State isLoading: boolean = false;
 
   aboutToAppear(): void {
@@ -168,7 +164,10 @@ export struct CreateNewInstruction_pop {
   private selectFolder(): void {
     this.isLoading = true;
     try {
-      promptAction.showToast({ message: Languages.please_select_any_file_in_target_folder[this.languages], duration: 3000 });
+      promptAction.showToast({
+        message: Languages.please_select_any_file_in_target_folder[this.languages],
+        duration: 3000
+      });
       //
       // const documentSelectOptions = new picker.DocumentSelectOptions();
       // documentSelectOptions.maxSelectNumber = 1;
@@ -194,7 +193,10 @@ export struct CreateNewInstruction_pop {
           if (lastSlashIndex !== -1) {
             this.execute = result[0];
             console.log('提取的文件夹路径:', result[0]);
-            promptAction.showToast({ message: `${Languages.folder_selected[this.languages]} ${result[0]}`, duration: 2500 });
+            promptAction.showToast({
+              message: `${Languages.folder_selected[this.languages]} ${result[0]}`,
+              duration: 2500
+            });
           } else {
             promptAction.showToast({ message: Languages.cannot_parse_folder_path[this.languages], duration: 2000 });
           }
@@ -349,12 +351,12 @@ export struct CreateNewInstruction_pop {
           updatedData.push(this.table_data[i]);
         }
       }
-      AppStorage.setOrCreate('table_data',[])
-      console.log('err:'+JSON.stringify('table_data'))
-      setTimeout(()=>{
-        AppStorage.setOrCreate('table_data',updatedData)
-        console.log('err:'+JSON.stringify('table_data'))
-      },50)
+      AppStorage.setOrCreate('table_data', [])
+      console.log('err:' + JSON.stringify('table_data'))
+      setTimeout(() => {
+        AppStorage.setOrCreate('table_data', updatedData)
+        console.log('err:' + JSON.stringify('table_data'))
+      }, 50)
       console.log('编辑指令完成:', JSON.stringify(newData));
       this.isShow_EditInstruction_pop = false;
     } else {

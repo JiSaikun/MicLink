@@ -271,11 +271,6 @@ struct Index {
             for (let item of ConnectDevice.Communication) {
               item.Communication.changPhysicalKeyboardExistState(isPhysicalKeyboardExist)
             }
-            ConnectDevice.connectDevice().then(() => {
-              for (let item of ConnectDevice.Communication) {
-                item.Communication.changPhysicalKeyboardExistState(true)
-              }
-            })
           }
         });
       });

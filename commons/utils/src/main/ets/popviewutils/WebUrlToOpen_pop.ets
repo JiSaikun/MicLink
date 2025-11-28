@@ -1,4 +1,5 @@
 import { Languages } from "config"
+import { promptAction } from "@kit.ArkUI"
 
 @Component
 export struct WebUrlToOpen_pop {
@@ -58,6 +59,14 @@ export struct WebUrlToOpen_pop {
             .backgroundColor(this.paletteTheme)
             .borderRadius(5)
             .onClick(() => {
+              const urlRegex = /^(https?:\/\/)?[\w.-]+\.[a-z]{2,}.*$/i;
+              if (!urlRegex.test(this.webUrlToOpen)) {
+                promptAction.showToast({
+                  message: Languages.please_enter_valid_website[this.languages],
+                  duration: 2000
+                });
+                return
+              }
               AppStorage.setOrCreate('webUrlToOpen', this.webUrlToOpen)
               console.error('webUrlToOpen:', AppStorage.get('webUrlToOpen') as string)
               this.isShow_webUrlToOpen_pop = false

@@ -1,7 +1,7 @@
 import { DeviceArrayType_Ble } from 'bluetooth'
 import { Communication, ConnectDevice } from 'mouse'
 
-export function Reset() {
+export async function Reset() {
   // (AppStorage.get('pageInfo') as NavPathStack).clear()
   for (let item of ConnectDevice.Communication) {
     item.Communication.deviceInfo.sn = ''
@@ -48,14 +48,14 @@ export function Reset() {
     // AppStorage.setOrCreate("isEnableLongVoiceRecog", true) //是否开启长语音识别
     // AppStorage.setOrCreate("isWordScan_Translation", true) //是否开启划词翻译功能
     // AppStorage.setOrCreate("isOCR_Translate_Toggle", true) //是否开启截图识别/翻译
-    
+
     // 获取当前的蓝牙设备列表并关闭所有连接
     const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || []
     console.info('Reset: 开始关闭蓝牙设备连接，当前设备数量:', currentDevices.length)
     for (let device of currentDevices) {
       try {
         console.info('Reset: 关闭蓝牙设备连接:', device.name)
-        device.BlueTooth_devices.closeconnectDevice()
+        await device.BlueTooth_devices.closeconnectDevice()
       } catch (error) {
         console.error('Reset: 关闭蓝牙设备连接失败:', error)
       }
@@ -63,16 +63,20 @@ export function Reset() {
 
     // 清空蓝牙设备列表，创建全新的空数组确保引用改变
     const emptyDevices: DeviceArrayType_Ble[] = []
-    AppStorage.setOrCreate("devices", null)
+    AppStorage.setOrCreate("devices", emptyDevices)
     console.info('Reset: 蓝牙设备列表已清空')
 
     // 强制触发设备列表更新，确保UI同步
     setTimeout(() => {
       // 再次确认清空，使用新的空数组实例
       const newEmptyDevices: DeviceArrayType_Ble[] = []
-      AppStorage.setOrCreate('devices', newEmptyDevices)
+      AppStorage.setOrCreate('devices', null)
       console.info('Reset: 二次确认蓝牙设备列表清空')
-
+      ConnectDevice.connectDevice().then(() => {
+        // for (let item of ConnectDevice.Communication) {
+        //   item.Communication.changPhysicalKeyboardExistState(true)
+        // }
+      })
     }, 50)
 
   }

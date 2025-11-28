@@ -313,8 +313,13 @@ export function _change_keyboard_KeyPressType() {
     _KeyMethodConfig.openChatGPT()
   }
 
-
-  AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DEFAULT)
+  if (AppStorage.get('device_isBle')) {
+    setTimeout(() => {
+      AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DEFAULT)
+    }, 500)
+  }else {
+    AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DEFAULT)
+  }
 }
 
 function sk(cmd: string) {

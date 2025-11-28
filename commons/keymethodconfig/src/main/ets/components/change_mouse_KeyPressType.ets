@@ -140,7 +140,13 @@ export function _change_mouse_KeyPressType() {
     // console.error(JSON.stringify(getModelInfo.keyInfos))
     lk_down((_keyInfos_childsModel as keyInfos_childsModel).childs[KeymethodConfig[7].currIndex].cmd)
   }
-  AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DEFAULT)
+  if (AppStorage.get('device_isBle')) {
+    setTimeout(() => {
+      AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DEFAULT)
+    }, 500)
+  }else {
+    AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DEFAULT)
+  }
 }
 
 function sk(cmd: string) {

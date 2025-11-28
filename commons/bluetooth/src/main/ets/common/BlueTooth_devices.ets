@@ -116,7 +116,9 @@ export class BlueTooth_devices {
   // 特征值变化超时检测
   private lastCharacteristicChangeTime: number = 0
   private characteristicTimeoutTimer: number | null = null
+  private isSetCharacteristicChangeNotification: boolean = true
   private readonly CHARACTERISTIC_TIMEOUT: number = 15000 // 15秒超时
+
 
   // 设备验证超时检测
   private deviceValidationTimer: number | null = null
@@ -137,7 +139,7 @@ export class BlueTooth_devices {
     let value: Uint8Array = new Uint8Array(characteristicChangeReq.characteristicValue);
     console.warn('client端订阅server端特征值变化事件', value)
     hilog.warn(0x00, 'send',
-      '*******************************************************************************接收鼠标发送的消息');
+      '*******************************************************************************接收蓝牙发送的消息**');
     console.log('读取数据结果,读取到的数据的长度:', value.length);
     // value = new Uint8Array([0, ...value])
     if (value.length > 0) {
@@ -150,7 +152,9 @@ export class BlueTooth_devices {
     }
   }
 
-  public closeconnectDevice() {
+  public async closeconnectDevice() {
+    // await this.setCharacteristicChangeNotification(false)
+    console.log('清除设备：关闭特征值监听')
     this.gattClient?.close()
     this.stopCharacteristicTimeout();
     this.stopDeviceValidationTimeout(); // 停止设备验证超时检测
@@ -1597,7 +1601,7 @@ export class BlueTooth_devices {
   /**
    * client端启用或者禁用接收server端特征值内容变更通知的能力
    */
-  public setCharacteristicChangeNotification() {
+  public async setCharacteristicChangeNotification(state: boolean = true) {
     // let descriptors: Array<ble.BLEDescriptor> = [];
     // let arrayBuffer = new ArrayBuffer(2);
     // let descV = new Uint8Array(arrayBuffer);
@@ -1609,6 +1613,13 @@ export class BlueTooth_devices {
     //   descriptorValue: arrayBuffer
     // };
     // descriptors[0] = descriptor;
+    if (state) {
+      if (this.isSetCharacteristicChangeNotification) {
+        this.isSetCharacteristicChangeNotification = false
+      } else {
+        return
+      }
+    }
     let arrayBufferC = new ArrayBuffer(8);
     let characteristic: ble.BLECharacteristic = {
       serviceUuid: this.CUSTOM_SERVICE_UUID,
@@ -1617,18 +1628,21 @@ export class BlueTooth_devices {
       descriptors: this.NOTIFY_DESCRIPTORS
     };
     try {
-      (this.gattClient as ble.GattClientDevice).setCharacteristicChangeNotification(characteristic, true,
+      await (this.gattClient as ble.GattClientDevice).setCharacteristicChangeNotification(characteristic, state,
         (err: BusinessError) => {
           if (err) {
-            console.error('client端启用或者禁用接收server端特征值内容变更通知的能力。使用Callback异步回调 callback failed');
+            console.error(`client端${state ? "'启用'" :
+              "'禁用'"}${this.device_currIndex}接收server端特征值内容变更通知的能力。使用Callback异步回调 callback failed`);
           } else {
-            console.info('client端启用或者禁用接收server端特征值内容变更通知的能力。使用Callback异步回调 callback successful');
+            console.info(`client端${state ? "'启用'" :
+              "'禁用'"}${this.device_currIndex}接收server端特征值内容变更通知的能力。使用Callback异步回调 callback successful`);
           }
         });
     } catch (err) {
       console.error('errCode: ' + (err as BusinessError).code + ', errMessage: ' +
       (err as BusinessError).message);
     }
+
   }
 
   /**
@@ -1938,7 +1952,7 @@ export class BlueTooth_devices {
         const hexString = Array.from(bufferCCC).map(b => b.toString(16).padStart(2, '0')).join(' ');
         console.log(`发送命令 0x${command[0].toString(16)}:`, hexString, '\t发送数据长度', bufferCCC.length);
 
-        if (this.devices[this.device_currIndex].PRODUCT_TYPE!==PRODUCT_TYPE.keyboard) {
+        if (this.devices[this.device_currIndex].PRODUCT_TYPE !== PRODUCT_TYPE.keyboard) {
           // 创建 ArrayBuffer
           let arrayBuffer = new ArrayBuffer(bufferCCC.length);
           let dataView = new Uint8Array(arrayBuffer);
