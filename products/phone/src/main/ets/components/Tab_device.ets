@@ -30,11 +30,20 @@ export struct Tab_device {
       .alignItems(VerticalAlign.Center)
       .margin({ bottom: 51 })
 
-      Text('设备')
-        .fontWeight(CommonConfig.fontWeight_700)
-        .fontColor(CommonConfig.hintTextColor_select)
-        .fontSize(CommonConfig.fontSize_16)
-        .margin({ bottom: 29 })
+      Stack() {
+        Image($r('app.media.Ellipse_52'))
+          .width(32)
+          .height(11)
+        Text('设备')
+          .fontWeight(CommonConfig.fontWeight_700)
+          .fontColor(CommonConfig.hintTextColor_select)
+          .fontSize(CommonConfig.fontSize_16)
+          .margin({ bottom: 6 })
+
+      }
+      .margin({ bottom: 29 })
+      .align(Alignment.Bottom)
+
       if (!(this.devicesList.length + this.devicesLink.length)) {
         Column() {
           /**

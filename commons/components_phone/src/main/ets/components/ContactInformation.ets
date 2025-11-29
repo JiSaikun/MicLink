@@ -45,6 +45,7 @@ struct ContactInformation {
           }
 
         }
+        .alignItems(HorizontalAlign.Start)
 
         Blank()
 
@@ -89,6 +90,7 @@ struct ContactInformation {
           }
 
         }
+        .alignItems(HorizontalAlign.Start)
 
         Blank()
 

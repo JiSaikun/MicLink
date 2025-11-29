@@ -76,30 +76,33 @@ export class Languages {
     "TH_TH": "AI ชาญฉลาด",
     "JA_JP": "スマートAI"
   }
+  // 智能体（标签文本）
   static readonly tab_library: LanguageNames = {
-    "DE_DE": "",
-    "KA_KA": "",
-    "ZH_TW": "",
-    "KO_KR": "",
-    "EN_US": "",
-    "AR_SA": "",
+    "DE_DE": "KI-Agent",
+    "KA_KA": "AI აგენტი",
+    "ZH_TW": "智能體",
+    "KO_KR": "지능형 에이전트",
+    "EN_US": "AI Agent",
+    "AR_SA": "العامل الذكي",
     "ZH_CN": "智能体",
-    "ES_ES": "",
-    "ZH_TI": "",
-    "IT_IT": "",
-    "RU_RU": "",
-    "FIL_PH": "",
-    "MAY_MAY": "",
-    "UYGUR": "",
-    "TR_TR": "",
-    "ID_ID": "",
-    "VI_VN": "",
-    "MO_MO": "",
-    "FR_FR": "",
-    "MN_MN": "",
-    "TH_TH": "",
-    "JA_JP": ""
+    "ES_ES": "Agente IA",
+    "ZH_TI": "བསམ་བློ་ཅན་ཨེ་རྒྱན་",
+    "IT_IT": "Agente AI",
+    "RU_RU": "ИИ-Агент",
+    "FIL_PH": "AI Agent",
+    "MAY_MAY": "Ejen AI",
+    "UYGUR": "ئىقتىدارلىق ئەگەنت",
+    "TR_TR": "Yapay Zeka Ajanı",
+    "ID_ID": "Agen AI",
+    "VI_VN": "Động tác trí tuệ",
+    "MO_MO": "智能體",
+    "FR_FR": "Agent IA",
+    "MN_MN": "санаа бүхий агент",
+    "TH_TH": "เอเจนต์ปัญญาประดิษฐ์",
+    "JA_JP": "AIエージェント"
   }
+
+  // 我的（标签文本，优化部分术语）
   static readonly tab_profile: LanguageNames = {
     "DE_DE": "Mein",
     "KA_KA": "ჩემი",
