@@ -48,8 +48,8 @@ PersistentStorage.persistProp("isWordScan_Translation", true) //是否开启划�
 PersistentStorage.persistProp("isOCR_Translate_Toggle", false) //是否开启截图识别/翻译
 PersistentStorage.persistProp("isAutoCloseVoiceTransPop", false) //是否开启语音翻译弹窗自动关闭
 PersistentStorage.persistProp("fixedText", '') //输入固定文本
-PersistentStorage.persistProp("folderPath", '') //打开文件夹记录文件夹路径  暂不做更改
-PersistentStorage.persistProp("foldPath", '') //打开文件记录文件路径  暂不做更改
+PersistentStorage.persistProp("folderPath", '') //打开文件夹记录文件夹路径
+PersistentStorage.persistProp("foldPath", '') //打开文件记录文件路径
 PersistentStorage.persistProp("webUrlToOpen", '') //输入打开网页的具体网址
 PersistentStorage.persistProp("EnhancedBrowserSearch", 0) //搜索引擎
 PersistentStorage.persistProp("device_currIndex", 0) //设备信息接收与发送
@@ -67,15 +67,15 @@ PersistentStorage.persistProp("resolutionScale", 'followSystem') //分辨率缩�
 @Component
 struct Index {
   @StorageLink("login") login: boolean = true
-  @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null
+  @Watch('refreshPage')@StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null
   @StorageLink("currpageIsAI") currpageIsAI: boolean = false
-  @StorageLink('languages') languages: string = 'ZH_CN'
+  @Watch('refreshPage') @StorageLink('languages') languages: string = 'ZH_CN'
   @Provide('pageInfo') pageInfo: NavPathStack = new NavPathStack()
   @StorageLink("pageInfo") pageInfo_: NavPathStack = this.pageInfo
   @Watch('change_mouse_KeyPressType') @StorageLink("mouse_KeyPressType") mouse_KeyPressType: KeyPressType =
     KeyPressType.DEFAULT
   @StorageLink("device_isBle") device_isBle: boolean = false
-  @State web: string = 'https://asrai.miclink.net?sno=123&productCode=999999&config=configMiclink_B_1755079145452'
+  @State web: string = ''
   @State currentIndex: number = 0
   @State bottomCurrIndex: number = 10000
   private tabsController: TabsController = new TabsController()
@@ -102,6 +102,14 @@ struct Index {
   @StorageLink("paletteTheme") paletteTheme: string = ThemeConfig.PaletteTheme
   @Watch('onResolutionChange') @StorageLink("resolutionScale") resolutionScale: string = 'followSystem'
   @State scaleValue: number = 1.0
+  @State refresh: boolean = true
+
+  refreshPage() {
+    this.refresh = false
+    setTimeout(() => {
+      this.refresh = true
+    }, 20)
+  }
 
   change_isShow_bluetoothConnect_pop() {
     if (!this.isShow_bluetoothConnect_pop) {
@@ -112,6 +120,12 @@ struct Index {
         }, 100)
       }
     }
+  }
+
+  web_prefix(): string {
+    return `https://asrai.miclink.net?sno=${this.mouseconfig?.sn ? this.mouseconfig?.sn :
+      123}&productCode=${this.mouseconfig?.productType ? this.mouseconfig?.productType :
+      999999}&language=${this.languages}`
   }
 
   // TabsControllerIndex 变化监听
@@ -329,11 +343,12 @@ struct Index {
             .scale({ x: this.scaleValue, y: this.scaleValue })
             .zIndex(100)
 
+            if (this.refresh)
             Tabs({ controller: this.tabsController, index: this.tabsControllerIndex }) {
               // 确保 TabContent 数量与 AiModel_data + bottom_data 匹配
               TabContent() { // AI-助手
                 Stack() {
-                  Content({ web: this.web })
+                  Content({ web: this.web_prefix() + this.web })
                   Topbar()
                 }
                 .height('100%')
@@ -342,7 +357,7 @@ struct Index {
 
               TabContent() { // AI-办公
                 Stack() {
-                  Content({ web: this.web })
+                  Content({ web: this.web_prefix() + this.web })
                   Topbar()
                 }
                 .height('100%')
@@ -351,7 +366,7 @@ struct Index {
 
               TabContent() { // AI-智能体
                 Stack() {
-                  Content({ web: this.web })
+                  Content({ web: this.web_prefix() + this.web })
                   Topbar()
                 }
                 .height('100%')
@@ -374,7 +389,7 @@ struct Index {
               TabContent() { // 导航库
                 Stack() {
                   if (this.isNavigationLibActive) {
-                    Content({ web: this.web })
+                    Content({ web: this.web_prefix() + this.web })
                   }
                   Topbar()
                 }
@@ -384,7 +399,7 @@ struct Index {
 
               TabContent() { // 视频库
                 Stack() {
-                  Content({ web: this.web })
+                  Content({ web: this.web_prefix() + this.web })
                   Topbar()
                 }
                 .height('100%')
@@ -393,7 +408,7 @@ struct Index {
 
               TabContent() { // 模板库
                 Stack() {
-                  Content({ web: this.web })
+                  Content({ web: this.web_prefix() + this.web })
                   Topbar()
                 }
                 .height('100%')
@@ -413,7 +428,7 @@ struct Index {
 
               TabContent() { // 企业中心
                 Stack() {
-                  Content({ web: this.web })
+                  Content({ web: 'https://www.miclink.info/' })
                   Topbar()
                 }
                 .height('100%')
@@ -422,7 +437,7 @@ struct Index {
 
               TabContent() { // 帮助中心
                 Stack() {
-                  Content({ web: this.web })
+                  Content({ web: this.web_prefix() + this.web })
                   Topbar()
                 }
                 .height('100%')

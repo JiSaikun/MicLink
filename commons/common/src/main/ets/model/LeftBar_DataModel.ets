@@ -9,25 +9,25 @@ export interface Ai_Model{
 export const AiModel_data:Ai_Model[]=[
   {
     img:'assistant',title:Languages.ai_assistant,select:'select_assistant',
-    web:'https://asrai.miclink.net?sno=123&productCode=999999&config=configMiclink_B_1755079145452'
+    web:''
   },{
     img:'office',title:Languages.ai_office,select:'select_office',
-    web:'https://asrai.miclink.net?sno=123&productCode=999999&config=configMiclink_B_1755079145452#/aiOffice'
+    web:'#/aiOffice'
   },{
     img:'agent',title:Languages.ai_agent,select:'select_agent',
-    web:'https://asrai.miclink.net/?sno=123&productCode=999999&config=configMiclink_B_1755079145452#/aiAgent'
+    web:'#/aiAgent'
   },{
     img:'command',title:Languages.ai_command,select:'select_command',
     web:'Command_Ai'
   },{
     img:'navigation',title:Languages.navigation,select:'select_navigation',
-    web:'https://asrai.miclink.net?sno=123123123&productCode=999999&config=configMiclink_B_1755079145452#/navLibrary'
+    web:'#/navLibrary'
   },{
     img:'video',title:Languages.video,select:'select_video',
-    web:'https://asrai.miclink.net?sno=123123123&productCode=999999&config=configMiclink_B_1755079145452#/videoGallery'
+    web:'#/videoGallery'
   },{
     img:'template',title:Languages.template,select:'select_template',
-    web:'https://asrai.miclink.net/?sno=123&productCode=999999&config=configMiclink_B_1755079145452#/temLibrary'
+    web:'#/temLibrary'
   }
 ]
 export const bottom_data:Ai_Model[]=[
@@ -36,9 +36,9 @@ export const bottom_data:Ai_Model[]=[
     web:'DeviceSettings'
   },{
     img:'enterpriseCentre',title:Languages.enterpriseCentre,select:'select_enterpriseCentre',
-    web:'https://www.miclink.info/'
+    web:''
   },{
     img:'helpCenter',title:Languages.helpCenter,select:'select_helpCenter',
-    web:'https://asrai.miclink.net?sno=123123123&productCode=999999&config=configMiclink_B_1755079145452#/helpCenter'
+    web:'#/helpCenter'
   }
 ]

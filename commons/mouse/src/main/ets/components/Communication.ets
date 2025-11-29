@@ -1139,7 +1139,9 @@ export class Communication {
           this.deviceInfo.firmwareVersion = data[19].toString();
 
           ConnectDevice.Communication[this.device_currIndex].mouseconfig = this.deviceInfo;
-
+          if (!AppStorage.get('mouseconfig')) {
+            AppStorage.setOrCreate('mouseconfig', this.deviceInfo)
+          }
           if (!(AppStorage.get('devicesList') as DeviceArrayType[])[this.device_currIndex].getModelInfo) {
             AppStorage.setOrCreate('devicesList', null);
             const newList: DeviceArrayType[] = JSON.parse(JSON.stringify(ConnectDevice.Communication));
@@ -1250,7 +1252,9 @@ export class Communication {
           }
 
           ConnectDevice.Communication[this.device_currIndex].mouseconfig = this.deviceInfo;
-
+          if (!AppStorage.get('mouseconfig')) {
+            AppStorage.setOrCreate('mouseconfig', this.deviceInfo)
+          }
           if (!(AppStorage.get('devicesList') as DeviceArrayType[])[this.device_currIndex].getModelInfo) {
             AppStorage.setOrCreate('devicesList', null);
             const newList: DeviceArrayType[] = JSON.parse(JSON.stringify(ConnectDevice.Communication));

@@ -377,6 +377,13 @@ export struct DeviceSettings {
         return ((item as imagesModel)[this.languages][0] as imagesDataModel)['img']
       }
     }
+    for (let item of getModelInfo.images) {
+      console.error('设备图片', JSON.stringify((item as imagesModel)[this.languages]))
+      if ((item as imagesModel)["EN_US"]) {
+        // console.log('****************************************1', JSON.stringify(item))
+        return ((item as imagesModel)["EN_US"][0] as imagesDataModel)['img']
+      }
+    }
     return ''
   }
 }

@@ -382,7 +382,11 @@ export class BlueTooth_devices {
 
             // 7. 固件版本（协议：byte19）
             this.deviceInfo.firmwareVersion = data[19].toString();
+            
             (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].mouseconfig = this.deviceInfo;
+            if (!AppStorage.get('mouseconfig')) {
+              AppStorage.setOrCreate('mouseconfig', this.deviceInfo)
+            }
 
             if (!devices[this.device_currIndex].getModelInfo) {
               // 深拷贝更新设备列表以触发UI更新
@@ -524,7 +528,11 @@ export class BlueTooth_devices {
               this.deviceInfo.atmosphereLight = false;
             }
 
+            
             (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].mouseconfig = this.deviceInfo;
+            if (!AppStorage.get('mouseconfig')) {
+              AppStorage.setOrCreate('mouseconfig', this.deviceInfo)
+            }
 
 
             if (!devices[this.device_currIndex].getModelInfo) {

@@ -198,6 +198,11 @@ export struct DevicesConfig {
         return ((item as imagesModel)[this.languages][0] as imagesDataModel)['img']
       }
     }
+    for (let item of this.getModelInfo.images) {
+      if ((item as imagesModel)["EN_US"]) {
+        return ((item as imagesModel)["EN_US"][0] as imagesDataModel)['img']
+      }
+    }
     return ''
   }
 

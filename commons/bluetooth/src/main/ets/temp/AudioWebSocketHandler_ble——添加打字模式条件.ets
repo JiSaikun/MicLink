@@ -6,7 +6,7 @@ import { getModelInfoModel } from 'config'
 import { _translate, translate_Params, translate_Response, inputMessageModel } from 'mouse'
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
 import { Float_Window } from 'float_window';
-import { DeviceArrayType_Ble } from './BlueTooth_devices';
+import { DeviceArrayType_Ble } from '../common/BlueTooth_devices';
 
 // 定义日志消息接口
 interface logMessageModel {

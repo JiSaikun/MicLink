@@ -15,7 +15,7 @@ export struct Content {
   // 创建WebDownloadDelegate
   delegate: webview.WebDownloadDelegate = new webview.WebDownloadDelegate();
 
-  @Link web: string
+  @Prop web: string
   @State isWebViewReady: boolean = false
   @State downloadProgress: number = 0
   @State isDownloading: boolean = false
@@ -27,6 +27,7 @@ export struct Content {
   aboutToAppear() {
     // 注册快捷键回调函数
     this.registerShortcutCallbacks();
+    console.error(this.web)
   }
 
   // 设置下载委托和监听 - 简化版本
