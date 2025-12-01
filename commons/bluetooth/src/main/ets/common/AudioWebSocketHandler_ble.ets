@@ -249,16 +249,28 @@ export class AudioWebSocketHandler_ble {
   private handleWebSocketMessage(message: string): void {
     try {
       let res: res_moudel = JSON.parse(message);
-      if (res.data.text === '') {
-        return
+      /**
+       * 语音转录优化
+       */
+      if (res.data.type === 'LAST' || res.data.type === "FIN") {
+        if (res.data.type === 'LAST') {
+          if (this.FINText === '') {
+            this.FINText += res.data.text
+            res.data.text = this.FINText
+          } else {
+            res.data.text = this.FINText + res.data.text
+          }
+        } else {
+          this.FINText += res.data.text
+          res.data.text = this.FINText
+        }
+      } else {
+        res.data.text = this.FINText + res.data.text
       }
-      if (res.data.type === "FIN") {
-        this.FINText = AppStorage.get('voiceInputText') as string
-      }
-      res.data.text = this.FINText + res.data.text
+
       if (res.status === 200 && this.state === 0) {
         if (AppStorage.get('isAI_assistant')) {
-          if (this.wending && (res.data.type === 'LAST') || res.data.type === "FIN") {
+          if (this.wending && (res.data.type === 'LAST' || res.data.type === "FIN")) {
             AppStorage.setOrCreate('voiceInputText', res.data.text);
             return;
           } else {

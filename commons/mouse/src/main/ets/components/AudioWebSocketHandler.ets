@@ -110,7 +110,7 @@ export class AudioWebSocketHandler {
   private readonly NO_DATA_TIMEOUT_MS = 30000; // 30秒无数据超时
   private hasSentStart: boolean = false; // 标记是否已经发送过start消息
   private hasSentEnd: boolean = false; // 标记是否已经发送过end消息
-
+  private FINText: string = ''
   // 性能优化：增量计算总采样点，避免重复遍历
   private totalSamplesCache: number = 0;
   private readonly MAX_BUFFER_FRAMES = 150; // 最大缓冲帧数，防止内存泄漏
@@ -134,7 +134,6 @@ export class AudioWebSocketHandler {
     sessionStartTime: 0,
     lastChunkTime: 0
   };
-
   // 优化配置 - 1024字节分片
   private readonly CHUNK_SIZE_BYTES = 1024; // 目标分片大小
   private readonly SAMPLES_PER_CHUNK = 512; // 1024字节 / 2字节每采样点 = 512个采样点
@@ -189,12 +188,12 @@ export class AudioWebSocketHandler {
 
       // 清理之前的连接
       this.cleanupConnection();
-      
+
       // 恢复start标志（避免重连时重复发送start）
       // 注意：hasSentEnd不保存，每次连接都应该能够发送新的结束标记
       this.hasSentStart = preserveStartFlag;
       this.hasSentEnd = false; // 重置结束标志，允许发送新的结束标记
-      
+
       console.log(`🔍 连接后会话状态: hasSentStart=${this.hasSentStart}, hasSentEnd=${this.hasSentEnd}`);
 
       this.ws = webSocket.createWebSocket();
@@ -268,9 +267,25 @@ export class AudioWebSocketHandler {
       this.updateHeartbeat();
 
       let res: res_moudel = JSON.parse(message);
-      if (res.data.text === '') {
-        return
+      /**
+       * 语音转录优化
+       */
+      if (res.data.type === 'LAST' || res.data.type === "FIN") {
+        if (res.data.type === 'LAST') {
+          if (this.FINText === '') {
+            this.FINText += res.data.text
+            res.data.text = this.FINText
+          } else {
+            res.data.text = this.FINText + res.data.text
+          }
+        } else {
+          this.FINText += res.data.text
+          res.data.text = this.FINText
+        }
+      } else {
+        res.data.text = this.FINText + res.data.text
       }
+
       if (res.status === 200 && this.state === 0) {
         if (AppStorage.get('isAI_assistant')) {
           if (this.wending && (res.data.type === 'LAST' || res.data.type === "FIN")) {
@@ -300,7 +315,7 @@ export class AudioWebSocketHandler {
           }
           this.handleTextResult(audioToText_res, res.data.type);
         } else {
-          if (!AppStorage.get('isAI_assistant')){
+          if (!AppStorage.get('isAI_assistant')) {
             this.handleTextResult(audioToText_res, res.data.type);
           }
         }
@@ -381,7 +396,7 @@ export class AudioWebSocketHandler {
     _translate(params).then((res) => {
       console.log('翻译请求成功————翻译结果：' + res.data?.transText, type);
       if (res.data) {
-        let dataArray : translate_Response = {
+        let dataArray: translate_Response = {
           transText: res.data?.transText as string,
           text: res.data?.text as string,
         };
@@ -448,10 +463,10 @@ export class AudioWebSocketHandler {
    */
   private cleanupConnection(): void {
     console.log('清理WebSocket连接资源');
-    
+
     this.cleanupIntervals();
     this.isSending = false;
-    
+
     if (this.ws) {
       try {
         if (this.isConnected) {
@@ -462,7 +477,7 @@ export class AudioWebSocketHandler {
       }
       this.ws = null;
     }
-    
+
     this.isConnected = false;
     this.isClosing = false;
   }
@@ -1057,19 +1072,22 @@ export class AudioWebSocketHandler {
           if (stableCount % 50 === 0) { // 减少日志频率
             console.log(`2.4G采样点不足(${totalSamples}/${this.MIN_SAMPLES_FOR_COMPLETION})，继续等待...`);
             console.log(`[2.4G调试] 当前audioData帧数: ${this.audioData.length}, currentLength: ${currentLength}`);
-            console.log(`[2.4G调试] audioDataState: ${ConnectDevice.Communication[AppStorage.get('device_currIndex') as number || 0]?.Communication?.audioDataState}`);
+            console.log(`[2.4G调试] audioDataState: ${ConnectDevice.Communication[AppStorage.get('device_currIndex') as number ||
+              0]?.Communication?.audioDataState}`);
           }
           return;
         }
 
         // 检查音频采集是否已停止（关键修复）
-        const audioDataState = ConnectDevice.Communication[AppStorage.get('device_currIndex') as number || 0]?.Communication?.audioDataState || false;
+        const audioDataState = ConnectDevice.Communication[AppStorage.get('device_currIndex') as number ||
+          0]?.Communication?.audioDataState || false;
 
         if (currentLength === lastDataLength) {
           stableCount++;
 
           if (stableCount % 25 === 0 || stableCount >= maxStableCount) { // 减少日志频率
-            console.log(`2.4G数据稳定计数: ${stableCount}/${maxStableCount} (${stableCount * this.CHECK_INTERVAL_MS}ms), audioDataState: ${audioDataState}`);
+            console.log(`2.4G数据稳定计数: ${stableCount}/${maxStableCount} (${stableCount *
+            this.CHECK_INTERVAL_MS}ms), audioDataState: ${audioDataState}`);
           }
 
           // 如果音频采集已停止且数据稳定超过阈值，发送结束标记
@@ -1132,7 +1150,7 @@ export class AudioWebSocketHandler {
 
   private async sendAudioChunk(chunk: Int16Array, chunkIndex: number, totalChunks: number): Promise<void> {
     const startTime = Date.now();
-    
+
     try {
       if (this.isClosing) {
         return;
@@ -1184,7 +1202,7 @@ export class AudioWebSocketHandler {
 
       // 使用带重试的发送方法
       const success = this.sendMessageWithRetry(inputMessage);
-      
+
       if (success) {
         // 更新性能指标
         this.metrics.totalChunksSent++;
@@ -1227,7 +1245,7 @@ export class AudioWebSocketHandler {
 
     this.sendMessage(endMessage);
     this.wending = true;
-    console.error(this.wending+'\t'+'发送结束标记', JSON.stringify(endMessage.rate));
+    console.error(this.wending + '\t' + '发送结束标记', JSON.stringify(endMessage.rate));
   }
 
   // 清理资源
