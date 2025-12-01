@@ -102,7 +102,7 @@ export class AudioWebSocketHandler_ble {
   private hasSentEnd: boolean = false; // 标记是否已经发送过end消息
   private completionDetectionStartTime: number = 0; // 完成检测开始时间
   private readonly MAX_NO_DATA_TIMEOUT: number = 10000; // 10秒内没有数据则超时
-
+  private FINText: string = ''
   // 网络重试机制
   private readonly MAX_SEND_RETRIES = 3; // 最大重试次数
   private failedChunksCount: number = 0; // 失败分片计数
@@ -252,9 +252,13 @@ export class AudioWebSocketHandler_ble {
       if (res.data.text === '') {
         return
       }
+      if (res.data.type === "FIN") {
+        this.FINText = AppStorage.get('voiceInputText') as string
+      }
+      res.data.text = this.FINText + res.data.text
       if (res.status === 200 && this.state === 0) {
         if (AppStorage.get('isAI_assistant')) {
-          if (this.wending && (res.data.type === 'LAST' || res.data.type === "FIN")) {
+          if (this.wending && (res.data.type === 'LAST') || res.data.type === "FIN") {
             AppStorage.setOrCreate('voiceInputText', res.data.text);
             return;
           } else {
@@ -281,7 +285,7 @@ export class AudioWebSocketHandler_ble {
           }
           this.handleTextResult(audioToText_res, res.data.type);
         } else {
-          if (!AppStorage.get('isAI_assistant')){
+          if (!AppStorage.get('isAI_assistant')) {
             this.handleTextResult(audioToText_res, res.data.type);
           }
         }
@@ -593,7 +597,7 @@ export class AudioWebSocketHandler_ble {
         if (err) {
           console.error("消息发送失败: " + err.message);
         } else {
-          console.log("消息发送成功");
+          // console.error("消息发送成功");
         }
       });
       return true;
@@ -965,9 +969,10 @@ export class AudioWebSocketHandler_ble {
             this.cleanupIntervals();
             return;
           }
-          
+
           if (stableCount % 50 === 0) { // 减少日志频率
-            console.log(`蓝牙采样点不足(${currentTotalSamples}/${MIN_SAMPLES_FOR_COMPLETION})，继续等待...（已等待${Math.floor(elapsedTime / 1000)}秒）`);
+            console.log(`蓝牙采样点不足(${currentTotalSamples}/${MIN_SAMPLES_FOR_COMPLETION})，继续等待...（已等待${Math.floor(elapsedTime /
+              1000)}秒）`);
           }
           stableCount++;
           return;
@@ -990,7 +995,8 @@ export class AudioWebSocketHandler_ble {
           stableCount++;
 
           if (stableCount % 25 === 0 || stableCount >= MAX_STABLE_COUNT) { // 减少日志频率
-            console.log(`蓝牙数据稳定计数: ${stableCount}/${MAX_STABLE_COUNT} (${stableCount * CHECK_INTERVAL_MS}ms), audioDataState: ${audioDataState}`);
+            console.log(`蓝牙数据稳定计数: ${stableCount}/${MAX_STABLE_COUNT} (${stableCount *
+              CHECK_INTERVAL_MS}ms), audioDataState: ${audioDataState}`);
           }
 
           // 如果数据稳定超过阈值，发送结束标记
@@ -1050,7 +1056,7 @@ export class AudioWebSocketHandler_ble {
           const isStart = !this.hasSentStart;
           if (isStart) {
             this.hasSentStart = true;
-            console.log('🎤 发送开始标志 start=true，当前采样点位置:', this.lastSentSampleIndex);
+            console.error('🎤 发送开始标志 start=true，当前采样点位置:', this.lastSentSampleIndex);
           }
           const isEnd = false;
 
@@ -1094,7 +1100,7 @@ export class AudioWebSocketHandler_ble {
   private sendEndMarker(): void {
     // 防止重复发送结束标记
     if (this.hasSentEnd) {
-      console.log('结束标记已发送，跳过重复发送');
+      console.error('结束标记已发送，跳过重复发送');
       return;
     }
 
@@ -1118,7 +1124,7 @@ export class AudioWebSocketHandler_ble {
 
     this.sendMessage(endMessage);
     this.wending = true;
-    console.error(this.wending+'\t'+'发送结束标记', JSON.stringify(endMessage.rate));
+    console.error(this.wending + '\t' + '发送结束标记', JSON.stringify(endMessage.rate));
 
   }
 

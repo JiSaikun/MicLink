@@ -12,5 +12,9 @@ export { AiModel_data, bottom_data, Ai_Model } from './src/main/ets/model/LeftBa
 export { observeSystemLanguageChanges } from './src/main/ets/common/ObserveSystemLanguageChanges'
 
 export { ThemeConfig } from './src/main/ets/common/ThemeConfig'
+
 export { UserLoginInfo } from './src/main/ets/model/UserLoginInfo'
-export { register_Response,updateAvatar } from './src/main/ets/common/UpdateAvatar'
+
+export { register_Response, updateAvatar } from './src/main/ets/common/UpdateAvatar'
+
+export { UpdateAvatar_Camera } from './src/main/ets/common/UpdateAvatar_Camera'

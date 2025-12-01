@@ -118,6 +118,7 @@ async function fileSelect(): Promise<string[]> {
   let photoSelectOptions = new photoAccessHelper.PhotoSelectOptions();
   photoSelectOptions.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
   photoSelectOptions.maxSelectNumber = 9;
+  // photoSelectOptions.isPhotoTakingSupported = false; // 隐藏拍照功能
   let photoPicker = new photoAccessHelper.PhotoViewPicker();
   try {
     let photoSelectResult = await photoPicker.select(photoSelectOptions);

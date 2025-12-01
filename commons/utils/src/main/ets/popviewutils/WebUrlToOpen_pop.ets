@@ -7,6 +7,8 @@ export struct WebUrlToOpen_pop {
   @State webUrlToOpen: string = '' //打开网页：输入网址
   @Link isShow_webUrlToOpen_pop: boolean
   @StorageLink("paletteTheme") paletteTheme: string = ''
+  @State showProtocolSelection: boolean = false // 控制协议选择弹窗显示
+  @State tempUrl: string = '' // 临时存储用户输入的URL
 
   aboutToAppear(): void {
     this.webUrlToOpen = AppStorage.get('webUrlToOpen') as string
@@ -14,11 +16,30 @@ export struct WebUrlToOpen_pop {
     console.warn('webUrlToOpen:', AppStorage.get('webUrlToOpen') as string)
   }
 
+  // 显示协议选择弹窗
+  private showProtocolDialog(url: string): void {
+    this.tempUrl = url;
+    this.showProtocolSelection = true;
+  }
+
+  // 处理协议选择
+  private handleProtocolSelection(protocol: string): void {
+    const formattedUrl = protocol + this.tempUrl;
+    AppStorage.setOrCreate('webUrlToOpen', formattedUrl);
+
+    promptAction.showToast({
+      message: `已使用 ${protocol} 协议`,
+      duration: 1500
+    });
+
+    this.isShow_webUrlToOpen_pop = false;
+    this.showProtocolSelection = false;
+  }
+
   build() {
     Stack() {
       Column() {
         Row() {
-          // Text('输入网页网址')
           Text(Languages.input_web_url[this.languages])
             .fontSize(16)
             .fontWeight(400)
@@ -30,8 +51,10 @@ export struct WebUrlToOpen_pop {
         .padding(10)
         .backgroundColor(this.paletteTheme)
 
-        // TextInput({ placeholder: '请输入打开网页的网址', text: $$this.webUrlToOpen })
-        TextInput({ placeholder: Languages.enter_web_url_placeholder[this.languages], text: $$this.webUrlToOpen })
+        TextInput({
+          placeholder: Languages.enter_web_url_placeholder[this.languages] + '\n例如: www.example.com 或 https://example.com',
+          text: $$this.webUrlToOpen
+        })
           .backgroundColor('#fff')
           .placeholderColor('#bbbdbf')
           .margin({
@@ -45,7 +68,6 @@ export struct WebUrlToOpen_pop {
           .borderRadius(5)
 
         Flex({ justifyContent: FlexAlign.Center }) {
-          // Text('确定')
           Text(Languages.confirm_btn[this.languages])
             .fontSize(16)
             .fontWeight(400)
@@ -62,14 +84,20 @@ export struct WebUrlToOpen_pop {
               const urlRegex = /^(https?:\/\/)?[\w.-]+\.[a-z]{2,}.*$/i;
               if (!urlRegex.test(this.webUrlToOpen)) {
                 promptAction.showToast({
-                  message: Languages.please_enter_valid_website[this.languages],
+                  message: Languages.please_enter_valid_website[this.languages] + '\n例如: www.example.com 或 https://example.com',
                   duration: 2000
                 });
                 return
               }
-              AppStorage.setOrCreate('webUrlToOpen', this.webUrlToOpen)
-              console.error('webUrlToOpen:', AppStorage.get('webUrlToOpen') as string)
-              this.isShow_webUrlToOpen_pop = false
+
+              // 如果URL已包含协议，直接使用
+              if (this.webUrlToOpen.startsWith('http://') || this.webUrlToOpen.startsWith('https://')) {
+                AppStorage.setOrCreate('webUrlToOpen', this.webUrlToOpen);
+                this.isShow_webUrlToOpen_pop = false;
+              } else {
+                // 如果不包含协议，显示协议选择弹窗
+                this.showProtocolDialog(this.webUrlToOpen);
+              }
             })
         }
         .width('100%')
@@ -81,9 +109,76 @@ export struct WebUrlToOpen_pop {
       .zIndex(10)
       .padding({ bottom: 20 })
 
+      // 协议选择弹窗
+      if (this.showProtocolSelection) {
+        Column() {
+          Column() {
+            Row() {
+              Text('选择协议类型')
+                .fontSize(16)
+                .fontWeight(500)
+                .fontColor(Color.Black)
+            }
+            .justifyContent(FlexAlign.Center)
+            .width('100%')
+            .padding(15)
+
+            Divider()
+
+            // HTTPS 选项
+            Row() {
+              Text('使用 HTTPS (推荐)')
+                .fontSize(14)
+                .fontColor(Color.Black)
+            }
+            .width('100%')
+            .padding(15)
+            .onClick(() => {
+              this.handleProtocolSelection('https://');
+            })
+
+            Divider()
+
+            // HTTP 选项
+            Row() {
+              Text('使用 HTTP')
+                .fontSize(14)
+                .fontColor(Color.Black)
+            }
+            .width('100%')
+            .padding(15)
+            .onClick(() => {
+              this.handleProtocolSelection('http://');
+            })
+
+            Divider()
+
+            // 取消按钮
+            Row() {
+              Text('取消')
+                .fontSize(14)
+                .fontColor('#007DFF')
+            }
+            .width('100%')
+            .padding(15)
+            .onClick(() => {
+              this.showProtocolSelection = false;
+            })
+          }
+          .backgroundColor(Color.White)
+          .borderRadius(12)
+          .width(280)
+          .shadow({ radius: 20, color: '#00000020' })
+        }
+        .justifyContent(FlexAlign.Center)
+        .alignItems(HorizontalAlign.Center)
+        .width('100%')
+        .height('100%')
+        .backgroundColor('#00000060')
+        .zIndex(20)
+      }
 
       Column() {
-
       }
       .width('100%')
       .height('100%')
@@ -92,6 +187,5 @@ export struct WebUrlToOpen_pop {
     }
     .width('100%')
     .height('100%')
-
   }
 }

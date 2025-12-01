@@ -1,76 +1,59 @@
 import { promptAction } from '@kit.ArkUI';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { photoAccessHelper } from '@kit.MediaLibraryKit';
+import { cameraPicker } from '@kit.CameraKit';
+import { camera } from '@kit.CameraKit';
 import { fileIo } from '@kit.CoreFileKit';
 import { http } from '@kit.NetworkKit';
 import { common } from '@kit.AbilityKit';
 import { UserLoginInfo } from '../model/UserLoginInfo';
 
-export interface register_Response {
-  unionid: string;
-  channel: string;
-  lastLoginDate: number | null;
-  type: string;
-  mac: string | null;
-  platform: string | null;
-  lastLoginIp: string | null;
-  password: string;
-  now: number;
-  registrationId: string | null;
-  id: number;
-  lastUpdatedBy: string | null;
-  address: string | null;
-  chatExpiredTime: number;
-  openid: string | null;
-  totalTime: number;
-  sex: string;
-  artExpiredTime: number;
-  avatar: string | null;
-  appleId: string | null;
-  version: number;
-  expiredTime: number;
-  token: string;
-  lastUpdatedDate: number | null;
-  createdDate: number;
-  createdBy: string | null;
-  name: string;
-  account: string;
-  status: number;
-}
-
 /**
- * 从相册选择图片
+ * 调用相机拍照
  */
-async function fileSelect(): Promise<string> {
-  let photoSelectOptions = new photoAccessHelper.PhotoSelectOptions();
-  photoSelectOptions.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
-  photoSelectOptions.maxSelectNumber = 1; // 最多选择1个文件
-  // photoSelectOptions.isPhotoTakingSupported = false; // 隐藏拍照功能
+async function takePhoto(): Promise<string> {
+  const context = AppStorage.get('context') as common.UIAbilityContext;
+  if (!context) {
+    throw new Error('未获取到上下文');
+  }
 
-  let photoPicker = new photoAccessHelper.PhotoViewPicker();
   try {
-    let photoSelectResult = await photoPicker.select(photoSelectOptions);
-    if (photoSelectResult && photoSelectResult.photoUris && photoSelectResult.photoUris.length > 0) {
-      let imgUri = photoSelectResult.photoUris[0];
-      if (imgUri.indexOf('media/Photo') < 0) {
-        promptAction.showToast({
-          message: '请选择图片进行上传',
-          duration: 1000
-        });
-        return '';
-      }
+    // 配置相机选择器
+    let pickerProfile: cameraPicker.PickerProfile = {
+      cameraPosition: camera.CameraPosition.CAMERA_POSITION_BACK, // 使用后置摄像头
+      // 可选：设置保存路径到沙箱
+      // saveUri: `${context.cacheDir}/photo_${Date.now()}.jpg`
+    };
+
+    // 拉起相机拍照
+    let pickerResult: cameraPicker.PickerResult = await cameraPicker.pick(
+      context,
+      [cameraPicker.PickerMediaType.PHOTO], // 只拍照，不录像
+      pickerProfile
+    );
+
+    console.info("相机拍照结果:" + JSON.stringify(pickerResult));
+
+    // 检查拍照结果
+    if (pickerResult.resultCode === 0 && pickerResult.resultUri) {
+      let imgUri = pickerResult.resultUri;
+      console.info('拍照成功，图片URI:', imgUri);
       return imgUri;
     } else {
-      promptAction.showToast({
-        message: '未选择图片',
-        duration: 1000
-      });
+      if (pickerResult.resultCode === -1) {
+        promptAction.showToast({
+          message: '拍照失败，请重试',
+          duration: 1000
+        });
+      } else {
+        // 用户取消拍照
+        console.info('用户取消拍照');
+      }
       return '';
     }
   } catch (err) {
-    console.error('选择图片失败:', JSON.stringify(err));
+    console.error('调用相机失败:', JSON.stringify(err));
     promptAction.showToast({
-      message: '选择图片失败',
+      message: '调用相机失败',
       duration: 1000
     });
     return '';
@@ -177,38 +160,14 @@ export async function uploadAvatar(filePath: string): Promise<void> {
           console.info('上传响应状态码:', data.responseCode);
           console.info('上传响应数据:', data.result);
 
-          // // 解析响应数据
-          // let responseData: any;
-          // if (typeof data.result === 'string') {
-          //   responseData = JSON.parse(data.result);
-          // } else {
-          //   responseData = data.result;
-          // }
+          // 这里可以添加对服务器响应的具体处理逻辑
+          // 根据实际API响应结构调整判断条件
 
-          // console.info('头像上传结果:', JSON.stringify(responseData));
-          //
-          // // 根据实际API响应结构调整这里的判断条件
-          // if (data.responseCode === 200 && responseData) {
-          //   // 假设成功返回 statusCode 为 200
-          //   if (responseData.statusCode === 200) {
-          //     // 如果服务器返回新的头像URL，更新本地存储
-          //     if (responseData.data?.avatarUrl) {
-          //       let userInfo = AppStorage.get('userLoginInfo') as UserLoginInfo;
-          //       userInfo.avatar = responseData.data.avatarUrl;
-          //       AppStorage.setOrCreate('userLoginInfo', userInfo);
-          //     }
-          //
-          //     promptAction.showToast({
-          //       message: '头像上传成功',
-          //       duration: 2000
-          //     });
-          //     resolve();
-          //   } else {
-          //     reject(new Error(responseData.message || '上传失败'));
-          //   }
-          // } else {
-          //   reject(new Error(`服务器错误: ${data.responseCode}`));
-          // }
+          promptAction.showToast({
+            message: '头像上传成功',
+            duration: 2000
+          });
+          resolve();
         } catch (parseError) {
           reject(new Error(`解析响应失败: ${parseError}`));
         }
@@ -230,11 +189,11 @@ async function deleteTempFile(filePath: string): Promise<void> {
 }
 
 /**
- * 选择图片处理（仅本地更新，不上传）
+ * 拍照处理（仅本地更新，不上传）
  */
 export async function updateAvatarLocal(): Promise<boolean> {
   try {
-    const uri = await fileSelect();
+    const uri = await takePhoto();
     if (uri) {
       let userLoginInfo = AppStorage.get('userLoginInfo') as UserLoginInfo;
       userLoginInfo.avatar = uri;
@@ -243,7 +202,7 @@ export async function updateAvatarLocal(): Promise<boolean> {
     }
     return false;
   } catch (error) {
-    console.error('选择图片错误:', error);
+    console.error('拍照错误:', error);
     promptAction.showToast({
       message: '头像更新失败',
       duration: 2000
@@ -253,11 +212,11 @@ export async function updateAvatarLocal(): Promise<boolean> {
 }
 
 /**
- * 完整的头像更新流程（选择+上传）
+ * 完整的头像更新流程（拍照+上传）
  */
-export async function updateAvatar(): Promise<boolean> {
+export async function UpdateAvatar_Camera(): Promise<boolean> {
   try {
-    const uri = await fileSelect();
+    const uri = await takePhoto();
     if (!uri) {
       return false;
     }
@@ -297,7 +256,7 @@ export async function uploadExistingAvatar(): Promise<boolean> {
     const userLoginInfo = AppStorage.get('userLoginInfo') as UserLoginInfo;
     if (!userLoginInfo?.avatar) {
       promptAction.showToast({
-        message: '请先选择头像',
+        message: '请先设置头像',
         duration: 2000
       });
       return false;

@@ -149,6 +149,7 @@ struct InstructionsForUse {
           .align(Alignment.TopStart)
           // .edgeEffect(EdgeEffect.Spring)
           .scrollBarWidth(2)
+          .edgeEffect(EdgeEffect.Spring)
           .padding({ left: 12 })
 
         }
