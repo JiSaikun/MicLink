@@ -3,6 +3,9 @@
     {
       "name": "app_name",
       "value": "MyApplication_MicLink"
+    },    {
+      "name": "ACCESS_EXTENSIONAL_DEVICE_DRIVER",
+      "value": "获取接入主设备的外部设备列表"
     },
     {
       "name": "read_media_reason",
@@ -11,6 +14,14 @@
     {
       "name": "write_media_reason",
       "value": "写入文件"
+    },
+    {
+      "name": "READ_PASTEBOARD",
+      "value": "读取剪贴板内容"
+    },
+    {
+      "name": "KEEP_BACKGROUND_RUNNING",
+      "value": "后台蓝牙通信"
     }
   ]
 }

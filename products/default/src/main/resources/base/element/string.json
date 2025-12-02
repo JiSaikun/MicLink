@@ -61,10 +61,6 @@
       "value": "开发悬浮窗窗口"
     },
     {
-      "name": "ACCESS_BLUETOOTH",
-      "value": "需要蓝牙权限来扫描和连接设备"
-    },
-    {
       "name": "KEEP_BACKGROUND_RUNNING",
       "value": "后台蓝牙通信"
     }

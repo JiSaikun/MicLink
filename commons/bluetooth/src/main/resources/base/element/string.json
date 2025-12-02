@@ -5,7 +5,7 @@
       "value": "page from package"
     },{
       "name": "ACCESS_BLUETOOTH",
-      "value": "申请蓝牙权限"
+      "value": "需要蓝牙权限来扫描和连接设备"
     }
   ]
 }

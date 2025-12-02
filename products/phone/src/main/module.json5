@@ -13,7 +13,8 @@
     "requestPermissions": [
       {
         "name": 'ohos.permission.INTERNET'
-      },      {
+      },
+      {
         "name": "ohos.permission.READ_MEDIA",
         "reason": "$string:app_name",
         "usedScene": {
@@ -26,6 +27,40 @@
       {
         "name": "ohos.permission.WRITE_MEDIA",
         "reason": "$string:write_media_reason",
+        "usedScene": {
+          "abilities": [
+            "EntryAbility"
+          ],
+          "when": "inuse"
+        }
+      },
+      {
+        "name": "ohos.permission.ACCESS_EXTENSIONAL_DEVICE_DRIVER",
+        "reason": "$string:ACCESS_EXTENSIONAL_DEVICE_DRIVER"
+      },
+      {
+        "name": "ohos.permission.KEEP_BACKGROUND_RUNNING",
+        "reason": "$string:KEEP_BACKGROUND_RUNNING",
+        "usedScene": {
+          "abilities": [
+            "EntryAbility"
+          ],
+          "when": "always"
+        }
+      },
+      {
+        "name": "ohos.permission.READ_PASTEBOARD",
+        "reason": "$string:READ_PASTEBOARD",
+        "usedScene": {
+          "abilities": [
+            "EntryAbility"
+          ],
+          "when": "inuse"
+        }
+      },
+      {
+        'name': 'ohos.permission.ACCESS_BLUETOOTH',
+        "reason": "$string:ACCESS_BLUETOOTH",
         "usedScene": {
           "abilities": [
             "EntryAbility"
@@ -61,18 +96,18 @@
             ],
             "actions": [
               "action.system.home",
-//              "ohos.want.action.viewData"//这是系统识别文件打开场景的固定值
+              //              "ohos.want.action.viewData"//这是系统识别文件打开场景的固定值
             ],
-//            "uris": [
-//              {
-//                "scheme": "file",
-//                // 支持file://协议
-//                "type": "application/msword",
-//                // 支持的文件MIME类型（如Word文档）
-//                "linkFeature": "FileOpen"
-//                // 声明功能为文件打开
-//              }
-//            ]
+            //            "uris": [
+            //              {
+            //                "scheme": "file",
+            //                // 支持file://协议
+            //                "type": "application/msword",
+            //                // 支持的文件MIME类型（如Word文档）
+            //                "linkFeature": "FileOpen"
+            //                // 声明功能为文件打开
+            //              }
+            //            ]
           }
         ]
       }
