@@ -117,7 +117,18 @@
             ],
             "actions": [
               "action.system.home"
+              //              "ohos.want.action.viewData"//这是系统识别文件打开场景的固定值
             ]
+            //            "uris": [
+            //              {
+            //                "scheme": "file",
+            //                // 支持file://协议
+            //                "type": "application/msword",
+            //                // 支持的文件MIME类型（如Word文档）
+            //                "linkFeature": "FileOpen"
+            //                // 声明功能为文件打开
+            //              }
+            //            ]
           }
         ],
         "backgroundModes": [

@@ -3,6 +3,14 @@
     {
       "name": "app_name",
       "value": "MyApplication_MicLink"
+    },
+    {
+      "name": "read_media_reason",
+      "value": "读取文件"
+    },
+    {
+      "name": "write_media_reason",
+      "value": "写入文件"
     }
   ]
 }

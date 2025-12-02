@@ -3,6 +3,7 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { backgroundTaskManager } from '@kit.BackgroundTasksKit';
+// import fs from '@ohos.file.fs';
 
 const DOMAIN = 0x0000;
 
@@ -10,6 +11,18 @@ export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
+
+    // if (want.uri) {
+    //   const fileUri = want.uri; // 获取文件URI
+    //   console.warn('获取文件URI:'+fileUri)
+    //   try {
+    //     // const file = fs.openSync(fileUri, fs.OpenMode.READ_WRITE); // 打开文件
+    //     // 后续处理（如读取内容、渲染界面等）
+    //   } catch (error) {
+    //     console.error(`File open failed: ${error.message}`);
+    //   }
+    // }
+
     let wantAgentInfo: wantAgent.WantAgentInfo = {
       // 点击通知后，将要执行的动作列表
       wants: [

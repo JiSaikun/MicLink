@@ -1,12 +1,22 @@
 import { AbilityConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
+// import fs from '@ohos.file.fs';
 
 const DOMAIN = 0x0000;
 
 export default class PhoneAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
+    // if (want.uri) {
+    //   const fileUri = want.uri; // 获取文件URI
+    //   try {
+    //     const file = fs.openSync(fileUri, fs.OpenMode.READ_WRITE); // 打开文件
+    //     // 后续处理（如读取内容、渲染界面等）
+    //   } catch (error) {
+    //     console.error(`File open failed: ${error.message}`);
+    //   }
+    // }
   }
 
   onDestroy(): void {
