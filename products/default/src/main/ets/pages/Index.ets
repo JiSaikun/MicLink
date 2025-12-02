@@ -67,7 +67,7 @@ PersistentStorage.persistProp("resolutionScale", 'followSystem') //分辨率缩�
 @Component
 struct Index {
   @StorageLink("login") login: boolean = true
-  @Watch('refreshPage')@StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null
+  @Watch('refreshPage') @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null
   @StorageLink("currpageIsAI") currpageIsAI: boolean = false
   @Watch('refreshPage') @StorageLink('languages') languages: string = 'ZH_CN'
   @Provide('pageInfo') pageInfo: NavPathStack = new NavPathStack()
@@ -245,7 +245,7 @@ struct Index {
   }
 
   onPageHide(): void {
-    console.log('sgdhjfjkhdgb')
+    console.log('应用最小化')
     Float_Window.creat_hide()
   }
 

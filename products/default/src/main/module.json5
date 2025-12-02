@@ -83,6 +83,16 @@
           ],
           "when": "inuse"
         }
+      },
+      {
+        "name": "ohos.permission.KEEP_BACKGROUND_RUNNING",
+        "reason": "$string:KEEP_BACKGROUND_RUNNING",
+        "usedScene": {
+          "abilities": [
+            "EntryAbility"
+          ],
+          "when": "always"
+        }
       }
     ],
     "deliveryWithInstall": true,
@@ -109,6 +119,9 @@
               "action.system.home"
             ]
           }
+        ],
+        "backgroundModes": [
+          "bluetoothInteraction"
         ]
       }
     ],
