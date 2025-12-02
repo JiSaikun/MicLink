@@ -138,6 +138,7 @@ export class AudioWebSocketHandler_ble {
       AppStorage.setOrCreate('linshi', '')
     }
     this.wending = false
+    this.FINText=''
     this.isSending = false;
     this.lastSentSampleIndex = 0;
     this.isClosing = false;
