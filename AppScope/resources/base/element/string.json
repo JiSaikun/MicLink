@@ -3,7 +3,8 @@
     {
       "name": "app_name",
       "value": "MyApplication_MicLink"
-    },    {
+    },
+    {
       "name": "ACCESS_EXTENSIONAL_DEVICE_DRIVER",
       "value": "获取接入主设备的外部设备列表"
     },
@@ -22,6 +23,10 @@
     {
       "name": "KEEP_BACKGROUND_RUNNING",
       "value": "后台蓝牙通信"
+    },
+    {
+      "name": "MICROPHONE",
+      "value": "需要麦克风权限进行音频录制"
     }
   ]
 }

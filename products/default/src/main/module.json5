@@ -25,6 +25,16 @@
         }
       },
       {
+        "name": "ohos.permission.MICROPHONE",
+        "reason": '$string:MICROPHONE',
+        "usedScene": {
+          "abilities": [
+            "EntryAbility"
+          ],
+          "when": "inuse"
+        }
+      },
+      {
         "name": "ohos.permission.ACCESS_EXTENSIONAL_DEVICE_DRIVER",
         "reason": "$string:ACCESS_EXTENSIONAL_DEVICE_DRIVER"
       },

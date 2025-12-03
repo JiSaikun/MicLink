@@ -1,0 +1,49 @@
+<!--index.html-->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebView Message Port Demo</title>
+    <style>
+        * {
+          font-size: 20px;
+          margin: 20px;
+        }
+    </style>
+</head>
+<body>
+<h1>WebView信息端口</h1>
+<div>
+    <button type="button" value="SendToEts" onclick="PostMsgToEts(msgFromJS.value);">单击后把文本框的内容传向应用端</button><br/>
+
+    <input id="msgFromJS" type="text" placeholder="请填写传给应用端的信息"/><br/>
+</div>
+<p class="output">展示来自应用端的消息：</p>
+</body>
+<script>
+    var h5Port;
+    var output = document.querySelector('.output');
+    window.addEventListener('message', function (event) {
+        if (event.data === '__init_port__') {
+            if (event.ports[0] !== null) {
+                h5Port = event.ports[0]; // 1. 保存从应用侧发送过来的端口。
+                h5Port.onmessage = function (event) {
+                  // 2. 接收ets侧发送过来的消息。
+                  var msg = '应用端过来的：';
+                  var result = event.data;
+                  msg = msg + result
+                  output.innerHTML = msg;
+                }
+            }
+        }
+    })
+    // 3. 使用h5Port向应用侧发送消息。
+      function PostMsgToEts(data) {
+        if (h5Port) {
+          h5Port.postMessage(data);
+        } else {
+          console.error('h5Port is null, Please initialize first');
+        }
+    }
+</script>
+</html>
