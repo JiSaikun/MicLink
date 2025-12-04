@@ -1,49 +1,792 @@
-<!--index.html-->
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebView Message Port Demo</title>
+    <title>ArkTS Web 通信测试</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
-          font-size: 20px;
-          margin: 20px;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #4b6cb7 0%, #182848 100%);
+            color: white;
+            padding: 24px 32px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .header h1 i {
+            font-size: 32px;
+        }
+
+        .header p {
+            opacity: 0.85;
+            font-size: 16px;
+        }
+
+        .content {
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+        }
+
+        .panels {
+            display: flex;
+            flex-wrap: wrap;
+            min-height: 500px;
+        }
+
+        .left-panel {
+            flex: 1;
+            min-width: 300px;
+            background-color: #f8f9fa;
+            padding: 28px;
+            border-right: 1px solid #eaeaea;
+        }
+
+        .right-panel {
+            flex: 1.2;
+            min-width: 300px;
+            padding: 28px;
+            background-color: white;
+        }
+
+        .section {
+            margin-bottom: 28px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 18px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #4b6cb7;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: #4b6cb7;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: white;
+            padding: 16px;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 20px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #dc3545;
+        }
+
+        .status-dot.connected {
+            background-color: #28a745;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            border-color: #4b6cb7;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(75, 108, 183, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, #4b6cb7 0%, #3a56a4 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(90deg, #3a56a4 0%, #2d4688 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(58, 86, 164, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .logs-container {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 16px;
+            height: 340px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+        }
+
+        .log-entry {
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #4b6cb7;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .log-entry.success {
+            border-left-color: #28a745;
+        }
+
+        .log-entry.error {
+            border-left-color: #dc3545;
+        }
+
+        .log-entry.warning {
+            border-left-color: #ffc107;
+        }
+
+        .log-time {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 4px;
+        }
+
+        .log-message {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .log-details {
+            font-size: 13px;
+            color: #495057;
+            margin-top: 6px;
+            padding: 8px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+        }
+
+        .empty-logs {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+
+        .empty-logs i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .api-info {
+            background: #e7f3ff;
+            border-radius: 10px;
+            padding: 18px;
+            margin-top: 20px;
+            border: 1px solid #c3d9ff;
+        }
+
+        .api-info h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .api-info code {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            display: block;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin-top: 8px;
+            overflow-x: auto;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #eaeaea;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .panels {
+                flex-direction: column;
+            }
+
+            .left-panel {
+                border-right: none;
+                border-bottom: 1px solid #eaeaea;
+            }
+
+            .btn {
+                min-width: 100%;
+            }
         }
     </style>
 </head>
 <body>
-<h1>WebView信息端口</h1>
-<div>
-    <button type="button" value="SendToEts" onclick="PostMsgToEts(msgFromJS.value);">单击后把文本框的内容传向应用端</button><br/>
+<div class="container">
+    <div class="header">
+        <h1><i class="fas fa-satellite-dish"></i> ArkTS Web 通信测试</h1>
+        <p>测试前端与鸿蒙 ArkTS WebComponent 的 JavaScriptProxy 通信</p>
+    </div>
 
-    <input id="msgFromJS" type="text" placeholder="请填写传给应用端的信息"/><br/>
+    <div class="content">
+        <div class="panels">
+            <!-- 左侧控制面板 -->
+            <div class="left-panel">
+                <div class="connection-status">
+                    <div class="status-indicator">
+                        <div class="status-dot" id="statusDot"></div>
+                        <span id="statusText">等待连接 ArkTS...</span>
+                    </div>
+                    <button class="btn btn-secondary" onclick="checkConnection()">
+                        <i class="fas fa-sync-alt"></i> 检测连接
+                    </button>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title"><i class="fas fa-sliders-h"></i> 参数设置</h3>
+
+                    <div class="input-group">
+                        <label for="stateInput"><i class="fas fa-chart-line"></i> 状态值 (State)</label>
+                        <input type="range" id="stateInput" min="0" max="100" value="50" oninput="updateStateValue(this.value)">
+                        <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                            <span>0</span>
+                            <span id="stateValue">50</span>
+                            <span>100</span>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="languageSelect"><i class="fas fa-language"></i> 语言 (Language)</label>
+                        <select id="languageSelect">
+                            <option value="zh-CN">简体中文</option>
+                            <option value="en-US">English (US)</option>
+                            <option value="ja-JP">日本語</option>
+                            <option value="ko-KR">한국어</option>
+                            <option value="fr-FR">Français</option>
+                            <option value="de-DE">Deutsch</option>
+                            <option value="es-ES">Español</option>
+                        </select>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-success" onclick="sendData()">
+                            <i class="fas fa-paper-plane"></i> 发送数据
+                        </button>
+                        <button class="btn btn-primary" onclick="sendRandomData()">
+                            <i class="fas fa-dice"></i> 发送随机数据
+                        </button>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-secondary" onclick="testMethod()">
+                            <i class="fas fa-vial"></i> 测试方法
+                        </button>
+                        <button class="btn btn-danger" onclick="clearLogs()">
+                            <i class="fas fa-trash-alt"></i> 清空日志
+                        </button>
+                    </div>
+                </div>
+
+                <div class="api-info">
+                    <h4><i class="fas fa-code"></i> 调用方式</h4>
+                    <p>前端调用 ArkTS 方法：</p>
+                    <code>window.hostInstance.webRecord({state: 值, language: "语言"})</code>
+                </div>
+            </div>
+
+            <!-- 右侧日志面板 -->
+            <div class="right-panel">
+                <div class="section">
+                    <h3 class="section-title"><i class="fas fa-history"></i> 通信日志</h3>
+                    <div class="logs-container" id="logsContainer">
+                        <div class="empty-logs">
+                            <i class="fas fa-clipboard-list"></i>
+                            <p>暂无通信记录，请先发送数据</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3 class="section-title"><i class="fas fa-lightbulb"></i> 使用说明</h3>
+                    <ol style="padding-left: 20px; color: #495057; line-height: 1.6;">
+                        <li>确保鸿蒙应用已加载此页面，且 WebComponent 已正确初始化</li>
+                        <li>点击"检测连接"按钮，确认与 ArkTS 的连接状态</li>
+                        <li>调整状态值和语言选项，点击"发送数据"进行测试</li>
+                        <li>观察右侧日志区域，查看通信状态和结果</li>
+                        <li>在鸿蒙应用中查看 WebComponent 的界面更新</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>鸿蒙 ArkTS Web 通信 Demo | 与 WebComponent 通过 JavaScriptProxy 交互</p>
+    </div>
 </div>
-<p class="output">展示来自应用端的消息：</p>
-</body>
+
 <script>
-    var h5Port;
-    var output = document.querySelector('.output');
-    window.addEventListener('message', function (event) {
-        if (event.data === '__init_port__') {
-            if (event.ports[0] !== null) {
-                h5Port = event.ports[0]; // 1. 保存从应用侧发送过来的端口。
-                h5Port.onmessage = function (event) {
-                  // 2. 接收ets侧发送过来的消息。
-                  var msg = '应用端过来的：';
-                  var result = event.data;
-                  msg = msg + result
-                  output.innerHTML = msg;
+    // 通信日志数组
+    let communicationLogs = [];
+    // 轮询检测连接
+    let connectionCheckInterval;
+
+    // 更新状态值显示
+    function updateStateValue(value) {
+        document.getElementById('stateValue').textContent = value;
+    }
+
+    // 检查与 ArkTS 的连接状态
+    function checkConnection() {
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+
+        try {
+            // 检查 hostInstance 对象是否存在
+            if (window.hostInstance && typeof window.hostInstance === 'object') {
+                statusDot.className = 'status-dot connected';
+                statusText.textContent = '已连接到 ArkTS';
+                statusText.style.color = '#28a745';
+
+                addLog('连接状态', '✅ 成功连接到 ArkTS，hostInstance 对象已就绪', 'success');
+
+                // 检查 webRecord 方法是否可用（注意：直接检查函数）
+                if (window.hostInstance.webRecord && typeof window.hostInstance.webRecord === 'function') {
+                    addLog('方法检查', '✅ webRecord() 方法可用', 'success');
+                } else {
+                    addLog('方法检查', '⚠️ webRecord() 方法未找到，请检查 ArkTS 代码', 'warning');
                 }
+
+                // 检查 test 方法是否可用
+                if (window.hostInstance.test && typeof window.hostInstance.test === 'function') {
+                    addLog('方法检查', '✅ test() 方法可用', 'success');
+                }
+                
+                // 检查 getStatus 方法是否可用
+                if (window.hostInstance.getStatus && typeof window.hostInstance.getStatus === 'function') {
+                    const status = window.hostInstance.getStatus();
+                    addLog('方法检查', `✅ getStatus() 方法可用，返回: "${status}"`, 'success');
+                }
+            } else {
+                statusDot.className = 'status-dot';
+                statusText.textContent = '未连接到 ArkTS';
+                statusText.style.color = '#dc3545';
+
+                addLog('连接状态', '❌ 未找到 hostInstance 对象，请确保 ArkTS WebComponent 已加载', 'error');
             }
-        }
-    })
-    // 3. 使用h5Port向应用侧发送消息。
-      function PostMsgToEts(data) {
-        if (h5Port) {
-          h5Port.postMessage(data);
-        } else {
-          console.error('h5Port is null, Please initialize first');
+        } catch (error) {
+            statusDot.className = 'status-dot';
+            statusText.textContent = '连接错误';
+            statusText.style.color = '#dc3545';
+
+            addLog('连接状态', `❌ 连接检测异常: ${error.message}`, 'error');
         }
     }
+
+    // 发送数据到 ArkTS
+    function sendData() {
+        const state = parseInt(document.getElementById('stateInput').value);
+        const language = document.getElementById('languageSelect').value;
+
+        // 验证输入
+        if (isNaN(state) || state < 0 || state > 100) {
+            addLog('输入验证', '❌ 状态值必须在 0-100 之间', 'error');
+            return;
+        }
+
+        if (!language) {
+            addLog('输入验证', '❌ 请选择语言', 'error');
+            return;
+        }
+
+        // 检查连接
+        if (!window.hostInstance) {
+            addLog('通信错误', '❌ hostInstance 未初始化，请先检测连接', 'error');
+            return;
+        }
+
+        // 修改这里：检查 webRecord 是否为函数，而不是检查 postMessage
+        if (!window.hostInstance.webRecord || typeof window.hostInstance.webRecord !== 'function') {
+            addLog('通信错误', '❌ webRecord 方法不可用', 'error');
+            return;
+        }
+
+        // 准备要发送的数据
+        const data = {
+            state: state,
+            language: language
+        };
+
+        try {
+            // 修改这里：直接调用函数，不需要 .postMessage()
+            window.hostInstance.webRecord(data);
+
+            // 记录成功日志
+            addLog('数据发送', `✅ 数据已发送到 ArkTS`, 'success', data);
+
+            // 在日志中提示用户查看 ArkTS 应用
+            setTimeout(() => {
+                addLog('提示', '请在鸿蒙应用中查看 WebComponent 界面状态更新', 'warning');
+            }, 500);
+
+        } catch (error) {
+            addLog('通信错误', `❌ 发送数据时出错: ${error.message}`, 'error');
+        }
+    }
+
+    // 发送随机数据（用于测试）
+    function sendRandomData() {
+        // 生成随机状态值 (0-100)
+        const randomState = Math.floor(Math.random() * 101);
+
+        // 随机选择语言
+        const languages = ['zh-CN', 'en-US', 'ja-JP', 'ko-KR', 'fr-FR', 'de-DE', 'es-ES'];
+        const randomLanguage = languages[Math.floor(Math.random() * languages.length)];
+
+        // 设置到表单
+        document.getElementById('stateInput').value = randomState;
+        updateStateValue(randomState);
+        document.getElementById('languageSelect').value = randomLanguage;
+
+        // 发送数据
+        setTimeout(() => {
+            addLog('数据生成', `🎲 已生成随机数据: state=${randomState}, language=${randomLanguage}`);
+            sendData();
+        }, 100);
+    }
+
+    // 测试其他方法
+    function testMethod() {
+        try {
+            if (window.hostInstance && window.hostInstance.test) {
+                if (typeof window.hostInstance.test === 'function') {
+                    const result = window.hostInstance.test();
+                    addLog('方法测试', `✅ test() 方法调用成功，返回: "${result}"`, 'success');
+                } else {
+                    addLog('方法测试', '⚠️ test 不是函数类型', 'warning');
+                }
+            } else {
+                addLog('方法测试', '❌ test 方法不存在', 'error');
+            }
+        } catch (error) {
+            addLog('方法测试', `❌ 测试方法调用失败: ${error.message}`, 'error');
+        }
+    }
+
+    // 添加日志条目
+    function addLog(title, message, type = 'info', data = null) {
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = {
+            id: Date.now(),
+            time: timestamp,
+            title: title,
+            message: message,
+            type: type,
+            data: data
+        };
+
+        communicationLogs.unshift(logEntry); // 添加到开头（新的在上方）
+        renderLogs();
+
+        // 自动滚动到最新日志
+        const logsContainer = document.getElementById('logsContainer');
+        logsContainer.scrollTop = 0;
+    }
+
+    // 渲染日志
+    function renderLogs() {
+        const logsContainer = document.getElementById('logsContainer');
+
+        if (communicationLogs.length === 0) {
+            logsContainer.innerHTML = `
+                <div class="empty-logs">
+                    <i class="fas fa-clipboard-list"></i>
+                    <p>暂无通信记录，请先发送数据</p>
+                </div>
+            `;
+            return;
+        }
+
+        let logsHTML = '';
+
+        communicationLogs.forEach(log => {
+            let dataHTML = '';
+            if (log.data) {
+                dataHTML = `
+                    <div class="log-details">
+                        ${JSON.stringify(log.data, null, 2)}
+                    </div>
+                `;
+            }
+
+            logsHTML += `
+                <div class="log-entry ${log.type}">
+                    <div class="log-time">${log.time}</div>
+                    <div class="log-message">
+                        <strong>${log.title}</strong>: ${log.message}
+                    </div>
+                    ${dataHTML}
+                </div>
+            `;
+        });
+
+        logsContainer.innerHTML = logsHTML;
+    }
+
+    // 清空日志
+    function clearLogs() {
+        if (communicationLogs.length > 0) {
+            communicationLogs = [];
+            renderLogs();
+            addLog('系统', '日志已清空');
+        }
+    }
+
+    // 自动检测连接
+    function startAutoConnectionCheck() {
+        // 停止之前的检测
+        if (connectionCheckInterval) {
+            clearInterval(connectionCheckInterval);
+        }
+
+        // 每3秒检测一次连接
+        connectionCheckInterval = setInterval(() => {
+            if (!window.hostInstance) {
+                checkConnection();
+            } else {
+                // 连接成功后停止频繁检测
+                clearInterval(connectionCheckInterval);
+                connectionCheckInterval = null;
+            }
+        }, 3000);
+    }
+
+    // 页面加载完成后初始化
+    window.addEventListener('load', function() {
+        // 初始连接检测
+        setTimeout(checkConnection, 1000);
+
+        // 启动自动连接检测
+        startAutoConnectionCheck();
+
+        // 添加初始日志
+        addLog('系统', 'ArkTS Web 通信测试页面已加载');
+        addLog('提示', '请确保鸿蒙应用中的 WebComponent 已加载此页面');
+
+        // 监听键盘事件：按 Enter 键发送数据
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && !event.target.matches('select, button')) {
+                sendData();
+            }
+
+            // Ctrl+L 清空日志
+            if (event.ctrlKey && event.key === 'l') {
+                event.preventDefault();
+                clearLogs();
+            }
+
+            // Ctrl+R 发送随机数据
+            if (event.ctrlKey && event.key === 'r') {
+                event.preventDefault();
+                sendRandomData();
+            }
+        });
+    });
+
+    // 调试函数：查看 hostInstance 的详细信息
+    function debugHostInstance() {
+        console.log('========== 调试 hostInstance ==========');
+        console.log('window.hostInstance:', window.hostInstance);
+        
+        if (window.hostInstance) {
+            console.log('hostInstance 类型:', typeof window.hostInstance);
+            console.log('hostInstance 上的方法:');
+            
+            Object.getOwnPropertyNames(window.hostInstance).forEach(prop => {
+                console.log(`  - ${prop}:`, typeof window.hostInstance[prop]);
+            });
+            
+            console.log('webRecord 方法详情:');
+            console.log('  - 是否存在:', window.hostInstance.webRecord !== undefined);
+            console.log('  - 类型:', typeof window.hostInstance.webRecord);
+            
+            if (typeof window.hostInstance.webRecord === 'function') {
+                console.log('  - 函数参数数量:', window.hostInstance.webRecord.length);
+            }
+        } else {
+            console.log('hostInstance 未定义');
+        }
+        console.log('=======================================');
+    }
+
+    // 监听 hostInstance 对象的变化（在某些实现中可能动态注入）
+    let hostInstanceCheckCount = 0;
+    const maxHostInstanceChecks = 30; // 最多检查30次（约30秒）
+
+    const hostInstanceObserver = setInterval(() => {
+        if (window.hostInstance) {
+            addLog('系统', '🎉 hostInstance 对象已注入页面', 'success');
+            clearInterval(hostInstanceObserver);
+            checkConnection();
+            
+            // 调试输出
+            debugHostInstance();
+        } else {
+            hostInstanceCheckCount++;
+            if (hostInstanceCheckCount >= maxHostInstanceChecks) {
+                clearInterval(hostInstanceObserver);
+                addLog('系统', '⚠️ hostInstance 对象未在预期时间内注入，请检查 ArkTS 代码', 'warning');
+            }
+        }
+    }, 1000);
+
+    // 提供一个调试按钮（可选）
+    document.addEventListener('DOMContentLoaded', function() {
+        // 添加调试按钮到按钮组
+        const buttonGroup = document.querySelector('.button-group');
+        if (buttonGroup) {
+            const debugBtn = document.createElement('button');
+            debugBtn.className = 'btn btn-secondary';
+            debugBtn.innerHTML = '<i class="fas fa-bug"></i> 调试信息';
+            debugBtn.onclick = function() {
+                debugHostInstance();
+                addLog('调试', '已在控制台输出 hostInstance 详细信息，请按 F12 查看');
+            };
+            buttonGroup.appendChild(debugBtn);
+        }
+    });
 </script>
+</body>
 </html>

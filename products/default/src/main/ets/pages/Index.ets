@@ -1,561 +1,230 @@
-import {
-  LeftBar,
-  Topbar,
-  Content,
-  Reset,
-  observeSystemLanguageChanges,
-  AiModel_data,
-  bottom_data,
-  ThemeConfig
-} from 'common'
-import Content_Ai from 'command_ai/src/main/ets/components/Command_Ai'
-import { inputDevice } from '@kit.InputKit';
-import { ConnectDevice, DeviceInfo, KeyPressType, DeviceArrayType, PRODUCT_TYPE, } from 'mouse'
-import common from '@ohos.app.ability.common';
-import { _change_keyboard_KeyPressType, _change_mouse_KeyPressType } from 'keymethodconfig';
-import { Float_Window } from 'float_window';
-import { window } from '@kit.ArkUI';
+// xxx.ets
+import { webview } from '@kit.ArkWeb';
 import { BusinessError } from '@kit.BasicServicesKit';
-import {
-  BluetoothConnect_pop,
-  FixedText_pop,
-  globalShortcutService,
-  PasswordModification_pop,
-  WebUrlToOpen_pop
-} from 'utils';
-import { CreateNewInstruction_pop } from 'command_ai';
-import { DeviceSettings } from '../components/DeviceSettings';
-import { connectDevice, DeviceArrayType_Ble } from 'bluetooth';
 
+// =============== 第一步：定义数据传输接口 ===============
+interface RecordData {
+  state: number;
+  language: string;
+}
 
-PersistentStorage.persistProp("login", false)
-PersistentStorage.persistProp("userLoginInfo", null)
-PersistentStorage.persistProp("table_data", []) //AI指令本地存储
-// PersistentStorage.persistProp("KeymethodConfig", null) //按键设置方法执行记录
-PersistentStorage.persistProp("keystroke_curr", 0) //打字模式
-PersistentStorage.persistProp("getModelInfo", null) //获取用户按键模式详情
-PersistentStorage.persistProp("languages", 'ZH_CN') //用户语言
-// PersistentStorage.persistProp("speech_Recognition_languages", 'ZH_CN') //语音识别语言
-PersistentStorage.persistProp("from_languages", 'ZH_CN') //语音翻译源语言
-PersistentStorage.persistProp("to_languages", 'EN_US') //语音翻译目标语言
-PersistentStorage.persistProp("wordScan_from_languages", 'ZH_CN') //划词翻译源语言
-PersistentStorage.persistProp("wordScan_to_languages", 'EN_US') //划词翻译目标语言
-PersistentStorage.persistProp("screenshotOCR_from_languages", 'ZH_CN') //截图识别/翻译源语言
-PersistentStorage.persistProp("screenshotOCR_to_languages", 'EN_US') //截图识别/翻译目标语言
-PersistentStorage.persistProp("isPunctuationRecognition", true) //语音识别是否带标点
-PersistentStorage.persistProp("isEnableLongVoiceRecog", true) //是否开启长语音识别
-PersistentStorage.persistProp("isWordScan_Translation", true) //是否开启划词翻译功能
-PersistentStorage.persistProp("isOCR_Translate_Toggle", false) //是否开启截图识别/翻译
-PersistentStorage.persistProp("isAutoCloseVoiceTransPop", false) //是否开启语音翻译弹窗自动关闭
-PersistentStorage.persistProp("fixedText", '') //输入固定文本
-PersistentStorage.persistProp("folderPath", '') //打开文件夹记录文件夹路径
-PersistentStorage.persistProp("foldPath", '') //打开文件记录文件路径
-PersistentStorage.persistProp("webUrlToOpen", '') //输入打开网页的具体网址
-PersistentStorage.persistProp("EnhancedBrowserSearch", 0) //搜索引擎
-PersistentStorage.persistProp("device_currIndex", 0) //设备信息接收与发送
-PersistentStorage.persistProp("device_isBle", false) //是否是蓝牙连接设备
-PersistentStorage.persistProp("device_show_currIndex", 0) //设备信息展示
+// =============== 第二步：创建代理类 ===============
+class WebProxy {
+  // 存储WebComponent的引用
+  private component: WebComponent;
 
-PersistentStorage.persistProp("voice_recognition_shortcut", { keyPreview: '', pressedKeys: [] }) //语音识别快捷键
-PersistentStorage.persistProp("voice_translation_shortcut", { keyPreview: '', pressedKeys: [] }) //语音翻译快捷键
-PersistentStorage.persistProp("screenshot_recognition_shortcut", { keyPreview: '', pressedKeys: [] }) //截图识别快捷键
-PersistentStorage.persistProp("custom_shortcut", { keyPreview: '', pressedKeys: [] }) //自定义快捷键
-PersistentStorage.persistProp("paletteTheme", ThemeConfig.PaletteTheme) //主题颜色
-PersistentStorage.persistProp("resolutionScale", 'followSystem') //分辨率缩放
-
-@Entry
-@Component
-struct Index {
-  @StorageLink("login") login: boolean = true
-  @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null
-  @StorageLink("currpageIsAI") currpageIsAI: boolean = false
-  @Watch('refreshPage') @StorageLink('languages') languages: string = 'ZH_CN'
-  @Provide('pageInfo') pageInfo: NavPathStack = new NavPathStack()
-  @StorageLink("pageInfo") pageInfo_: NavPathStack = this.pageInfo
-  @Watch('change_mouse_KeyPressType') @StorageLink("mouse_KeyPressType") mouse_KeyPressType: KeyPressType =
-    KeyPressType.DEFAULT
-  @StorageLink("device_isBle") device_isBle: boolean = false
-  @State web: string = ''
-  @State currentIndex: number = 0
-  @State bottomCurrIndex: number = 10000
-  private tabsController: TabsController = new TabsController()
-  // 修复：使用动态的 AiModel_data 长度
-  private aiModelDataLength: number = AiModel_data.length;
-  private bottomDataLength: number = bottom_data.length;
-  @Watch('onTabsControllerIndexChange')
-  @StorageLink('tabsControllerIndex') tabsControllerIndex: number = 0
-  @State isShow_CreateNewInstruction_pop: boolean = false
-  @State isShow_EditInstruction_pop: boolean = false
-  @State EditInstruction_pop_currIndex: number = 0
-  @Watch('onShortcutChange')
-  @StorageLink("shortcut") shortcut: number = 0
-  @StorageLink("isShowFixedText_pop") isShowFixedText_pop: boolean = false
-  @StorageLink("isShow_webUrlToOpen_pop") isShow_webUrlToOpen_pop: boolean = false
-  @StorageLink("isShow_passwordModification_pop") isShow_passwordModification_pop: boolean = false
-  @Watch('change_isShow_bluetoothConnect_pop') @StorageLink("isShow_bluetoothConnect_pop") isShow_bluetoothConnect_pop: boolean =
-    false
-  @StorageLink("isBluetoothConnect_state") isBluetoothConnect_state: boolean = false //蓝牙检索状态
-  @State shortcut_pop: boolean = false
-  @State isNavigationLibActive: boolean = true //导航库重置
-  @State isDeviceSettingsActive: boolean = true //设备设置状态
-  @Watch('onDevicesChange') @StorageLink('devices') devices: DeviceArrayType_Ble[] = []
-  @StorageLink("paletteTheme") paletteTheme: string = ThemeConfig.PaletteTheme
-  @Watch('onResolutionChange') @StorageLink("resolutionScale") resolutionScale: string = 'followSystem'
-  @State scaleValue: number = 1.0
-  @State refresh: boolean = true
-
-  refreshPage() {
-    this.refresh = false
-    setTimeout(() => {
-      this.refresh = true
-    }, 20)
+  constructor(component: WebComponent) {
+    this.component = component;
   }
 
-  change_isShow_bluetoothConnect_pop() {
-    if (!this.isShow_bluetoothConnect_pop) {
-      if (this.isBluetoothConnect_state) {
-        setTimeout(() => {
-          this.isDeviceSettingsActive = false
-          setTimeout(() => this.isDeviceSettingsActive = true, 20)
-        }, 100)
-      }
-    }
-  }
+  // =============== 关键方法：供前端调用 ===============
+  // 方法名必须与javaScriptProxy中注册的一致
+  // 参数类型使用定义好的接口
+  webRecord(data: RecordData): void {
+    console.info(`WebProxy收到数据: ${JSON.stringify(data)}`);
 
-  web_prefix(): string {
-    return `https://asrai.miclink.net?sno=${this.mouseconfig?.sn ? this.mouseconfig?.sn :
-      123}&productCode=${this.mouseconfig?.productType ? this.mouseconfig?.productType :
-      999999}&language=${this.languages}`
-  }
-
-  // TabsControllerIndex 变化监听
-  onTabsControllerIndexChange(): void {
-    console.log('onTabsControllerIndexChange called:', this.tabsControllerIndex)
-    if (this.tabsController) {
-      // 导航库逻辑
-      if (this.tabsControllerIndex === 4) {
-        this.isNavigationLibActive = true
-      } else {
-        this.isNavigationLibActive = false
-      }
-
-      // 设备设置逻辑 - 每次进入都刷新状态，触发重新渲染
-      if (this.tabsControllerIndex === 7) {
-        // 使用setTimeout确保状态变化生效后再设置为true，触发重新渲染
-        this.isDeviceSettingsActive = true
-      } else {
-        this.isDeviceSettingsActive = false
-      }
-      this.tabsController.changeIndex(this.tabsControllerIndex)
-    }
-    // 同步更新 currentIndex 和 bottomCurrIndex
-    this.syncCurrentIndexWithTabs()
-  }
-
-  // 修复：同步 currentIndex 和 bottomCurrIndex
-  private syncCurrentIndexWithTabs(): void {
-    console.log('syncCurrentIndexWithTabs - tabsControllerIndex:', this.tabsControllerIndex, 'aiModelDataLength:',
-      this.aiModelDataLength)
-
-    if (this.tabsControllerIndex < this.aiModelDataLength) {
-      // 选中顶部选项
-      this.currentIndex = this.tabsControllerIndex
-      this.bottomCurrIndex = 10000
-      console.log('Selected top item:', this.currentIndex)
-    } else if (this.tabsControllerIndex < this.aiModelDataLength + this.bottomDataLength) {
-      // 选中底部选项
-      this.currentIndex = 10000
-      this.bottomCurrIndex = this.tabsControllerIndex - this.aiModelDataLength
-      console.log('Selected bottom item:', this.bottomCurrIndex)
-    } else {
-      // 无效索引，重置状态
-      this.currentIndex = 10000
-      this.bottomCurrIndex = 10000
-      console.log('Invalid index, reset states')
-    }
-  }
-
-  // 监听分辨率变化
-  onResolutionChange(): void {
-    this.updateScaleValue()
-  }
-
-  // 更新缩放值
-  updateScaleValue(): void {
-    if (this.resolutionScale === 'followSystem') {
-      this.scaleValue = 1.0
-    } else {
-      this.scaleValue = parseFloat(this.resolutionScale) / 100
-    }
-    // console.info(`全局应用缩放比例: ${this.scaleValue}`)
-  }
-
-  // 监听设备列表变化
-  onDevicesChange(): void {
-    console.log('设备列表发生变化，当前设备数量:', this.devices.length)
-
-    // 当设备列表被清空时，重置相关索引
-    if (this.devices.length === 0) {
-      AppStorage.setOrCreate('device_currIndex', 0)
-      AppStorage.setOrCreate('device_show_currIndex', 0)
-      AppStorage.setOrCreate('device_isBle', false)
-      console.log('设备列表已清空，重置设备索引')
-    } else {
-      // 当有设备时，确保当前索引有效
-      const currentIndex = AppStorage.get('device_currIndex') as number || 0
-      if (currentIndex >= this.devices.length) {
-        // 如果当前索引超出范围，设置为最后一个设备
-        AppStorage.setOrCreate('device_currIndex', Math.max(0, this.devices.length - 1))
-        console.log('设备索引超出范围，已调整为最后一个设备')
-      }
-    }
-  }
-
-  change_mouse_KeyPressType() {
-    if (this.login) {
-      let PRODUCT_TYPE_: PRODUCT_TYPE = PRODUCT_TYPE.DEFAULT
-      if (this.device_isBle) {
-        /**
-         * BLE
-         */
-        PRODUCT_TYPE_ = (this.devices[AppStorage.get('device_currIndex')as number]).PRODUCT_TYPE
-      } else {
-        /**
-         * 2.4G
-         */
-        PRODUCT_TYPE_ =
-          (ConnectDevice.Communication[AppStorage.get('device_currIndex')as number] as DeviceArrayType).PRODUCT_TYPE
-      }
-      switch (PRODUCT_TYPE_) {
-        case PRODUCT_TYPE.DEFAULT: //鼠标
-          _change_mouse_KeyPressType()
-          break
-        case PRODUCT_TYPE.keyboard: //键盘
-          _change_keyboard_KeyPressType()
-          break
-      }
-    }
-  }
-
-  onShortcutChange() {
-    this.shortcut_pop = !this.shortcut_pop
-    if (this.shortcut_pop) {
-      this.pageInfo.pushPath({ 'name': 'shortcut_pop' })
-    }
-  }
-
-  onPageHide(): void {
-    console.log('应用最小化')
-    Float_Window.creat_hide()
-  }
-
-  aboutToAppear(): void {
-    ThemeConfig.PaletteTheme = this.paletteTheme
-    const context = getContext(this) as common.UIAbilityContext;
-    AppStorage.setOrCreate('context', context);
-    AppStorage.setOrCreate('currpageIsAI', true);
-    // 修复：初始化时获取正确的数据长度
-    this.aiModelDataLength = AiModel_data.length;
-    this.bottomDataLength = bottom_data.length;
-    console.log('aiModelDataLength initialized:', this.aiModelDataLength)
-    console.log('bottomDataLength initialized:', this.bottomDataLength)
-
-    // 初始化缩放值
-    this.updateScaleValue()
-
-    let isPhysicalKeyboardExist = true;
-    try {
-      inputDevice.on("change", (data: inputDevice.DeviceListener) => {
-        Reset()
-        console.log(`Device event info: ${JSON.stringify(data)}`);
-        inputDevice.getKeyboardType(data.deviceId, (err: Error, type: inputDevice.KeyboardType) => {
-          console.log("The keyboard type is: " + type);
-          if (type == inputDevice.KeyboardType.ALPHABETIC_KEYBOARD && data.type == 'add') {
-            isPhysicalKeyboardExist = true;
-            ConnectDevice.connectDevice().then(() => {
-              for (let item of ConnectDevice.Communication) {
-                item.Communication.changPhysicalKeyboardExistState(isPhysicalKeyboardExist)
-              }
-              const context: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
-              connectDevice(context)
-            })
-
-          } else if (type == inputDevice.KeyboardType.ALPHABETIC_KEYBOARD && data.type == 'remove') {
-            isPhysicalKeyboardExist = false;
-            for (let item of ConnectDevice.Communication) {
-              item.Communication.changPhysicalKeyboardExistState(isPhysicalKeyboardExist)
-            }
-          }
-        });
-      });
-    } catch (error) {
-      console.error(`Get device info failed, error: ${JSON.stringify(error, ['code', 'message'])}`);
-    }
-  }
-
-  onPageShow(): void {
-    if (!AppStorage.get('firstOpen')) {
-      try {
-        ConnectDevice.connectDevice().then(() => {
-          // 初始化后同步状态
-          this.syncCurrentIndexWithTabs()
-        })
-        const context: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
-        connectDevice(context)
-      } catch (e) {
-        console.log(e)
-      }
-      observeSystemLanguageChanges()
-    } else {
-      Float_Window.destroyWindow(Float_Window.window_hide)
-    }
-    this.pageInfo.disableAnimation(true)
-
-    if (!this.login) {
-      this.pageInfo.pushPath({ 'name': 'login' })
-    }
-    AppStorage.setOrCreate('firstOpen', 1)
-
-    // 确保状态同步
-    this.syncCurrentIndexWithTabs()
-  }
-
-  aboutToDisappear(): void {
-    for (let item of ConnectDevice.Communication) {
-      item.Communication.changPhysicalKeyboardExistState(false)
-    }
-  }
-
-  build() {
-    Column() {
-      Navigation(this.pageInfo) {
-        Stack() {
-          Flex() {
-            Column() {
-              LeftBar({
-                web: $web,
-                currentIndex: this.currentIndex,
-                bottomCurrIndex: this.bottomCurrIndex
-              })
-            }
-            .flexGrow(1)
-            .flexShrink(1)
-            .scale({ x: this.scaleValue, y: this.scaleValue })
-            .zIndex(100)
-
-            if (this.refresh)
-            Tabs({ controller: this.tabsController, index: this.tabsControllerIndex }) {
-              // 确保 TabContent 数量与 AiModel_data + bottom_data 匹配
-              TabContent() { // AI-助手
-                Stack() {
-                  Content({ web: this.web_prefix() + this.web })
-                  Topbar()
-                }
-                .height('100%')
-                .align(Alignment.TopStart)
-              }
-
-              TabContent() { // AI-办公
-                Stack() {
-                  Content({ web: this.web_prefix() + this.web })
-                  Topbar()
-                }
-                .height('100%')
-                .align(Alignment.TopStart)
-              }
-
-              TabContent() { // AI-智能体
-                Stack() {
-                  Content({ web: this.web_prefix() + this.web })
-                  Topbar()
-                }
-                .height('100%')
-                .align(Alignment.TopStart)
-              }
-
-              TabContent() { // AI-指令
-                Stack() {
-                  Content_Ai({
-                    isShow_CreateNewInstruction_pop: this.isShow_CreateNewInstruction_pop,
-                    isShow_EditInstruction_pop: this.isShow_EditInstruction_pop,
-                    EditInstruction_pop_currIndex: this.EditInstruction_pop_currIndex
-                  })
-                  Topbar()
-                }
-                .height('100%')
-                .align(Alignment.TopStart)
-              }
-
-              TabContent() { // 导航库
-                Stack() {
-                  if (this.isNavigationLibActive) {
-                    Content({ web: this.web_prefix() + this.web })
-                  }
-                  Topbar()
-                }
-                .height('100%')
-                .align(Alignment.TopStart)
-              }
-
-              TabContent() { // 视频库
-                Stack() {
-                  Content({ web: this.web_prefix() + this.web })
-                  Topbar()
-                }
-                .height('100%')
-                .align(Alignment.TopStart)
-              }
-
-              TabContent() { // 模板库
-                Stack() {
-                  Content({ web: this.web_prefix() + this.web })
-                  Topbar()
-                }
-                .height('100%')
-                .align(Alignment.TopStart)
-              }
-
-              TabContent() { // 设备设置
-                Stack() {
-                  if (this.isDeviceSettingsActive) {
-                    DeviceSettings()
-                  }
-                  Topbar()
-                }
-                .height('100%')
-                .align(Alignment.TopStart)
-              }
-
-              TabContent() { // 企业中心
-                Stack() {
-                  Content({ web: 'https://www.miclink.info/' })
-                  Topbar()
-                }
-                .height('100%')
-                .align(Alignment.TopStart)
-              }
-
-              TabContent() { // 帮助中心
-                Stack() {
-                  Content({ web: this.web_prefix() + this.web })
-                  Topbar()
-                }
-                .height('100%')
-                .align(Alignment.TopStart)
-              }
-            }
-            .onChange((index: number) => {
-              console.log('Tabs onChange:', index)
-              this.tabsControllerIndex = index
-            })
-            .edgeEffect(EdgeEffect.Spring)
-            .vertical(true)
-            .barWidth(2)
-            .flexGrow(1)
-            .flexShrink(1)
-            .scrollable(false)
-            .layoutWeight(1)
-            .barWidth(0)
-            .animationDuration(0)
-            .scale({ x: this.scaleValue, y: this.scaleValue })
-          }
-          .width('100%')
-          .height('100%')
-
-          if (this.isShow_CreateNewInstruction_pop) {
-            CreateNewInstruction_pop({
-              isShow_CreateNewInstruction_pop: this.isShow_CreateNewInstruction_pop,
-              isShow_EditInstruction_pop: this.isShow_EditInstruction_pop
-            })
-          }
-          if (this.isShow_EditInstruction_pop) {
-            CreateNewInstruction_pop({
-              isShow_CreateNewInstruction_pop: this.isShow_CreateNewInstruction_pop,
-              isShow_EditInstruction_pop: this.isShow_EditInstruction_pop,
-              isParam: true,
-              currIndexParam: this.EditInstruction_pop_currIndex
-            })
-          }
-          if (this.isShowFixedText_pop) {
-            FixedText_pop({ isShowFixedText_pop: this.isShowFixedText_pop })
-          }
-          if (this.isShow_webUrlToOpen_pop) {
-            WebUrlToOpen_pop({ isShow_webUrlToOpen_pop: this.isShow_webUrlToOpen_pop })
-          }
-          if (this.isShow_passwordModification_pop) { //修改密码弹窗
-            PasswordModification_pop({ isShow_passwordModification_pop: this.isShow_passwordModification_pop })
-          }
-          if (this.isShow_bluetoothConnect_pop) { //检索并建立蓝牙连接弹窗弹窗
-            BluetoothConnect_pop({
-              isShow_bluetoothConnect_pop: this.isShow_bluetoothConnect_pop,
-              isBluetoothConnect_state: this.isBluetoothConnect_state
-            })
-          }
-
-        }
-        .width('100%')
-        .height('100%')
-
-      }
-      .hideToolBar(true)
-      .hideTitleBar(true)
-      .mode(NavigationMode.Stack)
-
-      Image($r('app.media.create_Command_Ai'))
-    }.onKeyEvent((event: KeyEvent) => {
-      // 异步处理按键事件，避免阻塞UI渲染，添加超时保护
-      const timeoutId = setTimeout(() => {
-        try {
-          globalShortcutService.handleGlobalKeyEvent(event)
-        } catch (error) {
-          console.error('按键事件处理失败:', error)
-        }
-      }, 0)
-
-      // 如果处理时间过长，取消执行
-      setTimeout(() => {
-        clearTimeout(timeoutId)
-      }, 100) // 100ms超时保护
-    })
-  }
-
-  fixWindowToLandscape() {
-    let windowClass: window.Window | undefined = undefined;
-    let config: window.Configuration = {
-      name: "alertWindow",
-      windowType: window.WindowType.TYPE_SYSTEM_ALERT,
-      ctx: AppStorage.get('context')
-    };
-    try {
-      let promise = window.createWindow(config);
-      promise.then((data) => {
-        windowClass = data;
-        console.info('Succeeded in creating the window. Data:' + JSON.stringify(data));
-      }).catch((err: BusinessError) => {
-        console.error('Failed to create the Window. Cause:' + JSON.stringify(err));
-      });
-    } catch (exception) {
-      console.error('Failed to create the window. Cause: ' + JSON.stringify(exception));
+    // 添加数据验证
+    if (typeof data.state !== 'number') {
+      console.error('webRecord: state 必须是数字类型');
+      return;
     }
 
-    let orientation = window.Orientation.LANDSCAPE;
-    try {
-      let windowClass: window.Window = window.findWindow("test");
-      windowClass.setPreferredOrientation(orientation, (err: BusinessError) => {
-        const errCode: number = err.code;
-        if (errCode) {
-          console.error('Failed to set window orientation. Cause: ' + JSON.stringify(err));
-          return;
-        }
-        console.info('Succeeded in setting window orientation.');
-      });
-    } catch (exception) {
-      console.error('Failed to set window orientation. Cause: ' + JSON.stringify(exception));
+    if (typeof data.language !== 'string') {
+      console.error('webRecord: language 必须是字符串类型');
+      return;
     }
+
+    // 将接收到的对象数据转发给WebComponent
+    this.component.onWebRecord(data.state, data.language);
+  }
+
+  // =============== 测试方法 ===============
+  test(): string {
+    return 'ArkTS: 连接测试成功 ' + new Date().toLocaleTimeString();
+  }
+
+  // 可以添加更多方法...
+  getStatus(): string {
+    return 'WebProxy运行正常';
   }
 }
 
-interface shortcutType {
-  keyPreview: string
-  pressedKeys: number[]
+// =============== 第三步：主组件定义 ===============
+@Entry
+@Component
+struct WebComponent {
+  // Web组件控制器
+  controller: webview.WebviewController = new webview.WebviewController();
+
+  // =============== 组件的状态变量 ===============
+  @State FLAX: boolean = false;
+  @State currentState: number = 0;
+  @State currentLanguage: string = '未设置';
+  @State lastUpdateTime: string = '';
+
+  // 代理对象实例
+  private webProxy: WebProxy = new WebProxy(this);
+
+  // =============== 业务处理方法 ===============
+  // 注意：这个方法名与WebProxy中调用的要一致
+  onWebRecord(state: number, language: string): void {
+    // 更新状态
+    this.FLAX = !this.FLAX;
+    this.currentState = state;
+    this.currentLanguage = language;
+    this.lastUpdateTime = new Date().toLocaleTimeString();
+
+    // 输出日志
+    console.info(`onWebRecord被调用: state=${state}, language=${language}`);
+    console.info(`FLAX状态切换为: ${this.FLAX}`);
+
+    // 这里可以添加更多业务逻辑，如：
+    // - 保存到本地存储
+    // - 触发其他组件更新
+    // - 发送网络请求等
+  }
+
+  // =============== 组件生命周期 ===============
+  aboutToAppear() {
+    console.info('WebComponent已加载');
+  }
+
+  // =============== UI构建 ===============
+  build() {
+    Column({ space: 10 }) {
+      // =============== 标题区域 ===============
+      Text('ArkTS Web通信演示')
+        .fontSize(24)
+        .fontWeight(FontWeight.Bold)
+        .margin({ top: 20, bottom: 10 })
+        .fontColor('#183153')
+
+      // =============== 状态显示卡片 ===============
+      Column({ space: 8 }) {
+        // FLAX状态（带视觉反馈）
+        Row() {
+          Text('FLAX状态: ')
+            .fontSize(16)
+            .fontColor('#666')
+          Text(this.FLAX ? 'TRUE' : 'FALSE')
+            .fontSize(18)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(this.FLAX ? '#007DFF' : '#FF0000')
+        }
+        .width('90%')
+        .justifyContent(FlexAlign.SpaceBetween)
+
+        // 接收到的状态值
+        Row() {
+          Text('状态值(State): ')
+            .fontSize(16)
+            .fontColor('#666')
+          Text(this.currentState.toString())
+            .fontSize(18)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#007DFF')
+        }
+        .width('90%')
+        .justifyContent(FlexAlign.SpaceBetween)
+
+        // 接收到的语言
+        Row() {
+          Text('语言(Language): ')
+            .fontSize(16)
+            .fontColor('#666')
+          Text(this.currentLanguage)
+            .fontSize(18)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#007DFF')
+        }
+        .width('90%')
+        .justifyContent(FlexAlign.SpaceBetween)
+
+        // 最后更新时间
+        Row() {
+          Text('最后更新: ')
+            .fontSize(14)
+            .fontColor('#999')
+          Text(this.lastUpdateTime)
+            .fontSize(14)
+            .fontColor('#999')
+        }
+        .width('90%')
+        .justifyContent(FlexAlign.SpaceBetween)
+        .margin({ top: 5 })
+      }
+      .width('90%')
+      .padding(15)
+      .backgroundColor('#F5F5F5')
+      .borderRadius(12)
+      .margin({ bottom: 15 })
+
+      // =============== 操作按钮区域 ===============
+      Row({ space: 10 }) {
+        Button('测试连接')
+          .fontSize(14)
+          .backgroundColor('#007DFF')
+          .onClick(() => {
+            try {
+              const result = this.webProxy.test();
+              console.info('测试连接结果:', result);
+            } catch (error) {
+              console.error('测试连接失败:', error);
+            }
+          })
+
+        Button('重置状态')
+          .fontSize(14)
+          .backgroundColor('#888')
+          .onClick(() => {
+            this.FLAX = false;
+            this.currentState = 0;
+            this.currentLanguage = '已重置';
+            this.lastUpdateTime = new Date().toLocaleTimeString();
+          })
+      }
+      .margin({ bottom: 15 })
+
+      // =============== Web组件区域 ===============
+      Text('内嵌Web页面:')
+        .fontSize(16)
+        .fontColor('#333')
+        .margin({ left: 20, bottom: 5 })
+
+      Web({
+        // 请修改为你的前端页面地址
+        src: $rawfile('microphone.html'),
+        controller: this.controller
+      })
+        .javaScriptProxy({
+          // 关键配置：注册代理对象
+          object: this.webProxy,           // 要暴露的对象
+          name: "hostInstance",           // 前端通过window.hostInstance访问
+          methodList: ["webRecord", "test", "getStatus"], // 暴露的方法列表
+          controller: this.controller
+        })
+        .width('95%')
+        .height(300)
+        .margin({ bottom: 20 })
+        .border({ width: 1, color: '#E0E0E0' })
+        .borderRadius(8)
+
+      // =============== 调试信息 ===============
+      Text('调试信息:')
+        .fontSize(14)
+        .fontColor('#666')
+        .margin({ left: 20, bottom: 5 })
+
+      Text('前端通过 window.hostInstance.webRecord({state: 值, language: "语言"}) 调用')
+        .fontSize(12)
+        .fontColor('#888')
+        .width('90%')
+        .textAlign(TextAlign.Start)
+        .margin({ bottom: 10 })
+    }
+    .width('100%')
+    .height('100%')
+    .alignItems(HorizontalAlign.Center)
+    .backgroundColor('#FFFFFF')
+  }
 }
