@@ -97,13 +97,13 @@ export struct Content {
         /**
          * AI会议开启设备录音
          */
-        _KeyMethodConfig.voiceInput_AICon(this.webviewController)
+        _KeyMethodConfig.voiceInput_AICon(this.webviewController, this.currentLanguage)
         break
       case 2:
         /**
          * AI会议关闭设备录音
          */
-        _KeyMethodConfig.voiceInput_AICon(this.webviewController,false)
+        _KeyMethodConfig.voiceInput_AICon(this.webviewController, this.currentLanguage, false)
         break
     }
   }

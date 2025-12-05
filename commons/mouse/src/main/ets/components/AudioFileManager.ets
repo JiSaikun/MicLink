@@ -5,6 +5,10 @@ import { BusinessError } from '@ohos.base';
 import { http } from '@kit.NetworkKit';
 import { SmartMouseAudioProcessor } from './SmartMouseAudioProcessor';
 import { webview } from '@kit.ArkWeb';
+import { AudioWebSocketHandler_meeting } from '../common/AudioWebSocketHandler_meeting';
+import { WebSocket_serverUrl } from 'config';
+import { Communication } from './Communication';
+import { inputMessageModel } from './AudioWebSocketHandler'
 
 // 上传响应接口
 interface UploadResponse {
@@ -37,6 +41,7 @@ export class AudioFileManager {
   private pcmFile: fs.File | null = null;
   private audioProcessor: SmartMouseAudioProcessor = new SmartMouseAudioProcessor();
   private webViewController: webview.WebviewController
+  private inputMessage: inputMessageModel
 
   /**
    * 构造函数
@@ -50,6 +55,7 @@ export class AudioFileManager {
     rawData: Int16Array[],
     context: common.UIAbilityContext,
     webViewController: webview.WebviewController,
+    inputMessage: inputMessageModel,
     uploadToken: string = 'miclink',
     autoUpload: boolean = true,
     autoDeleteAfterUpload: boolean = true
@@ -61,6 +67,7 @@ export class AudioFileManager {
     this.autoUpload = autoUpload;
     this.autoDeleteAfterUpload = autoDeleteAfterUpload;
     this.webViewController = webViewController
+    this.inputMessage = inputMessage
     // 初始化并写入音频文件
     this.initAndWriteAudioFile();
   }
@@ -101,11 +108,11 @@ export class AudioFileManager {
       // 3. 完成文件写入操作
       this.closeAudioFile();
 
-      // 显示文件保存成功提示
-      promptAction.showToast({
-        message: `音频文件已保存: ${this.audioFileTimestamp}`,
-        duration: 2000
-      });
+      // // 显示文件保存成功提示
+      // promptAction.showToast({
+      //   message: `音频文件已保存: ${this.audioFileTimestamp}`,
+      //   duration: 2000
+      // });
 
       // 4. 如果启用了自动上传，则上传文件
       if (this.autoUpload) {
@@ -129,10 +136,10 @@ export class AudioFileManager {
   private async autoUploadFile(): Promise<void> {
     try {
       // 显示上传开始提示
-      promptAction.showToast({
-        message: '开始上传音频文件...',
-        duration: 2000
-      });
+      // promptAction.showToast({
+      //   message: '开始上传音频文件...',
+      //   duration: 2000
+      // });
 
       console.info('开始自动上传音频文件...');
 
@@ -141,14 +148,11 @@ export class AudioFileManager {
 
       if (uploadResult) {
         console.info('音频文件上传成功:', JSON.stringify(uploadResult.data));
-        // 构建JS代码字符串
-        const jsCode = `getRecordingText('value', '${uploadResult.data}')`;
-        console.error("执行JS代码: " + jsCode);
-        this.webViewController.runJavaScript(jsCode).then((result: string) => {
-          console.error("JS执行成功，返回值: " + result);
-        }).catch((error: Error) => {
-          console.error("JS执行失败: " + error.message);
-        });
+        let audioToText: AudioWebSocketHandler_meeting =
+          new AudioWebSocketHandler_meeting(WebSocket_serverUrl.audioToText, this.rawData,
+            this.inputMessage, this.webViewController,uploadResult.data) //语音转文字 websocket
+        audioToText.connect()
+
         // 显示上传成功提示
         // promptAction.showToast({
         //   message: '音频文件上传成功',

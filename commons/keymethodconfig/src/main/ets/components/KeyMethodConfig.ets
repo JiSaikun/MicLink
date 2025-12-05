@@ -928,7 +928,7 @@ export class _KeyMethodConfig {
 
   }
 
-  static async voiceInput_AICon(WebviewController:webview.WebviewController ,voiceInput_AICon: boolean = true) {
+  static async voiceInput_AICon(WebviewController:webview.WebviewController,language:string ,voiceInput_AICon: boolean = true) {
     if ((AppStorage.get('devices') as DeviceArrayType_Ble[]).length + ConnectDevice.Communication.length) {
     } else {
       return
@@ -962,18 +962,36 @@ export class _KeyMethodConfig {
             (AppStorage.get('devices') as DeviceArrayType_Ble[])[0].BlueTooth_devices.audioDataState =
               !(AppStorage.get('devices') as DeviceArrayType_Ble[])[0].BlueTooth_devices.audioDataState
             if (voiceInput_AICon) {
-              _KeyMethodConfig.voiceInput_AICon(WebviewController)
+              _KeyMethodConfig.voiceInput_AICon(WebviewController,language)
               if (Float_Window.windowClass) {
                 Float_Window.minimize_float_window()
               }
               return
+            }
+            //WebSocket  语音数据处理
+            let inputMessage: inputMessageModel = {
+              start: false,
+              "clientId": "clientId1751968608",
+              "ptt": (AppStorage.get('devices') as DeviceArrayType_Ble[])[0].isPunctuationRecognition ?
+                '1' :
+                '0',
+              "serialNo": (AppStorage.get('devices') as DeviceArrayType_Ble[])[0].BlueTooth_devices.deviceInfo.sn,
+              "phrases": "",
+              "format": "pcm",
+              "apiKey": (AppStorage.get('devices') as DeviceArrayType_Ble[])[0].getModelInfo?.appkey as string,
+              "language": language,
+              "end": false,
+              "rate": (AppStorage.get('devices') as DeviceArrayType_Ble[])[0].BlueTooth_devices.deviceInfo.sampleRate ?
+                "16k" : "8k",
+              "deviceNo": "6c:b1:33:9f:b9:8b",
+              content: ''
             }
             /**
              * 语音数据处理
              */
             // 保存本地PCM文件
             const context = AppStorage.get('context') as common.UIAbilityContext;
-            new AudioFileManager(BlueTooth_devices.audioData, context,WebviewController)
+            new AudioFileManager(BlueTooth_devices.audioData, context,WebviewController,inputMessage)
           })
       } else {
         ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x63])
@@ -981,18 +999,35 @@ export class _KeyMethodConfig {
             ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState =
               !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState
             if (voiceInput_AICon) {
-              _KeyMethodConfig.voiceInput_AICon(WebviewController)
+              _KeyMethodConfig.voiceInput_AICon(WebviewController,language)
               if (Float_Window.windowClass) {
                 Float_Window.minimize_float_window()
               }
               return
+            }
+            let inputMessage: inputMessageModel = {
+              start: false,
+              "clientId": "clientId1751968608",
+              "ptt": ConnectDevice.Communication[0].isPunctuationRecognition ?
+                '1' :
+                '0',
+              "serialNo": ConnectDevice.Communication[0].Communication.deviceInfo.sn,
+              "phrases": "",
+              "format": "pcm",
+              "apiKey": ConnectDevice.Communication[0].getModelInfo?.appkey as string,
+              "language": language ,
+              "end": false,
+              "rate": ConnectDevice.Communication[0].Communication.deviceInfo.sampleRate ?
+                "16k" : "8k",
+              "deviceNo": "6c:b1:33:9f:b9:8b",
+              content: ''
             }
             /**
              * 语音数据处理
              */
             // 保存本地PCM文件
             const context = AppStorage.get('context') as common.UIAbilityContext;
-            new AudioFileManager(Communication.audioData, context,WebviewController)
+            new AudioFileManager(Communication.audioData, context,WebviewController,inputMessage)
           })
       }
 
