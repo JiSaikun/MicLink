@@ -7,14 +7,60 @@ import { globalShortcutService } from 'utils';
 import { promptAction } from '@kit.ArkUI';
 import { fileUri } from '@kit.CoreFileKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
+import { _KeyMethodConfig } from 'keymethodconfig';
+
+// =============== 第一步：定义数据传输接口 ===============
+interface RecordData {
+  state: number;
+  language: string;
+}
+
+// =============== 第二步：创建代理类 ===============
+class WebProxy {
+  // 存储Content组件的引用
+  private component: Content;
+
+  constructor(component: Content) {
+    this.component = component;
+  }
+
+  // =============== 关键方法：供前端调用 ===============
+  // 方法名必须与javaScriptProxy中注册的一致
+  // 参数类型使用定义好的接口
+  webRecord(data: RecordData): void {
+    console.info(`WebProxy收到数据: ${JSON.stringify(data)}`);
+
+    // 添加数据验证
+    if (typeof data.state !== 'number') {
+      console.error('webRecord: state 必须是数字类型');
+      return;
+    }
+
+    if (typeof data.language !== 'string') {
+      console.error('webRecord: language 必须是字符串类型');
+      return;
+    }
+
+    // 将接收到的对象数据转发给Content组件
+    this.component.onWebRecord(data.state, data.language);
+  }
+
+  // =============== 测试方法 ===============
+  test(): string {
+    return 'ArkTS: 连接测试成功 ' + new Date().toLocaleTimeString();
+  }
+
+  // 可以添加更多方法...
+  getStatus(): string {
+    return 'WebProxy运行正常';
+  }
+}
 
 @Component
 export struct Content {
   webviewController: webview.WebviewController = new webview.WebviewController();
-
   // 创建WebDownloadDelegate
   delegate: webview.WebDownloadDelegate = new webview.WebDownloadDelegate();
-
   @Prop web: string
   @State isWebViewReady: boolean = false
   @State downloadProgress: number = 0
@@ -23,6 +69,44 @@ export struct Content {
   @State currentDownloadUrl: string = ''
   @State currentFileName: string = ''
   @State currentDownloadDirUri: string = '' // 新增：保存下载目录URI
+  // =============== 新增：Web通信相关的状态变量 ===============
+  @Watch('change_FLAX') @State FLAX: boolean = false;
+  @State currentState: number = 0;
+  @State currentLanguage: string = '未设置';
+  // 代理对象实例
+  private webProxy: WebProxy = new WebProxy(this);
+
+  // =============== 新增：Web通信处理方法 ===============
+  onWebRecord(state: number, language: string): void {
+    // 更新状态
+    this.currentState = state;
+    this.currentLanguage = language;
+    this.FLAX = !this.FLAX;
+
+    // 输出日志
+    console.info(`onWebRecord被调用: state=${state}, language=${language}`);
+    console.info(`FLAX状态切换为: ${this.FLAX}`);
+
+    // 这里可以添加更多业务逻辑
+  }
+
+  change_FLAX() {
+    console.error('currentState:', this.currentState)
+    switch (this.currentState) {
+      case 1:
+        /**
+         * AI会议开启设备录音
+         */
+        _KeyMethodConfig.voiceInput_AICon(this.webviewController)
+        break
+      case 2:
+        /**
+         * AI会议关闭设备录音
+         */
+        _KeyMethodConfig.voiceInput_AICon(this.webviewController,false)
+        break
+    }
+  }
 
   aboutToAppear() {
     // 注册快捷键回调函数
@@ -461,6 +545,7 @@ export struct Content {
 
   build() {
     Flex({ direction: FlexDirection.Column, alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center }) {
+
       // 下载进度显示
       if (this.isDownloading) {
         Column() {
@@ -484,7 +569,7 @@ export struct Content {
             .fontColor(Color.Gray)
             .margin({ top: 5 })
         }
-        .width('100%')
+        .width('95%')
         .padding(10)
         .backgroundColor('#F5F5F5')
         .borderRadius(8)
@@ -496,12 +581,22 @@ export struct Content {
         controller: this.webviewController
       })
         .onPageEnd(() => {
-          console.info("Web页面加载完成，设置下载委托");
+          console.info("Web页面加载完成，设置下载委托和Web通信代理");
           this.isWebViewReady = true;
           this.setupDownloadDelegate();
+          // 添加日志，确认页面加载完成
+          console.info("页面加载完成，javaScriptProxy应该已经注册");
         })
         .onPageBegin(() => {
           this.isWebViewReady = false;
+        })
+        // =============== 新增：Web通信代理配置 ===============
+        .javaScriptProxy({
+          // 关键配置：注册代理对象
+          object: this.webProxy, // 要暴露的对象
+          name: "hostInstance", // 前端通过window.hostInstance访问
+          methodList: ["webRecord", "test", "getStatus"], // 暴露的方法列表
+          controller: this.webviewController
         })
         .flexGrow(1)
         .width('100%')

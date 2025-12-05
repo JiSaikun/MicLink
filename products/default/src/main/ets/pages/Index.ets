@@ -357,7 +357,7 @@ struct Index {
 
               TabContent() { // AI-办公
                 Stack() {
-                  Content({ web: this.web_prefix() + this.web })
+                  Content({ web:'https://asrai.miclink.net/?sno=123&productCode=999999&config=configMiclink_B_1755079145452#/aiOffice'  })
                   Topbar()
                 }
                 .height('100%')

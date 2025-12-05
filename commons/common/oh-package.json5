@@ -9,6 +9,7 @@
     'utils': 'file:../utils',
     'mouse': 'file:../mouse',
     'config': 'file:../config',
+    'keymethodconfig': 'file:../keymethodconfig',
     'bluetooth': 'file:../bluetooth'
   }
 }
