@@ -5,7 +5,6 @@ import { BusinessError } from '@ohos.base';
 import { http } from '@kit.NetworkKit';
 import { SmartMouseAudioProcessor } from './SmartMouseAudioProcessor';
 import { webview } from '@kit.ArkWeb';
-import { AudioWebSocketHandler_meeting } from '../common/AudioWebSocketHandler_meeting';
 import { WebSocket_serverUrl } from 'config';
 import { Communication } from './Communication';
 import { inputMessageModel } from './AudioWebSocketHandler'
@@ -147,11 +146,15 @@ export class AudioFileManager {
       const uploadResult = await this.uploadRecording();
 
       if (uploadResult) {
-        console.info('音频文件上传成功:', JSON.stringify(uploadResult.data));
-        let audioToText: AudioWebSocketHandler_meeting =
-          new AudioWebSocketHandler_meeting(WebSocket_serverUrl.audioToText, this.rawData,
-            this.inputMessage, this.webViewController,uploadResult.data) //语音转文字 websocket
-        audioToText.connect()
+        console.warn('音频文件上传成功:', JSON.stringify(uploadResult.data));
+        // 构建JS代码字符串
+        const jsCode = `getRecordingText('${AppStorage.get('getRecordingText')}', '${uploadResult.data}')`;
+        console.warn("执行JS代码: " + jsCode);
+        this.webViewController.runJavaScript(jsCode).then((result: string) => {
+          console.warn("JS执行成功，返回值: " + result);
+        }).catch((error: Error) => {
+          console.warn("JS执行失败: " + error.message);
+        });
 
         // 显示上传成功提示
         // promptAction.showToast({

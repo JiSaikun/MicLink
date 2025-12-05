@@ -9,6 +9,7 @@ import { translate_Params, translate_Response } from '../model/MouseInfoModel'
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
 import { promptAction } from '@kit.ArkUI';
 import { Float_Window } from 'float_window';
+import { webview } from '@kit.ArkWeb';
 
 // 定义日志消息接口
 interface logMessageModel {
@@ -142,15 +143,19 @@ export class AudioWebSocketHandler {
   private readonly COMPLETION_CHECK_MS = 100; // 完成检查间隔
   private readonly MAX_BUFFER_SIZE = 50; // 最大缓冲分片数
   private readonly MIN_SAMPLES_FOR_COMPLETION = 1024; // 最小采样点数才开始检测完成（约0.064秒@16kHz）
-
+  private webViewController: webview.WebviewController | null = null
   // Base64编码表
   private base64Chars: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
-  constructor(serverUrl: string, audioData: Int16Array[], state: number, inputMessage: inputMessageModel) {
+  constructor(serverUrl: string, audioData: Int16Array[], state: number, inputMessage: inputMessageModel,
+    webViewController?: webview.WebviewController) {
     this.serverUrl = serverUrl;
     this.audioData = audioData;
     this.state = state;
     this.inputMessage = inputMessage;
+    if (webViewController) {
+      this.webViewController = webViewController
+    }
     if (state) {
       AppStorage.setOrCreate('voiceTranslationText', {
         transText: '',
@@ -162,7 +167,7 @@ export class AudioWebSocketHandler {
       AppStorage.setOrCreate('linshi', '')
     }
     this.wending = false
-    this.FINText=''
+    this.FINText = ''
     this.isSending = false;
     this.lastSentIndex = 0;
     this.isClosing = false;
@@ -285,6 +290,20 @@ export class AudioWebSocketHandler {
         }
       } else {
         res.data.text = this.FINText + res.data.text
+      }
+      if (this.webViewController && !this.wending) {
+        // 构建JS代码字符串
+        const jsCode = `getRecordingText('${res.data.text}', '中间过度')`;
+        AppStorage.setOrCreate('getRecordingText', res.data.text)
+        console.error("执行JS代码: " + jsCode);
+        this.webViewController.runJavaScript(jsCode).then((result: string) => {
+          console.error("JS执行成功，返回值: " + result);
+        }).catch((error: Error) => {
+          console.error("JS执行失败: " + error.message);
+        });
+        return
+      } else {
+        this.webViewController = null
       }
 
       if (res.status === 200 && this.state === 0) {

@@ -1369,6 +1369,9 @@ export class BlueTooth_devices {
         console.log('没有收到0x61命令,重新获取设备信息');
         this.send();
       } else {
+        if (this.flax_yuyin) {
+          this.send([0x63]);
+        }
         if (!devices[this.device_currIndex].getModelInfo) {
           console.warn(this.deviceInfo.productType.toString());
           const params: getModelInfo_Params = {
@@ -1553,10 +1556,6 @@ export class BlueTooth_devices {
           }).catch(() => {
             console.log('获取设备模型信息请求失败');
           });
-        } else {
-          if (this.flax_yuyin) {
-            this.send([0x63]);
-          }
         }
       }
 

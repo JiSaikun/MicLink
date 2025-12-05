@@ -7,6 +7,7 @@ import { _translate, translate_Params, translate_Response, inputMessageModel } f
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
 import { Float_Window } from 'float_window';
 import { DeviceArrayType_Ble } from './BlueTooth_devices';
+import { webview } from '@kit.ArkWeb';
 
 // 定义日志消息接口
 interface logMessageModel {
@@ -112,7 +113,7 @@ export class AudioWebSocketHandler_ble {
   private lastHeartbeatTime: number = 0;
   private readonly HEARTBEAT_INTERVAL_MS = 5000; // 5秒心跳间隔
   private readonly HEARTBEAT_TIMEOUT_MS = 15000; // 15秒心跳超时
-
+  private webViewController: webview.WebviewController | null = null
   // 性能指标
   private metrics: MetricsModel = {
     totalChunksSent: 0,
@@ -122,11 +123,15 @@ export class AudioWebSocketHandler_ble {
     lastChunkTime: 0
   };
 
-  constructor(serverUrl: string, audioData: Int16Array[], state: number, inputMessage: inputMessageModel) {
+  constructor(serverUrl: string, audioData: Int16Array[], state: number, inputMessage: inputMessageModel,
+    webViewController?: webview.WebviewController) {
     this.serverUrl = serverUrl || SERVER_URL;
     this.audioData = audioData;
     this.state = state;
     this.inputMessage = inputMessage;
+    if (webViewController) {
+      this.webViewController = webViewController
+    }
     if (state) {
       AppStorage.setOrCreate('voiceTranslationText', {
         transText: '',
@@ -138,7 +143,7 @@ export class AudioWebSocketHandler_ble {
       AppStorage.setOrCreate('linshi', '')
     }
     this.wending = false
-    this.FINText=''
+    this.FINText = ''
     this.isSending = false;
     this.lastSentSampleIndex = 0;
     this.isClosing = false;
@@ -268,7 +273,18 @@ export class AudioWebSocketHandler_ble {
       } else {
         res.data.text = this.FINText + res.data.text
       }
-
+      if (this.webViewController&&!this.wending) {
+        // 构建JS代码字符串
+        const jsCode = `getRecordingText('${res.data.text}', '中间过度')`;
+        AppStorage.setOrCreate('getRecordingText',res.data.text)
+        console.error("执行JS代码: " + jsCode);
+        this.webViewController.runJavaScript(jsCode).then((result: string) => {
+          console.error("JS执行成功，返回值: " + result);
+        }).catch((error: Error) => {
+          console.error("JS执行失败: " + error.message);
+        });
+        return
+      }
       if (res.status === 200 && this.state === 0) {
         if (AppStorage.get('isAI_assistant')) {
           if (this.wending && (res.data.type === 'LAST' || res.data.type === "FIN")) {
