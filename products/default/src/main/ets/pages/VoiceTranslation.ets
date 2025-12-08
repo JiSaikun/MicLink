@@ -1,6 +1,6 @@
 import { Float_Window } from 'float_window'
 import { ConnectDevice, translate_Response, Communication, _translate, translate_Params } from "mouse"
-import { getModelInfoModel, languagesModel } from 'config'
+import { getModelInfoModel, Languages, languagesModel } from 'config'
 import { CursorController, promptAction } from '@kit.ArkUI'
 import { pasteboard } from '@kit.BasicServicesKit'; //复制
 import { BusinessError } from '@kit.BasicServicesKit';
@@ -21,6 +21,7 @@ struct VoiceTranslation {
   }
   @StorageLink('voiceTranslationState') voiceTranslationState: boolean = true
   @StorageLink('voiceOrText') voiceOrText: boolean = true //语音翻译为true,文本翻译为false
+  @StorageLink('languages') languages: string = 'ZH_CN'
   @Watch('changeLanguages') @StorageLink('from_languages') from_languages: string = 'ZH_CN' //翻译源语言
   @Watch('changeLanguages') @StorageLink('to_languages') to_languages: string = 'EN_US' //翻译目标语言
   @Watch('changeLanguages') @StorageLink('wordScan_from_languages') wordScan_from_languages: string = 'ZH_CN' //翻译源语言
@@ -150,7 +151,7 @@ struct VoiceTranslation {
         }
       }).catch((error: BusinessError) => {
         console.error('翻译请求失败:', error);
-        promptAction.showToast({ message: '翻译请求失败，请检查网络连接' });
+        // promptAction.showToast({ message: '翻译请求失败，请检查网络连接' });
       })
     }, 500);
   }
@@ -396,7 +397,7 @@ struct VoiceTranslation {
                   systemPasteboard.setData(pasteData)
                     .then(() => {
                       console.error('文本已复制到剪贴板: ' + this.voiceTranslationText.transText);
-                      promptAction.showToast({ message: '复制成功' });
+                      promptAction.showToast({ message:`${Languages.copySuccess[this.languages]}` });
                     })
                     .catch((err: BusinessError) => {
                       console.error('复制失败: ' + err.message);
@@ -606,14 +607,14 @@ struct VoiceTranslation {
     true //语音翻译为true,文本翻译为false
 
   change_flax_yuyinfanyi_chachaobudaoyuyan() {
-    promptAction.showToast({ message: '无法翻译到对应目标语言', backgroundColor: Color.Red, duration: 3000 });
+    promptAction.showToast({ message: '无法翻译到对应目标语言', backgroundColor: Color.Red, duration: 1000 });
   }
 
   @Watch('change_flax_huacifanyi') @StorageLink('flax_huacifanyi') flax_huacifanyi: boolean =
     true //语音翻译为true,文本翻译为false
 
   change_flax_huacifanyi() {
-    promptAction.showToast({ message: '未识别到选中划词', backgroundColor: Color.Red });
+    promptAction.showToast({ message: `${Languages.noSelectedTextDetected[this.languages]}`, backgroundColor: Color.Red });
   }
 
   // 页面销毁时清理资源

@@ -8,7 +8,7 @@ import {
   DPI_currInfoModel,
   KeyPressType,
 } from 'mouse' //语音输入
-import { WebSocket_serverUrl, getModelInfoModel } from 'config'; //语音输入
+import { WebSocket_serverUrl, getModelInfoModel, Languages } from 'config'; //语音输入
 import window from '@ohos.window'; //一键回到桌面————应用最小化
 import { BusinessError } from '@ohos.base';
 import common from '@ohos.app.ability.common'; //打开网页
@@ -942,19 +942,20 @@ export class _KeyMethodConfig {
     0].BlueTooth_devices.audioDataState :
     ConnectDevice.Communication[0].Communication.audioDataState)
     ) {
-      // 显示录音提示框
-      promptAction.showDialog({
-        title: '设备录音提示',
-        message: '当前为硬件设备录音，请注意：\n\n1. 请勿在此期间使用设备执行语音输入等操作\n2. 不要长按硬件设备按键\n3. 以上操作都会打断之前的语音数据采集',
-        buttons: [
-          {
-            text: '关闭提醒',
-            color: '#FF3B30'
-          }
-        ]
-      })
+
       if ((AppStorage.get('devices') as DeviceArrayType_Ble[]).length) {
         if (voiceInput_AICon) {
+          // 显示录音提示框
+          promptAction.showDialog({
+            title: `${Languages.deviceRecordingPrompt[AppStorage.get('languages') as string]}`,
+            message: `${Languages.hardwareRecordingNotice[AppStorage.get('languages') as string]}\n\n1. ${Languages.prohibitVoiceOperation[AppStorage.get('languages') as string]}\n2. ${Languages.prohibitLongPressButton[AppStorage.get('languages') as string]}\n3. ${Languages.operationInterruptRecording[AppStorage.get('languages') as string]}`,
+            buttons: [
+              {
+                text: `${Languages.closeReminder[AppStorage.get('languages') as string]}`,
+                color: '#FF3B30'
+              }
+            ]
+          });
           (AppStorage.get('devices') as DeviceArrayType_Ble[])[0].BlueTooth_devices.send([0x62])
             .then(() => {
               BlueTooth_devices.audioData = [];
@@ -985,34 +986,48 @@ export class _KeyMethodConfig {
             })
         }
       } else {
-        ConnectDevice.Communication[0].Communication.getDeviceInfo([0x62])
-          .then(() => {
-            Communication.audioData = []
-            ConnectDevice.Communication[0].Communication.audioDataState =
-              !ConnectDevice.Communication[0].Communication.audioDataState
-            //WebSocket  语音数据处理
-            let inputMessage: inputMessageModel = {
-              start: false,
-              "clientId": "clientId1751968608",
-              "ptt": ConnectDevice.Communication[0].isPunctuationRecognition ?
-                '1' :
-                '0',
-              "serialNo": ConnectDevice.Communication[0].Communication.deviceInfo.sn,
-              "phrases": "",
-              "format": "pcm",
-              "apiKey": ConnectDevice.Communication[0].getModelInfo?.appkey as string,
-              "language": language,
-              "end": false,
-              "rate": ConnectDevice.Communication[0].Communication.deviceInfo.sampleRate ?
-                "16k" : "8k",
-              "deviceNo": "6c:b1:33:9f:b9:8b",
-              content: ''
-            }
-            let audioToText: AudioWebSocketHandler =
-              new AudioWebSocketHandler(WebSocket_serverUrl.audioToText, Communication.audioData, 0,
-                inputMessage, WebviewController) //语音转文字 websocket
-            audioToText.connect()
-          })
+        if (voiceInput_AICon) {
+          // 显示录音提示框
+          promptAction.showDialog({
+            title: `${Languages.deviceRecordingPrompt[AppStorage.get('languages') as string]}`,
+            message: `${Languages.hardwareRecordingNotice[AppStorage.get('languages') as string]}\n\n1. ${Languages.prohibitVoiceOperation[AppStorage.get('languages') as string]}\n2. ${Languages.prohibitLongPressButton[AppStorage.get('languages') as string]}\n3. ${Languages.operationInterruptRecording[AppStorage.get('languages') as string]}`,
+            buttons: [
+              {
+                text: `${Languages.closeReminder[AppStorage.get('languages') as string]}`,
+                color: '#FF3B30'
+              }
+            ]
+          });
+          ConnectDevice.Communication[0].Communication.getDeviceInfo([0x62])
+            .then(() => {
+              Communication.audioData = []
+              ConnectDevice.Communication[0].Communication.audioDataState =
+                !ConnectDevice.Communication[0].Communication.audioDataState
+              //WebSocket  语音数据处理
+              let inputMessage: inputMessageModel = {
+                start: false,
+                "clientId": "clientId1751968608",
+                "ptt": ConnectDevice.Communication[0].isPunctuationRecognition ?
+                  '1' :
+                  '0',
+                "serialNo": ConnectDevice.Communication[0].Communication.deviceInfo.sn,
+                "phrases": "",
+                "format": "pcm",
+                "apiKey": ConnectDevice.Communication[0].getModelInfo?.appkey as string,
+                "language": language,
+                "end": false,
+                "rate": ConnectDevice.Communication[0].Communication.deviceInfo.sampleRate ?
+                  "16k" : "8k",
+                "deviceNo": "6c:b1:33:9f:b9:8b",
+                content: ''
+              }
+              let audioToText: AudioWebSocketHandler =
+                new AudioWebSocketHandler(WebSocket_serverUrl.audioToText, Communication.audioData, 0,
+                  inputMessage, WebviewController) //语音转文字 websocket
+              audioToText.connect()
+            })
+        }
+
       }
 
     } else {
