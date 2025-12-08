@@ -998,7 +998,7 @@ export class _KeyMethodConfig {
             }
             let audioToText: AudioWebSocketHandler =
               new AudioWebSocketHandler(WebSocket_serverUrl.audioToText, Communication.audioData, 0,
-                inputMessage) //语音转文字 websocket
+                inputMessage, WebviewController) //语音转文字 websocket
             audioToText.connect()
           })
       }
