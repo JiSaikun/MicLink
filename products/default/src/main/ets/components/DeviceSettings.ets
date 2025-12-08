@@ -1,9 +1,10 @@
-import { LengthMetrics } from "@kit.ArkUI"
+import { CursorController, LengthMetrics } from "@kit.ArkUI"
 import { connectDevice, DeviceArrayType_Ble } from "bluetooth"
 import { getModelInfoModel, imagesDataModel, imagesModel, Languages } from "config"
 import { DeviceArrayType, DeviceInfo, MouseICType, ConnectDevice } from 'mouse'
 import { DevicesConfig } from './DevicesConfig'
 import { common } from "@kit.AbilityKit"
+import { pointer } from "@kit.InputKit"
 
 // 鼠标连接方式
 interface connectionmethod_Model {
@@ -24,6 +25,7 @@ export struct DeviceSettings {
   @Watch('onDevicesChange') @StorageLink('devices') devicesLink: DeviceArrayType_Ble[] = []
   @State devices: DeviceArrayType_Ble[] = []
   @Provide device_isBle: boolean = false //该设备是否是蓝牙连接
+  cursorCustom: CursorController = this.getUIContext().getCursorController();
 
   onDevicesChange() {
     console.log('DeviceSettings: 设备列表发生变化，当前设备数量:', this.devicesLink ? this.devicesLink.length : 0)
@@ -218,6 +220,14 @@ export struct DeviceSettings {
                       }
                     }
                   })
+                  .onHover((flag) => {
+                    if (flag) {
+                      this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+                    } else {
+                      console.info("restoreDefault");
+                      this.cursorCustom.restoreDefault();
+                    }
+                  })
                   .onClick(() => {
                     if (item.getModelInfo) {
                       AppStorage.setOrCreate('device_show_currIndex', index)
@@ -314,6 +324,14 @@ export struct DeviceSettings {
                       if (event.stopPropagation) {
                         event.stopPropagation();
                       }
+                    }
+                  })
+                  .onHover((flag) => {
+                    if (flag) {
+                      this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+                    } else {
+                      console.info("restoreDefault");
+                      this.cursorCustom.restoreDefault();
                     }
                   })
                   .onClick(() => {
