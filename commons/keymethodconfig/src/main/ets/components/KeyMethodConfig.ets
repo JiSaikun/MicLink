@@ -23,6 +23,7 @@ import { Float_Window } from 'float_window'; //按键执行方法回调
 import { OpenFileWithSystemApp } from 'api';
 import { AudioWebSocketHandler_ble, BlueTooth_devices, DeviceArrayType_Ble } from 'bluetooth';
 import { webview } from '@kit.ArkWeb';
+import { promptAction } from '@kit.ArkUI';
 
 export class _KeyMethodConfig {
   /**
@@ -941,6 +942,17 @@ export class _KeyMethodConfig {
     0].BlueTooth_devices.audioDataState :
     ConnectDevice.Communication[0].Communication.audioDataState)
     ) {
+      // 显示录音提示框
+      promptAction.showDialog({
+        title: '设备录音提示',
+        message: '当前为硬件设备录音，请注意：\n\n1. 请勿在此期间使用设备执行语音输入等操作\n2. 不要长按硬件设备按键\n3. 以上操作都会打断之前的语音数据采集',
+        buttons: [
+          {
+            text: '关闭提醒',
+            color: '#FF3B30'
+          }
+        ]
+      })
       if ((AppStorage.get('devices') as DeviceArrayType_Ble[]).length) {
         if (voiceInput_AICon) {
           (AppStorage.get('devices') as DeviceArrayType_Ble[])[0].BlueTooth_devices.send([0x62])
