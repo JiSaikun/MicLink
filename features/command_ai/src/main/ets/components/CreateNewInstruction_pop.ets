@@ -5,8 +5,9 @@ import { tableDataModel } from './Command_Ai'
 import { picker } from '@kit.CoreFileKit';
 import { common, Want } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { promptAction } from '@kit.ArkUI';
+import { CursorController, promptAction } from '@kit.ArkUI';
 import { ThemeConfig } from "common";
+import { pointer } from "@kit.InputKit";
 
 interface response_interface {
   title: string
@@ -35,6 +36,7 @@ export struct CreateNewInstruction_pop {
   @State voice: string = ''
   @State execute: string = ''
   @State isLoading: boolean = false;
+  cursorCustom: CursorController = this.getUIContext().getCursorController();
 
   aboutToAppear(): void {
     this.updateLanguageDependentData();
@@ -417,6 +419,14 @@ export struct CreateNewInstruction_pop {
           Image($r('app.media.pop_down'))
             .height(44)
             .width(44)
+            .onHover((flag) => {
+              if (flag) {
+                this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+              } else {
+                console.info("restoreDefault");
+                this.cursorCustom.restoreDefault();
+              }
+            })
             .onClick(() => {
               this.isShow_CreateNewInstruction_pop = false
               this.isShow_EditInstruction_pop = false
@@ -516,6 +526,14 @@ export struct CreateNewInstruction_pop {
                     this.response_[this.currentindex]?.showAppPicker ?
                   Visibility.Visible : Visibility.None
                 )
+                .onHover((flag) => {
+                  if (flag) {
+                    this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+                  } else {
+                    console.info("restoreDefault");
+                    this.cursorCustom.restoreDefault();
+                  }
+                })
                 .onClick(() => {
                   this.handlePickerClick();
                 })
@@ -542,6 +560,14 @@ export struct CreateNewInstruction_pop {
               right: 24,
               bottom: 9,
               left: 24
+            })
+            .onHover((flag) => {
+              if (flag) {
+                this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+              } else {
+                console.info("restoreDefault");
+                this.cursorCustom.restoreDefault();
+              }
             })
             .onClick(() => {
               this.saveInstruction();

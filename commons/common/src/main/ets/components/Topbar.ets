@@ -1,6 +1,8 @@
 import { PopViewUtils, LaunchLogin_pop, PopParams_1 } from 'utils'
 import { Languages } from 'config'
 import { UserLoginInfo } from '../model/UserLoginInfo'
+import { CursorController } from '@kit.ArkUI'
+import { pointer } from '@kit.InputKit'
 
 @Component
 export struct Topbar {
@@ -8,6 +10,7 @@ export struct Topbar {
   @StorageLink('languages') languages: string = 'ZH_CN' //语言适配
   @StorageLink('userLoginInfo') userLoginInfo: UserLoginInfo = AppStorage.get('userLoginInfo') as UserLoginInfo //语言适配
   @Consume('pageInfo') pageInfo: NavPathStack
+  cursorCustom: CursorController = this.getUIContext().getCursorController();
 
   @Styles
   textStyle(){
@@ -52,6 +55,14 @@ export struct Topbar {
               centerZ: 180
             })
         }
+        .onHover((flag) => {
+          if (flag) {
+            this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+          } else {
+            console.info("restoreDefault");
+            this.cursorCustom.restoreDefault();
+          }
+        })
         .alignRules({
           middle: { anchor: '__container__', align: HorizontalAlign.Center },
           center: { anchor: '__container__', align: VerticalAlign.Center },
@@ -71,10 +82,26 @@ export struct Topbar {
             .onClick(() => {
               this.pageInfo.pushPath({ name: 'personalCenter' })
             })
+            .onHover((flag) => {
+              if (flag) {
+                this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+              } else {
+                console.info("restoreDefault");
+                this.cursorCustom.restoreDefault();
+              }
+            })
           Text(Languages.passwordReset[this.languages])
             .textStyle()
             .onClick(() => {
               AppStorage.setOrCreate('isShow_passwordModification_pop', true)
+            })
+            .onHover((flag) => {
+              if (flag) {
+                this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+              } else {
+                console.info("restoreDefault");
+                this.cursorCustom.restoreDefault();
+              }
             })
           Divider()
             .width('100%')
@@ -86,10 +113,18 @@ export struct Topbar {
               const params_1: PopParams_1 = {
                 content: Languages.logout_pop_title[this.languages],
                 down: this.down,
-                confirm: this.confirm
+                confirm: this.confirm,cursorCustom:this.cursorCustom
               }
               PopViewUtils.showPopView<PopParams_1>(wrapBuilder(LaunchLogin_pop), params_1,
                 { alignment: DialogAlignment.Center });
+            })
+            .onHover((flag) => {
+              if (flag) {
+                this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+              } else {
+                console.info("restoreDefault");
+                this.cursorCustom.restoreDefault();
+              }
             })
         }
         .visibility(this.isDown ? Visibility.Visible : Visibility.None)

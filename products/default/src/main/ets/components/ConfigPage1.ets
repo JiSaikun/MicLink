@@ -1,8 +1,9 @@
-import { LengthMetrics } from "@kit.ArkUI"
+import { CursorController, LengthMetrics } from "@kit.ArkUI"
 import { DeviceArrayType_Ble } from "bluetooth"
 import { ThemeConfig } from "common"
 import { Languages, getModelInfoModel, languagesModel } from 'config'
 import { ConnectDevice } from "mouse"
+import { pointer } from "@kit.InputKit"
 
 interface shortcutType {
   keyPreview: string
@@ -38,6 +39,7 @@ export struct ConfigPage1 {
   @State voice_recognition_shortcut: string = '' //语音识别快捷键
   @State voice_translation_shortcut: string = '' //语音翻译快捷键
   @State screenshot_recognition_shortcut: string = '' //截图识别快捷键
+  cursorCustom: CursorController = this.getUIContext().getCursorController();
 
   aboutToAppear(): void {
     this.shortcut_change()
@@ -107,6 +109,14 @@ export struct ConfigPage1 {
             .fontWeight(400)
             .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
         }
+        .onHover((flag) => {
+          if (flag) {
+            this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+          } else {
+            console.info("restoreDefault");
+            this.cursorCustom.restoreDefault();
+          }
+        })
         .onClick(() => {
           if (this.device_isBle) {
             this.devices[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition =
@@ -144,7 +154,14 @@ export struct ConfigPage1 {
             .fontWeight(400)
             .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
         }
-
+        .onHover((flag) => {
+          if (flag) {
+            this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+          } else {
+            console.info("restoreDefault");
+            this.cursorCustom.restoreDefault();
+          }
+        })
         .onClick(() => {
           if (this.device_isBle) {
             this.devices[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition =
@@ -184,6 +201,14 @@ export struct ConfigPage1 {
             .fontWeight(400)
             .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
         }
+        .onHover((flag) => {
+          if (flag) {
+            this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+          } else {
+            console.info("restoreDefault");
+            this.cursorCustom.restoreDefault();
+          }
+        })
         .onClick(() => {
           this.isEnableLongVoiceRecog = true
         })
@@ -209,6 +234,14 @@ export struct ConfigPage1 {
             .fontWeight(400)
             .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
         }
+        .onHover((flag) => {
+          if (flag) {
+            this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+          } else {
+            console.info("restoreDefault");
+            this.cursorCustom.restoreDefault();
+          }
+        })
         .onClick(() => {
           this.isEnableLongVoiceRecog = false
         })
@@ -222,6 +255,14 @@ export struct ConfigPage1 {
         .fontWeight(400)
         .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
       Select(this.convert_LanguagesToOptions())
+        .onHover((flag) => {
+          if (flag) {
+            this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+          } else {
+            console.info("restoreDefault");
+            this.cursorCustom.restoreDefault();
+          }
+        })
         .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.languages[this.getDefaultSelectedIndex_from(this.speech_Recognition_languages)]))
         .onSelect((index: number) => {
           if (this.device_isBle) {
@@ -295,6 +336,14 @@ export struct ConfigPage1 {
           .onSelect((index: number) => {
             this.from_languages = this.getModelInfo.transLanguages[index].code
           })
+          .onHover((flag) => {
+            if (flag) {
+              this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+            } else {
+              console.info("restoreDefault");
+              this.cursorCustom.restoreDefault();
+            }
+          })
           .selected(this.getDefaultSelectedIndex_from(this.from_languages))
           .width(200)
           .font({ size: 14, weight: 400 })
@@ -313,6 +362,14 @@ export struct ConfigPage1 {
           .margin({ left: 20, right: 20 })
           .flexShrink(1)
         Select(this.convert_ttsLanguagesToOptions())
+          .onHover((flag) => {
+            if (flag) {
+              this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+            } else {
+              console.info("restoreDefault");
+              this.cursorCustom.restoreDefault();
+            }
+          })
           .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.to_languages)]))
           .onSelect((index: number) => {
             this.to_languages = this.getModelInfo.transLanguages[index].code
@@ -381,6 +438,14 @@ export struct ConfigPage1 {
             .fontWeight(400)
             .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
         }
+        .onHover((flag) => {
+          if (flag) {
+            this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+          } else {
+            console.info("restoreDefault");
+            this.cursorCustom.restoreDefault();
+          }
+        })
         .onClick(() => {
           this.isWordScan_Translation = true
         })
@@ -406,6 +471,14 @@ export struct ConfigPage1 {
             .fontWeight(400)
             .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
         }
+        .onHover((flag) => {
+          if (flag) {
+            this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+          } else {
+            console.info("restoreDefault");
+            this.cursorCustom.restoreDefault();
+          }
+        })
         .onClick(() => {
           this.isWordScan_Translation = false
         })
@@ -420,6 +493,14 @@ export struct ConfigPage1 {
         .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
       Flex({ alignItems: ItemAlign.Center, justifyContent: FlexAlign.SpaceBetween }) {
         Select(this.convert_ttsLanguagesToOptions())
+          .onHover((flag) => {
+            if (flag) {
+              this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+            } else {
+              console.info("restoreDefault");
+              this.cursorCustom.restoreDefault();
+            }
+          })
           .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.wordScan_from_languages)]))
           .onSelect((index: number) => {
             this.wordScan_from_languages = this.getModelInfo.transLanguages[index].code
@@ -441,6 +522,14 @@ export struct ConfigPage1 {
           .margin({ left: 20, right: 20 })
           .flexShrink(1)
         Select(this.convert_ttsLanguagesToOptions())
+          .onHover((flag) => {
+            if (flag) {
+              this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+            } else {
+              console.info("restoreDefault");
+              this.cursorCustom.restoreDefault();
+            }
+          })
           .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.wordScan_to_languages)]))
           .onSelect((index: number) => {
             this.wordScan_to_languages = this.getModelInfo.transLanguages[index].code
@@ -492,6 +581,14 @@ export struct ConfigPage1 {
             .fontWeight(400)
             .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
         }
+        .onHover((flag) => {
+          if (flag) {
+            this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+          } else {
+            console.info("restoreDefault");
+            this.cursorCustom.restoreDefault();
+          }
+        })
         .onClick(() => {
           this.isOCR_Translate_Toggle = true
         })
@@ -516,6 +613,14 @@ export struct ConfigPage1 {
             .fontWeight(400)
             .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
         }
+        .onHover((flag) => {
+          if (flag) {
+            this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+          } else {
+            console.info("restoreDefault");
+            this.cursorCustom.restoreDefault();
+          }
+        })
         .onClick(() => {
           this.isOCR_Translate_Toggle = false
         })
@@ -530,6 +635,14 @@ export struct ConfigPage1 {
         .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
       Flex({ alignItems: ItemAlign.Center, justifyContent: FlexAlign.SpaceBetween }) {
         Select(this.convert_ttsLanguagesToOptions())
+          .onHover((flag) => {
+            if (flag) {
+              this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+            } else {
+              console.info("restoreDefault");
+              this.cursorCustom.restoreDefault();
+            }
+          })
           .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.screenshotOCR_from_languages)]))
           .onSelect((index: number) => {
             this.screenshotOCR_from_languages = this.getModelInfo.transLanguages[index].code
@@ -552,6 +665,14 @@ export struct ConfigPage1 {
           .margin({ left: 20, right: 20 })
           .flexShrink(1)
         Select(this.convert_ttsLanguagesToOptions())
+          .onHover((flag) => {
+            if (flag) {
+              this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+            } else {
+              console.info("restoreDefault");
+              this.cursorCustom.restoreDefault();
+            }
+          })
           .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.screenshotOCR_to_languages)]))
           .onSelect((index: number) => {
             this.screenshotOCR_to_languages = this.getModelInfo.transLanguages[index].code
@@ -601,6 +722,14 @@ export struct ConfigPage1 {
         .fontWeight(400)
         .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
       Select(this.searchEngine)
+        .onHover((flag) => {
+          if (flag) {
+            this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+          } else {
+            console.info("restoreDefault");
+            this.cursorCustom.restoreDefault();
+          }
+        })
         .value(this.searchEngine[AppStorage.get('EnhancedBrowserSearch') as number].value)
         .onSelect((index: number, value) => {
           AppStorage.setOrCreate('EnhancedBrowserSearch', index)
@@ -648,6 +777,14 @@ export struct ConfigPage1 {
             .fontWeight(400)
             .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
         }
+        .onHover((flag) => {
+          if (flag) {
+            this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+          } else {
+            console.info("restoreDefault");
+            this.cursorCustom.restoreDefault();
+          }
+        })
         .onClick(() => {
           this.isAutoCloseVoiceTransPop = true
         })
@@ -673,6 +810,14 @@ export struct ConfigPage1 {
             .fontWeight(400)
             .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
         }
+        .onHover((flag) => {
+          if (flag) {
+            this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+          } else {
+            console.info("restoreDefault");
+            this.cursorCustom.restoreDefault();
+          }
+        })
         .onClick(() => {
           this.isAutoCloseVoiceTransPop = false
         })

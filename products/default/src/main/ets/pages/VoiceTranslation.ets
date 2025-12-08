@@ -1,11 +1,12 @@
 import { Float_Window } from 'float_window'
 import { ConnectDevice, translate_Response, Communication, _translate, translate_Params } from "mouse"
 import { getModelInfoModel, languagesModel } from 'config'
-import { promptAction } from '@kit.ArkUI'
+import { CursorController, promptAction } from '@kit.ArkUI'
 import { pasteboard } from '@kit.BasicServicesKit'; //复制
 import { BusinessError } from '@kit.BasicServicesKit';
 import { globalShortcutService } from 'utils';
 import { DeviceArrayType_Ble } from 'bluetooth';
+import { pointer } from '@kit.InputKit';
 
 /**
  * 语音翻译悬浮窗
@@ -32,6 +33,7 @@ struct VoiceTranslation {
   // 1. 初始化滚动控制器
   private scroller_to: Scroller = new Scroller();
   private scroller_from: Scroller = new Scroller();
+  cursorCustom: CursorController = this.getUIContext().getCursorController();
 
   updata() {
     if (this.changeText) {
@@ -202,6 +204,14 @@ struct VoiceTranslation {
         Image($r('app.media.Frame_12'))
           .width(50)
           .height(50)
+          .onHover((flag) => {
+            if (flag) {
+              this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+            } else {
+              console.info("restoreDefault");
+              this.cursorCustom.restoreDefault();
+            }
+          })
           .onClick(() => {
             Float_Window.destroyWindow(Float_Window.window_VoiceTranslation)
             Float_Window.showVoiceTranslation = false
@@ -317,6 +327,14 @@ struct VoiceTranslation {
               .border({ width: 1, color: $r('app.string.DEFAULT_BORDER_COLOR') })
               .backgroundColor(Color.White)
               .width(150)
+              .onHover((flag) => {
+                if (flag) {
+                  this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+                } else {
+                  console.info("restoreDefault");
+                  this.cursorCustom.restoreDefault();
+                }
+              })
             Text('至')
               .fontSize(12)
               .fontWeight(400)
@@ -341,6 +359,14 @@ struct VoiceTranslation {
               })
               .selected(this.getDefaultSelectedIndex_from(this.voiceOrText ? this.to_languages :
               this.wordScan_to_languages))
+              .onHover((flag) => {
+                if (flag) {
+                  this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+                } else {
+                  console.info("restoreDefault");
+                  this.cursorCustom.restoreDefault();
+                }
+              })
               .width('100%')
               .font({ size: 12, weight: 400 })
               .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
@@ -353,6 +379,14 @@ struct VoiceTranslation {
               .width(25)
               .height(25)
               .padding(4)
+              .onHover((flag) => {
+                if (flag) {
+                  this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+                } else {
+                  console.info("restoreDefault");
+                  this.cursorCustom.restoreDefault();
+                }
+              })
               .onClick(() => {
                 try {
                   const pasteData =

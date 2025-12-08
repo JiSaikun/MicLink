@@ -1,8 +1,9 @@
 import { Languages } from "config"
-import { promptAction } from "@kit.ArkUI"
+import { CursorController, promptAction } from "@kit.ArkUI"
 import { getCode_Params, resetPwd_Params } from "../model/UserModel"
 import { _getCode, _resetPwd } from "../viewmodel/UserViewModel"
 import { AxiosError } from "@ohos/axios"
+import { pointer } from "@kit.InputKit"
 
 @Component
 export struct PasswordModification_pop {
@@ -16,7 +17,7 @@ export struct PasswordModification_pop {
   @State sendState: boolean = false
   private timerId: number = 0 // 用于存储定时器的ID
   @Consume('pageInfo') pageInfo: NavPathStack
-
+  cursorCustom: CursorController = this.getUIContext().getCursorController();
 
   build() {
     Stack() {
@@ -33,6 +34,15 @@ export struct PasswordModification_pop {
             .onClick(() => {
               this.isShow_passwordModification_pop = false
             })
+            .onHover((flag) => {
+              if (flag) {
+                this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+              } else {
+                console.info("restoreDefault");
+                this.cursorCustom.restoreDefault();
+              }
+            })
+
         }
         .width('100%')
 
@@ -85,6 +95,14 @@ export struct PasswordModification_pop {
                   .height('100%')
                   .width(89)
                   .textAlign(TextAlign.Center)
+                  .onHover((flag) => {
+                    if (flag) {
+                      this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+                    } else {
+                      console.info("restoreDefault");
+                      this.cursorCustom.restoreDefault();
+                    }
+                  })
                   .onClick(() => {
                     if (this.sendState) {
                       return
@@ -213,6 +231,14 @@ export struct PasswordModification_pop {
               right: 24,
               bottom: 9,
               left: 24
+            })
+            .onHover((flag) => {
+              if (flag) {
+                this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+              } else {
+                console.info("restoreDefault");
+                this.cursorCustom.restoreDefault();
+              }
             })
             .onClick(() => {
               /******修改密码页*********/

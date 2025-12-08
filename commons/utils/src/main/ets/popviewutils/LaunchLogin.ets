@@ -1,10 +1,13 @@
 import { CommonConstants_pop, Languages } from "config"
+import { CursorController } from "@kit.ArkUI";
+import { pointer } from "@kit.InputKit";
 
 // 步骤1：定义参数对象类型
 export interface PopParams_1 {
   content: string;
   down: () => void;
   confirm: () => void;
+  cursorCustom: CursorController
 }
 
 // let languages: string = AppStorage.get('languages') as string || 'ZH_CN' //语言适配
@@ -21,6 +24,14 @@ export function LaunchLogin_pop(params: PopParams_1) {
       Image($r('app.media.pop_down'))
         .height(44)
         .width(44)
+        .onHover((flag) => {
+          if (flag) {
+            params.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+          } else {
+            console.info("restoreDefault");
+            params.cursorCustom.restoreDefault();
+          }
+        })
         .onClick(params.down)
     }
     .width($r('app.float.pop_launch_column_width'))
@@ -50,6 +61,14 @@ export function LaunchLogin_pop(params: PopParams_1) {
           left: 24
         })
         .onClick(params.confirm)
+        .onHover((flag) => {
+          if (flag) {
+            params.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+          } else {
+            console.info("restoreDefault");
+            params.cursorCustom.restoreDefault();
+          }
+        })
     }
     .justifyContent(FlexAlign.End)
     .height(1)

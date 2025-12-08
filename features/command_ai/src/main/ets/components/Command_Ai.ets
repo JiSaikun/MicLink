@@ -2,6 +2,8 @@ import { PopViewUtils, LaunchLogin_pop, PopParams_1 } from 'utils'
 import CommonConstants from '../common/CommonConstants'
 import { CommonConstants_pop, Languages } from "config" // 导入Languages
 import { ThemeConfig } from 'common';
+import { CursorController } from '@kit.ArkUI';
+import { pointer } from '@kit.InputKit';
 
 // 新增：获取当前语言（与之前ConfigPage1组件保持一致）
 
@@ -38,6 +40,7 @@ export default struct Command_Ai {
   @StorageLink("paletteTheme") paletteTheme: string = ThemeConfig.PaletteTheme
   // 模拟视频数据：替换中文标题为多语言
   @State video_data: videoModel[] = []
+  cursorCustom: CursorController = this.getUIContext().getCursorController();
 
   // 监听语言变化，更新视频数据
   onLanguageChange() {
@@ -143,6 +146,14 @@ export default struct Command_Ai {
         .borderRadius(8)
         .padding(12)
         .flexGS()
+        .onHover((flag) => {
+          if (flag) {
+            this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+          } else {
+            console.info("restoreDefault");
+            this.cursorCustom.restoreDefault();
+          }
+        })
         .onClick(() => {
           this.isShow_CreateNewInstruction_pop = true
         })
@@ -232,6 +243,14 @@ export default struct Command_Ai {
                   .fontColor(this.paletteTheme)
                   .margin({ right: 10 })
                   .fontWeight(CommonConstants.COMMAND_ICON_DEFAULT_WEIGHT)
+                  .onHover((flag) => {
+                    if (flag) {
+                      this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+                    } else {
+                      console.info("restoreDefault");
+                      this.cursorCustom.restoreDefault();
+                    }
+                  })
                   .onClick(() => {
                     this.EditInstruction_pop_currIndex = index
                     this.isShow_EditInstruction_pop = true
@@ -240,13 +259,22 @@ export default struct Command_Ai {
                 Text(Languages.delete[this.languages])
                   .fontWeight(CommonConstants.COMMAND_ICON_DEFAULT_WEIGHT)
                   .fontColor(this.paletteTheme)
+                  .onHover((flag) => {
+                    if (flag) {
+                      this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+                    } else {
+                      console.info("restoreDefault");
+                      this.cursorCustom.restoreDefault();
+                    }
+                  })
                   .onClick(() => {
                     this.EditInstruction_pop_currIndex = index
                     const params_1: PopParams_1 = {
                       // 替换：确定要删除吗?
                       content: Languages.confirm_delete[this.languages],
                       down: this.down,
-                      confirm: this.confirm
+                      confirm: this.confirm,
+                      cursorCustom:this.cursorCustom
                     }
                     PopViewUtils.showPopView<PopParams_1>(wrapBuilder(LaunchLogin_pop), params_1,
                       { alignment: DialogAlignment.Center });

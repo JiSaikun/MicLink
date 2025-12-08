@@ -1,5 +1,6 @@
 import { Languages } from "config"
-import { promptAction } from "@kit.ArkUI"
+import { CursorController, promptAction } from "@kit.ArkUI"
+import { pointer } from "@kit.InputKit"
 
 @Component
 export struct WebUrlToOpen_pop {
@@ -9,6 +10,7 @@ export struct WebUrlToOpen_pop {
   @StorageLink("paletteTheme") paletteTheme: string = ''
   @State showProtocolSelection: boolean = false // 控制协议选择弹窗显示
   @State tempUrl: string = '' // 临时存储用户输入的URL
+  cursorCustom: CursorController = this.getUIContext().getCursorController();
 
   aboutToAppear(): void {
     this.webUrlToOpen = AppStorage.get('webUrlToOpen') as string
@@ -80,6 +82,14 @@ export struct WebUrlToOpen_pop {
             })
             .backgroundColor(this.paletteTheme)
             .borderRadius(5)
+            .onHover((flag) => {
+              if (flag) {
+                this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+              } else {
+                console.info("restoreDefault");
+                this.cursorCustom.restoreDefault();
+              }
+            })
             .onClick(() => {
               const urlRegex = /^(https?:\/\/)?[\w.-]+\.[a-z]{2,}.*$/i;
               if (!urlRegex.test(this.webUrlToOpen)) {
@@ -133,6 +143,14 @@ export struct WebUrlToOpen_pop {
             }
             .width('100%')
             .padding(15)
+            .onHover((flag) => {
+              if (flag) {
+                this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+              } else {
+                console.info("restoreDefault");
+                this.cursorCustom.restoreDefault();
+              }
+            })
             .onClick(() => {
               this.handleProtocolSelection('https://');
             })
@@ -147,6 +165,14 @@ export struct WebUrlToOpen_pop {
             }
             .width('100%')
             .padding(15)
+            .onHover((flag) => {
+              if (flag) {
+                this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+              } else {
+                console.info("restoreDefault");
+                this.cursorCustom.restoreDefault();
+              }
+            })
             .onClick(() => {
               this.handleProtocolSelection('http://');
             })
@@ -161,6 +187,14 @@ export struct WebUrlToOpen_pop {
             }
             .width('100%')
             .padding(15)
+            .onHover((flag) => {
+              if (flag) {
+                this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+              } else {
+                console.info("restoreDefault");
+                this.cursorCustom.restoreDefault();
+              }
+            })
             .onClick(() => {
               this.showProtocolSelection = false;
             })

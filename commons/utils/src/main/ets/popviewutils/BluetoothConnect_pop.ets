@@ -1,10 +1,13 @@
 import { Languages } from "config"
+import { CursorController } from "@kit.ArkUI"
+import { pointer } from "@kit.InputKit"
 
 @Component
 export struct BluetoothConnect_pop {
   @StorageLink('languages') languages: string = 'ZH_CN'
   @Link isShow_bluetoothConnect_pop: boolean
   @Prop isBluetoothConnect_state: boolean //蓝牙检索状态
+  cursorCustom: CursorController = this.getUIContext().getCursorController();
 
   build() {
     Stack() {
@@ -22,6 +25,15 @@ export struct BluetoothConnect_pop {
             .onClick(() => {
               this.isShow_bluetoothConnect_pop = false
             })
+            .onHover((flag) => {
+              if (flag) {
+                this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+              } else {
+                console.info("restoreDefault");
+                this.cursorCustom.restoreDefault();
+              }
+            })
+
         }
         .border({ width: 1, color: '#f8f8f8' })
         .width(622)

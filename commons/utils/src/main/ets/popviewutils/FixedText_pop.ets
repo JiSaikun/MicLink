@@ -1,4 +1,6 @@
 import { Languages } from "config"
+import { CursorController } from "@kit.ArkUI"
+import { pointer } from "@kit.InputKit"
 
 @Component
 export struct FixedText_pop {
@@ -6,6 +8,7 @@ export struct FixedText_pop {
   @StorageLink("paletteTheme") paletteTheme: string = ''
   @StorageLink('fixedText') fixedText: string = '' //输入固定文本
   @Link isShowFixedText_pop: boolean
+  cursorCustom: CursorController = this.getUIContext().getCursorController();
 
   build() {
     Stack() {
@@ -46,6 +49,14 @@ export struct FixedText_pop {
             })
             .backgroundColor(this.paletteTheme)
             .borderRadius(5)
+            .onHover((flag) => {
+              if (flag) {
+                this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+              } else {
+                console.info("restoreDefault");
+                this.cursorCustom.restoreDefault();
+              }
+            })
             .onClick(() => {
               this.isShowFixedText_pop = false
             })

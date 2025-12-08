@@ -9,6 +9,8 @@ import {
   getModelInfoModel, imagesModel, imagesDataModel, Languages
 } from 'config' //获取设备按键信息
 import { DeviceArrayType_Ble } from 'bluetooth'
+import { pointer } from '@kit.InputKit'
+import { CursorController } from '@kit.ArkUI'
 
 @Component
 export struct DevicesConfig {
@@ -25,6 +27,7 @@ export struct DevicesConfig {
   @State currLED: boolean = true
   @State getModelInfo: getModelInfoModel =
     AppStorage.get('getModelInfo') as getModelInfoModel
+  cursorCustom: CursorController = this.getUIContext().getCursorController();
 
   onDidBuild(): void {
     this.data_init()
@@ -82,6 +85,14 @@ export struct DevicesConfig {
             bottom: 10
           })
           .margin({ bottom: 20 })
+          .onHover((flag) => {
+          if (flag) {
+            this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+          } else {
+            console.info("restoreDefault");
+            this.cursorCustom.restoreDefault();
+          }
+        })
           .onClick(() => {
             this.handleKeyReset()
           })

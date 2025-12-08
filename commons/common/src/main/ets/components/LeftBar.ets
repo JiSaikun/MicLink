@@ -1,6 +1,8 @@
 import { Ai_Model, AiModel_data, bottom_data } from '../model/LeftBar_DataModel'
 import { Languages } from 'config'
 import { ThemeConfig } from '../common/ThemeConfig'
+import { CursorController } from '@kit.ArkUI'
+import { pointer } from '@kit.InputKit'
 
 export interface paramModel {
   web: string,
@@ -25,6 +27,7 @@ export struct LeftBar {
   @State width_length: number = 248
   // 添加调试状态
   @State debugInfo: string = ''
+  cursorCustom: CursorController = this.getUIContext().getCursorController();
 
   // 方法：为16进制颜色添加透明度
   addOpacityToHex(hexColor: string, opacity: number): string {
@@ -111,6 +114,14 @@ export struct LeftBar {
               this.width_length = 88;
             })
           })
+          .onHover((flag) => {
+            if (flag) {
+              this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+            } else {
+              console.info("restoreDefault");
+              this.cursorCustom.restoreDefault();
+            }
+          })
       }
       .visibility(this.extend ? Visibility.Visible : Visibility.None)
       .width('100%')
@@ -131,6 +142,14 @@ export struct LeftBar {
             center: { anchor: '__container__', align: VerticalAlign.Center },
           })
           .margin({ left: 24 })
+          .onHover((flag) => {
+            if (flag) {
+              this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+            } else {
+              console.info("restoreDefault");
+              this.cursorCustom.restoreDefault();
+            }
+          })
           .onClick(() => {
             animateTo({
               duration: 500,
@@ -170,6 +189,14 @@ export struct LeftBar {
             .fontColor(this.currentIndex === index ? this.paletteTheme : '')
             .visibility(this.extend ? Visibility.Visible : Visibility.None)
         }
+        .onHover((flag) => {
+          if (flag) {
+            this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+          } else {
+            console.info("restoreDefault");
+            this.cursorCustom.restoreDefault();
+          }
+        })
         .backgroundColor(this.currentIndex === index ? this.getPaletteThemeWithOpacity() : '#f8f8f8')
         .padding({ left: 13 })
         .height(40)
@@ -211,11 +238,19 @@ export struct LeftBar {
             angle: this.mark ? 90 : 0
           })
           .visibility(this.extend ? Visibility.Visible : Visibility.None)
-          .margin({right:13})
+          .margin({ right: 13 })
       }
+      .onHover((flag) => {
+        if (flag) {
+          this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+        } else {
+          console.info("restoreDefault");
+          this.cursorCustom.restoreDefault();
+        }
+      })
       .flexGS()
       .backgroundColor(this.mark ? this.getPaletteThemeWithOpacity() : '#f8f8f8')
-      .padding({ left: 13})
+      .padding({ left: 13 })
       .height(40)
       .borderRadius(8)
       .width('100%')
@@ -252,6 +287,14 @@ export struct LeftBar {
             .fontColor(this.bottomCurrIndex === index ? this.paletteTheme : '')
             .visibility(this.extend ? Visibility.Visible : Visibility.None)
         }
+        .onHover((flag) => {
+          if (flag) {
+            this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+          } else {
+            console.info("restoreDefault");
+            this.cursorCustom.restoreDefault();
+          }
+        })
         .backgroundColor(this.bottomCurrIndex === index ? this.getPaletteThemeWithOpacity() : '#f8f8f8')
         .padding({ left: 13 })
         .height(40)

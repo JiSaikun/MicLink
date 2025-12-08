@@ -1,5 +1,5 @@
 import { ConnectDevice, DeviceInfo, KeyPressType } from 'mouse'
-import { LengthMetrics, promptAction } from "@kit.ArkUI"
+import { CursorController, LengthMetrics, promptAction } from "@kit.ArkUI"
 import { addCustomerKey_Params } from '../model/UserModel'
 import { _addCustomerKey } from '../viewmodel/UserViewModel'
 import {
@@ -13,6 +13,7 @@ import { picker } from '@kit.CoreFileKit'
 import { BusinessError } from '@kit.BasicServicesKit'
 import { OpenFileWithSystemApp } from 'api'
 import { DeviceArrayType_Ble } from 'bluetooth'
+import { pointer } from '@kit.InputKit'
 
 export interface KeymethodConfig {
   key: KeyPressType
@@ -35,6 +36,7 @@ export struct ConfigPage2 {
   @State isLoading: boolean = false
   @State isDataReady: boolean = false
   @State hasDeviceDisconnected: boolean = false
+  cursorCustom: CursorController = this.getUIContext().getCursorController();
 
   // 监听 getModelInfo 变化
   onGetModelInfoChange(): void {
@@ -371,6 +373,14 @@ export struct ConfigPage2 {
                 .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
 
               Select(this.convertChildsToOptions(child.childs || []))
+                .onHover((flag) => {
+                  if (flag) {
+                    this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+                  } else {
+                    console.info("restoreDefault");
+                    this.cursorCustom.restoreDefault();
+                  }
+                })
                 .value(((child.childs[this.getDefaultSelectedIndex(child.childs, index1,
                   index2)] as keyInfos_childs_childsModel).names as LanguageNames)[this.languages])
                 .onSelect((index: number) => {

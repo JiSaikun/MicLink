@@ -1,8 +1,9 @@
 import { DPI_currInfoModel, ConnectDevice, DeviceInfo, MouseICType } from 'mouse'
-import { LengthMetrics } from '@kit.ArkUI'
+import { CursorController, LengthMetrics } from '@kit.ArkUI'
 import { getModelInfoModel, Languages } from 'config'
 import { DeviceArrayType_Ble } from 'bluetooth'
 import { ThemeConfig } from 'common'
+import { pointer } from '@kit.InputKit'
 
 PersistentStorage.persistProp("lowPowerAlertEnabled", true)
 PersistentStorage.persistProp("DPI_currInfo", null)
@@ -30,6 +31,7 @@ export struct ConfigPage3 {
   @Watch('change_LEDstate') @State currLED: boolean =false
   @Watch('change_reportRate') @State reportRate_currIndex: number = 0
   @Watch('change_DPI') @State DPI_currIndex: number = 0
+  cursorCustom: CursorController = this.getUIContext().getCursorController();
   watchDPI_currInfo() {
     if (this.DPI_currInfo) {
       this.DPI_currIndex = this.DPI_currInfo.curr;
@@ -135,6 +137,14 @@ export struct ConfigPage3 {
           .fontWeight(400)
           .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
         Select(this.DPI)
+          .onHover((flag) => {
+            if (flag) {
+              this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+            } else {
+              console.info("restoreDefault");
+              this.cursorCustom.restoreDefault();
+            }
+          })
           .value(this.DPI && this.DPI.length > 0 ? this.DPI[Math.min(Math.max(0, this.DPI_currIndex), this.DPI.length - 1)]?.value : '')
           .onSelect((index: number) => {
             this.DPI_currIndex = index
@@ -154,6 +164,14 @@ export struct ConfigPage3 {
           .fontWeight(400)
           .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
         Select(this.reportRate)
+          .onHover((flag) => {
+            if (flag) {
+              this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+            } else {
+              console.info("restoreDefault");
+              this.cursorCustom.restoreDefault();
+            }
+          })
           .value(this.reportRate && this.reportRate.length > 0 ? this.reportRate[Math.max(0, Math.min(this.reportRate_currIndex, this.reportRate.length - 1))]?.value : '')
           .onSelect((index: number) => {
             this.reportRate_currIndex = index
@@ -194,6 +212,14 @@ export struct ConfigPage3 {
               .fontWeight(400)
               .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
           }
+          .onHover((flag) => {
+            if (flag) {
+              this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+            } else {
+              console.info("restoreDefault");
+              this.cursorCustom.restoreDefault();
+            }
+          })
           .onClick(() => {
             this.currLED = true
           })
@@ -219,6 +245,14 @@ export struct ConfigPage3 {
               .fontWeight(400)
               .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
           }
+          .onHover((flag) => {
+            if (flag) {
+              this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+            } else {
+              console.info("restoreDefault");
+              this.cursorCustom.restoreDefault();
+            }
+          })
           .onClick(() => {
             this.currLED = false
           })
@@ -251,6 +285,14 @@ export struct ConfigPage3 {
             .fontWeight(400)
             .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
         }
+        .onHover((flag) => {
+          if (flag) {
+            this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+          } else {
+            console.info("restoreDefault");
+            this.cursorCustom.restoreDefault();
+          }
+        })
         .onClick(() => {
           this.lowPowerAlertEnabled = true
         })
@@ -274,6 +316,14 @@ export struct ConfigPage3 {
             .fontWeight(400)
             .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
         }
+        .onHover((flag) => {
+          if (flag) {
+            this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+          } else {
+            console.info("restoreDefault");
+            this.cursorCustom.restoreDefault();
+          }
+        })
         .onClick(() => {
           this.lowPowerAlertEnabled = false
         })
