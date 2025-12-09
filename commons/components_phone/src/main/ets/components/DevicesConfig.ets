@@ -142,6 +142,7 @@ struct DevicesConfig {
       }
       .layoutWeight(1)
       .scrollable(false)
+      .animationDuration(0)
       .barHeight(0)
       .barWidth(0)
 
