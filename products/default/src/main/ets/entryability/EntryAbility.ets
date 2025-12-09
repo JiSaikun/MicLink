@@ -3,6 +3,7 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { backgroundTaskManager } from '@kit.BackgroundTasksKit';
+
 // import fs from '@ohos.file.fs';
 
 const DOMAIN = 0x0000;
@@ -12,7 +13,7 @@ export default class EntryAbility extends UIAbility {
     this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
 
-    // if (want.uri) {
+    // if (want.uri) { //申请允许其他应用的文件导入到本应用中。
     //   const fileUri = want.uri; // 获取文件URI
     //   console.warn('获取文件URI:'+fileUri)
     //   try {
@@ -23,6 +24,9 @@ export default class EntryAbility extends UIAbility {
     //   }
     // }
 
+    /**
+     * 申请长时任务
+     */
     let wantAgentInfo: wantAgent.WantAgentInfo = {
       // 点击通知后，将要执行的动作列表
       wants: [

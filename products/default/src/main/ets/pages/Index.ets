@@ -251,6 +251,7 @@ struct Index {
 
   aboutToAppear(): void {
     ThemeConfig.PaletteTheme = this.paletteTheme
+    // const context =  this.getUIContext().getHostContext() as common.UIAbilityContext;//正规；暂不做更改
     const context = getContext(this) as common.UIAbilityContext;
     AppStorage.setOrCreate('context', context);
     AppStorage.setOrCreate('currpageIsAI', true);
@@ -357,7 +358,9 @@ struct Index {
 
               TabContent() { // AI-办公
                 Stack() {
-                  Content({ web:'https://asrai.miclink.net/?sno=123&productCode=999999&config=configMiclink_B_1755079145452#/aiOffice'  })
+                  Content({
+                    web: 'https://asrai.miclink.net/?sno=123&productCode=999999&config=configMiclink_B_1755079145452#/aiOffice'
+                  })
                   Topbar()
                 }
                 .height('100%')

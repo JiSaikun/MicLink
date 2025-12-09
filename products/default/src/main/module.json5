@@ -110,15 +110,15 @@
     "pages": "$profile:main_pages",
     "abilities": [
       {
-        "name": "EntryAbility",
-        "srcEntry": "./ets/entryability/EntryAbility.ets",
-        "description": "$string:EntryAbility_desc",
-        "minWindowHeight": 600,
-        "minWindowWidth": 1000,
-        "icon": "$media:layered_image",
-        "label": "$string:EntryAbility_label",
-        "startWindowIcon": "$media:Vector",
-        "startWindowBackground": "$color:start_window_background",
+        "name": "EntryAbility", // UIAbility组件的名称
+        "srcEntry": "./ets/entryability/EntryAbility.ets",// UIAbility组件的代码路径
+        "description": "$string:EntryAbility_desc", // UIAbility组件的描述信息
+        "minWindowHeight": 600,//窗口最小宽度
+        "minWindowWidth": 1000,//窗口最小高度
+        "icon": "$media:layered_image",// UIAbility组件的图标
+        "label": "$string:EntryAbility_label", // UIAbility组件的标签
+        "startWindowIcon": "$media:Vector",// UIAbility组件启动页面图标资源文件的索引————启动背景图
+        "startWindowBackground": "$color:start_window_background", // UIAbility组件启动页面背景颜色资源文件的索引
         "exported": true,
         "skills": [
           {
