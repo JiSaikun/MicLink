@@ -1392,6 +1392,7 @@ export class BlueTooth_devices {
               devices[this.device_currIndex]) {
                 // 首先更新本地设备数据
                 devices[this.device_currIndex].getModelInfo = getModelInfo;
+
                 console.warn('设备模型信息已设置');
 
                 // 直接更新本地设备数据，然后强制创建全新的AppStorage数据
@@ -1425,6 +1426,12 @@ export class BlueTooth_devices {
                   freshDevices.push(newDevice);
                 }
                 AppStorage.setOrCreate('devices', freshDevices);
+                if (AppStorage.get('flax')) {
+                  AppStorage.setOrCreate('flax',false)
+                  setTimeout(()=>{
+                    AppStorage.setOrCreate('flax',true)
+                  },50)
+                }
 
                 // 使用全新的数组更新AppStorage
                 // AppStorage.setOrCreate('devices', fres

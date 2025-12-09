@@ -31,9 +31,12 @@ struct DevicesConfig {
   @State currLED: boolean = true
   @State getModelInfo: getModelInfoModel =
     AppStorage.get('getModelInfo') as getModelInfoModel
+  @StorageLink("flax") flax: boolean = true
+
   onDidBuild(): void {
     this.data_init()
   }
+
   aboutToAppear(): void {
     // console.log(JSON.stringify(this.pageInfo.getParamByName('DevicesConfig')))
     this.device_isBle = this.pageInfo.getParamByName('DevicesConfig')[0] as boolean
@@ -47,7 +50,8 @@ struct DevicesConfig {
         this.mouseconfig = null
       }
     } else {
-      if (ConnectDevice.Communication && deviceIndex >= 0 && deviceIndex < ConnectDevice.Communication.length && ConnectDevice.Communication[deviceIndex]) {
+      if (ConnectDevice.Communication && deviceIndex >= 0 && deviceIndex < ConnectDevice.Communication.length &&
+      ConnectDevice.Communication[deviceIndex]) {
         this.mouseconfig = ConnectDevice.Communication[deviceIndex].mouseconfig as DeviceInfo
       } else {
         console.error('2.4G设备索引无效或设备不存在:', deviceIndex, ConnectDevice.Communication?.length)
@@ -55,6 +59,7 @@ struct DevicesConfig {
       }
     }
   }
+
   data_init() {
     switch (this.mouseconfig?.reportRate) {
       case 125:
@@ -73,6 +78,7 @@ struct DevicesConfig {
     this.DPI_currIndex = this.mouseconfig?.dpiLevel as number - 1
     this.currLED = this.mouseconfig?.atmosphereLight as boolean
   }
+
   getdeviesImage(): string {
     if (!this.getModelInfo || !this.getModelInfo.images) {
       return ''
@@ -84,8 +90,6 @@ struct DevicesConfig {
     }
     return ''
   }
-
-
 
   build() {
     NavDestination() {
@@ -118,15 +122,21 @@ struct DevicesConfig {
 
       Tabs({ controller: this.controller }) {
         TabContent() {
-          SmartSettings({device_isBle:this.device_isBle})
+          if (this.flax) {
+            SmartSettings({ device_isBle: this.device_isBle })
+          }
         }
 
         TabContent() {
-          ButtonConfiguration({device_isBle:this.device_isBle})
+          if (this.flax) {
+            ButtonConfiguration({ device_isBle: this.device_isBle })
+          }
         }
 
         TabContent() {
-          DeviceSettings({device_isBle:this.device_isBle})
+          if (this.flax) {
+            DeviceSettings({ device_isBle: this.device_isBle })
+          }
         }
 
       }

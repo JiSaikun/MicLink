@@ -1969,6 +1969,31 @@ export class Languages {
     "TH_TH": "ปิดอัตโนมัติ Popup การแปลเสียง",
     "JA_JP": "音声翻訳ポップアップ自動閉じ"
   }
+  static readonly voice_translation_settings: LanguageNames = {
+    "DE_DE": "Sprachübersetzungseinstellungen",
+    "KA_KA": "ხმოვანი თარგმანის პარამეტრები",
+    "ZH_TW": "語音翻譯設定",
+    "KO_KR": "음성 번역 설정",
+    "EN_US": "Voice Translation Settings",
+    "AR_SA": "إعدادات ترجمة الصوت",
+    "ZH_CN": "语音翻译设置",
+    "ES_ES": "Configuración de Traducción de Voz",
+    "ZH_TI": "ལུགས་འཕྲིན་དབྱེ་སྐྱོང་སྐྱེད་སྟངས",
+    "IT_IT": "Impostazioni di Traduzione Vocale",
+    "RU_RU": "Настройки перевода голоса",
+    "FIL_PH": "Mga Setting ng Voice Translation",
+    "MAY_MAY": "Tetapan Terjemahan Suara",
+    "UYGUR": "سىزىق تەرجىمى ئورۇنلاشتۇرۇشى",
+    "TR_TR": "Ses Çevirisi Ayarları",
+    "ID_ID": "Pengaturan Terjemahan Suara",
+    "VI_VN": "Cài đặt Dịch Giọng nói",
+    "MO_MO": "語音翻譯設定",
+    "FR_FR": "Paramètres de Traduction Vocale",
+    "MN_MN": "дууны орчууллын тохиргоо",
+    "TH_TH": "การตั้งค่าการแปลเสียง",
+    "JA_JP": "音声翻訳設定"
+  }
+
   static readonly lighting: LanguageNames = {
     "DE_DE": "LED-Leuchteneffekt",
     "KA_KA": "LED ანათების ეფექტი",

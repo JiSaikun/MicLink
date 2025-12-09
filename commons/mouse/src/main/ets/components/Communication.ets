@@ -2069,7 +2069,12 @@ export class Communication {
             ConnectDevice.Communication[this.device_currIndex].getModelInfo = getModelInfo;
             const newList: DeviceArrayType[] = JSON.parse(JSON.stringify(ConnectDevice.Communication));
             AppStorage.setOrCreate('devicesList', newList);
-
+            if (AppStorage.get('flax')) {
+              AppStorage.setOrCreate('flax',false)
+              setTimeout(()=>{
+                AppStorage.setOrCreate('flax',true)
+              },10)
+            }
             /**
              * 判断当前设备是否是键盘
              */

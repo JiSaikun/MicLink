@@ -36,6 +36,7 @@ PersistentStorage.persistProp("wordScan_from_languages", 'ZH_CN') //划词翻译
 PersistentStorage.persistProp("wordScan_to_languages", 'EN_US') //划词翻译目标语言
 PersistentStorage.persistProp("screenshotOCR_from_languages", 'ZH_CN') //截图识别/翻译源语言
 PersistentStorage.persistProp("screenshotOCR_to_languages", 'EN_US') //截图识别/翻译目标语言
+PersistentStorage.persistProp("flax", true) //手机专属标记
 
 @Entry
 @Component
@@ -48,7 +49,7 @@ struct Index {
     KeyPressType.DEFAULT
   @StorageLink("device_isBle") device_isBle: boolean = false
   @StorageLink('devices') devices: DeviceArrayType_Ble[] = []
-  @Watch('a') @State currPageIndex: number = 1
+  @Watch('changeflax') @State currPageIndex: number = 1
   @State barList: BarType[] = [
     { img: 'un_tab_device', selectImg: 'tab_device', title: Languages.tab_device[this.languages] },
     // { img: 'un_tab_command', selectImg: 'tab_command', title: Languages.tab_command[this.languages] },
@@ -57,14 +58,14 @@ struct Index {
     { img: 'un_tab_profile', selectImg: 'tab_profile', title: Languages.tab_profile[this.languages] },
   ]
   private controller: TabsController = new TabsController()
-  @State flax: boolean = true
+  @StorageLink("flax") flax: boolean = true
 
-  a() {
-    if (this.currPageIndex !== 0) {
+  changeflax() {
+    if (this.currPageIndex === 0) {
       this.flax = false
       setTimeout(() => {
         this.flax = true
-      }, 50)
+      }, 10)
     }
 
   }

@@ -29,6 +29,8 @@ export struct SmartSettings {
   @State speech_Recognition_languages: string = 'ZH_CN' //语音识别语种
   @State keystroke: SelectOption[] = [{ value: '动态打字模式' }, { value: '兼容打字模式' }] //打字输入模式选项
   @StorageLink('keystroke_curr') keystroke_curr: number = 0 //打字输入模式选项
+  @StorageLink('EnhancedBrowserSearch') EnhancedBrowserSearch: number = 0 //搜索引擎
+  @StorageLink('speech_Recognition_languages') speech_Recognition_languages_curr: number = 0 //语音识别语种索引
   @State searchEngine: SelectOption[] = [{ value: '百度' }, { value: 'Google' }] //搜索引擎
   @StorageLink('from_languages') from_languages: string = 'ZH_CN' //语音翻译源语言
   @StorageLink('to_languages') to_languages: string = 'EN_US' //语音翻译目标语言
@@ -45,19 +47,16 @@ export struct SmartSettings {
     const deviceIndex = AppStorage.get('device_show_currIndex') as number || 0
 
     if (this.device_isBle) {
-      if (this.devices && deviceIndex >= 0 && deviceIndex < this.devices.length && this.devices[deviceIndex]) {
         this.isPunctuationRecognition = this.devices[deviceIndex].isPunctuationRecognition
         this.speech_Recognition_languages = this.devices[deviceIndex].speech_Recognition_languages //语音识别语种
-      } else {
-        console.error('ConfigPage1: 蓝牙设备索引无效或设备不存在:', deviceIndex, this.devices?.length)
-        this.isPunctuationRecognition = true
-        this.speech_Recognition_languages = 'ZH_CN'
-      }
+        this.speech_Recognition_languages_curr = this.getDefaultSelectedIndex_from(this.speech_Recognition_languages)
+
     } else {
       if (ConnectDevice.Communication && deviceIndex >= 0 && deviceIndex < ConnectDevice.Communication.length &&
       ConnectDevice.Communication[deviceIndex]) {
         this.isPunctuationRecognition = ConnectDevice.Communication[deviceIndex].isPunctuationRecognition
         this.speech_Recognition_languages = ConnectDevice.Communication[deviceIndex].speech_Recognition_languages
+        this.speech_Recognition_languages_curr = this.getDefaultSelectedIndex_from(this.speech_Recognition_languages)
       } else {
         console.error('ConfigPage1: 2.4G设备索引无效或设备不存在:', deviceIndex, ConnectDevice.Communication?.length)
         this.isPunctuationRecognition = true
@@ -81,7 +80,12 @@ export struct SmartSettings {
               .fontColor(CommonConfig.hintTextColor_select)
               .fontWeight(CommonConfig.fontWeight_400)
             Blank()
-            Toggle({ type: ToggleType.Switch, isOn: true }).onChange((value: boolean) => {
+            Toggle({
+              type: ToggleType.Switch,
+              isOn: this.device_isBle ?
+              this.devices[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition :
+              ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition
+            }).onChange((value: boolean) => {
               // 处理开关逻辑
               if (value) {
                 console.log('*****************************打开识别带标点****************************************')
@@ -118,7 +122,7 @@ export struct SmartSettings {
               .fontColor(CommonConfig.hintTextColor_select)
               .fontWeight(CommonConfig.fontWeight_400)
             Blank()
-            Toggle({ type: ToggleType.Switch, isOn: true }).onChange((value: boolean) => {
+            Toggle({ type: ToggleType.Switch, isOn: this.isEnableLongVoiceRecog }).onChange((value: boolean) => {
               // 处理开关逻辑
               if (value) {
                 console.log('*****************************打开长语音识别****************************************')
@@ -143,24 +147,26 @@ export struct SmartSettings {
               .fontColor(CommonConfig.hintTextColor_select)
               .fontWeight(CommonConfig.fontWeight_400)
             Blank()
-            Text(this.getDefaultSelectedIndex_fromText(this.getModelInfo.languages[this.getDefaultSelectedIndex_from(this.speech_Recognition_languages)]))
-              .fontSize(CommonConfig.fontSize_12)
-              .fontColor(CommonConfig.hintTextColor)
-              .fontWeight(CommonConfig.fontWeight_400)
-              .margin({ right: 8 })
-            Image($r('app.media.Arrow_to_the_right'))
-              .width(16)
-              .height(16)
-              .onClick(() => {
-                let params: Languages_params = {
-                  ListData: this.convert_LanguagesToOptions(),
-                  OperationType: 'speech_Recognition_languages',
-                  currLanguages: this.getDefaultSelectedIndex_from(this.speech_Recognition_languages),
-                  device_isBle: this.device_isBle,
-                  title: Languages.recognize_speech[this.languages]
-                }
-                this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
-              })
+            Row() {
+              Text(this.getDefaultSelectedIndex_fromText(this.getModelInfo.languages[this.speech_Recognition_languages_curr]))
+                .fontSize(CommonConfig.fontSize_12)
+                .fontColor(CommonConfig.hintTextColor)
+                .fontWeight(CommonConfig.fontWeight_400)
+                .margin({ right: 8 })
+              Image($r('app.media.Arrow_to_the_right'))
+                .width(16)
+                .height(16)
+            }.onClick(() => {
+              let params: Languages_params = {
+                ListData: this.convert_LanguagesToOptions(),
+                OperationType: 'speech_Recognition_languages',
+                currLanguages: this.speech_Recognition_languages_curr,
+                device_isBle: this.device_isBle,
+                title: Languages.recognize_speech[this.languages]
+              }
+              this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
+            })
+
           }
           .width('100%')
           .alignItems(VerticalAlign.Center)
@@ -173,24 +179,26 @@ export struct SmartSettings {
               .fontColor(CommonConfig.hintTextColor_select)
               .fontWeight(CommonConfig.fontWeight_400)
             Blank()
-            Text(this.keystroke[this.keystroke_curr].value)
-              .fontSize(CommonConfig.fontSize_12)
-              .fontColor(CommonConfig.hintTextColor)
-              .fontWeight(CommonConfig.fontWeight_400)
-              .margin({ right: 8 })
-            Image($r('app.media.Arrow_to_the_right'))
-              .width(16)
-              .height(16)
-              .onClick(() => {
-                let params: Languages_params = {
-                  ListData: this.keystroke,
-                  OperationType: 'typing_input_mode',
-                  currLanguages: 0,
-                  device_isBle: this.device_isBle,
-                  title: Languages.typing_input_mode[this.languages]
-                }
-                this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
-              })
+            Row() {
+              Text(this.keystroke[this.keystroke_curr].value)
+                .fontSize(CommonConfig.fontSize_12)
+                .fontColor(CommonConfig.hintTextColor)
+                .fontWeight(CommonConfig.fontWeight_400)
+                .margin({ right: 8 })
+              Image($r('app.media.Arrow_to_the_right'))
+                .width(16)
+                .height(16)
+            }.onClick(() => {
+              let params: Languages_params = {
+                ListData: this.keystroke,
+                OperationType: 'typing_input_mode',
+                currLanguages: this.keystroke_curr,
+                device_isBle: this.device_isBle,
+                title: Languages.typing_input_mode[this.languages]
+              }
+              this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
+            })
+
           }
           .width('100%')
           .alignItems(VerticalAlign.Center)
@@ -201,7 +209,7 @@ export struct SmartSettings {
         .backgroundColor(Color.White)
 
         //======================================================语音翻译设置
-        Text(Languages.voice_recognition_settings[this.languages])
+        Text(Languages.voice_translation_settings[this.languages])
           .fontSize(CommonConfig.fontSize_14)
           .fontWeight(CommonConfig.fontWeight_400)
           .fontColor(CommonConfig.hintTextColor)
@@ -212,24 +220,26 @@ export struct SmartSettings {
               .fontColor(CommonConfig.hintTextColor_select)
               .fontWeight(CommonConfig.fontWeight_400)
             Blank()
-            Text(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.from_languages)]))
-              .fontSize(CommonConfig.fontSize_12)
-              .fontColor(CommonConfig.hintTextColor)
-              .fontWeight(CommonConfig.fontWeight_400)
-              .margin({ right: 8 })
-            Image($r('app.media.Arrow_to_the_right'))
-              .width(16)
-              .height(16)
-              .onClick(() => {
-                let params: Languages_params = {
-                  ListData: this.convert_ttsLanguagesToOptions(),
-                  OperationType: 'from_languages',
-                  currLanguages: this.getDefaultSelectedIndex_from(this.from_languages),
-                  device_isBle: this.device_isBle,
-                  title: Languages.translation_language[this.languages]
-                }
-                this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
-              })
+            Row() {
+              Text(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.from_languages)]))
+                .fontSize(CommonConfig.fontSize_12)
+                .fontColor(CommonConfig.hintTextColor)
+                .fontWeight(CommonConfig.fontWeight_400)
+                .margin({ right: 8 })
+              Image($r('app.media.Arrow_to_the_right'))
+                .width(16)
+                .height(16)
+            }.onClick(() => {
+              let params: Languages_params = {
+                ListData: this.convert_ttsLanguagesToOptions(),
+                OperationType: 'from_languages',
+                currLanguages: this.getDefaultSelectedIndex_from(this.from_languages),
+                device_isBle: this.device_isBle,
+                title: Languages.translation_language[this.languages]
+              }
+              this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
+            })
+
           }
           .width('100%')
           .alignItems(VerticalAlign.Center)
@@ -252,7 +262,7 @@ export struct SmartSettings {
               .fontColor(CommonConfig.hintTextColor_select)
               .fontWeight(CommonConfig.fontWeight_400)
             Blank()
-            Toggle({ type: ToggleType.Switch, isOn: true }).onChange((value: boolean) => {
+            Toggle({ type: ToggleType.Switch, isOn: this.isWordScan_Translation }).onChange((value: boolean) => {
               // 处理开关逻辑
               if (value) {
                 console.log('*****************************打开划词翻译****************************************')
@@ -277,24 +287,26 @@ export struct SmartSettings {
               .fontColor(CommonConfig.hintTextColor_select)
               .fontWeight(CommonConfig.fontWeight_400)
             Blank()
-            Text(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.wordScan_from_languages)]))
-              .fontSize(CommonConfig.fontSize_12)
-              .fontColor(CommonConfig.hintTextColor)
-              .fontWeight(CommonConfig.fontWeight_400)
-              .margin({ right: 8 })
-            Image($r('app.media.Arrow_to_the_right'))
-              .width(16)
-              .height(16)
-              .onClick(() => {
-                let params: Languages_params = {
-                  ListData: this.convert_ttsLanguagesToOptions(),
-                  OperationType: 'wordScan_from_languages',
-                  currLanguages: this.getDefaultSelectedIndex_from(this.wordScan_from_languages),
-                  device_isBle: this.device_isBle,
-                  title: Languages.translation_language[this.languages]
-                }
-                this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
-              })
+            Row() {
+              Text(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.wordScan_from_languages)]))
+                .fontSize(CommonConfig.fontSize_12)
+                .fontColor(CommonConfig.hintTextColor)
+                .fontWeight(CommonConfig.fontWeight_400)
+                .margin({ right: 8 })
+              Image($r('app.media.Arrow_to_the_right'))
+                .width(16)
+                .height(16)
+            }.onClick(() => {
+              let params: Languages_params = {
+                ListData: this.convert_ttsLanguagesToOptions(),
+                OperationType: 'wordScan_from_languages',
+                currLanguages: this.getDefaultSelectedIndex_from(this.wordScan_from_languages),
+                device_isBle: this.device_isBle,
+                title: Languages.translation_language[this.languages]
+              }
+              this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
+            })
+
           }
           .width('100%')
           .alignItems(VerticalAlign.Center)
@@ -317,7 +329,7 @@ export struct SmartSettings {
               .fontColor(CommonConfig.hintTextColor_select)
               .fontWeight(CommonConfig.fontWeight_400)
             Blank()
-            Toggle({ type: ToggleType.Switch, isOn: true }).onChange((value: boolean) => {
+            Toggle({ type: ToggleType.Switch, isOn: this.isOCR_Translate_Toggle }).onChange((value: boolean) => {
               // 处理开关逻辑
               if (value) {
                 console.log('*****************************打开截图识别/翻译****************************************')
@@ -342,24 +354,26 @@ export struct SmartSettings {
               .fontColor(CommonConfig.hintTextColor_select)
               .fontWeight(CommonConfig.fontWeight_400)
             Blank()
-            Text(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.wordScan_from_languages)]))
-              .fontSize(CommonConfig.fontSize_12)
-              .fontColor(CommonConfig.hintTextColor)
-              .fontWeight(CommonConfig.fontWeight_400)
-              .margin({ right: 8 })
-            Image($r('app.media.Arrow_to_the_right'))
-              .width(16)
-              .height(16)
-              .onClick(() => {
-                let params: Languages_params = {
-                  ListData: this.convert_ttsLanguagesToOptions(),
-                  OperationType: 'screenshotOCR_from_languages',
-                  currLanguages: this.getDefaultSelectedIndex_from(this.screenshotOCR_from_languages),
-                  device_isBle: this.device_isBle,
-                  title: Languages.translation_language[this.languages]
-                }
-                this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
-              })
+            Row() {
+              Text(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.wordScan_from_languages)]))
+                .fontSize(CommonConfig.fontSize_12)
+                .fontColor(CommonConfig.hintTextColor)
+                .fontWeight(CommonConfig.fontWeight_400)
+                .margin({ right: 8 })
+              Image($r('app.media.Arrow_to_the_right'))
+                .width(16)
+                .height(16)
+            }.onClick(() => {
+              let params: Languages_params = {
+                ListData: this.convert_ttsLanguagesToOptions(),
+                OperationType: 'screenshotOCR_from_languages',
+                currLanguages: this.getDefaultSelectedIndex_from(this.screenshotOCR_from_languages),
+                device_isBle: this.device_isBle,
+                title: Languages.translation_language[this.languages]
+              }
+              this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
+            })
+
           }
           .width('100%')
           .alignItems(VerticalAlign.Center)
@@ -382,24 +396,26 @@ export struct SmartSettings {
               .fontColor(CommonConfig.hintTextColor_select)
               .fontWeight(CommonConfig.fontWeight_400)
             Blank()
-            Text(this.searchEngine[AppStorage.get('EnhancedBrowserSearch') as number].value)
-              .fontSize(CommonConfig.fontSize_12)
-              .fontColor(CommonConfig.hintTextColor)
-              .fontWeight(CommonConfig.fontWeight_400)
-              .margin({ right: 8 })
-            Image($r('app.media.Arrow_to_the_right'))
-              .width(16)
-              .height(16)
-              .onClick(() => {
-                let params: Languages_params = {
-                  ListData: this.searchEngine,
-                  OperationType: 'EnhancedBrowserSearch',
-                  currLanguages: AppStorage.get('EnhancedBrowserSearch') as number,
-                  device_isBle: this.device_isBle,
-                  title: Languages.typing_input_mode[this.languages]
-                }
-                this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
-              })
+            Row() {
+              Text(this.searchEngine[this.EnhancedBrowserSearch].value)
+                .fontSize(CommonConfig.fontSize_12)
+                .fontColor(CommonConfig.hintTextColor)
+                .fontWeight(CommonConfig.fontWeight_400)
+                .margin({ right: 8 })
+              Image($r('app.media.Arrow_to_the_right'))
+                .width(16)
+                .height(16)
+            }.onClick(() => {
+              let params: Languages_params = {
+                ListData: this.searchEngine,
+                OperationType: 'EnhancedBrowserSearch',
+                currLanguages: this.EnhancedBrowserSearch,
+                device_isBle: this.device_isBle,
+                title: Languages.typing_input_mode[this.languages]
+              }
+              this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
+            })
+
           }
           .width('100%')
           .alignItems(VerticalAlign.Center)
@@ -422,7 +438,7 @@ export struct SmartSettings {
               .fontColor(CommonConfig.hintTextColor_select)
               .fontWeight(CommonConfig.fontWeight_400)
             Blank()
-            Toggle({ type: ToggleType.Switch, isOn: true }).onChange((value: boolean) => {
+            Toggle({ type: ToggleType.Switch, isOn: this.isAutoCloseVoiceTransPop }).onChange((value: boolean) => {
               // 处理开关逻辑
               if (value) {
                 console.log('*****************************打开语音翻译弹窗自动关闭****************************************')

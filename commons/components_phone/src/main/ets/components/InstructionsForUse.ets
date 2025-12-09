@@ -1,4 +1,5 @@
 import { DeviceArrayType_Ble } from "bluetooth"
+import { UserLoginInfo } from "common"
 import { getModelInfoModel } from "config"
 import { ConnectDevice } from "mouse"
 import { CommonConfig } from "../common/CommonConfig"
@@ -18,6 +19,7 @@ struct InstructionsForUse {
   @StorageLink('languages') languages: string = 'ZH_CN'
   @State search: string = ''
   @State currTitleIndex: number = 0
+  @State userLoginInfo: UserLoginInfo = AppStorage.get('userLoginInfo') as UserLoginInfo
 
   build() {
     NavDestination() {
@@ -25,7 +27,7 @@ struct InstructionsForUse {
         // TopTitle({ title: Languages.editProfile[this.languages] })
         TopTitle({ title: "" })
           .margin({ bottom: 24 })
-        Text('Hi，用户123456')
+        Text('Hi，'+`${this.userLoginInfo ? this.userLoginInfo.name : '用户123456'}`)
           .fontWeight(CommonConfig.fontWeight_400)
           .fontColor(CommonConfig.hintTextColor_select)
           .fontSize(CommonConfig.fontSize_24)

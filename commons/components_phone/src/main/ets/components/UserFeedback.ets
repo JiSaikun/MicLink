@@ -18,7 +18,7 @@ struct UserFeedback {
   @StorageLink("paletteTheme") paletteTheme: string = CommonConfig.PaletteTheme
   @Consume('pageInfo') pageInfo: NavPathStack
   @StorageLink('languages') languages: string = 'ZH_CN'
-  @State feedbackText: string = '你可以描述你遇到的问题'
+  @State feedbackText: string = ''
   @State imageUris: string[] = []
 
   build() {
@@ -33,8 +33,9 @@ struct UserFeedback {
           .fontColor(CommonConfig.hintTextColor)
           .margin({ bottom: 12 })
         Column() {
-          TextArea({ text: $$this.feedbackText })
-            .fontColor(CommonConfig.hintTextColor)
+          TextArea({ text: $$this.feedbackText,placeholder:'你可以描述你遇到的问题' })
+            .placeholderColor(CommonConfig.hintTextColor)
+            .fontColor(CommonConfig.hintTextColor_select)
             .fontWeight(CommonConfig.fontWeight_400)
             .fontSize(CommonConfig.fontSize_14)
             .maxLength(300)
@@ -117,7 +118,7 @@ struct UserFeedback {
 async function fileSelect(): Promise<string[]> {
   let photoSelectOptions = new photoAccessHelper.PhotoSelectOptions();
   photoSelectOptions.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
-  photoSelectOptions.maxSelectNumber = 9;
+  photoSelectOptions.maxSelectNumber = 1;
   // photoSelectOptions.isPhotoTakingSupported = false; // 隐藏拍照功能
   let photoPicker = new photoAccessHelper.PhotoViewPicker();
   try {

@@ -61,6 +61,7 @@ struct Changelanguage {
               this.currOption = index
               switch (this.params?.OperationType) {
                 case 'speech_Recognition_languages': //识别语言
+                  AppStorage.setOrCreate('speech_Recognition_languages',index)
                   if (this.params.device_isBle) {
                     this.devices[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages =
                       this.getModelInfo.languages[index].code
@@ -94,6 +95,10 @@ struct Changelanguage {
                   AppStorage.setOrCreate('reportRate_currIndex', index)
                   break
               }
+              AppStorage.setOrCreate('flax',false)
+              setTimeout(() => {
+                AppStorage.setOrCreate('flax',true)
+              }, 10)
             })
           }, (item: SelectOption) => item.value.toString())
         }
@@ -102,6 +107,7 @@ struct Changelanguage {
       .padding({ left: 12, right: 12 })
       .backgroundColor(Color.White)
       .layoutWeight(1)
+      .align(Alignment.TopStart)
 
     }
     .padding({ left: 16, right: 16, bottom: 16 })
