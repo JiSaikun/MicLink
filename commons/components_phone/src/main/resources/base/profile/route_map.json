@@ -119,6 +119,14 @@
       "data": {
         "description": "使用说明"
       }
+    },
+    {
+      "name": "Changelanguage",
+      "pageSourceFile": "src/main/ets/components/Changelanguage.ets",
+      "buildFunction": "ChangelanguageBuilder",
+      "data": {
+        "description": "选择服用页面"
+      }
     }
   ]
 }

@@ -122,8 +122,9 @@
         "exported": true,
         "skills": [
           {
-            "entities": [
-              "entity.system.home"
+            "entities": [/*描述组件的类别属性，用于缩小匹配范围*/
+              "entity.system.home",//桌面组件
+              //"entity.system.browsable"//（可浏览组件）
             ],
             "actions": [
               "action.system.home"

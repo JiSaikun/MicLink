@@ -3,6 +3,7 @@ import { LengthMetrics } from "@kit.ArkUI"
 import { getModelInfoModel, imagesDataModel, imagesModel } from "../common/config/GetModelInfoModel"
 import { ConnectDevice, DeviceArrayType } from "mouse"
 import { DeviceArrayType_Ble } from "bluetooth"
+import { adapterManager } from "api"
 
 @Component
 export struct Tab_device {
@@ -135,6 +136,9 @@ export struct Tab_device {
               .backgroundColor('#EAEAEA')
               .padding(8)
               .borderRadius(16)
+              .onClick(() => {
+                adapterManager.openBluetooth()
+              })
 
           }
           .width('100%')
@@ -156,11 +160,11 @@ export struct Tab_device {
         .margin({ bottom: 16 })
 
       } else {
-        List() {
+        Tabs(){
           ForEach(this.devicesList, (item: DeviceArrayType, index) => {
             if (item.getModelInfo) {
-              ListItem() {
-                Column() {
+              TabContent(){
+                Flex({ direction: FlexDirection.Column }) {
                   Column() {
                     Flex() {
                       Column() {
@@ -191,22 +195,26 @@ export struct Tab_device {
 
                       Flex({ direction: FlexDirection.Column }) {
                         Column({ space: 4 }) {
-                          if (item.mouseconfig?.batteryLevel as number >= 80) {
-                            Image($r('app.media.power_level_full'))
-                              .width(20).height(10)
-                          } else if (item.mouseconfig?.batteryLevel as number >= 60) {
-                            Image($r('app.media.power_level_80'))
-                              .width(20).height(10)
-                          } else if (item.mouseconfig?.batteryLevel as number >= 40) {
-                            Image($r('app.media.power_level_60'))
-                              .width(20).height(10)
-                          } else if (item.mouseconfig?.batteryLevel as number >= 20) {
-                            Image($r('app.media.power_level_40'))
-                              .width(20).height(10)
-                          } else {
-                            Image($r('app.media.power_level_20'))
-                              .width(20).height(10)
+                          Column(){
+                            if (item.mouseconfig?.batteryLevel as number >= 80) {
+                              Image($r('app.media.power_level_full'))
+                                .width(24)
+                            } else if (item.mouseconfig?.batteryLevel as number >= 60) {
+                              Image($r('app.media.power_level_80'))
+                                .width(24)
+                            } else if (item.mouseconfig?.batteryLevel as number >= 40) {
+                              Image($r('app.media.power_level_60'))
+                                .width(24)
+                            } else if (item.mouseconfig?.batteryLevel as number >= 20) {
+                              Image($r('app.media.power_level_40'))
+                                .width(24)
+                            } else {
+                              Image($r('app.media.power_level_20'))
+                                .width(24)
+                            }
                           }
+                          .height(24)
+
                           Text('剩余电量')
                             .fontWeight(CommonConfig.fontWeight_400)
                             .fontSize(CommonConfig.fontSize_12)
@@ -214,7 +222,9 @@ export struct Tab_device {
                         }
                         .flexGrow(1)
                         .flexShrink(1)
-
+                        .width('100%')
+                        .height(100)
+                        .justifyContent(FlexAlign.Center)
                         Column({ space: 4 }) {
                           Image($r('app.media.USB_true'))
                             .visibility(item.connectionmethod === 1 ? Visibility.Visible : Visibility.None)
@@ -222,7 +232,7 @@ export struct Tab_device {
                           Image($r('app.media.USB_false'))
                             .visibility(item.connectionmethod === 1 ? Visibility.None : Visibility.Visible)
                             .margin({ left: 10 }).width(24)
-                          Text('剩余电量')
+                          Text('2.4G模式')
                             .fontWeight(CommonConfig.fontWeight_400)
                             .fontSize(CommonConfig.fontSize_12)
                             .fontColor(item.connectionmethod === 1 ? CommonConfig.hintTextColor_select :
@@ -230,7 +240,9 @@ export struct Tab_device {
                         }
                         .flexGrow(1)
                         .flexShrink(1)
-
+                        .width('100%')
+                        .height(100)
+                        .justifyContent(FlexAlign.Center)
                         Column({ space: 4 }) {
                           Image($r('app.media.Bluetooth_true'))
                             .visibility(item.connectionmethod === 2 ? Visibility.Visible : Visibility.None)
@@ -246,15 +258,17 @@ export struct Tab_device {
                         }
                         .flexGrow(1)
                         .flexShrink(1)
+                        .width('100%')
+                        .height(100)
+                        .justifyContent(FlexAlign.Center)
                       }
                       .layoutWeight(1)
                       .height('100%')
-                      .border({ width: 1, color: '#EAEAEA', style: BorderStyle.Dashed })
+                      .border({ width: {left:1}, color: '#EAEAEA', style: BorderStyle.Dashed })
                       .padding({ left: 16 })
                     }
                     .width('100%')
                     .height('100%')
-
                   }
                   .width('100%')
                   .borderRadius(16)
@@ -262,6 +276,7 @@ export struct Tab_device {
                   .backgroundColor(CommonConfig.commonBackgroundColor)
                   .border({ width: 1, color: Color.White })
                   .margin({ bottom: 16 })
+                  .layoutWeight(1)
 
                   Column({ space: 8 }) {
                     Row() {
@@ -322,7 +337,7 @@ export struct Tab_device {
                       Text('去设置')
                         .fontWeight(CommonConfig.fontWeight_400)
                         .fontSize(CommonConfig.fontSize_11)
-                        .fontColor(CommonConfig.hintTextColor)
+                        .fontColor('#fff')
                         .backgroundColor(this.paletteTheme)
                         .padding(8)
                         .borderRadius(16)
@@ -354,15 +369,18 @@ export struct Tab_device {
                   .backgroundColor(CommonConfig.commonBackgroundColor)
                   .border({ width: 1, color: Color.White })
                   .margin({ bottom: 16 })
+                  .flexGrow(1)
+                  .flexShrink(1)
                 }
+                .height('100%')
 
               }
             }
           }, (item: DeviceArrayType) => JSON.stringify(item.Communication))
           ForEach(this.devices, (item: DeviceArrayType_Ble, index) => {
             if (item.getModelInfo) {
-              ListItem() {
-                Column() {
+              TabContent(){
+                Flex({ direction: FlexDirection.Column }) {
                   Column() {
                     Flex() {
                       Column() {
@@ -393,22 +411,27 @@ export struct Tab_device {
 
                       Flex({ direction: FlexDirection.Column }) {
                         Column({ space: 4 }) {
-                          if (item.mouseconfig?.batteryLevel as number >= 80) {
-                            Image($r('app.media.power_level_full'))
-                              .width(20).height(10)
-                          } else if (item.mouseconfig?.batteryLevel as number >= 60) {
-                            Image($r('app.media.power_level_80'))
-                              .width(20).height(10)
-                          } else if (item.mouseconfig?.batteryLevel as number >= 40) {
-                            Image($r('app.media.power_level_60'))
-                              .width(20).height(10)
-                          } else if (item.mouseconfig?.batteryLevel as number >= 20) {
-                            Image($r('app.media.power_level_40'))
-                              .width(20).height(10)
-                          } else {
-                            Image($r('app.media.power_level_20'))
-                              .width(20).height(10)
+                          Column(){
+                            if (item.mouseconfig?.batteryLevel as number >= 80) {
+                              Image($r('app.media.power_level_full'))
+                                .width(24)
+                            } else if (item.mouseconfig?.batteryLevel as number >= 60) {
+                              Image($r('app.media.power_level_80'))
+                                .width(24)
+                            } else if (item.mouseconfig?.batteryLevel as number >= 40) {
+                              Image($r('app.media.power_level_60'))
+                                .width(24)
+                            } else if (item.mouseconfig?.batteryLevel as number >= 20) {
+                              Image($r('app.media.power_level_40'))
+                                .width(24)
+                            } else {
+                              Image($r('app.media.power_level_20'))
+                                .width(24)
+                            }
                           }
+                          .height(24)
+                          .justifyContent(FlexAlign.Center)
+
                           Text('剩余电量')
                             .fontWeight(CommonConfig.fontWeight_400)
                             .fontSize(CommonConfig.fontSize_12)
@@ -416,15 +439,17 @@ export struct Tab_device {
                         }
                         .flexGrow(1)
                         .flexShrink(1)
-
+                        .width('100%')
+                        .height(100)
+                        .justifyContent(FlexAlign.Center)
                         Column({ space: 4 }) {
                           Image($r('app.media.USB_true'))
                             .visibility(item.connectionmethod === 1 ? Visibility.Visible : Visibility.None)
-                            .margin({ left: 10 }).width(24)
+                            .width(24)
                           Image($r('app.media.USB_false'))
                             .visibility(item.connectionmethod === 1 ? Visibility.None : Visibility.Visible)
-                            .margin({ left: 10 }).width(24)
-                          Text('剩余电量')
+                            .width(24)
+                          Text('2.4G模式')
                             .fontWeight(CommonConfig.fontWeight_400)
                             .fontSize(CommonConfig.fontSize_12)
                             .fontColor(item.connectionmethod === 1 ? CommonConfig.hintTextColor_select :
@@ -432,14 +457,17 @@ export struct Tab_device {
                         }
                         .flexGrow(1)
                         .flexShrink(1)
+                        .width('100%')
+                        .height(100)
+                        .justifyContent(FlexAlign.Center)
 
                         Column({ space: 4 }) {
                           Image($r('app.media.Bluetooth_true'))
                             .visibility(item.connectionmethod === 2 ? Visibility.Visible : Visibility.None)
-                            .margin({ left: 10 }).width(24)
+                            .width(24)
                           Image($r('app.media.Bluetooth_false'))
                             .visibility(item.connectionmethod === 2 ? Visibility.None : Visibility.Visible)
-                            .margin({ left: 10 }).width(24)
+                            .width(24)
                           Text('蓝牙模式')
                             .fontWeight(CommonConfig.fontWeight_400)
                             .fontSize(CommonConfig.fontSize_12)
@@ -447,16 +475,17 @@ export struct Tab_device {
                             CommonConfig.hintTextColor)
                         }
                         .flexGrow(1)
+                        .width('100%')
+                        .height(100)
+                        .justifyContent(FlexAlign.Center)
                         .flexShrink(1)
                       }
                       .layoutWeight(1)
                       .height('100%')
-                      .border({ width: 1, color: '#EAEAEA', style: BorderStyle.Dashed })
+                      .border({ width: { left:1}, color: '#EAEAEA', style: BorderStyle.Dashed })
                       .padding({ left: 16 })
                     }
                     .width('100%')
-                    .height('100%')
-
                   }
                   .width('100%')
                   .borderRadius(16)
@@ -464,6 +493,7 @@ export struct Tab_device {
                   .backgroundColor(CommonConfig.commonBackgroundColor)
                   .border({ width: 1, color: Color.White })
                   .margin({ bottom: 16 })
+                  .layoutWeight(1)
 
                   Column({ space: 8 }) {
                     Row() {
@@ -524,18 +554,17 @@ export struct Tab_device {
                       Text('去设置')
                         .fontWeight(CommonConfig.fontWeight_400)
                         .fontSize(CommonConfig.fontSize_11)
-                        .fontColor(CommonConfig.hintTextColor)
+                        .fontColor('#fff')
                         .backgroundColor(this.paletteTheme)
                         .padding(8)
                         .borderRadius(16)
                         .onClick(() => {
-                          if (this.getModelInfo) {
-                            AppStorage.setOrCreate('device_show_currIndex', index)
-                            AppStorage.setOrCreate('getModelInfo',
-                              this.devices[AppStorage.get('device_show_currIndex') as number].getModelInfo)
-                            this.device_isBle = true
-                            this.pageInfo.pushPath({ "name": 'DevicesConfig', param: this.device_isBle })
-                          }
+                          console.error(JSON.stringify(this.getModelInfo))
+                          AppStorage.setOrCreate('device_show_currIndex', index)
+                          AppStorage.setOrCreate('getModelInfo',
+                            this.devices[index].getModelInfo)
+                          this.device_isBle = true
+                          this.pageInfo.pushPath({ "name": 'DevicesConfig', param: this.device_isBle })
                         })
 
                     }
@@ -556,13 +585,18 @@ export struct Tab_device {
                   .backgroundColor(CommonConfig.commonBackgroundColor)
                   .border({ width: 1, color: Color.White })
                   .margin({ bottom: 16 })
-                }
 
+                }
+                .height('100%')
               }
             }
           }, (item: DeviceArrayType_Ble) => JSON.stringify(item.BlueTooth_devices.device_address))
-        }
 
+        }
+        .barWidth(0)
+        .barHeight(0)
+        .height(410)
+        .width('100%')
       }
 
 

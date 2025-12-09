@@ -72,5 +72,4 @@ export class AdapterManager {
   }
 }
 
-let adapterManager = new AdapterManager();
-export default adapterManager as AdapterManager;
+export let adapterManager = new AdapterManager();

@@ -349,98 +349,106 @@ export struct ButtonConfiguration {
   }
 
   build() {
-    Column({ space: 12 }) {
-      if (this.hasDeviceDisconnected) {
-        // 设备断开时显示空白
-        Blank()
-      } else if (this.getModelInfo?.keyInfos && this.isDataReady) {
-        // 数据加载完成的情况
-        Flex({ space: { main: LengthMetrics.px(12) }, direction: FlexDirection.Column }) {
-          ForEach(this.getModelInfo.keyInfos, (item: keyInfosModel, index1: number) => {
-            Text((item.names as LanguageNames)[this.languages])
-              .fontSize(CommonConfig.fontSize_14)
-              .fontWeight(CommonConfig.fontWeight_400)
+
+      Column({ space: 12 }) {
+        if (this.hasDeviceDisconnected) {
+          // 设备断开时显示空白
+          Blank()
+        } else if (this.getModelInfo?.keyInfos && this.isDataReady) {
+          Scroll(){
+            // 数据加载完成的情况
+            Column({space:12}) {
+              ForEach(this.getModelInfo.keyInfos, (item: keyInfosModel, index1: number) => {
+                Text((item.names as LanguageNames)[this.languages])
+                  .fontSize(CommonConfig.fontSize_14)
+                  .fontWeight(CommonConfig.fontWeight_400)
+                  .fontColor(CommonConfig.hintTextColor)
+
+                ForEach(item.childs, (child: keyInfos_childsModel, index2: number) => {
+                  Column() {
+
+                    Row() {
+                      Text((child.names as LanguageNames)[this.languages])
+                        .fontSize(CommonConfig.fontSize_14)
+                        .fontColor(CommonConfig.hintTextColor_select)
+                        .fontWeight(CommonConfig.fontWeight_400)
+                      Blank()
+                      Text(((child.childs[this.getDefaultSelectedIndex(child.childs, index1,
+                        index2)] as keyInfos_childs_childsModel).names as LanguageNames)[this.languages])
+                        .fontSize(CommonConfig.fontSize_12)
+                        .fontColor(CommonConfig.hintTextColor)
+                        .fontWeight(CommonConfig.fontWeight_400)
+                        .margin({ right: 8 })
+                      Image($r('app.media.Arrow_to_the_right'))
+                        .width(16)
+                        .height(16)
+                        .onClick(() => {
+                          this.index1 = index1
+                          this.index2 = index2
+                          this.childs = child.childs
+                          this.currentSelectedIndex = -1
+                          let params: Languages_params = {
+                            ListData: this.convertChildsToOptions(child.childs || []),
+                            OperationType: 'buttonConfiguration',
+                            currLanguages: this.getDefaultSelectedIndex(child.childs || [], index1, index2),
+                            device_isBle: this.device_isBle,
+                            title: (child.names as LanguageNames)[this.languages],
+                          }
+                          this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
+                        })
+                    }
+                    .width('100%')
+                    .alignItems(VerticalAlign.Center)
+                    .padding({ top: 12, bottom: 12 })
+                  }
+                  .padding({ left: 12, right: 12 })
+                  .borderRadius(12)
+                  .backgroundColor(Color.White)
+
+                }, (item: keyInfos_childsModel) => item.name)
+
+              }, (item: keyInfosModel) => item.keyName)
+            }
+            .width('100%')
+            .alignItems(HorizontalAlign.Start)
+          }
+          .layoutWeight(1)
+          .scrollBarWidth(0)
+          .align(Alignment.TopStart)
+
+
+          Blank()
+          Column() {
+            Text('固件版本：25')
+              .fontSize(CommonConfig.fontSize_12)
               .fontColor(CommonConfig.hintTextColor)
-
-            ForEach(item.childs, (child: keyInfos_childsModel, index2: number) => {
-              Text((child.names as LanguageNames)[this.languages])
-                .fontSize(CommonConfig.fontSize_14)
-                .fontWeight(CommonConfig.fontWeight_400)
-                .fontColor(CommonConfig.hintTextColor)
-              Column() {
-
-                Row() {
-                  Text((child.names as LanguageNames)[this.languages])
-                    .fontSize(CommonConfig.fontSize_14)
-                    .fontColor(CommonConfig.hintTextColor_select)
-                    .fontWeight(CommonConfig.fontWeight_400)
-                  Blank()
-                  Text(((child.childs[this.getDefaultSelectedIndex(child.childs, index1,
-                    index2)] as keyInfos_childs_childsModel).names as LanguageNames)[this.languages])
-                    .fontSize(CommonConfig.fontSize_12)
-                    .fontColor(CommonConfig.hintTextColor)
-                    .fontWeight(CommonConfig.fontWeight_400)
-                    .margin({ right: 8 })
-                  Image($r('app.media.Arrow_to_the_right'))
-                    .width(16)
-                    .height(16)
-                    .onClick(() => {
-                      this.index1 = index1
-                      this.index2 = index2
-                      this.childs = child.childs
-                      this.currentSelectedIndex = -1
-                      let params: Languages_params = {
-                        ListData: this.convertChildsToOptions(child.childs || []),
-                        OperationType: 'buttonConfiguration',
-                        currLanguages: this.getDefaultSelectedIndex(child.childs || [], index1, index2),
-                        device_isBle: this.device_isBle,
-                        title: (child.names as LanguageNames)[this.languages],
-                      }
-                      this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
-                    })
-                }
-                .width('100%')
-                .alignItems(VerticalAlign.Center)
-                .padding({ top: 12, bottom: 12 })
-              }
-              .padding({ left: 12, right: 12 })
-              .borderRadius(12)
-              .backgroundColor(Color.White)
-
-            }, (item: keyInfos_childsModel) => item.name)
-
-          }, (item: keyInfosModel) => item.keyName)
+              .fontWeight(CommonConfig.fontWeight_400)
+              .margin({ bottom: 8 })
+            Text('SN：ML2023120604000031')
+              .fontSize(CommonConfig.fontSize_12)
+              .fontColor(CommonConfig.hintTextColor)
+              .fontWeight(CommonConfig.fontWeight_400)
+          }
+          .width('100%')
+          .alignItems(HorizontalAlign.Center)
+        } else {
+          // 数据加载中的情况
+          Column() {
+            Text('加载中...')
+              .fontSize(14)
+              .fontColor('#a4aab2')
+          }
+          .width('100%')
+          .height(100)
+          .justifyContent(FlexAlign.Center)
+          .alignItems(HorizontalAlign.Center)
         }
-        .width('100%')
-
-        Blank()
-        Column() {
-          Text('固件版本：25')
-            .fontSize(CommonConfig.fontSize_12)
-            .fontColor(CommonConfig.hintTextColor)
-            .fontWeight(CommonConfig.fontWeight_400)
-            .margin({ bottom: 8 })
-          Text('SN：ML2023120604000031')
-            .fontSize(CommonConfig.fontSize_12)
-            .fontColor(CommonConfig.hintTextColor)
-            .fontWeight(CommonConfig.fontWeight_400)
-        }
-        .width('100%')
-        .alignItems(HorizontalAlign.Center)
-      } else {
-        // 数据加载中的情况
-        Column() {
-          Text('加载中...')
-            .fontSize(14)
-            .fontColor('#a4aab2')
-        }
-        .width('100%')
-        .height(100)
-        .justifyContent(FlexAlign.Center)
-        .alignItems(HorizontalAlign.Center)
       }
-    }
-    .width('100%')
+      .width('100%')
+      .height('100%')
+
+
+
   }
 
   // 保留原有的 Watch_null 方法用于兼容性

@@ -67,383 +67,390 @@ export struct SmartSettings {
   }
 
   build() {
-    Column({ space: 12 }) {
-      //======================================================语音识别设置
-      Text(Languages.voice_recognition_settings[this.languages])
-        .fontSize(CommonConfig.fontSize_14)
-        .fontWeight(CommonConfig.fontWeight_400)
-        .fontColor(CommonConfig.hintTextColor)
-      Column() {
-        Row() {
-          Text(Languages.punctuation_recognition[this.languages])
-            .fontSize(CommonConfig.fontSize_14)
-            .fontColor(CommonConfig.hintTextColor_select)
-            .fontWeight(CommonConfig.fontWeight_400)
-          Blank()
-          Toggle({ type: ToggleType.Switch, isOn: true }).onChange((value: boolean) => {
-            // 处理开关逻辑
-            if (value) {
-              console.log('*****************************打开识别带标点****************************************')
-              if (this.device_isBle) {
-                this.devices[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition =
-                  true
+    Scroll() {
+      Column({ space: 12 }) {
+        //======================================================语音识别设置
+        Text(Languages.voice_recognition_settings[this.languages])
+          .fontSize(CommonConfig.fontSize_14)
+          .fontWeight(CommonConfig.fontWeight_400)
+          .fontColor(CommonConfig.hintTextColor)
+        Column() {
+          Row() {
+            Text(Languages.punctuation_recognition[this.languages])
+              .fontSize(CommonConfig.fontSize_14)
+              .fontColor(CommonConfig.hintTextColor_select)
+              .fontWeight(CommonConfig.fontWeight_400)
+            Blank()
+            Toggle({ type: ToggleType.Switch, isOn: true }).onChange((value: boolean) => {
+              // 处理开关逻辑
+              if (value) {
+                console.log('*****************************打开识别带标点****************************************')
+                if (this.device_isBle) {
+                  this.devices[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition =
+                    true
+                } else {
+                  ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition =
+                    true
+                }
               } else {
-                ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition =
-                  true
+                console.log('****************************关闭识别带标点****************************************')
+                if (this.device_isBle) {
+                  this.devices[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition =
+                    false
+                } else {
+                  ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition =
+                    false
+                }
               }
-            } else {
-              console.log('****************************关闭识别带标点****************************************')
-              if (this.device_isBle) {
-                this.devices[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition =
-                  false
+            })
+              .selectedColor(this.paletteTheme)
+              .height(22)
+              .width(44)
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .padding({ top: 12, bottom: 12 })
+          .border({ width: { bottom: 1 }, color: CommonConfig.commonBackgroundColor })
+
+          Row() {
+            Text(Languages.long_voice_recognition[this.languages])
+              .fontSize(CommonConfig.fontSize_14)
+              .fontColor(CommonConfig.hintTextColor_select)
+              .fontWeight(CommonConfig.fontWeight_400)
+            Blank()
+            Toggle({ type: ToggleType.Switch, isOn: true }).onChange((value: boolean) => {
+              // 处理开关逻辑
+              if (value) {
+                console.log('*****************************打开长语音识别****************************************')
+                this.isEnableLongVoiceRecog = true
               } else {
-                ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition =
-                  false
+                console.log('*****************************关闭长语音识别****************************************')
+                this.isEnableLongVoiceRecog = false
               }
-            }
-          })
-            .selectedColor(this.paletteTheme)
-            .height(22)
-            .width(44)
-        }
-        .width('100%')
-        .alignItems(VerticalAlign.Center)
-        .padding({ top: 12, bottom: 12 })
-        .border({ width: { bottom: 1 }, color: CommonConfig.commonBackgroundColor })
-
-        Row() {
-          Text(Languages.long_voice_recognition[this.languages])
-            .fontSize(CommonConfig.fontSize_14)
-            .fontColor(CommonConfig.hintTextColor_select)
-            .fontWeight(CommonConfig.fontWeight_400)
-          Blank()
-          Toggle({ type: ToggleType.Switch, isOn: true }).onChange((value: boolean) => {
-            // 处理开关逻辑
-            if (value) {
-              console.log('*****************************打开长语音识别****************************************')
-              this.isEnableLongVoiceRecog = true
-            } else {
-              console.log('*****************************关闭长语音识别****************************************')
-              this.isEnableLongVoiceRecog = false
-            }
-          })
-            .selectedColor(this.paletteTheme)
-            .height(22)
-            .width(44)
-        }
-        .width('100%')
-        .alignItems(VerticalAlign.Center)
-        .padding({ top: 12, bottom: 12 })
-        .border({ width: { bottom: 1 }, color: CommonConfig.commonBackgroundColor })
-
-        Row() {
-          Text(Languages.recognize_speech[this.languages])
-            .fontSize(CommonConfig.fontSize_14)
-            .fontColor(CommonConfig.hintTextColor_select)
-            .fontWeight(CommonConfig.fontWeight_400)
-          Blank()
-          Text(this.getDefaultSelectedIndex_fromText(this.getModelInfo.languages[this.getDefaultSelectedIndex_from(this.speech_Recognition_languages)]))
-            .fontSize(CommonConfig.fontSize_12)
-            .fontColor(CommonConfig.hintTextColor)
-            .fontWeight(CommonConfig.fontWeight_400)
-            .margin({ right: 8 })
-          Image($r('app.media.Arrow_to_the_right'))
-            .width(16)
-            .height(16)
-            .onClick(() => {
-              let params: Languages_params = {
-                ListData: this.convert_LanguagesToOptions(),
-                OperationType: 'speech_Recognition_languages',
-                currLanguages: this.getDefaultSelectedIndex_from(this.speech_Recognition_languages),
-                device_isBle: this.device_isBle,
-                title: Languages.recognize_speech[this.languages]
-              }
-              this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
             })
-        }
-        .width('100%')
-        .alignItems(VerticalAlign.Center)
-        .padding({ top: 12, bottom: 12 })
-        .border({ width: { bottom: 1 }, color: CommonConfig.commonBackgroundColor })
+              .selectedColor(this.paletteTheme)
+              .height(22)
+              .width(44)
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .padding({ top: 12, bottom: 12 })
+          .border({ width: { bottom: 1 }, color: CommonConfig.commonBackgroundColor })
 
-        Row() {
-          Text(Languages.typing_input_mode[this.languages])
-            .fontSize(CommonConfig.fontSize_14)
-            .fontColor(CommonConfig.hintTextColor_select)
-            .fontWeight(CommonConfig.fontWeight_400)
-          Blank()
-          Text(this.keystroke[this.keystroke_curr].value)
-            .fontSize(CommonConfig.fontSize_12)
-            .fontColor(CommonConfig.hintTextColor)
-            .fontWeight(CommonConfig.fontWeight_400)
-            .margin({ right: 8 })
-          Image($r('app.media.Arrow_to_the_right'))
-            .width(16)
-            .height(16)
-            .onClick(() => {
-              let params: Languages_params = {
-                ListData: this.keystroke,
-                OperationType: 'typing_input_mode',
-                currLanguages: 0,
-                device_isBle: this.device_isBle,
-                title: Languages.typing_input_mode[this.languages]
+          Row() {
+            Text(Languages.recognize_speech[this.languages])
+              .fontSize(CommonConfig.fontSize_14)
+              .fontColor(CommonConfig.hintTextColor_select)
+              .fontWeight(CommonConfig.fontWeight_400)
+            Blank()
+            Text(this.getDefaultSelectedIndex_fromText(this.getModelInfo.languages[this.getDefaultSelectedIndex_from(this.speech_Recognition_languages)]))
+              .fontSize(CommonConfig.fontSize_12)
+              .fontColor(CommonConfig.hintTextColor)
+              .fontWeight(CommonConfig.fontWeight_400)
+              .margin({ right: 8 })
+            Image($r('app.media.Arrow_to_the_right'))
+              .width(16)
+              .height(16)
+              .onClick(() => {
+                let params: Languages_params = {
+                  ListData: this.convert_LanguagesToOptions(),
+                  OperationType: 'speech_Recognition_languages',
+                  currLanguages: this.getDefaultSelectedIndex_from(this.speech_Recognition_languages),
+                  device_isBle: this.device_isBle,
+                  title: Languages.recognize_speech[this.languages]
+                }
+                this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
+              })
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .padding({ top: 12, bottom: 12 })
+          .border({ width: { bottom: 1 }, color: CommonConfig.commonBackgroundColor })
+
+          Row() {
+            Text(Languages.typing_input_mode[this.languages])
+              .fontSize(CommonConfig.fontSize_14)
+              .fontColor(CommonConfig.hintTextColor_select)
+              .fontWeight(CommonConfig.fontWeight_400)
+            Blank()
+            Text(this.keystroke[this.keystroke_curr].value)
+              .fontSize(CommonConfig.fontSize_12)
+              .fontColor(CommonConfig.hintTextColor)
+              .fontWeight(CommonConfig.fontWeight_400)
+              .margin({ right: 8 })
+            Image($r('app.media.Arrow_to_the_right'))
+              .width(16)
+              .height(16)
+              .onClick(() => {
+                let params: Languages_params = {
+                  ListData: this.keystroke,
+                  OperationType: 'typing_input_mode',
+                  currLanguages: 0,
+                  device_isBle: this.device_isBle,
+                  title: Languages.typing_input_mode[this.languages]
+                }
+                this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
+              })
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .padding({ top: 12, bottom: 12 })
+        }
+        .padding({ left: 12, right: 12 })
+        .borderRadius(12)
+        .backgroundColor(Color.White)
+
+        //======================================================语音翻译设置
+        Text(Languages.voice_recognition_settings[this.languages])
+          .fontSize(CommonConfig.fontSize_14)
+          .fontWeight(CommonConfig.fontWeight_400)
+          .fontColor(CommonConfig.hintTextColor)
+        Column() {
+          Row() {
+            Text(Languages.translation_language[this.languages])
+              .fontSize(CommonConfig.fontSize_14)
+              .fontColor(CommonConfig.hintTextColor_select)
+              .fontWeight(CommonConfig.fontWeight_400)
+            Blank()
+            Text(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.from_languages)]))
+              .fontSize(CommonConfig.fontSize_12)
+              .fontColor(CommonConfig.hintTextColor)
+              .fontWeight(CommonConfig.fontWeight_400)
+              .margin({ right: 8 })
+            Image($r('app.media.Arrow_to_the_right'))
+              .width(16)
+              .height(16)
+              .onClick(() => {
+                let params: Languages_params = {
+                  ListData: this.convert_ttsLanguagesToOptions(),
+                  OperationType: 'from_languages',
+                  currLanguages: this.getDefaultSelectedIndex_from(this.from_languages),
+                  device_isBle: this.device_isBle,
+                  title: Languages.translation_language[this.languages]
+                }
+                this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
+              })
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .padding({ top: 12, bottom: 12 })
+
+        }
+        .padding({ left: 12, right: 12 })
+        .borderRadius(12)
+        .backgroundColor(Color.White)
+
+        //======================================================划词翻译
+        Text(Languages.word_scan_translation[this.languages])
+          .fontSize(CommonConfig.fontSize_14)
+          .fontWeight(CommonConfig.fontWeight_400)
+          .fontColor(CommonConfig.hintTextColor)
+        Column() {
+          Row() {
+            Text(Languages.enable_function[this.languages])
+              .fontSize(CommonConfig.fontSize_14)
+              .fontColor(CommonConfig.hintTextColor_select)
+              .fontWeight(CommonConfig.fontWeight_400)
+            Blank()
+            Toggle({ type: ToggleType.Switch, isOn: true }).onChange((value: boolean) => {
+              // 处理开关逻辑
+              if (value) {
+                console.log('*****************************打开划词翻译****************************************')
+                this.isWordScan_Translation = true
+              } else {
+                console.log('*****************************关闭划词翻译****************************************')
+                this.isWordScan_Translation = false
               }
-              this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
             })
-        }
-        .width('100%')
-        .alignItems(VerticalAlign.Center)
-        .padding({ top: 12, bottom: 12 })
-      }
-      .padding({ left: 12, right: 12 })
-      .borderRadius(12)
-      .backgroundColor(Color.White)
+              .selectedColor(this.paletteTheme)
+              .height(22)
+              .width(44)
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .padding({ top: 12, bottom: 12 })
+          .border({ width: { bottom: 1 }, color: CommonConfig.commonBackgroundColor })
 
-      //======================================================语音翻译设置
-      Text(Languages.voice_recognition_settings[this.languages])
-        .fontSize(CommonConfig.fontSize_14)
-        .fontWeight(CommonConfig.fontWeight_400)
-        .fontColor(CommonConfig.hintTextColor)
-      Column() {
-        Row() {
-          Text(Languages.translation_language[this.languages])
-            .fontSize(CommonConfig.fontSize_14)
-            .fontColor(CommonConfig.hintTextColor_select)
-            .fontWeight(CommonConfig.fontWeight_400)
-          Blank()
-          Text(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.from_languages)]))
-            .fontSize(CommonConfig.fontSize_12)
-            .fontColor(CommonConfig.hintTextColor)
-            .fontWeight(CommonConfig.fontWeight_400)
-            .margin({ right: 8 })
-          Image($r('app.media.Arrow_to_the_right'))
-            .width(16)
-            .height(16)
-            .onClick(() => {
-              let params: Languages_params = {
-                ListData: this.convert_ttsLanguagesToOptions(),
-                OperationType: 'from_languages',
-                currLanguages: this.getDefaultSelectedIndex_from(this.from_languages),
-                device_isBle: this.device_isBle,
-                title: Languages.translation_language[this.languages]
+          Row() {
+            Text(Languages.translation_language[this.languages])
+              .fontSize(CommonConfig.fontSize_14)
+              .fontColor(CommonConfig.hintTextColor_select)
+              .fontWeight(CommonConfig.fontWeight_400)
+            Blank()
+            Text(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.wordScan_from_languages)]))
+              .fontSize(CommonConfig.fontSize_12)
+              .fontColor(CommonConfig.hintTextColor)
+              .fontWeight(CommonConfig.fontWeight_400)
+              .margin({ right: 8 })
+            Image($r('app.media.Arrow_to_the_right'))
+              .width(16)
+              .height(16)
+              .onClick(() => {
+                let params: Languages_params = {
+                  ListData: this.convert_ttsLanguagesToOptions(),
+                  OperationType: 'wordScan_from_languages',
+                  currLanguages: this.getDefaultSelectedIndex_from(this.wordScan_from_languages),
+                  device_isBle: this.device_isBle,
+                  title: Languages.translation_language[this.languages]
+                }
+                this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
+              })
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .padding({ top: 12, bottom: 12 })
+
+        }
+        .padding({ left: 12, right: 12 })
+        .borderRadius(12)
+        .backgroundColor(Color.White)
+
+        //======================================================截图识别/翻译
+        Text(Languages.screenshot_ocr_translation[this.languages])
+          .fontSize(CommonConfig.fontSize_14)
+          .fontWeight(CommonConfig.fontWeight_400)
+          .fontColor(CommonConfig.hintTextColor)
+        Column() {
+          Row() {
+            Text(Languages.enable_function[this.languages])
+              .fontSize(CommonConfig.fontSize_14)
+              .fontColor(CommonConfig.hintTextColor_select)
+              .fontWeight(CommonConfig.fontWeight_400)
+            Blank()
+            Toggle({ type: ToggleType.Switch, isOn: true }).onChange((value: boolean) => {
+              // 处理开关逻辑
+              if (value) {
+                console.log('*****************************打开截图识别/翻译****************************************')
+                this.isOCR_Translate_Toggle = true
+              } else {
+                console.log('*****************************关闭截图识别/翻译****************************************')
+                this.isOCR_Translate_Toggle = false
               }
-              this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
             })
-        }
-        .width('100%')
-        .alignItems(VerticalAlign.Center)
-        .padding({ top: 12, bottom: 12 })
+              .selectedColor(this.paletteTheme)
+              .height(22)
+              .width(44)
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .padding({ top: 12, bottom: 12 })
+          .border({ width: { bottom: 1 }, color: CommonConfig.commonBackgroundColor })
 
-      }
-      .padding({ left: 12, right: 12 })
-      .borderRadius(12)
-      .backgroundColor(Color.White)
-      //======================================================划词翻译
-      Text(Languages.word_scan_translation[this.languages])
-        .fontSize(CommonConfig.fontSize_14)
-        .fontWeight(CommonConfig.fontWeight_400)
-        .fontColor(CommonConfig.hintTextColor)
-      Column() {
-        Row() {
-          Text(Languages.enable_function[this.languages])
-            .fontSize(CommonConfig.fontSize_14)
-            .fontColor(CommonConfig.hintTextColor_select)
-            .fontWeight(CommonConfig.fontWeight_400)
-          Blank()
-          Toggle({ type: ToggleType.Switch, isOn: true }).onChange((value: boolean) => {
-            // 处理开关逻辑
-            if (value) {
-              console.log('*****************************打开划词翻译****************************************')
-              this.isWordScan_Translation = true
-            } else {
-              console.log('*****************************关闭划词翻译****************************************')
-              this.isWordScan_Translation = false
-            }
-          })
-            .selectedColor(this.paletteTheme)
-            .height(22)
-            .width(44)
+          Row() {
+            Text(Languages.translation_language[this.languages])
+              .fontSize(CommonConfig.fontSize_14)
+              .fontColor(CommonConfig.hintTextColor_select)
+              .fontWeight(CommonConfig.fontWeight_400)
+            Blank()
+            Text(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.wordScan_from_languages)]))
+              .fontSize(CommonConfig.fontSize_12)
+              .fontColor(CommonConfig.hintTextColor)
+              .fontWeight(CommonConfig.fontWeight_400)
+              .margin({ right: 8 })
+            Image($r('app.media.Arrow_to_the_right'))
+              .width(16)
+              .height(16)
+              .onClick(() => {
+                let params: Languages_params = {
+                  ListData: this.convert_ttsLanguagesToOptions(),
+                  OperationType: 'screenshotOCR_from_languages',
+                  currLanguages: this.getDefaultSelectedIndex_from(this.screenshotOCR_from_languages),
+                  device_isBle: this.device_isBle,
+                  title: Languages.translation_language[this.languages]
+                }
+                this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
+              })
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .padding({ top: 12, bottom: 12 })
+
         }
-        .width('100%')
-        .alignItems(VerticalAlign.Center)
-        .padding({ top: 12, bottom: 12 })
-        .border({ width: { bottom: 1 }, color: CommonConfig.commonBackgroundColor })
-        Row() {
-          Text(Languages.translation_language[this.languages])
-            .fontSize(CommonConfig.fontSize_14)
-            .fontColor(CommonConfig.hintTextColor_select)
-            .fontWeight(CommonConfig.fontWeight_400)
-          Blank()
-          Text(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.wordScan_from_languages)]))
-            .fontSize(CommonConfig.fontSize_12)
-            .fontColor(CommonConfig.hintTextColor)
-            .fontWeight(CommonConfig.fontWeight_400)
-            .margin({ right: 8 })
-          Image($r('app.media.Arrow_to_the_right'))
-            .width(16)
-            .height(16)
-            .onClick(() => {
-              let params: Languages_params = {
-                ListData: this.convert_ttsLanguagesToOptions(),
-                OperationType: 'wordScan_from_languages',
-                currLanguages: this.getDefaultSelectedIndex_from(this.wordScan_from_languages),
-                device_isBle: this.device_isBle,
-                title: Languages.translation_language[this.languages]
+        .padding({ left: 12, right: 12 })
+        .borderRadius(12)
+        .backgroundColor(Color.White)
+
+        //======================================================语音搜索设置
+        Text(Languages.voice_search_settings[this.languages])
+          .fontSize(CommonConfig.fontSize_14)
+          .fontWeight(CommonConfig.fontWeight_400)
+          .fontColor(CommonConfig.hintTextColor)
+        Column() {
+          Row() {
+            Text('搜索引擎')
+              .fontSize(CommonConfig.fontSize_14)
+              .fontColor(CommonConfig.hintTextColor_select)
+              .fontWeight(CommonConfig.fontWeight_400)
+            Blank()
+            Text(this.searchEngine[AppStorage.get('EnhancedBrowserSearch') as number].value)
+              .fontSize(CommonConfig.fontSize_12)
+              .fontColor(CommonConfig.hintTextColor)
+              .fontWeight(CommonConfig.fontWeight_400)
+              .margin({ right: 8 })
+            Image($r('app.media.Arrow_to_the_right'))
+              .width(16)
+              .height(16)
+              .onClick(() => {
+                let params: Languages_params = {
+                  ListData: this.searchEngine,
+                  OperationType: 'EnhancedBrowserSearch',
+                  currLanguages: AppStorage.get('EnhancedBrowserSearch') as number,
+                  device_isBle: this.device_isBle,
+                  title: Languages.typing_input_mode[this.languages]
+                }
+                this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
+              })
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .padding({ top: 12, bottom: 12 })
+
+        }
+        .padding({ left: 12, right: 12 })
+        .borderRadius(12)
+        .backgroundColor(Color.White)
+
+        //======================================================外部弹窗设置
+        Text(Languages.external_popup_settings[this.languages])
+          .fontSize(CommonConfig.fontSize_14)
+          .fontWeight(CommonConfig.fontWeight_400)
+          .fontColor(CommonConfig.hintTextColor)
+        Column() {
+          Row() {
+            Text(Languages.auto_close_voice_translation_popup[this.languages])
+              .fontSize(CommonConfig.fontSize_14)
+              .fontColor(CommonConfig.hintTextColor_select)
+              .fontWeight(CommonConfig.fontWeight_400)
+            Blank()
+            Toggle({ type: ToggleType.Switch, isOn: true }).onChange((value: boolean) => {
+              // 处理开关逻辑
+              if (value) {
+                console.log('*****************************打开语音翻译弹窗自动关闭****************************************')
+                this.isAutoCloseVoiceTransPop = true
+              } else {
+                console.log('*****************************关闭语音翻译弹窗自动关闭****************************************')
+                this.isAutoCloseVoiceTransPop = false
               }
-              this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
             })
+              .selectedColor(this.paletteTheme)
+              .height(22)
+              .width(44)
+          }
+          .width('100%')
+          .alignItems(VerticalAlign.Center)
+          .padding({ top: 12, bottom: 12 })
+          .border({ width: { bottom: 1 }, color: CommonConfig.commonBackgroundColor })
         }
-        .width('100%')
-        .alignItems(VerticalAlign.Center)
-        .padding({ top: 12, bottom: 12 })
-
-
+        .padding({ left: 12, right: 12 })
+        .borderRadius(12)
+        .backgroundColor(Color.White)
 
       }
-      .padding({ left: 12, right: 12 })
-      .borderRadius(12)
-      .backgroundColor(Color.White)
-      //======================================================截图识别/翻译
-      Text(Languages.screenshot_ocr_translation[this.languages])
-        .fontSize(CommonConfig.fontSize_14)
-        .fontWeight(CommonConfig.fontWeight_400)
-        .fontColor(CommonConfig.hintTextColor)
-      Column() {
-        Row() {
-          Text(Languages.enable_function[this.languages])
-            .fontSize(CommonConfig.fontSize_14)
-            .fontColor(CommonConfig.hintTextColor_select)
-            .fontWeight(CommonConfig.fontWeight_400)
-          Blank()
-          Toggle({ type: ToggleType.Switch, isOn: true }).onChange((value: boolean) => {
-            // 处理开关逻辑
-            if (value) {
-              console.log('*****************************打开截图识别/翻译****************************************')
-              this.isOCR_Translate_Toggle = true
-            } else {
-              console.log('*****************************关闭截图识别/翻译****************************************')
-              this.isOCR_Translate_Toggle = false
-            }
-          })
-            .selectedColor(this.paletteTheme)
-            .height(22)
-            .width(44)
-        }
-        .width('100%')
-        .alignItems(VerticalAlign.Center)
-        .padding({ top: 12, bottom: 12 })
-        .border({ width: { bottom: 1 }, color: CommonConfig.commonBackgroundColor })
-        Row() {
-          Text(Languages.translation_language[this.languages])
-            .fontSize(CommonConfig.fontSize_14)
-            .fontColor(CommonConfig.hintTextColor_select)
-            .fontWeight(CommonConfig.fontWeight_400)
-          Blank()
-          Text(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.wordScan_from_languages)]))
-            .fontSize(CommonConfig.fontSize_12)
-            .fontColor(CommonConfig.hintTextColor)
-            .fontWeight(CommonConfig.fontWeight_400)
-            .margin({ right: 8 })
-          Image($r('app.media.Arrow_to_the_right'))
-            .width(16)
-            .height(16)
-            .onClick(() => {
-              let params: Languages_params = {
-                ListData: this.convert_ttsLanguagesToOptions(),
-                OperationType: 'screenshotOCR_from_languages',
-                currLanguages: this.getDefaultSelectedIndex_from(this.screenshotOCR_from_languages),
-                device_isBle: this.device_isBle,
-                title: Languages.translation_language[this.languages]
-              }
-              this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
-            })
-        }
-        .width('100%')
-        .alignItems(VerticalAlign.Center)
-        .padding({ top: 12, bottom: 12 })
-
-
-
-      }
-      .padding({ left: 12, right: 12 })
-      .borderRadius(12)
-      .backgroundColor(Color.White)
-      //======================================================语音搜索设置
-      Text(Languages.voice_search_settings[this.languages])
-        .fontSize(CommonConfig.fontSize_14)
-        .fontWeight(CommonConfig.fontWeight_400)
-        .fontColor(CommonConfig.hintTextColor)
-      Column() {
-        Row() {
-          Text('搜索引擎')
-            .fontSize(CommonConfig.fontSize_14)
-            .fontColor(CommonConfig.hintTextColor_select)
-            .fontWeight(CommonConfig.fontWeight_400)
-          Blank()
-          Text(this.searchEngine[AppStorage.get('EnhancedBrowserSearch') as number].value)
-            .fontSize(CommonConfig.fontSize_12)
-            .fontColor(CommonConfig.hintTextColor)
-            .fontWeight(CommonConfig.fontWeight_400)
-            .margin({ right: 8 })
-          Image($r('app.media.Arrow_to_the_right'))
-            .width(16)
-            .height(16)
-            .onClick(() => {
-              let params: Languages_params = {
-                ListData: this.searchEngine,
-                OperationType: 'EnhancedBrowserSearch',
-                currLanguages: AppStorage.get('EnhancedBrowserSearch') as number,
-                device_isBle: this.device_isBle,
-                title: Languages.typing_input_mode[this.languages]
-              }
-              this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
-            })
-        }
-        .width('100%')
-        .alignItems(VerticalAlign.Center)
-        .padding({ top: 12, bottom: 12 })
-
-      }
-      .padding({ left: 12, right: 12 })
-      .borderRadius(12)
-      .backgroundColor(Color.White)
-      //======================================================外部弹窗设置
-      Text(Languages.external_popup_settings[this.languages])
-        .fontSize(CommonConfig.fontSize_14)
-        .fontWeight(CommonConfig.fontWeight_400)
-        .fontColor(CommonConfig.hintTextColor)
-      Column() {
-        Row() {
-          Text(Languages.auto_close_voice_translation_popup[this.languages])
-            .fontSize(CommonConfig.fontSize_14)
-            .fontColor(CommonConfig.hintTextColor_select)
-            .fontWeight(CommonConfig.fontWeight_400)
-          Blank()
-          Toggle({ type: ToggleType.Switch, isOn: true }).onChange((value: boolean) => {
-            // 处理开关逻辑
-            if (value) {
-              console.log('*****************************打开语音翻译弹窗自动关闭****************************************')
-              this.isAutoCloseVoiceTransPop = true
-            } else {
-              console.log('*****************************关闭语音翻译弹窗自动关闭****************************************')
-              this.isAutoCloseVoiceTransPop = false
-            }
-          })
-            .selectedColor(this.paletteTheme)
-            .height(22)
-            .width(44)
-        }
-        .width('100%')
-        .alignItems(VerticalAlign.Center)
-        .padding({ top: 12, bottom: 12 })
-        .border({ width: { bottom: 1 }, color: CommonConfig.commonBackgroundColor })
-      }
-      .padding({ left: 12, right: 12 })
-      .borderRadius(12)
-      .backgroundColor(Color.White)
-
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
     }
-    .width('100%')
+    .height('100%')
+    .scrollBarWidth(0)
   }
 
   private getDefaultSelectedIndex_from(from_languages: string): number {

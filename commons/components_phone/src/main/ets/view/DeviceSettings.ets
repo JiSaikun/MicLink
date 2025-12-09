@@ -109,82 +109,109 @@ export struct DeviceSettings {
   }
 
   build() {
+    Scroll(){
+      Column({ space: 12 }) {
+        Text(Languages.deviceSetup[this.languages])
+          .fontSize(CommonConfig.fontSize_14)
+          .fontWeight(CommonConfig.fontWeight_400)
+          .fontColor(CommonConfig.hintTextColor)
 
-    Column({ space: 12 }) {
-      Text(Languages.deviceSetup[this.languages])
-        .fontSize(CommonConfig.fontSize_14)
-        .fontWeight(CommonConfig.fontWeight_400)
-        .fontColor(CommonConfig.hintTextColor)
+        Column() {
+          if (this.isShow('DPI')) {
 
-      Column() {
-        if (this.isShow('DPI')) {
+            Row() {
+              Text("DPI")
+                .fontSize(CommonConfig.fontSize_14)
+                .fontColor(CommonConfig.hintTextColor_select)
+                .fontWeight(CommonConfig.fontWeight_400)
+              Blank()
+              Text(this.DPI && this.DPI.length > 0 ?
+                this.DPI[Math.min(Math.max(0, this.DPI_currIndex), this.DPI.length - 1)]?.value : '')
+                .fontSize(CommonConfig.fontSize_12)
+                .fontColor(CommonConfig.hintTextColor)
+                .fontWeight(CommonConfig.fontWeight_400)
+                .margin({ right: 8 })
+              Image($r('app.media.Arrow_to_the_right'))
+                .width(16)
+                .height(16)
+                .onClick(() => {
+                  let params: Languages_params = {
+                    ListData: this.DPI,
+                    OperationType: 'DPI_currIndex',
+                    currLanguages: this.DPI && this.DPI.length > 0 ?
+                    Math.min(Math.max(0, this.DPI_currIndex), this.DPI.length - 1) : 0,
+                    device_isBle: this.device_isBle,
+                    title: "DPI"
+                  }
+                  this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
+                })
+            }
+            .width('100%')
+            .alignItems(VerticalAlign.Center)
+            .padding({ top: 12, bottom: 12 })
 
-          Row() {
-            Text("DPI")
-              .fontSize(CommonConfig.fontSize_14)
-              .fontColor(CommonConfig.hintTextColor_select)
-              .fontWeight(CommonConfig.fontWeight_400)
-            Blank()
-            Text(this.DPI && this.DPI.length > 0 ?
-              this.DPI[Math.min(Math.max(0, this.DPI_currIndex), this.DPI.length - 1)]?.value : '')
-              .fontSize(CommonConfig.fontSize_12)
-              .fontColor(CommonConfig.hintTextColor)
-              .fontWeight(CommonConfig.fontWeight_400)
-              .margin({ right: 8 })
-            Image($r('app.media.Arrow_to_the_right'))
-              .width(16)
-              .height(16)
-              .onClick(() => {
-                let params: Languages_params = {
-                  ListData: this.DPI,
-                  OperationType: 'DPI_currIndex',
-                  currLanguages: this.DPI && this.DPI.length > 0 ?
-                  Math.min(Math.max(0, this.DPI_currIndex), this.DPI.length - 1) : 0,
-                  device_isBle: this.device_isBle,
-                  title: "DPI"
-                }
-                this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
-              })
           }
-          .width('100%')
-          .alignItems(VerticalAlign.Center)
-          .padding({ top: 12, bottom: 12 })
+          if (this.isShow('ReportRate')) {
+            Row() {
+              Text(Languages.return[this.languages])
+                .fontSize(CommonConfig.fontSize_14)
+                .fontColor(CommonConfig.hintTextColor_select)
+                .fontWeight(CommonConfig.fontWeight_400)
+              Blank()
+              Text(this.reportRate && this.reportRate.length > 0 ? this.reportRate[Math.max(0, Math.min(this.reportRate_currIndex, this.reportRate.length - 1))]?.value : '')
+                .fontSize(CommonConfig.fontSize_12)
+                .fontColor(CommonConfig.hintTextColor)
+                .fontWeight(CommonConfig.fontWeight_400)
+                .margin({ right: 8 })
+              Image($r('app.media.Arrow_to_the_right'))
+                .width(16)
+                .height(16)
+                .onClick(() => {
+                  let params: Languages_params = {
+                    ListData: this.reportRate,
+                    OperationType: 'reportRate_currIndex',
+                    currLanguages: this.reportRate && this.reportRate.length > 0 ? Math.max(0, Math.min(this.reportRate_currIndex, this.reportRate.length - 1)) : 0,
+                    device_isBle: this.device_isBle,
+                    title:Languages.return[this.languages]
+                  }
+                  this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
+                })
+            }
+            .width('100%')
+            .alignItems(VerticalAlign.Center)
+            .padding({ top: 12, bottom: 12 })
 
-        }
-        if (this.isShow('ReportRate')) {
-          Row() {
-            Text(Languages.return[this.languages])
-              .fontSize(CommonConfig.fontSize_14)
-              .fontColor(CommonConfig.hintTextColor_select)
-              .fontWeight(CommonConfig.fontWeight_400)
-            Blank()
-            Text(this.reportRate && this.reportRate.length > 0 ? this.reportRate[Math.max(0, Math.min(this.reportRate_currIndex, this.reportRate.length - 1))]?.value : '')
-              .fontSize(CommonConfig.fontSize_12)
-              .fontColor(CommonConfig.hintTextColor)
-              .fontWeight(CommonConfig.fontWeight_400)
-              .margin({ right: 8 })
-            Image($r('app.media.Arrow_to_the_right'))
-              .width(16)
-              .height(16)
-              .onClick(() => {
-                let params: Languages_params = {
-                  ListData: this.reportRate,
-                  OperationType: 'reportRate_currIndex',
-                  currLanguages: this.reportRate && this.reportRate.length > 0 ? Math.max(0, Math.min(this.reportRate_currIndex, this.reportRate.length - 1)) : 0,
-                  device_isBle: this.device_isBle,
-                  title:Languages.return[this.languages]
-                }
-                this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
-              })
           }
-          .width('100%')
-          .alignItems(VerticalAlign.Center)
-          .padding({ top: 12, bottom: 12 })
+          if (this.isShow("AmbientLightSwitch")) {
+            Row() {
+              Text(Languages.lighting[this.languages])
+                .fontSize(CommonConfig.fontSize_14)
+                .fontColor(CommonConfig.hintTextColor_select)
+                .fontWeight(CommonConfig.fontWeight_400)
+              Blank()
+              Toggle({ type: ToggleType.Switch, isOn: true }).onChange((value: boolean) => {
+                // 处理开关逻辑
+                if (value) {
+                  console.log('*****************************打开氛围灯****************************************')
+                  this.currLED = true
+                } else {
+                  console.log('*****************************关闭氛围灯****************************************')
+                  this.currLED = false
+                }
+              })
+                .selectedColor(this.paletteTheme)
+                .height(22)
+                .width(44)
+            }
+            .width('100%')
+            .alignItems(VerticalAlign.Center)
+            .padding({ top: 12, bottom: 12 })
+            .border({ width: { bottom: 1 }, color: CommonConfig.commonBackgroundColor })
+          }
 
-        }
-        if (this.isShow("AmbientLightSwitch")) {
+
           Row() {
-            Text(Languages.lighting[this.languages])
+            Text(Languages.battery_Low_Warning[this.languages])
               .fontSize(CommonConfig.fontSize_14)
               .fontColor(CommonConfig.hintTextColor_select)
               .fontWeight(CommonConfig.fontWeight_400)
@@ -192,11 +219,9 @@ export struct DeviceSettings {
             Toggle({ type: ToggleType.Switch, isOn: true }).onChange((value: boolean) => {
               // 处理开关逻辑
               if (value) {
-                console.log('*****************************打开氛围灯****************************************')
-                this.currLED = true
+                console.log('*****************************打开低电量提醒****************************************')
               } else {
-                console.log('*****************************关闭氛围灯****************************************')
-                this.currLED = false
+                console.log('*****************************打关闭低电量提醒****************************************')
               }
             })
               .selectedColor(this.paletteTheme)
@@ -207,39 +232,20 @@ export struct DeviceSettings {
           .alignItems(VerticalAlign.Center)
           .padding({ top: 12, bottom: 12 })
           .border({ width: { bottom: 1 }, color: CommonConfig.commonBackgroundColor })
+
+
         }
-
-
-        Row() {
-          Text(Languages.battery_Low_Warning[this.languages])
-            .fontSize(CommonConfig.fontSize_14)
-            .fontColor(CommonConfig.hintTextColor_select)
-            .fontWeight(CommonConfig.fontWeight_400)
-          Blank()
-          Toggle({ type: ToggleType.Switch, isOn: true }).onChange((value: boolean) => {
-            // 处理开关逻辑
-            if (value) {
-              console.log('*****************************打开低电量提醒****************************************')
-            } else {
-              console.log('*****************************打关闭低电量提醒****************************************')
-            }
-          })
-            .selectedColor(this.paletteTheme)
-            .height(22)
-            .width(44)
-        }
-        .width('100%')
-        .alignItems(VerticalAlign.Center)
-        .padding({ top: 12, bottom: 12 })
-        .border({ width: { bottom: 1 }, color: CommonConfig.commonBackgroundColor })
-
-
+        .padding({ left: 12, right: 12 })
+        .borderRadius(12)
+        .backgroundColor(Color.White)
       }
-      .padding({ left: 12, right: 12 })
-      .borderRadius(12)
-      .backgroundColor(Color.White)
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
     }
-    .width('100%')
+    .height('100%')
+    .scrollBarWidth(0)
+    .align(Alignment.TopStart)
+
   }
 
   onDidBuild(): void {

@@ -95,6 +95,7 @@ struct DevicesConfig {
       Flex() {
         ForEach(this.TabsData, (item: string, index) => {
           Text(item)
+            .textAlign(TextAlign.Center)
             .padding(8)
             .fontSize(CommonConfig.fontSize_14)
             .fontColor(CommonConfig.hintTextColor_select)
@@ -105,9 +106,11 @@ struct DevicesConfig {
             .flexGrow(1)
             .onClick(() => {
               this.currIndex = index
+              this.controller.changeIndex(index)
             })
         }, (item: string) => item)
       }
+      .borderRadius(8)
       .backgroundColor("#EAEAEA")
       .padding(2)
       .width('100%')
@@ -127,6 +130,7 @@ struct DevicesConfig {
         }
 
       }
+      .layoutWeight(1)
       .scrollable(false)
       .barHeight(0)
       .barWidth(0)

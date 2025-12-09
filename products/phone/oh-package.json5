@@ -9,6 +9,7 @@
     "keymethodconfig": "file:../../commons/keymethodconfig",
     "components_phone": "file:../../commons/components_phone",
     "common": "file:../../commons/common",
+    "api": "file:../../commons/api",
     "mouse": "file:../../commons/mouse",
     "login": "file:../../features/login",
     "bluetooth": "file:../../commons/bluetooth"
