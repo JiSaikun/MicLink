@@ -2,7 +2,7 @@ import { CommonConfig } from "../common/CommonConfig"
 import { Languages } from "../common/Languages"
 import { TopTitle } from "../common/TopTitle"
 import { LengthMetrics } from "@kit.ArkUI"
-import { updateAvatar, UserLoginInfo } from "common"
+import { updateAvatar, UpdateAvatar_Camera, UserLoginInfo } from "common"
 import { request } from "@kit.BasicServicesKit"
 import { fileIo, fileUri } from "@kit.CoreFileKit"
 import { photoAccessHelper } from "@kit.MediaLibraryKit"
@@ -47,7 +47,7 @@ struct AvatarView {
   takeAPhoto() {
     console.info('单击第一个按钮时回调');
     if (this.userLoginInfo?.token) {
-      updateAvatar()
+      UpdateAvatar_Camera()
     }
   }
 
