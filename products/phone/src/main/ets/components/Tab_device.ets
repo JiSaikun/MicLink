@@ -137,7 +137,7 @@ export struct Tab_device {
               .padding(8)
               .borderRadius(16)
               .onClick(() => {
-                adapterManager.openBluetooth()
+                adapterManager.openBluetooth(this.getUIContext())
               })
 
           }

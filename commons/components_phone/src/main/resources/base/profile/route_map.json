@@ -127,6 +127,14 @@
       "data": {
         "description": "选择服用页面"
       }
+    },
+    {
+      "name": "aipage",
+      "pageSourceFile": "src/main/ets/components/AiPage.ets",
+      "buildFunction": "AiPageBuilder",
+      "data": {
+        "description": "AI界面"
+      }
     }
   ]
 }

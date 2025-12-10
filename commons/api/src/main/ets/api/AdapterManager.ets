@@ -1,5 +1,8 @@
 import { access } from '@kit.ConnectivityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { common } from '@kit.AbilityKit';
+import { promptAction } from '@kit.ArkUI';
+
 /**
  * 蓝牙状态开关管理
  */
@@ -39,7 +42,7 @@ export class AdapterManager {
   };
 
   // 开启蓝牙
-  public openBluetooth() {
+  public openBluetooth(getUIContext: UIContext) {
     try {
       access.on('stateChange', this.onReceiveEvent);
     } catch (err) {
@@ -51,6 +54,21 @@ export class AdapterManager {
       if (state == access.BluetoothState.STATE_OFF) {
         // 若蓝牙是关闭的，则主动开启蓝牙
         access.enableBluetooth();
+      }
+      if (state == access.BluetoothState.STATE_ON) {
+        getUIContext.getPromptAction().showDialog({
+          title: ('手机蓝牙已处于开启状态，请建立手机与设备的蓝牙连接'),
+          buttons: [{ text: '去连接', color: '#007DFF'}, { text: '关闭提醒', color: '#FF3B30' },]
+        }).then((res:promptAction.ShowDialogSuccessResponse)=>{
+          if (res.index===0) {
+            let context = getContext() as common.UIAbilityContext
+            context.startAbility({
+              bundleName: "com.huawei.hmos.settings",//被拉起方的应用包名。
+              abilityName: "com.huawei.hmos.settings.MainAbility", //abilityName 必须完整匹配
+              uri: 'bluetooth_entry', //决定具体子页面，不可省略
+            })
+          }
+        })
       }
     } catch (err) {
       console.error('errCode: ' + (err as BusinessError).code + ', errMessage: ' + (err as BusinessError).message);

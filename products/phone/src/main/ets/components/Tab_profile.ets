@@ -94,7 +94,7 @@ export struct Tab_profile {
   }
 
   @Builder
-  Product(price: number, name: string) {
+  Product(price: number, name: string, index: number) {
     Row() {
       Flex({ direction: FlexDirection.Column, alignItems: ItemAlign.Start, justifyContent: FlexAlign.Center }) {
         Text(price + '￥')
@@ -123,6 +123,9 @@ export struct Tab_profile {
             top: 6,
             bottom: 6
           })
+          .flexGrow(1)
+          .flexShrink(1)
+          .width('100%')
       }
       .width(40)
       .height(24)
@@ -140,6 +143,7 @@ export struct Tab_profile {
     })
     .flexShrink(1)
     .flexGrow(1)
+    .margin({ right: index % 2 === 0 ? 15 : 0 })
     .width('35%')
     .backgroundImage($r('app.media.Frame_2600'))
     .backgroundImageSize({ width: '100%', height: '100%' })
@@ -289,9 +293,9 @@ export struct Tab_profile {
             .fontColor(CommonConfig.hintTextColor)
             .fontWeight(CommonConfig.fontWeight_400)
             .margin({ bottom: 12 })
-          Flex({ space: { main: LengthMetrics.px(30), cross: LengthMetrics.px(24) }, wrap: FlexWrap.Wrap }) {
-            ForEach(this.fileTranscriptionProducts, (product: ProductType) => {
-              this.Product(product.price, product.name)
+          Flex({ space: { cross: LengthMetrics.px(24) }, wrap: FlexWrap.Wrap }) {
+            ForEach(this.fileTranscriptionProducts, (product: ProductType, index) => {
+              this.Product(product.price, product.name, index)
             }, (product: ProductType) => `${product.price}_${this.languages}`)
           }
 
@@ -300,22 +304,24 @@ export struct Tab_profile {
             .fontColor(CommonConfig.hintTextColor)
             .fontWeight(CommonConfig.fontWeight_400)
             .margin({ bottom: 12, top: 16 })
-          Flex({ space: { main: LengthMetrics.px(30), cross: LengthMetrics.px(12) }, wrap: FlexWrap.Wrap }) {
-            ForEach(this.voiceCustomizationProducts, (product: ProductType) => {
-              this.Product(product.price, product.name)
+          Flex({ space: { cross: LengthMetrics.px(24) }, wrap: FlexWrap.Wrap }) {
+            ForEach(this.voiceCustomizationProducts, (product: ProductType, index) => {
+              this.Product(product.price, product.name, index)
             }, (product: ProductType) => `${product.price}_${this.languages}`)
-            Row()
-              .padding({
-                left: 12,
-                right: 12,
-                top: 6,
-                bottom: 6
-              })
-              .flexShrink(1)
-              .flexGrow(1)
-              .width('35%')
-              .backgroundImage($r('app.media.Frame_2600'))
-              .backgroundImageSize({ width: '100%', height: '100%' })
+            if (this.voiceCustomizationProducts.length % 2) {
+              Row()
+                .padding({
+                  left: 12,
+                  right: 12,
+                  top: 6,
+                  bottom: 6
+                })
+                .flexShrink(1)
+                .flexGrow(1)
+                .width('35%')
+                .backgroundImage($r('app.media.Frame_2600'))
+                .backgroundImageSize({ width: '100%', height: '100%' })
+            }
           }
 
         }
