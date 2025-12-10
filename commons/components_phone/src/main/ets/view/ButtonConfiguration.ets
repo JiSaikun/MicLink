@@ -35,80 +35,6 @@ export struct ButtonConfiguration {
   @State index1: number = 0
   @State index2: number = 0
   @State childs: keyInfos_childs_childsModel[] = []
-  dialogController: CustomDialogController | null = new CustomDialogController({
-    builder: Action_FT(),
-    cancel: this.exitApp,
-    autoCancel: true,
-    alignment: DialogAlignment.Center,
-    offset: { dx: 0, dy: -20 },
-    gridCount: 4,
-    customStyle: false,
-    cornerRadius: 16
-  })
-  dialogController_Action_OW: CustomDialogController | null = new CustomDialogController({
-    builder: Action_OW({
-      cancel: () => {
-        this.onCancel();
-      },
-      confirm: () => {
-        this.onAccept();
-      }
-    }),
-    cancel: this.exitApp_,
-    autoCancel: true,
-    alignment: DialogAlignment.Center,
-    offset: { dx: 0, dy: -20 },
-    gridCount: 4,
-    customStyle: false,
-    cornerRadius: 16
-  })
-
-  onCancel() {
-    console.info('单击第一个按钮时回调');
-  }
-
-  onAccept() {
-    console.info('点击第二个按钮时回调');
-  }
-
-  // 在自定义组件即将析构销毁时将dialogController置空
-  aboutToDisappear() {
-    this.dialogController = null; // 将dialogController置空
-  }
-
-  exitApp() {
-    console.info('单击空白区域中的回拨');
-    this.dialogController?.open()
-  }
-
-  exitApp_() {
-    console.info('单击空白区域中的回拨');
-    this.dialogController_Action_OW?.open()
-  }
-
-  /**
-   * 处理特殊命令
-   */
-  private handleSpecialCommand(cmd: string): void {
-    switch (cmd) {
-      case 'Action_FT': //固定文本
-        if (this.dialogController != null) {
-          this.dialogController.open();
-        }
-        break
-      case 'Action_OW': //打开网页
-        if (this.dialogController_Action_OW != null) {
-          this.dialogController_Action_OW.open();
-        }
-        break
-      case 'Action_OF': //打开文件
-        OpenFileWithSystemApp.openFileWithSystemApp()
-        break
-      case 'Action_OFJ': //打开文件夹
-        this.selectFolder()
-        break
-    }
-  }
 
   build() {
 
@@ -155,7 +81,8 @@ export struct ButtonConfiguration {
                         OperationType: 'buttonConfiguration',
                         currLanguages: this.getDefaultSelectedIndex(child.childs || [], index1, index2),
                         device_isBle: this.device_isBle,
-                        title: (child.names as LanguageNames)[this.languages],
+                        title: (item.names as LanguageNames)[this.languages] +'\t\t\t'+
+                        (child.names as LanguageNames)[this.languages],
                       }
                       this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
                     })
@@ -501,6 +428,7 @@ export struct ButtonConfiguration {
 
     // 处理特殊命令
     this.handleSpecialCommand(this.getModelInfo.keyInfos[index1].childs[index2].childs[index].cmd)
+
   }
 
   // 保留原有的 Watch_null 方法用于兼容性
@@ -557,6 +485,66 @@ export struct ButtonConfiguration {
         return '无文件夹访问权限，请授权后重试'
       default:
         return `选择失败（错误码: ${errorCode}）`
+    }
+  }
+
+  dialogController: CustomDialogController | null = new CustomDialogController({
+    builder: Action_FT(),
+    cancel: this.exitApp,
+    autoCancel: true,
+    alignment: DialogAlignment.Center,
+    offset: { dx: 0, dy: -20 },
+    gridCount: 4,
+    customStyle: false,
+    cornerRadius: 16
+  })
+  dialogController_Action_OW: CustomDialogController | null = new CustomDialogController({
+    builder: Action_OW(),
+    cancel: this.exitApp_,
+    autoCancel: true,
+    alignment: DialogAlignment.Center,
+    offset: { dx: 0, dy: -20 },
+    gridCount: 4,
+    customStyle: false,
+    cornerRadius: 16
+  })
+
+  // 在自定义组件即将析构销毁时将dialogController置空
+  aboutToDisappear() {
+    this.dialogController = null; // 将dialogController置空
+  }
+
+  exitApp() {
+    console.info('单击空白区域中的回拨');
+    this.dialogController?.open()
+  }
+
+  exitApp_() {
+    console.info('单击空白区域中的回拨');
+    this.dialogController_Action_OW?.open()
+  }
+
+  /**
+   * 处理特殊命令
+   */
+  private handleSpecialCommand(cmd: string): void {
+    switch (cmd) {
+      case 'Action_FT': //固定文本
+        if (this.dialogController != null) {
+          this.dialogController.open();
+        }
+        break
+      case 'Action_OW': //打开网页
+        if (this.dialogController_Action_OW != null) {
+          this.dialogController_Action_OW.open();
+        }
+        break
+      case 'Action_OF': //打开文件
+        OpenFileWithSystemApp.openFileWithSystemApp()
+        break
+      case 'Action_OFJ': //打开文件夹
+        this.selectFolder()
+        break
     }
   }
 }
@@ -662,8 +650,9 @@ struct Action_OW {
   @StorageLink('languages') languages: string = 'ZH_CN'
   @StorageLink('webUrlToOpen_pop') webUrlToOpen: string = '' //输入固定文本
   @StorageLink("paletteTheme") paletteTheme: string = CommonConfig.PaletteTheme
+
   aboutToAppear(): void {
-    this.webUrlToOpen=AppStorage.get('webUrlToOpen') as string
+    this.webUrlToOpen = AppStorage.get('webUrlToOpen') as string
   }
 
   build() {
