@@ -142,7 +142,7 @@
             //            ]
           }
         ],
-        "backgroundModes": [
+        "backgroundModes": [//申请长时任务
           "bluetoothInteraction"
         ]
       }
