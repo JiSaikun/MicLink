@@ -118,8 +118,7 @@ export class BlueTooth_devices {
   private characteristicTimeoutTimer: number | null = null
   private isSetCharacteristicChangeNotification: boolean = true
   private readonly CHARACTERISTIC_TIMEOUT: number = 15000 // 15秒超时
-
-
+  private flax: boolean = true
   // 设备验证超时检测
   private deviceValidationTimer: number | null = null
   private readonly DEVICE_VALIDATION_TIMEOUT: number = 10000 // 10秒超时，如果设备还没有SN就移除
@@ -382,7 +381,7 @@ export class BlueTooth_devices {
 
             // 7. 固件版本（协议：byte19）
             this.deviceInfo.firmwareVersion = data[19].toString();
-            
+
             (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].mouseconfig = this.deviceInfo;
             if (!AppStorage.get('mouseconfig')) {
               AppStorage.setOrCreate('mouseconfig', this.deviceInfo)
@@ -528,7 +527,7 @@ export class BlueTooth_devices {
               this.deviceInfo.atmosphereLight = false;
             }
 
-            
+
             (AppStorage.get('devices') as DeviceArrayType_Ble[])[this.device_currIndex].mouseconfig = this.deviceInfo;
             if (!AppStorage.get('mouseconfig')) {
               AppStorage.setOrCreate('mouseconfig', this.deviceInfo)
@@ -1426,11 +1425,12 @@ export class BlueTooth_devices {
                   freshDevices.push(newDevice);
                 }
                 AppStorage.setOrCreate('devices', freshDevices);
-                if (AppStorage.get('flax')) {
-                  AppStorage.setOrCreate('flax',false)
-                  setTimeout(()=>{
-                    AppStorage.setOrCreate('flax',true)
-                  },50)
+                if (AppStorage.get('flax')&&this.flax) {
+                  this.flax=false
+                  AppStorage.setOrCreate('flax', false)
+                  setTimeout(() => {
+                    AppStorage.setOrCreate('flax', true)
+                  }, 50)
                 }
 
                 // 使用全新的数组更新AppStorage

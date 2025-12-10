@@ -534,35 +534,6 @@ struct AiPage {
                 alignItems: ItemAlign.Center,
                 justifyContent: FlexAlign.Center
               }) {
-                // 下载进度显示
-                if (this.isDownloading) {
-                  Column() {
-                    Text('正在下载文件...')
-                      .fontSize(16)
-                      .fontColor(Color.Black)
-                      .margin({ bottom: 5 })
-
-                    Text(`下载进度: ${this.downloadProgress}%`)
-                      .fontSize(14)
-                      .fontColor(Color.Blue)
-
-                    Progress({ value: this.downloadProgress, total: 100 })
-                      .width('80%')
-                      .height(8)
-                      .color(Color.Blue)
-                      .backgroundColor('#EEEEEE')
-
-                    Text(`文件: ${this.currentFileName}`)
-                      .fontSize(12)
-                      .fontColor(Color.Gray)
-                      .margin({ top: 5 })
-                  }
-                  .width('100%')
-                  .padding(10)
-                  .backgroundColor('#F5F5F5')
-                  .borderRadius(8)
-                  .margin({ bottom: 10 })
-                }
                 Web({
                   src: AppStorage.get('device_isBle') ? this.getModelInfo.chatChromeUrl :
                     (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number] as DeviceArrayType).getModelInfo?.chatChromeUrl as string,
