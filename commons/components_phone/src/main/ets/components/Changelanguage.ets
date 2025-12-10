@@ -29,11 +29,39 @@ struct Changelanguage {
     this.currOption = this.params.currLanguages
   }
 
+  changeflax() {
+    AppStorage.setOrCreate('flax', false)
+    setTimeout(() => {
+      AppStorage.setOrCreate('flax', true)
+    }, 10)
+  }
+
   build() {
     NavDestination() {
       // TopTitle({ title: Languages.editProfile[this.languages] })
-      TopTitle({ title: this.params?.title })
-        .margin({ bottom: 12 })
+      Row() {
+        Image($r('app.media.page_back_icon'))
+          .width(32)
+          .height(32)
+          .onClick(() => {
+            this.pageInfo.pop()
+            this.changeflax()
+          })
+        Text(this.params?.title)
+          .fontWeight(CommonConfig.fontWeight_700)
+          .fontSize(CommonConfig.fontSize_16)
+          .fontColor(CommonConfig.hintTextColor_select)
+
+        Image('')
+          .width(32)
+          .height(32)
+      }
+      .alignItems(VerticalAlign.Center)
+      .justifyContent(FlexAlign.SpaceBetween)
+      .width('100%')
+      .padding({ top: 6, bottom: 6 })
+      .margin({ bottom: 12 })
+
       Scroll() {
         Column() {
           ForEach(this.params?.ListData, (item: SelectOption, index) => {
@@ -61,7 +89,7 @@ struct Changelanguage {
               this.currOption = index
               switch (this.params?.OperationType) {
                 case 'speech_Recognition_languages': //识别语言
-                  AppStorage.setOrCreate('speech_Recognition_languages',index)
+                  AppStorage.setOrCreate('speech_Recognition_languages', index)
                   if (this.params.device_isBle) {
                     this.devices[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages =
                       this.getModelInfo.languages[index].code
@@ -95,10 +123,6 @@ struct Changelanguage {
                   AppStorage.setOrCreate('reportRate_currIndex', index)
                   break
               }
-              AppStorage.setOrCreate('flax',false)
-              setTimeout(() => {
-                AppStorage.setOrCreate('flax',true)
-              }, 10)
             })
           }, (item: SelectOption) => item.value.toString())
         }

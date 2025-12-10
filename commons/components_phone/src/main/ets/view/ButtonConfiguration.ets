@@ -26,7 +26,6 @@ export struct ButtonConfiguration {
   @State mouseconfig: DeviceInfo | null = null
   @StorageLink('languages') languages: string = 'ZH_CN'
   @State KeymethodConfig: KeymethodConfig[] = []
-  @StorageLink("shortcut") shortcut: number = 0
   @Link device_isBle: boolean
   @State isLoading: boolean = false
   @State isDataReady: boolean = false
@@ -331,19 +330,16 @@ export struct ButtonConfiguration {
    */
   private handleSpecialCommand(cmd: string): void {
     switch (cmd) {
-      case 'Action_SK':
-        this.shortcut = 4
-        break
-      case 'Action_FT':
+      case 'Action_FT': //固定文本
         AppStorage.setOrCreate('isShowFixedText_pop', true)
         break
-      case 'Action_OW':
+      case 'Action_OW': //打开网页
         AppStorage.setOrCreate('isShow_webUrlToOpen_pop', true)
         break
-      case 'Action_OF':
+      case 'Action_OF': //打开文件
         OpenFileWithSystemApp.openFileWithSystemApp()
         break
-      case 'Action_OFJ':
+      case 'Action_OFJ': //打开文件夹
         this.selectFolder()
         break
     }
