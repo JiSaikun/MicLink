@@ -71,10 +71,22 @@ export class AudioRecorderManager {
         return true;
       } else {
         console.error(`${TAG}: 麦克风权限被拒绝`);
-        promptAction.showToast({
-          message: '麦克风权限被拒绝，无法录音',
-          duration: 3000
-        });
+        promptAction.showDialog({
+          title: ('麦克风权限被拒绝，无法录音'),
+          buttons: [{ text: '去开启', color: '#007DFF'}, { text: '关闭', color: '#FF3B30' }]
+        }).then((res:promptAction.ShowDialogSuccessResponse)=>{
+          if (res.index===0) {
+            let context = getContext() as common.UIAbilityContext
+            context.startAbility({
+              bundleName: "com.huawei.hmos.settings",//被拉起方的应用包名。
+              abilityName: "com.huawei.hmos.settings.MainAbility", //abilityName 必须完整匹配
+              uri: 'application_info_entry', //决定具体子页面，不可省略
+              parameters: {
+                pushParams: context.abilityInfo.bundleName//应用包名
+              }
+            })
+          }
+        })
         return false;
       }
     } catch (err) {

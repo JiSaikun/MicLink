@@ -1,7 +1,7 @@
 import { connectDevice, DeviceArrayType_Ble } from 'bluetooth'
 import { _change_keyboard_KeyPressType, _change_mouse_KeyPressType } from 'keymethodconfig'
 import { ConnectDevice, DeviceArrayType, KeyPressType, PRODUCT_TYPE } from 'mouse'
-import { Tab_ai } from '../components/Tab_ai'
+import { ModelsItem, Tab_ai } from '../components/Tab_ai'
 import { Tab_command } from '../components/Tab_command'
 import { Tab_device } from '../components/Tab_device'
 import { Tab_library } from '../components/Tab_library'
@@ -41,6 +41,41 @@ PersistentStorage.persistProp("flax", true) //手机专属标记
 @Entry
 @Component
 struct Index {
+  @State Models: ModelsItem[] = [
+    {
+      name: 'DeepSeck-V3 ',
+      title: '长文本强，逻辑推理。',
+      recommended: true
+    }, {
+    name: 'DeepSeek-Rl',
+    title: '数学专精，代码优化。',
+    recommended: false
+  }, {
+    name: '豆包',
+    title: '响应迅速，轻量高效。',
+    recommended: false
+  }, {
+    name: '通义千问',
+    title: '多轮对话，知识丰富。',
+    recommended: false
+  }, {
+    name: '文心一言',
+    title: '中文理解，创作力强。',
+    recommended: false
+  }, {
+    name: 'KIMI',
+    title: '简洁交互，信息精准。',
+    recommended: false
+  }, {
+    name: '讯飞星火',
+    title: '多轮对话，响应迅捷。',
+    recommended: false
+  }, {
+    name: '讯飞星火-X1',
+    title: '多模态强，视觉理解。',
+    recommended: false
+  }]
+  @StorageLink("paletteTheme") paletteTheme: string = CommonConfig.PaletteTheme
   @StorageLink("login") login: boolean = true
   @Provide('pageInfo') pageInfo: NavPathStack = new NavPathStack()
   @StorageLink("pageInfo") pageInfo_: NavPathStack = this.pageInfo
@@ -59,7 +94,7 @@ struct Index {
   ]
   private controller: TabsController = new TabsController()
   @StorageLink("flax") flax: boolean = true
-
+  @State firstShow: boolean = true
   changeflax() {
     if (this.currPageIndex === 0) {
       this.flax = false
@@ -163,60 +198,180 @@ struct Index {
 
   build() {
     Navigation(this.pageInfo) {
-      Column() {
-        Tabs({ controller: this.controller }) {
-          TabContent() {
-            if (this.flax) {
-              Tab_device()
+      Stack(){
+        Column() {
+          Tabs({ controller: this.controller }) {
+            TabContent() {
+              if (this.flax) {
+                Tab_device()
+              }
+            }
+
+            TabContent() {
+              Tab_ai()
+            }
+
+            TabContent() {
+              Tab_library()
+            }
+
+            TabContent() {
+              Tab_profile()
             }
           }
+          .animationDuration(0)
+          .layoutWeight(1)
+          .barHeight(0)
+          .scrollable(false)
 
-          TabContent() {
-            Tab_ai()
-          }
-
-          TabContent() {
-            Tab_library()
-          }
-
-          TabContent() {
-            Tab_profile()
-          }
+          Flex({ justifyContent: FlexAlign.SpaceBetween }) {
+            ForEach(this.barList, (item: BarType, index) => {
+              Column() {
+                Image($r(`app.media.${this.currPageIndex === index ? item.selectImg : item.img}`))
+                  .width(24)
+                  .margin({ bottom: 10 })
+                Text(item.title)
+                  .fontSize(CommonConfig.fontSize_11)
+                  .fontColor(this.currPageIndex === index ? CommonConfig.hintTextColor_select :
+                  CommonConfig.hintTextColor)
+              }
+              .flexGrow(1)
+              .flexShrink(1)
+              .onClick(() => {
+                this.currPageIndex = index
+                this.controller.changeIndex(index)
+              })
+            }, (item: BarType) => item.title)
+          }.width('100%')
+          .padding(10)
+          .backgroundColor(Color.White)
+          .borderRadius(8)
         }
-        .animationDuration(0)
-        .layoutWeight(1)
-        .barHeight(0)
-        .scrollable(false)
-
-        Flex({ justifyContent: FlexAlign.SpaceBetween }) {
-          ForEach(this.barList, (item: BarType, index) => {
+        .padding({ left: 16, right: 16 })
+        .backgroundColor(CommonConfig.commonBackgroundColor)
+        .width('100%')
+        .height('100%')
+        .backgroundImage(this.currPageIndex !== 1 ? $r('app.media.background_1') : '')
+        .backgroundImageSize({ width: '100%', height: '100%' })
+        if (this.firstShow) {
+          Stack() {
+            Column()
+              .height('100%')
+              .width('100%')
+              .backgroundColor("#000")
+              .opacity(0.1)
             Column() {
-              Image($r(`app.media.${this.currPageIndex === index ? item.selectImg : item.img}`))
-                .width(24)
-                .margin({ bottom: 10 })
-              Text(item.title)
-                .fontSize(CommonConfig.fontSize_11)
-                .fontColor(this.currPageIndex === index ? CommonConfig.hintTextColor_select :
-                CommonConfig.hintTextColor)
+              Row() {
+                Row() {
+                  Image($r('app.media.Frame_2511'))
+                    .width(16)
+                    .margin({ right: 4 })
+                  Text('豆包')
+                    .fontSize(CommonConfig.fontSize_12)
+                    .fontWeight(CommonConfig.fontWeight_400)
+                    .fontColor(CommonConfig.secondaryTextColorMain)
+                }
+                .alignItems(VerticalAlign.Center)
+                .borderRadius(4)
+                .backgroundColor(Color.White)
+                .padding({
+                  left: 4,
+                  top: 2,
+                  right: 4,
+                  bottom: 2
+                })
+              }
+              .height(40)
+              .alignItems(VerticalAlign.Center)
+
+              Column() {
+                Row() {
+                  Image($r('app.media.delete_ai'))
+                    .width(24)
+                    .onClick(() => {
+                      this.firstShow = false
+                    })
+                }
+                .width('100%')
+                .justifyContent(FlexAlign.End)
+
+                Scroll() {
+                  Column() {
+                    ForEach(this.Models, (item: ModelsItem) => {
+                      Column() {
+                        Flex({ alignItems: ItemAlign.Center }) {
+                          Text(item.name)
+                            .fontWeight(CommonConfig.fontWeight_400)
+                            .fontColor(CommonConfig.hintTextColor_select)
+                            .fontSize(CommonConfig.fontSize_12)
+                          Text('推荐')
+                            .backgroundColor('#e6f7fa')
+                            .visibility(item.recommended?Visibility.Visible:Visibility.None)
+                            .padding({
+                              left: 4,
+                              top: 2,
+                              right: 4,
+                              bottom: 2
+                            })
+                            .fontWeight(CommonConfig.fontWeight_400)
+                            .fontColor(this.paletteTheme)
+                            .fontSize(CommonConfig.fontSize_12)
+                        }
+                        .width('100%')
+                        .margin({ bottom: 4 })
+
+                        Flex({ alignItems: ItemAlign.Center }) {
+                          Text(item.title)
+                            .fontWeight(CommonConfig.fontWeight_400)
+                            .fontColor(CommonConfig.hintTextColor)
+                            .fontSize(CommonConfig.fontSize_12)
+                        }
+                        .width('100%')
+                      }
+                      .border({width:{bottom:1},color:'#EAEAEA'})
+                      .padding(8)
+                    }, (item: ModelsItem) => item.name)
+                  }
+                }
+                .width('100%')
+                .height(178)
+                .align(Alignment.TopStart)
+                .padding(8)
+                .borderRadius(8)
+                .backgroundColor(Color.White)
+                .margin({ right: 24, bottom: 24 })
+
+                Text('切换模型')
+                  .fontWeight(CommonConfig.fontWeight_400)
+                  .fontColor(CommonConfig.hintTextColor_select)
+                  .fontSize(CommonConfig.fontSize_14)
+                  .width('100%')
+                  .margin({ bottom: 8 })
+                Text('在这里您可以选择支持的AI大模型，效果将有所不同。')
+                  .fontWeight(CommonConfig.fontWeight_400)
+                  .fontColor(CommonConfig.secondaryTextColorMain)
+                  .fontSize(CommonConfig.fontSize_11)
+                  .width('100%')
+
+              }
+              .padding({
+                left: 32,
+                bottom: 32,
+                top: 8,
+                right: 8
+              })
+              .borderRadius(12)
+              .backgroundColor('#f2f2f2')
             }
-            .flexGrow(1)
-            .flexShrink(1)
-            .onClick(() => {
-              this.currPageIndex = index
-              this.controller.changeIndex(index)
-            })
-          }, (item: BarType) => item.title)
-        }.width('100%')
-        .padding(10)
-        .backgroundColor(Color.White)
-        .borderRadius(8)
+            .width(224)
+            .margin({ left: 84 })
+            .alignItems(HorizontalAlign.Start)
+
+          }
+          .align(Alignment.TopStart)
+        }
       }
-      .padding({ left: 16, right: 16 })
-      .backgroundColor(CommonConfig.commonBackgroundColor)
-      .width('100%')
-      .height('100%')
-      .backgroundImage(this.currPageIndex !== 1 ? $r('app.media.background_1') : '')
-      .backgroundImageSize({ width: '100%', height: '100%' })
+
     }
     .hideToolBar(true)
     .hideTitleBar(true)
