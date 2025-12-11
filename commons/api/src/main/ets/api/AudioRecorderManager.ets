@@ -224,18 +224,18 @@ export class AudioRecorderManager {
         this.audioCapturer!.start((err: BusinessError) => {
           if (err) {
             console.error(`${TAG}: 开始录音失败:`, err);
-            promptAction.showToast({
-              message: '开始录音失败',
-              duration: 3000
-            });
+            // promptAction.showToast({
+            //   message: '开始录音失败',
+            //   duration: 3000
+            // });
             resolve(false);
           } else {
             this.isRecording = true;
             console.info(`${TAG}: 录音开始成功`);
-            promptAction.showToast({
-              message: '录音开始',
-              duration: 1000
-            });
+            // promptAction.showToast({
+            //   message: '录音开始',
+            //   duration: 1000
+            // });
             resolve(true);
           }
         });
@@ -243,7 +243,7 @@ export class AudioRecorderManager {
     } catch (error) {
       console.error(`${TAG}: 开始录音过程失败:`, error);
       promptAction.showToast({
-        message: '开始录音失败',
+        message: '开始录音过程失败',
         duration: 3000
       });
       return false;
@@ -278,10 +278,10 @@ export class AudioRecorderManager {
         } else {
           this.isRecording = false;
           console.info(`${TAG}: 录音停止成功`);
-          promptAction.showToast({
-            message: '录音停止',
-            duration: 1000
-          });
+          // promptAction.showToast({
+          //   message: '录音停止',
+          //   duration: 1000
+          // });
           resolve(true);
         }
       });
