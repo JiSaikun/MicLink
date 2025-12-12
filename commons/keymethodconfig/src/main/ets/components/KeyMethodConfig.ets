@@ -107,6 +107,10 @@ export class _KeyMethodConfig {
       }
 
       if (state) {
+        AppStorage.setOrCreate('voiceTranslationText', {
+          transText: '',
+          text: ''
+        })
         if (!AppStorage.get('voiceOrText')) {
           AppStorage.setOrCreate('voiceTranslationText', [])
         }
@@ -122,7 +126,7 @@ export class _KeyMethodConfig {
         //   Float_Window.show_float_window(Float_Window.window_VoiceTranslation)
         // }
       } else {
-        AppStorage.setOrCreate('isAI_assistant', isAI_assistant)
+        AppStorage.setOrCreate('editCompleted', false)
         // if (!Float_Window.showVoiceInput) { //窗口没有显示时创建窗口
         Float_Window.creat()
         // } else {
@@ -301,6 +305,7 @@ export class _KeyMethodConfig {
       }
     }
     if (state) {
+      AppStorage.setOrCreate('editCompleted', false)
       AppStorage.setOrCreate('voiceTranslationText', {
         transText: '',
         text: ''
@@ -657,6 +662,7 @@ export class _KeyMethodConfig {
    *划词翻译
    */
   static word_SelectedTranslation() {
+    AppStorage.setOrCreate('editCompleted', false)
     if (!AppStorage.get('isWordScan_Translation')) {
       return
     }

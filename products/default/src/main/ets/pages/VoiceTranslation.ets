@@ -7,6 +7,7 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { globalShortcutService } from 'utils';
 import { DeviceArrayType_Ble } from 'bluetooth';
 import { pointer } from '@kit.InputKit';
+import { FocusController } from '@ohos.arkui.UIContext';
 
 /**
  * 语音翻译悬浮窗
@@ -15,12 +16,12 @@ import { pointer } from '@kit.InputKit';
 @Component
 struct VoiceTranslation {
   @State getModelInfo: getModelInfoModel = AppStorage.get('getModelInfo') as getModelInfoModel
-  @Watch('updata') @StorageLink('voiceTranslationText') voiceTranslationText: translate_Response = {
+  @StorageLink('voiceTranslationText') voiceTranslationText: translate_Response = {
     transText: '',
     text: ''
   }
   @StorageLink('voiceTranslationState') voiceTranslationState: boolean = true
-  @StorageLink('voiceOrText') voiceOrText: boolean = true //语音翻译为true,文本翻译为false
+  @StorageLink('voiceOrText') voiceOrText: boolean = true //语音  翻译为true,文本翻译为false
   @StorageLink('languages') languages: string = 'ZH_CN'
   @Watch('changeLanguages') @StorageLink('from_languages') from_languages: string = 'ZH_CN' //翻译源语言
   @Watch('changeLanguages') @StorageLink('to_languages') to_languages: string = 'EN_US' //翻译目标语言
@@ -35,10 +36,16 @@ struct VoiceTranslation {
   private scroller_to: Scroller = new Scroller();
   private scroller_from: Scroller = new Scroller();
   cursorCustom: CursorController = this.getUIContext().getCursorController();
+  @Watch('updata') @StorageLink('editCompleted') editCompleted: boolean = false
+  @State edit_old_Text:string=''
 
   updata() {
-    if (this.changeText) {
-      this.changeLanguages()
+    if (!this.editCompleted) {
+      if (this.edit_old_Text!==this.voiceTranslationText.text) {
+        this.changeLanguages()
+      }
+    }else {
+      this.edit_old_Text=this.voiceTranslationText.text
     }
   }
 
@@ -178,7 +185,7 @@ struct VoiceTranslation {
       this.isInitialized = true;
     }
   }
-
+  private focusController: FocusController = this.getUIContext().getFocusController();//自动获焦
   build() {
     Flex({ direction: FlexDirection.Column }) {
       Flex({ justifyContent: FlexAlign.SpaceBetween }) {
@@ -259,29 +266,53 @@ struct VoiceTranslation {
             .backgroundColor('#f8f8f8')
             .focusable(false)
         }
-        List({ scroller: this.scroller_from }) {
-          ListItem() {
-            TextArea({ text: $$this.voiceTranslationText.text })
-              .width('100%')
-              .textAlign(TextAlign.Start)
-              .padding({ left: 0, top: 0, right: 0 })
-              .borderRadius(0)
-              .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-              .fontWeight(400)
-              .fontSize(14)
-              .backgroundColor('#f8f8f8')
-            // .focusable(false)
+        Stack() {
+          List({ scroller: this.scroller_from }) {
+            ListItem() {
+              TextArea({ text: $$this.voiceTranslationText.text })
+                .width('100%')
+                .textAlign(TextAlign.Start)
+                .padding({ left: 0, top: 0, right: 0 })
+                .borderRadius(0)
+                .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
+                .fontWeight(400)
+                .fontSize(14)
+                .backgroundColor(this.editCompleted ? '#EAEAEA' : '#f8f8f8')
+                .focusable(this.editCompleted)
+                .key('yuyinfanyi')
+                .outlineWidth(0)
+
+            }
           }
+          .padding({
+            left: 12,
+            top: 12,
+            right: 24,
+            bottom: 12
+          })
+          .width('100%')
+          .backgroundColor(this.editCompleted ? '#EAEAEA' : '#f8f8f8')
+          .height('100%')
+          .borderRadius(8)
+          .height('100%')
+          .align(Alignment.TopStart)
+
+          Image(this.editCompleted ? $r('app.media.editCompleted') : $r('app.media.editing'))
+            .width(24)
+            .onClick(() => {
+              this.editCompleted = !this.editCompleted
+              if (this.editCompleted) {
+                setTimeout(()=>{
+                  this.focusController.requestFocus('yuyinfanyi');
+                },100)
+              }
+            })
+            .margin({ bottom: 5, right: 5 })
         }
-        .padding({
-          left: 12,
-          top: 12,
-          right: 24,
-          bottom: 12
-        })
-        .width('100%')
+        .align(Alignment.BottomEnd)
         .layoutWeight(1)
-        .align(Alignment.TopStart)
+        .margin({ bottom: 16 })
+
 
         Column() {
           List({ scroller: this.scroller_to }) {
@@ -397,7 +428,7 @@ struct VoiceTranslation {
                   systemPasteboard.setData(pasteData)
                     .then(() => {
                       console.error('文本已复制到剪贴板: ' + this.voiceTranslationText.transText);
-                      promptAction.showToast({ message:`${Languages.copySuccess[this.languages]}` });
+                      promptAction.showToast({ message: `${Languages.copySuccess[this.languages]}` });
                     })
                     .catch((err: BusinessError) => {
                       console.error('复制失败: ' + err.message);
@@ -464,7 +495,7 @@ struct VoiceTranslation {
 
     // 检查缓存是否仍然有效
     if (this.languageOptionsCache && this.lastLanguageCache === currentLang &&
-        this.languageOptionsCache.length === this.getModelInfo.transLanguages.length) {
+      this.languageOptionsCache.length === this.getModelInfo.transLanguages.length) {
       return this.languageOptionsCache;
     }
 
@@ -614,7 +645,10 @@ struct VoiceTranslation {
     true //语音翻译为true,文本翻译为false
 
   change_flax_huacifanyi() {
-    promptAction.showToast({ message: `${Languages.noSelectedTextDetected[this.languages]}`, backgroundColor: Color.Red });
+    promptAction.showToast({
+      message: `${Languages.noSelectedTextDetected[this.languages]}`,
+      backgroundColor: Color.Red
+    });
   }
 
   // 页面销毁时清理资源
