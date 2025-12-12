@@ -107,6 +107,7 @@ export class _KeyMethodConfig {
       }
 
       if (state) {
+        AppStorage.setOrCreate('editCompleted', false)
         AppStorage.setOrCreate('voiceTranslationText', {
           transText: '',
           text: ''
@@ -126,7 +127,6 @@ export class _KeyMethodConfig {
         //   Float_Window.show_float_window(Float_Window.window_VoiceTranslation)
         // }
       } else {
-        AppStorage.setOrCreate('editCompleted', false)
         // if (!Float_Window.showVoiceInput) { //窗口没有显示时创建窗口
         Float_Window.creat()
         // } else {
