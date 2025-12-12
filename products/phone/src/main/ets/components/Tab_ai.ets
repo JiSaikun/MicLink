@@ -1,6 +1,7 @@
 import { AudioRecorderManager } from "api"
 import { CommonConfig } from "components_phone"
 import { common } from "@kit.AbilityKit"
+import { FocusController } from "@ohos.arkui.UIContext"
 
 interface AIListType {
   image: string
@@ -93,7 +94,7 @@ export struct Tab_ai {
   @State audioRecorderManager: AudioRecorderManager =
     new AudioRecorderManager(this.getUIContext().getHostContext() as common.UIAbilityContext)
   @State inputText: string = ''
-
+    private focusController: FocusController = this.getUIContext().getFocusController();
   build() {
     Stack() {
       Stack() {
@@ -270,6 +271,7 @@ export struct Tab_ai {
                 .height(40)
                 .borderRadius(0)
                 .focusable(true)
+                .key('myTextArea')
               Image($r('app.media.delete_ai'))
                 .width(24)
                 .margin({ left: 8, right: 8 })
@@ -279,10 +281,10 @@ export struct Tab_ai {
               Image($r('app.media.textShow_ai'))
                 .width(24)
                 .onClick(() => {
-                  this.inputText = ''
                   this.inputCapable = false
                 })
             }
+            .margin({bottom:8})
 
             Flex() {
               Image(this.Frame_29_select ? $r('app.media.network_thinking_enabled') :
@@ -369,6 +371,9 @@ export struct Tab_ai {
               .backgroundColor(Color.White)
               .onClick(() => {
                 this.inputCapable = true
+                setTimeout(()=>{
+                  this.focusController.requestFocus('myTextArea');
+                },50)
               })
             Image($r('app.media.audio'))
               .width(32)
