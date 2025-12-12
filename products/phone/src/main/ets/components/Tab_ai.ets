@@ -18,6 +18,8 @@ export interface ModelsItem { //大模型列表
 @Component
 export struct Tab_ai {
   @StorageLink("paletteTheme") paletteTheme: string = CommonConfig.PaletteTheme
+  @Consume('pageInfo') pageInfo: NavPathStack
+
   @State Frame_29_select: boolean = false
   @State online_thinking_select: boolean = false
   @State aiList: AIListType[] = [
@@ -94,7 +96,14 @@ export struct Tab_ai {
   @State audioRecorderManager: AudioRecorderManager =
     new AudioRecorderManager(this.getUIContext().getHostContext() as common.UIAbilityContext)
   @State inputText: string = ''
-    private focusController: FocusController = this.getUIContext().getFocusController();
+  private focusController: FocusController = this.getUIContext().getFocusController();
+  AI_ListOnclick(index:number){
+    switch (index){
+      case 0:
+        this.pageInfo.pushPath({"name":'AI_Meeting'})
+      break
+    }
+  }
   build() {
     Stack() {
       Stack() {
@@ -239,6 +248,9 @@ export struct Tab_ai {
                 })
                 .margin({ right: this.aiList.length === index + 1 ? 0 : 8 })
                 .backgroundColor(Color.White)
+                .onClick(()=>{
+                  this.AI_ListOnclick(index)
+                })
               }
 
             }, (item: AIListType) => item.AIline)
@@ -316,7 +328,6 @@ export struct Tab_ai {
                   event.setResult(DragResult.DRAG_CANCELED);
                 })
                 .onTouch((event) => {
-                  console.warn(JSON.stringify(event.type))
                   if (event.type === TouchType.Down) { // 按下时改变状态
                     this.audioRecorderManager.startRecording().then((res) => {
                       if (res) {
@@ -383,17 +394,25 @@ export struct Tab_ai {
                 event.setResult(DragResult.DRAG_CANCELED);
               })
               .onTouch((event) => {
-                console.warn(JSON.stringify(event.type))
                 if (event.type === TouchType.Down) { // 按下时改变状态
-                  if (!this.showAnimate_flax) {
-                    this.downAnimate = setInterval(() => {
-                      this.showAnimate = !this.showAnimate;
-                    }, 180)
-                  }
-                  this.showAnimate_flax = true
+                  this.audioRecorderManager.startRecording().then((res) => {
+                    if (res) {
+                      if (!this.showAnimate_flax) {
+                        this.downAnimate = setInterval(() => {
+                          this.showAnimate = !this.showAnimate;
+                        }, 180)
+                      }
+                      this.showAnimate_flax = true
+                    }
+                  })
+
                 } else if (event.type === TouchType.Up) {
-                  this.showAnimate_flax = false
-                  clearInterval(this.downAnimate)
+                  this.audioRecorderManager.stopAndUploadRecording().then((res) => {
+                    console.log(JSON.stringify(res))
+                    this.showAnimate_flax = false
+                    clearInterval(this.downAnimate)
+                  })
+
                 }
               })
             Image($r('app.media.multi_functional'))

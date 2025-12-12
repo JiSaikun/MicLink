@@ -27,6 +27,7 @@ export class AudioRecorderManager {
   private filePath: string = '';
   private bufferSize: number = 0;
   private isRecording: boolean = false;
+  private isPaused: boolean = false; // 新增：暂停状态标志
   private context: common.UIAbilityContext | null = null;
   private uploadToken: string = '';
   // 音频配置
@@ -154,15 +155,15 @@ export class AudioRecorderManager {
 
         this.audioCapturer = capturer;
 
-        // 设置数据读取回调
+        // 设置数据读取回调 - 只在未暂停时写入数据
         this.audioCapturer.on('readData', (buffer: ArrayBuffer) => {
-          if (this.file) {
+          if (this.file && !this.isPaused) {
             const options: Options = {
               offset: this.bufferSize,
               length: buffer.byteLength
             };
             try {
-              fs.writeSync(this.file.fd, buffer, options);
+              fs.writeSync(this.file!.fd, buffer, options);
               this.bufferSize += buffer.byteLength;
             } catch (writeError) {
               console.error(`${TAG}: 写入录音数据失败:`, writeError);
@@ -182,13 +183,20 @@ export class AudioRecorderManager {
   async startRecording(): Promise<boolean> {
     try {
       // 检查是否已在录音
-      if (this.isRecording) {
+      if (this.isRecording && !this.isPaused) {
         console.warn(`${TAG}: 录音已在进行中`);
         promptAction.showToast({
           message: '录音已在进行中',
           duration: 2000
         });
         return false;
+      }
+
+      // 如果是暂停状态，恢复录音
+      if (this.isPaused) {
+        this.isPaused = false;
+        console.info(`${TAG}: 录音已恢复`);
+        return true;
       }
 
       // 请求权限
@@ -224,18 +232,11 @@ export class AudioRecorderManager {
         this.audioCapturer!.start((err: BusinessError) => {
           if (err) {
             console.error(`${TAG}: 开始录音失败:`, err);
-            // promptAction.showToast({
-            //   message: '开始录音失败',
-            //   duration: 3000
-            // });
             resolve(false);
           } else {
             this.isRecording = true;
+            this.isPaused = false;
             console.info(`${TAG}: 录音开始成功`);
-            // promptAction.showToast({
-            //   message: '录音开始',
-            //   duration: 1000
-            // });
             resolve(true);
           }
         });
@@ -251,6 +252,62 @@ export class AudioRecorderManager {
   }
 
   /**
+   * 暂停录音
+   * 注意：AudioCapturer没有pause方法，我们通过停止写入数据来模拟暂停
+   */
+  async pauseRecording(): Promise<boolean> {
+    if (!this.audioCapturer || !this.isRecording) {
+      console.warn(`${TAG}: 没有正在进行的录音`);
+      return false;
+    }
+
+    // 检查是否已经在暂停状态
+    if (this.isPaused) {
+      console.warn(`${TAG}: 录音已经暂停`);
+      return true;
+    }
+
+    // 检查状态
+    if (this.audioCapturer.state.valueOf() !== audio.AudioState.STATE_RUNNING) {
+      console.warn(`${TAG}: 录音器不在运行状态，无法暂停`);
+      return false;
+    }
+
+    // AudioCapturer没有pause方法，我们通过停止写入数据来模拟暂停
+    // 注意：这里不会停止AudioCapturer，只是停止写入文件，录音仍在进行但数据被丢弃
+    this.isPaused = true;
+    console.info(`${TAG}: 录音已暂停（数据不再写入文件）`);
+    return true;
+  }
+
+  /**
+   * 恢复录音
+   */
+  async resumeRecording(): Promise<boolean> {
+    if (!this.audioCapturer || !this.isRecording) {
+      console.warn(`${TAG}: 没有可恢复的录音`);
+      return false;
+    }
+
+    // 检查是否在暂停状态
+    if (!this.isPaused) {
+      console.warn(`${TAG}: 录音未暂停，无需恢复`);
+      return false;
+    }
+
+    // 检查状态
+    if (this.audioCapturer.state.valueOf() !== audio.AudioState.STATE_RUNNING) {
+      console.warn(`${TAG}: 录音器不在运行状态`);
+      return false;
+    }
+
+    // 恢复写入数据
+    this.isPaused = false;
+    console.info(`${TAG}: 录音已恢复（数据重新开始写入文件）`);
+    return true;
+  }
+
+  /**
    * 停止录音
    */
   async stopRecording(): Promise<boolean> {
@@ -260,8 +317,9 @@ export class AudioRecorderManager {
     }
 
     // 检查状态
-    if (this.audioCapturer.state.valueOf() !== audio.AudioState.STATE_RUNNING &&
-      this.audioCapturer.state.valueOf() !== audio.AudioState.STATE_PAUSED) {
+    const currentState = this.audioCapturer.state.valueOf();
+    if (currentState !== audio.AudioState.STATE_RUNNING &&
+      currentState !== audio.AudioState.STATE_PAUSED) {
       console.warn(`${TAG}: 录音器不在运行或暂停状态`);
       return false;
     }
@@ -277,11 +335,8 @@ export class AudioRecorderManager {
           resolve(false);
         } else {
           this.isRecording = false;
+          this.isPaused = false;
           console.info(`${TAG}: 录音停止成功`);
-          // promptAction.showToast({
-          //   message: '录音停止',
-          //   duration: 1000
-          // });
           resolve(true);
         }
       });
@@ -353,17 +408,9 @@ export class AudioRecorderManager {
 
             if (data.responseCode === 200) {
               console.info(`${TAG}: 上传成功:`, responseData);
-              // promptAction.showToast({
-              //   message: '录音上传成功',
-              //   duration: 2000
-              // });
               resolve(responseData);
             } else {
               console.error(`${TAG}: 上传失败:`, responseData);
-              // promptAction.showToast({
-              //   message: responseData.message || '上传失败',
-              //   duration: 3000
-              // });
               reject(new Error(responseData.message || '上传失败'));
             }
           } catch (parseError) {
@@ -481,6 +528,13 @@ export class AudioRecorderManager {
   }
 
   /**
+   * 获取暂停状态
+   */
+  getPausedStatus(): boolean {
+    return this.isPaused;
+  }
+
+  /**
    * 获取录音文件路径
    */
   getRecordingFilePath(): string {
@@ -501,5 +555,12 @@ export class AudioRecorderManager {
       16 / 8); // SAMPLE_FORMAT_S16LE表示16位
 
     return Math.round(this.bufferSize / bytesPerSecond);
+  }
+
+  /**
+   * 获取录音器当前状态
+   */
+  getCapturerState(): audio.AudioState | undefined {
+    return this.audioCapturer?.state;
   }
 }

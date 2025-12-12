@@ -135,6 +135,14 @@
       "data": {
         "description": "AI界面"
       }
+    },
+    {
+      "name": "AI_Meeting",
+      "pageSourceFile": "src/main/ets/components/AI_Meeting.ets",
+      "buildFunction": "AI_MeetingBuilder",
+      "data": {
+        "description": "AI会议"
+      }
     }
   ]
 }
