@@ -314,6 +314,7 @@ export struct Tab_ai {
                   event.setResult(DragResult.DRAG_CANCELED);
                 })
                 .onTouch((event) => {
+                  console.warn(JSON.stringify(event.type))
                   if (event.type === TouchType.Down) { // 按下时改变状态
                     this.audioRecorderManager.startRecording().then((res) => {
                       if (res) {
@@ -377,25 +378,17 @@ export struct Tab_ai {
                 event.setResult(DragResult.DRAG_CANCELED);
               })
               .onTouch((event) => {
+                console.warn(JSON.stringify(event.type))
                 if (event.type === TouchType.Down) { // 按下时改变状态
-                  this.audioRecorderManager.startRecording().then((res) => {
-                    if (res) {
-                      if (!this.showAnimate_flax) {
-                        this.downAnimate = setInterval(() => {
-                          this.showAnimate = !this.showAnimate;
-                        }, 180)
-                      }
-                      this.showAnimate_flax = true
-                    }
-                  })
-
+                  if (!this.showAnimate_flax) {
+                    this.downAnimate = setInterval(() => {
+                      this.showAnimate = !this.showAnimate;
+                    }, 180)
+                  }
+                  this.showAnimate_flax = true
                 } else if (event.type === TouchType.Up) {
-                  this.audioRecorderManager.stopAndUploadRecording().then((res) => {
-                    console.log(JSON.stringify(res))
-                    this.showAnimate_flax = false
-                    clearInterval(this.downAnimate)
-                  })
-
+                  this.showAnimate_flax = false
+                  clearInterval(this.downAnimate)
                 }
               })
             Image($r('app.media.multi_functional'))

@@ -26,6 +26,7 @@ import {
 import { CreateNewInstruction_pop } from 'command_ai';
 import { DeviceSettings } from '../components/DeviceSettings';
 import { connectDevice, DeviceArrayType_Ble } from 'bluetooth';
+import { DraggableResizableRect } from 'api'; //截图翻译
 
 
 PersistentStorage.persistProp("login", false)
@@ -494,7 +495,7 @@ struct Index {
               isBluetoothConnect_state: this.isBluetoothConnect_state
             })
           }
-
+          // DraggableResizableRect()
         }
         .width('100%')
         .height('100%')
@@ -505,7 +506,8 @@ struct Index {
       .mode(NavigationMode.Stack)
 
       Image($r('app.media.create_Command_Ai'))
-    }.onKeyEvent((event: KeyEvent) => {
+    }
+    .onKeyEvent((event: KeyEvent) => {
       // 异步处理按键事件，避免阻塞UI渲染，添加超时保护
       const timeoutId = setTimeout(() => {
         try {

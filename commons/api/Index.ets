@@ -10,3 +10,4 @@ export { Call_PHONE } from './src/main/ets/api/Call_PHONE' //打开通话应用
 export { AudioRecorderManager } from './src/main/ets/api/AudioRecorderManager' //本地麦克风管理
 
 export {adapterManager,AdapterManager} from './src/main/ets/api/AdapterManager' //蓝牙状态管理
+export {DraggableResizableRect} from './src/main/ets/api/DraggableResizableRect' //蓝牙状态管理
