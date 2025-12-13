@@ -2,24 +2,27 @@ import { AudioRecorderManager } from "api"
 import { CommonConfig } from "components_phone"
 import { common } from "@kit.AbilityKit"
 import { FocusController } from "@ohos.arkui.UIContext"
+import { LengthMetrics } from "@kit.ArkUI"
+import { AllShowAIWriting } from "./aiWriting/AllShowAIWriting"
 
-interface AIListType {
+export interface AIListType {
   image: string
   title: string
   AIline: string
 }
 
 export interface ModelsItem { //大模型列表
+  image: string
   name: string
   title: string
   recommended: boolean //是否被推荐
 }
 
+
 @Component
 export struct Tab_ai {
   @StorageLink("paletteTheme") paletteTheme: string = CommonConfig.PaletteTheme
   @Consume('pageInfo') pageInfo: NavPathStack
-
   @State Frame_29_select: boolean = false
   @State online_thinking_select: boolean = false
   @State aiList: AIListType[] = [
@@ -55,56 +58,96 @@ export struct Tab_ai {
   ]
   @State models: ModelsItem[] = [
     {
+      image: 'deepseek',
       name: 'DeepSeck-V3 ',
       title: '长文本强，逻辑推理。',
       recommended: true
     }, {
+    image: 'deepseek',
     name: 'DeepSeek-Rl',
     title: '数学专精，代码优化。',
     recommended: false
   }, {
+    image: 'Frame_2511',
     name: '豆包',
     title: '响应迅速，轻量高效。',
     recommended: false
   }, {
+    image: 'tyqw',
     name: '通义千问',
     title: '多轮对话，知识丰富。',
     recommended: false
   }, {
+    image: 'wxyy',
     name: '文心一言',
     title: '中文理解，创作力强。',
     recommended: false
   }, {
+    image: 'Kimi',
     name: 'KIMI',
     title: '简洁交互，信息精准。',
     recommended: false
   }, {
+    image: 'xfxh',
     name: '讯飞星火',
     title: '多轮对话，响应迅捷。',
     recommended: false
   }, {
+    image: 'xfxh',
     name: '讯飞星火-X1',
     title: '多模态强，视觉理解。',
     recommended: false
   }]
   @State showModels: boolean = false; // 展开大模型列表
-  @State currModels: string = '豆包'; // 当前大模型
+  @State currModels: number = 2; // 当前大模型
   @State inputCapable: boolean = false; // 具备输入能力
   @State showAnimate: boolean = true; // 按住语音图片变化
   @State showAnimate_flax: boolean = false; //是否显示录音UI
-  @State isTextAllShow:boolean=false//输入文本是否全部展开
+  @State isTextAllShow: boolean = false //输入文本是否全部展开
   @State downAnimate: number = -100000
   @State audioRecorderManager: AudioRecorderManager =
     new AudioRecorderManager(this.getUIContext().getHostContext() as common.UIAbilityContext)
   @State inputText: string = ''
+  @State showAIOption: boolean = false //是否选择展示具体某个ai，并控制List的滚动能力
+  @State currAIOption: number = 10000 //被点击查看的ai索引
+  @State currAIHeight: number = 34 //被查看的ai界面高度
+  @State currAIWidth: string = '30%' //被查看的ai界面宽度
   private focusController: FocusController = this.getUIContext().getFocusController();
-  AI_ListOnclick(index:number){
-    switch (index){
+  private listScroller: ListScroller = new ListScroller()
+
+  AI_ListOnclick(index: number) {
+    switch (index) {
       case 0:
-        this.pageInfo.pushPath({"name":'AI_Meeting'})
-      break
+        if (this.showAIOption) {
+          break
+        }
+        this.pageInfo.pushPath({ "name": 'AI_Meeting' })
+        break
+      case 1:
+        if (this.showAIOption) {
+          return
+        }
+        this.showAIOption = true
+        this.currAIOption = 1
+        this.listScroller.scrollToIndex(1)
+        this.getUIContext()?.animateTo({
+          duration: 1200,
+          curve: Curve.Friction,
+          playMode: PlayMode.Alternate,
+          expectedFrameRateRange: {
+            min: 10,
+            max: 120,
+            expected: 60,
+          }
+        }, () => {
+          this.currAIHeight = 177
+          this.currAIWidth = '100%'
+        })
+        break
+
     }
   }
+
   build() {
     Stack() {
       Stack() {
@@ -138,10 +181,10 @@ export struct Tab_ai {
               .margin({ right: 8 })
 
             Row() {
-              Image($r('app.media.Frame_2511'))
+              Image($r(`app.media.${this.models[this.currModels].image}`))
                 .width(16)
                 .margin({ right: 4 })
-              Text(this.currModels)
+              Text(this.models[this.currModels].name)
                 .fontSize(CommonConfig.fontSize_12)
                 .fontWeight(CommonConfig.fontWeight_400)
                 .fontColor(CommonConfig.secondaryTextColorMain)
@@ -169,7 +212,7 @@ export struct Tab_ai {
           if (this.showModels) {
             Scroll() {
               Column() {
-                ForEach(this.models, (item: ModelsItem) => {
+                ForEach(this.models, (item: ModelsItem, index) => {
                   Column() {
                     Row() {
                       Text(item.name)
@@ -204,7 +247,7 @@ export struct Tab_ai {
                   .padding(8)
                   .border({ width: { bottom: 1 }, color: '#EAEAEA' })
                   .onClick(() => {
-                    this.currModels = item.name
+                    this.currModels = index
                     this.showModels = false
                   })
                 }, (item: ModelsItem) => item.name)
@@ -228,53 +271,83 @@ export struct Tab_ai {
 
       Column() {
         Stack() {
-          List() {
+          List({ scroller: this.listScroller }) {
             ForEach(this.aiList, (item: AIListType, index) => {
               ListItem() {
-                Flex({ alignItems: ItemAlign.Center }) {
-                  Image($r(`app.media.${item.image}`))
-                    .width(16)
-                    .margin({ right: 8 })
-                    .backgroundColor(Color.White)
-                  Text(item.title)
-                    .fontSize(CommonConfig.fontSize_12)
-                    .fontWeight(CommonConfig.fontWeight_400)
-                    .fontColor(CommonConfig.hintTextColor_select)
+                if (this.currAIOption === index && this.showAIOption) {
+                  /**
+                   * AI写作，配置选项
+                   */
+                  if (index === 1) {
+                    AllShowAIWriting({
+                      item: item,
+                      showAIOption: this.showAIOption,
+                      currAIHeight: this.currAIHeight,
+                      currAIWidth: this.currAIWidth
+                    })
+                      .margin({ right: this.aiList.length === index + 1 ? 0 : 8 })
+                  }
+
+                } else {
+                  Flex({ alignItems: ItemAlign.Center }) {
+                    Image($r(`app.media.${item.image}`))
+                      .width(16)
+                      .margin({ right: 8 })
+                      .backgroundColor(Color.White)
+                      .flexShrink(1)
+                      .flexGrow(1)
+                    Text(item.title)
+                      .fontSize(CommonConfig.fontSize_12)
+                      .fontWeight(CommonConfig.fontWeight_400)
+                      .fontColor(CommonConfig.hintTextColor_select)
+                      .flexShrink(1)
+                      .flexGrow(1)
+                  }
+                  .borderRadius(8)
+                  .padding({
+                    left: 12,
+                    top: 8,
+                    right: 12,
+                    bottom: 8
+                  })
+                  .border({ width: 1, color: '#EAEAEA' })
+                  .margin({ right: this.aiList.length === index + 1 ? 0 : 8 })
+                  .backgroundColor(Color.White)
+                  .onClick(() => {
+                    this.AI_ListOnclick(index)
+                  })
                 }
-                .borderRadius(8)
-                .padding({
-                  left: 12,
-                  top: 8,
-                  right: 12,
-                  bottom: 8
-                })
-                .margin({ right: this.aiList.length === index + 1 ? 0 : 8 })
-                .backgroundColor(Color.White)
-                .onClick(()=>{
-                  this.AI_ListOnclick(index)
-                })
+
               }
 
             }, (item: AIListType) => item.AIline)
           }
           .width('100%')
           .margin({ bottom: 12 })
-          .height(34)
+          .alignListItem(ListItemAlign.End)
+          .scrollBar(this.showAIOption ? BarState.Off : BarState.On)
+          .height(this.currAIHeight)
           .listDirection(Axis.Horizontal)
           .scrollBarWidth(0)
+          .onScrollStop(() => {
+            if (this.showAIOption) {
+              this.listScroller.scrollToIndex(this.currAIOption)
+            }
+          })
+
 
           if (this.showAnimate_flax) {
             Image(this.showAnimate ? $r('app.media.audioanimate1') : $r('app.media.audioanimate2'))
               .width('100%')
               .height(40)
               .margin({ bottom: 12 })
-          }
+          } //语音条
         }
         .align(Alignment.Bottom)
 
-        if (this.inputCapable) {
+        if (this.inputCapable) { //对话输入页面
           Column() {
-            if (this.isTextAllShow){
+            if (this.isTextAllShow) {
               Flex() {
                 TextArea({ text: $$this.inputText })
                   .backgroundColor(Color.White)
@@ -287,7 +360,7 @@ export struct Tab_ai {
                   .borderRadius(0)
                   .focusable(true)
                   .key('myTextArea')
-                Column(){
+                Column() {
                   Image($r('app.media.delete_ai'))
                     .width(24)
                     .margin({ left: 8, bottom: 8 })
@@ -297,15 +370,15 @@ export struct Tab_ai {
                     })
                   Image($r('app.media.textShow_ai'))
                     .width(24)
-                    .margin({ left: 8})
+                    .margin({ left: 8 })
                     .onClick(() => {
-                      this.isTextAllShow=false
+                      this.isTextAllShow = false
                     })
                 }
 
               }
-              .margin({bottom:8})
-            }else {
+              .margin({ bottom: 8 })
+            } else {
               Flex() {
                 TextArea({ text: $$this.inputText })
                   .backgroundColor(Color.White)
@@ -328,10 +401,10 @@ export struct Tab_ai {
                 Image($r('app.media.textShow_ai'))
                   .width(24)
                   .onClick(() => {
-                    this.isTextAllShow=true
+                    this.isTextAllShow = true
                   })
               }
-              .margin({bottom:8})
+              .margin({ bottom: 8 })
             }
 
 
@@ -411,18 +484,18 @@ export struct Tab_ai {
               .onClick(() => {
                 this.online_thinking_select = !this.online_thinking_select
               })
-            Text(this.inputText?this.inputText:'给 AI 发送消息')
+            Text(this.inputText ? this.inputText : '给 AI 发送消息')
               .layoutWeight(1)
               .fontWeight(CommonConfig.fontWeight_400)
               .fontSize(CommonConfig.fontSize_14)
               .maxLines(2)
-              .fontColor(this.inputText?CommonConfig.hintTextColor_select:CommonConfig.hintTextColor)
+              .fontColor(this.inputText ? CommonConfig.hintTextColor_select : CommonConfig.hintTextColor)
               .backgroundColor(Color.White)
               .onClick(() => {
                 this.inputCapable = true
-                setTimeout(()=>{
+                setTimeout(() => {
                   this.focusController.requestFocus('myTextArea');
-                },50)
+                }, 50)
               })
             Image($r('app.media.audio'))
               .width(32)

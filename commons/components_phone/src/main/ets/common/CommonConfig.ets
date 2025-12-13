@@ -1,6 +1,7 @@
 export class CommonConfig {
   static readonly PaletteTheme: string = '#00AECC' //主题色
   static readonly commonBackgroundColor: string = '#F8F8F8' //通用背景色
+  static readonly commonBorderColor: string = '#EAEAEA' //通用背景色
   static readonly hintTextColor: string = '#999' //提示文字颜色+三级文本
   static readonly hintTextColor_select: string = '#333333' //提示文字颜色
   static readonly secondaryTextColor: string = '#A4AAB2' //二级文字颜色

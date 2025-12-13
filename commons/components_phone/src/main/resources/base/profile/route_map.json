@@ -137,7 +137,7 @@
       }
     },
     {
-      "name": "AI_Meeting",
+        "name": "AI_Meeting",
       "pageSourceFile": "src/main/ets/components/AI_Meeting.ets",
       "buildFunction": "AI_MeetingBuilder",
       "data": {

@@ -41,36 +41,44 @@ PersistentStorage.persistProp("flax", true) //手机专属标记
 @Entry
 @Component
 struct Index {
-  @State Models: ModelsItem[] = [
+  @State models: ModelsItem[] = [
     {
+      image: 'deepseek',
       name: 'DeepSeck-V3 ',
       title: '长文本强，逻辑推理。',
       recommended: true
     }, {
+    image: 'deepseek',
     name: 'DeepSeek-Rl',
     title: '数学专精，代码优化。',
     recommended: false
   }, {
+    image: 'Frame_2511',
     name: '豆包',
     title: '响应迅速，轻量高效。',
     recommended: false
   }, {
+    image: 'tyqw',
     name: '通义千问',
     title: '多轮对话，知识丰富。',
     recommended: false
   }, {
+    image: 'wxyy',
     name: '文心一言',
     title: '中文理解，创作力强。',
     recommended: false
   }, {
+    image: 'Kimi',
     name: 'KIMI',
     title: '简洁交互，信息精准。',
     recommended: false
   }, {
+    image: 'xfxh',
     name: '讯飞星火',
     title: '多轮对话，响应迅捷。',
     recommended: false
   }, {
+    image: 'xfxh',
     name: '讯飞星火-X1',
     title: '多模态强，视觉理解。',
     recommended: false
@@ -297,7 +305,7 @@ struct Index {
 
                 Scroll() {
                   Column() {
-                    ForEach(this.Models, (item: ModelsItem) => {
+                    ForEach(this.models, (item: ModelsItem) => {
                       Column() {
                         Flex({ alignItems: ItemAlign.Center }) {
                           Text(item.name)
