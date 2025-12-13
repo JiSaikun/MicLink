@@ -92,6 +92,7 @@ export struct Tab_ai {
   @State inputCapable: boolean = false; // 具备输入能力
   @State showAnimate: boolean = true; // 按住语音图片变化
   @State showAnimate_flax: boolean = false; //是否显示录音UI
+  @State isTextAllShow:boolean=false//输入文本是否全部展开
   @State downAnimate: number = -100000
   @State audioRecorderManager: AudioRecorderManager =
     new AudioRecorderManager(this.getUIContext().getHostContext() as common.UIAbilityContext)
@@ -212,6 +213,7 @@ export struct Tab_ai {
             .height(250)
             .align(Alignment.TopStart)
             .padding(8)
+            .scrollBarWidth(2)
             .borderRadius(8)
             .backgroundColor(Color.White)
             .margin({ left: 68 })
@@ -272,31 +274,66 @@ export struct Tab_ai {
 
         if (this.inputCapable) {
           Column() {
-            Flex() {
-              TextArea({ text: $$this.inputText })
-                .backgroundColor(Color.White)
-                .padding(0)
-                .fontSize(CommonConfig.fontSize_14)
-                .fontWeight(CommonConfig.fontWeight_400)
-                .fontColor(CommonConfig.hintTextColor_select)
-                .defaultFocus(true)
-                .height(40)
-                .borderRadius(0)
-                .focusable(true)
-                .key('myTextArea')
-              Image($r('app.media.delete_ai'))
-                .width(24)
-                .margin({ left: 8, right: 8 })
-                .onClick(() => {
-                  this.inputText = ''
-                })
-              Image($r('app.media.textShow_ai'))
-                .width(24)
-                .onClick(() => {
-                  this.inputCapable = false
-                })
+            if (this.isTextAllShow){
+              Flex() {
+                TextArea({ text: $$this.inputText })
+                  .backgroundColor(Color.White)
+                  .padding(0)
+                  .fontSize(CommonConfig.fontSize_14)
+                  .fontWeight(CommonConfig.fontWeight_400)
+                  .fontColor(CommonConfig.hintTextColor_select)
+                  .defaultFocus(true)
+                  .height(152)
+                  .borderRadius(0)
+                  .focusable(true)
+                  .key('myTextArea')
+                Column(){
+                  Image($r('app.media.delete_ai'))
+                    .width(24)
+                    .margin({ left: 8, bottom: 8 })
+                    .onClick(() => {
+                      // this.inputText = ''
+                      this.inputCapable = false
+                    })
+                  Image($r('app.media.textShow_ai'))
+                    .width(24)
+                    .margin({ left: 8})
+                    .onClick(() => {
+                      this.isTextAllShow=false
+                    })
+                }
+
+              }
+              .margin({bottom:8})
+            }else {
+              Flex() {
+                TextArea({ text: $$this.inputText })
+                  .backgroundColor(Color.White)
+                  .padding(0)
+                  .fontSize(CommonConfig.fontSize_14)
+                  .fontWeight(CommonConfig.fontWeight_400)
+                  .fontColor(CommonConfig.hintTextColor_select)
+                  .defaultFocus(true)
+                  .height(40)
+                  .borderRadius(0)
+                  .focusable(true)
+                  .key('myTextArea')
+                Image($r('app.media.delete_ai'))
+                  .width(24)
+                  .margin({ left: 8, right: 8 })
+                  .onClick(() => {
+                    // this.inputText = ''
+                    this.inputCapable = false
+                  })
+                Image($r('app.media.textShow_ai'))
+                  .width(24)
+                  .onClick(() => {
+                    this.isTextAllShow=true
+                  })
+              }
+              .margin({bottom:8})
             }
-            .margin({bottom:8})
+
 
             Flex() {
               Image(this.Frame_29_select ? $r('app.media.network_thinking_enabled') :
@@ -374,11 +411,12 @@ export struct Tab_ai {
               .onClick(() => {
                 this.online_thinking_select = !this.online_thinking_select
               })
-            Text('给 AI 发送消息')
+            Text(this.inputText?this.inputText:'给 AI 发送消息')
               .layoutWeight(1)
               .fontWeight(CommonConfig.fontWeight_400)
               .fontSize(CommonConfig.fontSize_14)
-              .fontColor(CommonConfig.hintTextColor)
+              .maxLines(2)
+              .fontColor(this.inputText?CommonConfig.hintTextColor_select:CommonConfig.hintTextColor)
               .backgroundColor(Color.White)
               .onClick(() => {
                 this.inputCapable = true

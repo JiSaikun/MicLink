@@ -259,7 +259,7 @@ struct Index {
               .height('100%')
               .width('100%')
               .backgroundColor("#000")
-              .opacity(0.1)
+              .opacity(0.3)
             Column() {
               Row() {
                 Row() {
@@ -337,6 +337,7 @@ struct Index {
                 .height(178)
                 .align(Alignment.TopStart)
                 .padding(8)
+                .scrollBarWidth(1)
                 .borderRadius(8)
                 .backgroundColor(Color.White)
                 .margin({ right: 24, bottom: 24 })
