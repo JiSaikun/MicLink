@@ -1,714 +1,626 @@
-import { AudioRecorderManager } from "api"
-import { CommonConfig } from "components_phone"
-import { common } from "@kit.AbilityKit"
-import { FocusController } from "@ohos.arkui.UIContext"
-import { LengthMetrics } from "@kit.ArkUI"
-import { AllShowAIWriting } from "./ai_list_show/AllShowAIWriting"
-import { AllShowAIDrawing } from "./ai_list_show/AllShowAIDrawing"
-import { AllShowAIPPT } from "./ai_list_show/AllShowAIPPT"
-import { fileSelect, takePhoto } from "common"
+// import { webview } from "@kit.ArkWeb";
+//
+// @Component
+// export struct Tab_ai {
+//   webviewController: webview.WebviewController = new webview.WebviewController();
+//
+//   build() {
+//     Column() {
+//       Web({ src: 'https://asrai.miclink.net/?sno=123123#/', controller: this.webviewController })
+//         .javaScriptAccess(true)    // 启用JavaScript
+//         .domStorageAccess(true)    // 启用DOM存储
+//         .fileAccess(true)          // 启用文件访问
+//     }
+//     .width('100%')
+//     .height('100%')
+//   }
+// }
+import { picker } from '@kit.CoreFileKit';
+import { fileIo as fs } from '@kit.CoreFileKit';
+import { BusinessError } from '@kit.BasicServicesKit';
+import { common, OpenLinkOptions } from '@kit.AbilityKit';
+import { webview } from '@kit.ArkWeb';
+import { promptAction } from '@kit.ArkUI';
+import { fileUri } from '@kit.CoreFileKit';
+import { hilog } from '@kit.PerformanceAnalysisKit';
+import { _KeyMethodConfig } from 'keymethodconfig';
 
-export interface AIListType {
-  image: string
-  title: string
-  AIline: string
+// =============== 第一步：定义数据传输接口 ===============
+interface RecordData {
+  state: number;
+  language: string;
 }
 
-export interface ModelsItem { //大模型列表
-  image: string
-  name: string
-  title: string
-  recommended: boolean //是否被推荐
+// =============== 第二步：创建代理类 ===============
+class WebProxy {
+  // 存储Content组件的引用
+  private component: Tab_ai;
+
+  constructor(component: Tab_ai) {
+    this.component = component;
+  }
+
+  // =============== 关键方法：供前端调用 ===============
+  // 方法名必须与javaScriptProxy中注册的一致
+  // 参数类型使用定义好的接口
+  webRecord(data: RecordData): void {
+    console.info(`WebProxy收到数据: ${JSON.stringify(data)}`);
+
+    // 添加数据验证
+    if (typeof data.state !== 'number') {
+      console.error('webRecord: state 必须是数字类型');
+      return;
+    }
+
+    if (typeof data.language !== 'string') {
+      console.error('webRecord: language 必须是字符串类型');
+      return;
+    }
+
+    // 将接收到的对象数据转发给Content组件
+    this.component.onWebRecord(data.state, data.language);
+  }
+
+  // =============== 测试方法 ===============
+  test(): string {
+    return 'ArkTS: 连接测试成功 ' + new Date().toLocaleTimeString();
+  }
+
+  // 可以添加更多方法...
+  getStatus(): string {
+    return 'WebProxy运行正常';
+  }
 }
 
 @Component
 export struct Tab_ai {
-  @StorageLink("paletteTheme") paletteTheme: string = CommonConfig.PaletteTheme
-  @Consume('pageInfo') pageInfo: NavPathStack
-  @State Frame_29_select: boolean = false
-  @State online_thinking_select: boolean = false
-  @State aiList: AIListType[] = [
-    {
-      image: 'aiMeeting',
-      title: 'AI 会议',
-      AIline: ''
-    }, {
-    image: 'aiWriting',
-    title: 'AI 写作',
-    AIline: ''
-  }, {
-    image: 'aiDrawing',
-    title: 'AI 绘图',
-    AIline: ''
-  }, {
-    image: 'aiPpt',
-    title: 'AI PPT',
-    AIline: ''
-  }, {
-    image: 'imageAnalysis',
-    title: '图片分析',
-    AIline: ''
-  }, {
-    image: 'documentConversion',
-    title: '文档转换',
-    AIline: ''
-  }, {
-    image: 'aiVideo',
-    title: 'AI视频',
-    AIline: ''
-  }
-  ]
-  @State models: ModelsItem[] = [
-    {
-      image: 'deepseek',
-      name: 'DeepSeck-V3 ',
-      title: '长文本强，逻辑推理。',
-      recommended: true
-    }, {
-    image: 'deepseek',
-    name: 'DeepSeek-Rl',
-    title: '数学专精，代码优化。',
-    recommended: false
-  }, {
-    image: 'Frame_2511',
-    name: '豆包',
-    title: '响应迅速，轻量高效。',
-    recommended: false
-  }, {
-    image: 'tyqw',
-    name: '通义千问',
-    title: '多轮对话，知识丰富。',
-    recommended: false
-  }, {
-    image: 'wxyy',
-    name: '文心一言',
-    title: '中文理解，创作力强。',
-    recommended: false
-  }, {
-    image: 'Kimi',
-    name: 'KIMI',
-    title: '简洁交互，信息精准。',
-    recommended: false
-  }, {
-    image: 'xfxh',
-    name: '讯飞星火',
-    title: '多轮对话，响应迅捷。',
-    recommended: false
-  }, {
-    image: 'xfxh',
-    name: '讯飞星火-X1',
-    title: '多模态强，视觉理解。',
-    recommended: false
-  }]
-  @State showModels: boolean = false; // 展开大模型列表
-  @State currModels: number = 2; // 当前大模型
-  @State inputCapable: boolean = false; // 具备输入能力
-  @State showAnimate: boolean = true; // 按住语音图片变化
-  @State showAnimate_flax: boolean = false; //是否显示录音UI
-  @State isTextAllShow: boolean = false //输入文本是否全部展开
-  @State downAnimate: number = -100000
-  @State audioRecorderManager: AudioRecorderManager =
-    new AudioRecorderManager(this.getUIContext().getHostContext() as common.UIAbilityContext)
-  @State inputText: string = ''
-  @State showAIOption: boolean = false //是否选择展示具体某个ai，并控制List的滚动能力
-  @State currAIOption: number = 10000 //被点击查看的ai索引
-  @State currAIHeight: number = 34 //被查看的ai界面高度
-  @State currAIWidth: string = '30%' //被查看的ai界面宽度
-  private focusController: FocusController = this.getUIContext().getFocusController();
-  private listScroller: ListScroller = new ListScroller()
+  webviewController: webview.WebviewController = new webview.WebviewController();
+  // 创建WebDownloadDelegate
+  delegate: webview.WebDownloadDelegate = new webview.WebDownloadDelegate();
+  @State web: string='https://asrai.miclink.net/?sno=123123#/'
+  @State isWebViewReady: boolean = false
+  @State downloadProgress: number = 0
+  @State isDownloading: boolean = false
+  @State currentDownloadPath: string = ''
+  @State currentDownloadUrl: string = ''
+  @State currentFileName: string = ''
+  @State currentDownloadDirUri: string = '' // 新增：保存下载目录URI
+  // =============== 新增：Web通信相关的状态变量 ===============
+  @Watch('change_FLAX') @State FLAX: boolean = false;
+  @State currentState: number = 0;
+  @State currentLanguage: string = '未设置';
+  // 代理对象实例
+  private webProxy: WebProxy = new WebProxy(this);
 
-  AI_ListOnclick(index: number) {
-    switch (index) {
-      case 0:
-        if (this.showAIOption) {
-          break
-        }
-        this.pageInfo.pushPath({ "name": 'AI_Meeting' })
-        break
+  // =============== 新增：Web通信处理方法 ===============
+  onWebRecord(state: number, language: string): void {
+    // 更新状态
+    this.currentState = state;
+    this.currentLanguage = language;
+    this.FLAX = !this.FLAX;
+
+    // 输出日志
+    console.info(`onWebRecord被调用: state=${state}, language=${language}`);
+    console.info(`FLAX状态切换为: ${this.FLAX}`);
+
+    // 这里可以添加更多业务逻辑
+  }
+
+  change_FLAX() {
+    console.error('currentState:', this.currentState)
+    switch (this.currentState) {
       case 1:
-        if (this.showAIOption) {
-          return
-        }
-        this.showAIOption = true
-        this.currAIOption = 1
-        this.listScroller.scrollToIndex(1)
-        this.getUIContext()?.animateTo({
-          duration: 1200,
-          curve: Curve.Friction,
-          playMode: PlayMode.Alternate,
-          expectedFrameRateRange: {
-            min: 10,
-            max: 120,
-            expected: 60,
-          }
-        }, () => {
-          this.currAIHeight = 177
-          this.currAIWidth = '100%'
-        })
+        /**
+         * AI会议开启设备录音
+         */
+        _KeyMethodConfig.voiceInput_AICon(this.webviewController, this.currentLanguage)
         break
       case 2:
-        if (this.showAIOption) {
-          return
-        }
-        this.showAIOption = true
-        this.currAIOption = 2
-        this.listScroller.scrollToIndex(2)
-        this.getUIContext()?.animateTo({
-          duration: 1200,
-          curve: Curve.Friction,
-          playMode: PlayMode.Alternate,
-          expectedFrameRateRange: {
-            min: 10,
-            max: 120,
-            expected: 60,
-          }
-        }, () => {
-          this.currAIHeight = 230
-          this.currAIWidth = '100%'
-        })
+        /**
+         * AI会议关闭设备录音
+         */
+        _KeyMethodConfig.voiceInput_AICon(this.webviewController, this.currentLanguage, false)
         break
-      case 3:
-        if (this.showAIOption) {
-          return
-        }
-        this.showAIOption = true
-        this.currAIOption = 3
-        this.listScroller.scrollToIndex(3)
-        this.getUIContext()?.animateTo({
-          duration: 1200,
-          curve: Curve.Friction,
-          playMode: PlayMode.Alternate,
-          expectedFrameRateRange: {
-            min: 10,
-            max: 120,
-            expected: 60,
-          }
-        }, () => {
-          this.currAIHeight = 300
-          this.currAIWidth = '100%'
-        })
-        break
-      case 4:
-        this.dialogController?.open()
     }
   }
 
-  build() {
-    Stack() {
-      Stack() {
-        Column() {
-          //没有数据时默认显示
-          Image($r('app.media.Vector_ai'))
-            .height(45)
-          Text('嗨！我是智能AI')
-            .fontSize(CommonConfig.fontSize_14)
-            .fontColor(CommonConfig.hintTextColor_select)
-            .fontWeight(CommonConfig.fontWeight_400)
-            .margin({ top: 16, bottom: 7 })
-          Text('我可以帮你搜索、解答问题、写作，请把你的任务交给我把~')
-            .width(198)
-            .textAlign(TextAlign.Center)
-            .fontSize(CommonConfig.fontSize_11)
-            .fontColor(CommonConfig.secondaryTextColorMain)
-            .fontWeight(CommonConfig.fontWeight_400)
-        }
-        .height('100%')
-        .width('100%')
-        .justifyContent(FlexAlign.Center)
+  aboutToAppear() {
+    // 注册快捷键回调函数
+    console.error(this.web)
+  }
 
-        Column() {
-          Row() {
-            Text('智能AI')
-              .width(60)
-              .fontColor(CommonConfig.hintTextColor_select)
-              .fontWeight(CommonConfig.fontWeight_700)
-              .fontSize(CommonConfig.fontSize_18)
-              .margin({ right: 8 })
-
-            Row() {
-              Image($r(`app.media.${this.models[this.currModels].image}`))
-                .width(16)
-                .margin({ right: 4 })
-              Text(this.models[this.currModels].name)
-                .fontSize(CommonConfig.fontSize_12)
-                .fontWeight(CommonConfig.fontWeight_400)
-                .fontColor(CommonConfig.secondaryTextColorMain)
-            }
-            .alignItems(VerticalAlign.Center)
-            .backgroundColor(Color.White)
-            .borderRadius(4)
-            .padding({
-              left: 4,
-              top: 2,
-              right: 4,
-              bottom: 2
-            })
-            .onClick(() => {
-              this.showModels = !this.showModels
-            })
-
-            Blank()
-            Image($r('app.media.new_chat'))
-              .height(40)
-          }
-          .width('100%')
-          .alignItems(VerticalAlign.Center)
-
-          if (this.showModels) {
-            Scroll() {
-              Column() {
-                ForEach(this.models, (item: ModelsItem, index) => {
-                  Column() {
-                    Row() {
-                      Text(item.name)
-                        .fontWeight(CommonConfig.fontWeight_400)
-                        .fontColor(CommonConfig.hintTextColor_select)
-                        .fontSize(CommonConfig.fontSize_12)
-                      Text('推荐')
-                        .backgroundColor('#e6f7fa')
-                        .visibility(item.recommended ? Visibility.Visible : Visibility.None)
-                        .padding({
-                          left: 4,
-                          top: 2,
-                          right: 4,
-                          bottom: 2
-                        })
-                        .fontWeight(CommonConfig.fontWeight_400)
-                        .fontColor(this.paletteTheme)
-                        .fontSize(CommonConfig.fontSize_12)
-                    }
-                    .margin({ bottom: 4 })
-                    .alignItems(VerticalAlign.Center)
-
-                    Row() {
-                      Text(item.title)
-                        .fontWeight(CommonConfig.fontWeight_400)
-                        .fontColor(CommonConfig.hintTextColor)
-                        .fontSize(CommonConfig.fontSize_12)
-                    }
-                    .alignItems(VerticalAlign.Center)
-                  }
-                  .alignItems(HorizontalAlign.Start)
-                  .padding(8)
-                  .border({ width: { bottom: 1 }, color: '#EAEAEA' })
-                  .onClick(() => {
-                    this.currModels = index
-                    this.showModels = false
-                  })
-                }, (item: ModelsItem) => item.name)
-              }
-            }
-            .height(250)
-            .align(Alignment.TopStart)
-            .padding(8)
-            .scrollBarWidth(2)
-            .borderRadius(8)
-            .backgroundColor(Color.White)
-            .margin({ left: 68 })
-          }
-        }
-        .alignItems(HorizontalAlign.Start)
-
-      }
-      .height("100%")
-      .align(Alignment.TopStart)
-      .expandSafeArea([SafeAreaType.KEYBOARD], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
-
-      Column() {
-        Stack() {
-          List({ scroller: this.listScroller }) {
-            ForEach(this.aiList, (item: AIListType, index) => {
-              ListItem() {
-                if (this.showAIOption && (this.currAIOption === index && this.currAIOption === 1)) {
-                  /**
-                   * AI写作，配置选项
-                   */
-                  AllShowAIWriting({
-                    item: item,
-                    showAIOption: this.showAIOption,
-                    currAIHeight: this.currAIHeight,
-                    currAIWidth: this.currAIWidth
-                  })
-                } else if (this.showAIOption && (this.currAIOption === index && index === 2)) {
-                  /**
-                   * AI绘图，配置选项
-                   */
-                  AllShowAIDrawing({
-                    item: item,
-                    showAIOption: this.showAIOption,
-                    currAIHeight: this.currAIHeight,
-                    currAIWidth: this.currAIWidth
-                  })
-                } else if (this.showAIOption && (this.currAIOption === index && index === 3)) {
-                  /**
-                   * AIPPT，配置选项
-                   */
-                  AllShowAIPPT({
-                    item: item,
-                    showAIOption: this.showAIOption,
-                    currAIHeight: this.currAIHeight,
-                    currAIWidth: this.currAIWidth
-                  })
-                } else {
-                  Flex({ alignItems: ItemAlign.Center }) {
-                    Image($r(`app.media.${item.image}`))
-                      .width(16)
-                      .margin({ right: 8 })
-                      .backgroundColor(Color.White)
-                      .flexShrink(1)
-                      .flexGrow(1)
-                    Text(item.title)
-                      .fontSize(CommonConfig.fontSize_12)
-                      .fontWeight(CommonConfig.fontWeight_400)
-                      .fontColor(CommonConfig.hintTextColor_select)
-                      .flexShrink(1)
-                      .flexGrow(1)
-                  }
-                  .borderRadius(8)
-                  .padding({
-                    left: 12,
-                    top: 8,
-                    right: 12,
-                    bottom: 8
-                  })
-                  .border({ width: 1, color: '#EAEAEA' })
-                  .margin({ right: this.aiList.length === index + 1 ? 0 : 8 })
-                  .backgroundColor(Color.White)
-                  .onClick(() => {
-                    this.AI_ListOnclick(index)
-                  })
-                }
-
-              }
-
-            }, (item: AIListType) => item.AIline)
-          }
-          .width('100%')
-          .margin({ bottom: 12 })
-          .alignListItem(ListItemAlign.End)
-          .scrollBar(this.showAIOption ? BarState.Off : BarState.On)
-          .height(this.currAIHeight)
-          .listDirection(Axis.Horizontal)
-          .scrollBarWidth(0)
-          .onScrollStop(() => {
-            if (this.showAIOption) {
-              this.listScroller.scrollToIndex(this.currAIOption)
-            }
-          })
-
-
-          if (this.showAnimate_flax) {
-            Image(this.showAnimate ? $r('app.media.audioanimate1') : $r('app.media.audioanimate2'))
-              .width('100%')
-              .height(40)
-              .margin({ bottom: 12 })
-          } //语音条
-        }
-        .align(Alignment.Bottom)
-
-        if (this.inputCapable) { //对话输入页面
-          Column() {
-            if (this.isTextAllShow) {
-              Flex() {
-                TextArea({ text: $$this.inputText })
-                  .backgroundColor(Color.White)
-                  .padding(0)
-                  .fontSize(CommonConfig.fontSize_14)
-                  .fontWeight(CommonConfig.fontWeight_400)
-                  .fontColor(CommonConfig.hintTextColor_select)
-                  .defaultFocus(true)
-                  .height(152)
-                  .borderRadius(0)
-                  .focusable(true)
-                  .key('myTextArea')
-                Column() {
-                  Image($r('app.media.delete_ai'))
-                    .width(24)
-                    .margin({ left: 8, bottom: 8 })
-                    .onClick(() => {
-                      // this.inputText = ''
-                      this.inputCapable = false
-                    })
-                  Image($r('app.media.textShow_ai'))
-                    .width(24)
-                    .margin({ left: 8 })
-                    .onClick(() => {
-                      this.isTextAllShow = false
-                    })
-                }
-
-              }
-              .margin({ bottom: 8 })
-            } else {
-              Flex() {
-                TextArea({ text: $$this.inputText })
-                  .backgroundColor(Color.White)
-                  .padding(0)
-                  .fontSize(CommonConfig.fontSize_14)
-                  .fontWeight(CommonConfig.fontWeight_400)
-                  .fontColor(CommonConfig.hintTextColor_select)
-                  .defaultFocus(true)
-                  .height(40)
-                  .borderRadius(0)
-                  .focusable(true)
-                  .key('myTextArea')
-                Image($r('app.media.delete_ai'))
-                  .width(24)
-                  .margin({ left: 8, right: 8 })
-                  .onClick(() => {
-                    // this.inputText = ''
-                    this.inputCapable = false
-                  })
-                Image($r('app.media.textShow_ai'))
-                  .width(24)
-                  .onClick(() => {
-                    this.isTextAllShow = true
-                  })
-              }
-              .margin({ bottom: 8 })
-            }
-
-
-            Flex() {
-              Image(this.Frame_29_select ? $r('app.media.network_thinking_enabled') :
-              $r('app.media.network_thinking_disabled'))
-                .height(32)
-                .onClick(() => {
-                  this.Frame_29_select = !this.Frame_29_select
-                })
-                .flexShrink(1)
-                .flexGrow(1)
-                .margin({ right: 8 })
-              Image(this.online_thinking_select ? $r('app.media.deep_thinking_filled') :
-              $r('app.media.deep_thinking_outline'))
-                .height(32)
-                .margin({ right: 8 })
-                .onClick(() => {
-                  this.online_thinking_select = !this.online_thinking_select
-                })
-                .flexShrink(1)
-                .flexGrow(1)
-                .margin({ right: 8 })
-
-
-              Image($r('app.media.audio'))
-                .width(32)
-                .margin({ left: 27, right: 8 })
-                .onDragStart((event: DragEvent) => {
-                  // 关键代码：返回DRAG_CANCELED阻止拖出
-                  event.setResult(DragResult.DRAG_CANCELED);
-                })
-                .onTouch((event) => {
-                  if (event.type === TouchType.Down) { // 按下时改变状态
-                    this.audioRecorderManager.startRecording().then((res) => {
-                      if (res) {
-                        if (!this.showAnimate_flax) {
-                          this.downAnimate = setInterval(() => {
-                            this.showAnimate = !this.showAnimate;
-                          }, 180)
-                        }
-                        this.showAnimate_flax = true
-                      }
-                    })
-
-                  } else if (event.type === TouchType.Up) {
-                    this.audioRecorderManager.stopAndUploadRecording().then((res) => {
-                      console.log(JSON.stringify(res))
-                      this.showAnimate_flax = false
-                      clearInterval(this.downAnimate)
-                    })
-
-                  }
-                })
-              Image($r('app.media.multi_functional'))
-                .width(32)
-                .margin({ right: 8 })
-              Image($r('app.media.Frame_32'))
-                .width(32)
-            }
-          }
-          .backgroundColor(Color.White)
-          .borderRadius(8)
-          .padding(8)
-        } else {
-          Flex({ alignItems: ItemAlign.Center }) {
-            Image(this.Frame_29_select ? $r('app.media.Frame_29_select') : $r('app.media.Frame_29'))
-              .width(32)
-              .margin({ right: 8 })
-              .onClick(() => {
-                this.Frame_29_select = !this.Frame_29_select
-              })
-            Image(this.online_thinking_select ? $r('app.media.online_thinking_select') :
-            $r('app.media.online_thinking'))
-              .width(32)
-              .margin({ right: 8 })
-              .onClick(() => {
-                this.online_thinking_select = !this.online_thinking_select
-              })
-            Text(this.inputText ? this.inputText : '给 AI 发送消息')
-              .layoutWeight(1)
-              .fontWeight(CommonConfig.fontWeight_400)
-              .fontSize(CommonConfig.fontSize_14)
-              .maxLines(2)
-              .fontColor(this.inputText ? CommonConfig.hintTextColor_select : CommonConfig.hintTextColor)
-              .backgroundColor(Color.White)
-              .onClick(() => {
-                this.inputCapable = true
-                setTimeout(() => {
-                  this.focusController.requestFocus('myTextArea');
-                }, 50)
-              })
-            Image($r('app.media.audio'))
-              .width(32)
-              .margin({ right: 8 })
-              .onDragStart((event: DragEvent) => {
-                // 关键代码：返回DRAG_CANCELED阻止拖出
-                event.setResult(DragResult.DRAG_CANCELED);
-              })
-              .onTouch((event) => {
-                if (event.type === TouchType.Down) { // 按下时改变状态
-                  this.audioRecorderManager.startRecording().then((res) => {
-                    if (res) {
-                      if (!this.showAnimate_flax) {
-                        this.downAnimate = setInterval(() => {
-                          this.showAnimate = !this.showAnimate;
-                        }, 180)
-                      }
-                      this.showAnimate_flax = true
-                    }
-                  })
-
-                } else if (event.type === TouchType.Up) {
-                  this.audioRecorderManager.stopAndUploadRecording().then((res) => {
-                    console.log(JSON.stringify(res))
-                    this.showAnimate_flax = false
-                    clearInterval(this.downAnimate)
-                  })
-
-                }
-              })
-            Image($r('app.media.multi_functional'))
-              .width(32)
-          }
-          .width('100%')
-          .borderRadius(8)
-          .padding(8)
-          .backgroundColor(Color.White)
-        }
-
-      }
-      .margin({ bottom: 12 })
-
+  // 设置下载委托和监听 - 简化版本
+  private setupDownloadDelegate() {
+    if (!this.isWebViewReady) {
+      console.error("WebView未就绪，无法设置下载委托");
+      return;
     }
-    .align(Alignment.Bottom)
+
+    try {
+      // 将下载委托设置到WebView控制器
+      this.webviewController.setDownloadDelegate(this.delegate);
+      console.info("下载委托设置成功");
+
+      // 监听下载开始前的回调
+      this.delegate.onBeforeDownload((webDownloadItem: webview.WebDownloadItem) => {
+        console.info("监听到下载请求");
+
+        // 获取下载信息
+        const suggestedFileName = webDownloadItem.getSuggestedFileName();
+        const url = webDownloadItem.getUrl();
+
+        console.info("下载地址: " + url);
+        console.info("建议文件名: " + suggestedFileName);
+
+        // 直接使用WebView的下载功能，不进行任何处理
+        this.handleDownloadDirectly(webDownloadItem, suggestedFileName, url);
+
+        return true; // 表示已处理下载请求
+      });
+
+    } catch (error) {
+      console.error("设置下载委托失败: " + JSON.stringify(error));
+    }
+  }
+
+  // 直接使用WebView下载功能
+  private handleDownloadDirectly(webDownloadItem: webview.WebDownloadItem, fileName: string, downloadUrl: string) {
+    try {
+      const context = getContext(this) as common.UIAbilityContext;
+
+      // 创建文件选择器实例
+      const documentViewPicker = new picker.DocumentViewPicker(context);
+      const documentSaveOptions = new picker.DocumentSaveOptions();
+
+      // 配置为DOWNLOAD模式
+      documentSaveOptions.pickerMode = picker.DocumentPickerMode.DOWNLOAD;
+
+      // 设置文件名
+      const finalFileName = fileName || this.extractFileNameFromUrl(downloadUrl);
+      documentSaveOptions.newFileNames = [finalFileName];
+
+      this.currentFileName = finalFileName;
+      this.currentDownloadUrl = downloadUrl;
+
+      console.info("准备下载文件: " + finalFileName);
+
+      // 显示下载开始提示
+      promptAction.showToast({
+        message: '开始下载文件',
+        duration: 2000
+      });
+
+      // 调用save接口获取DOWNLOAD目录
+      documentViewPicker.save(documentSaveOptions).then((documentSaveResult: Array<string>) => {
+        if (documentSaveResult.length > 0) {
+          const dirUri = documentSaveResult[0];
+          console.info('DOWNLOAD目录URI: ' + dirUri);
+
+          // 保存下载目录URI，用于后续打开文件夹
+          this.currentDownloadDirUri = dirUri;
+
+          // 构建完整的文件路径
+          const filePath = new fileUri.FileUri(dirUri + '/' + finalFileName).path;
+
+          // 保存当前下载路径用于显示
+          this.currentDownloadPath = filePath;
+
+          console.info("WebView下载路径: " + filePath);
+
+          // 设置下载状态
+          this.isDownloading = true;
+          this.downloadProgress = 0;
+
+          // 设置下载监听器
+          this.setupDownloadListeners();
+
+          // 让WebView开始下载到指定路径
+          webDownloadItem.start(filePath);
+
+          console.info("WebView下载已启动");
+        }
+      }).catch((err: BusinessError) => {
+        console.error(`DOWNLOAD模式失败, code is ${err.code}, message is ${err.message}`);
+        promptAction.showToast({
+          message: '下载启动失败',
+          duration: 3000
+        });
+      });
+
+    } catch (error) {
+      console.error("处理下载时出错: " + JSON.stringify(error));
+      promptAction.showToast({
+        message: '下载处理异常',
+        duration: 3000
+      });
+    }
+  }
+
+  // 设置下载监听器
+  private setupDownloadListeners() {
+    // 监听下载进度更新
+    this.delegate.onDownloadUpdated((webDownloadItem: webview.WebDownloadItem) => {
+      this.isDownloading = true;
+      const progress = webDownloadItem.getPercentComplete();
+      this.downloadProgress = progress;
+      console.info(`下载进度: ${progress}%`);
+    });
+
+    // 监听下载完成事件
+    this.delegate.onDownloadFinish(() => {
+      console.info("下载完成");
+      this.isDownloading = false;
+      this.downloadProgress = 100;
+
+      // 验证下载的文件
+      this.verifyDownloadedFile();
+
+      // 显示选择对话框，让用户决定是否打开文件夹
+      this.showDownloadCompleteDialogWithChoice();
+
+      promptAction.showToast({
+        message: '下载完成',
+        duration: 2000
+      });
+    });
+
+    // 监听下载失败事件
+    this.delegate.onDownloadFailed(() => {
+      console.error("下载失败");
+      this.isDownloading = false;
+      this.downloadProgress = 0;
+
+      promptAction.showToast({
+        message: '下载失败',
+        duration: 3000
+      });
+    });
+  }
+
+  // 验证下载的文件
+  private verifyDownloadedFile() {
+    if (!this.currentDownloadPath) {
+      console.error("没有下载路径信息");
+      return;
+    }
+
+    try {
+      const stat = fs.statSync(this.currentDownloadPath);
+      console.info(`文件大小: ${stat.size} 字节`);
+
+      if (stat.size === 0) {
+        console.error("下载的文件大小为0，文件可能已损坏");
+        promptAction.showToast({
+          message: '下载的文件为空或已损坏',
+          duration: 3000
+        });
+
+        // 删除空文件
+        try {
+          fs.unlinkSync(this.currentDownloadPath);
+          console.info("已删除空文件");
+        } catch (deleteError) {
+          console.error("删除空文件失败: " + JSON.stringify(deleteError));
+        }
+      } else {
+        console.info("文件下载成功，大小正常");
+
+        // 尝试读取文件头信息来验证文件类型
+        this.checkFileHeader();
+      }
+    } catch (error) {
+      console.error("文件验证失败: " + JSON.stringify(error));
+      promptAction.showToast({
+        message: '文件验证失败',
+        duration: 3000
+      });
+    }
+  }
+
+  // 检查文件头信息
+  private checkFileHeader() {
+    if (!this.currentDownloadPath) {
+      return;
+    }
+
+    try {
+      const file = fs.openSync(this.currentDownloadPath, fs.OpenMode.READ_ONLY);
+      const buffer = new ArrayBuffer(8); // 读取前8个字节
+      const bytesRead = fs.readSync(file.fd, buffer);
+      fs.closeSync(file);
+
+      if (bytesRead > 0) {
+        const uint8Array = new Uint8Array(buffer);
+        console.info("文件头(十六进制): " + Array.from(uint8Array).map(b => b.toString(16).padStart(2, '0')).join(' '));
+
+        // 常见文件类型的魔数检查
+        if (this.isZipFile(uint8Array)) {
+          console.info("检测到ZIP文件格式");
+        } else if (this.isPngFile(uint8Array)) {
+          console.info("检测到PNG文件格式");
+        } else if (this.isJpegFile(uint8Array)) {
+          console.info("检测到JPEG文件格式");
+        } else {
+          console.info("未知文件格式");
+        }
+      }
+    } catch (error) {
+      console.error("检查文件头失败: " + JSON.stringify(error));
+    }
+  }
+
+  // 检查ZIP文件格式 (PK开头)
+  private isZipFile(header: Uint8Array): boolean {
+    return header.length >= 4 &&
+      header[0] === 0x50 && header[1] === 0x4B &&
+      header[2] === 0x03 && header[3] === 0x04;
+  }
+
+  // 检查PNG文件格式
+  private isPngFile(header: Uint8Array): boolean {
+    return header.length >= 8 &&
+      header[0] === 0x89 && header[1] === 0x50 &&
+      header[2] === 0x4E && header[3] === 0x47 &&
+      header[4] === 0x0D && header[5] === 0x0A &&
+      header[6] === 0x1A && header[7] === 0x0A;
+  }
+
+  // 检查JPEG文件格式
+  private isJpegFile(header: Uint8Array): boolean {
+    return header.length >= 3 &&
+      header[0] === 0xFF && header[1] === 0xD8 && header[2] === 0xFF;
+  }
+
+  // 从URL中提取文件名
+  private extractFileNameFromUrl(url: string): string {
+    try {
+      let fileName = `download_${new Date().getTime()}`;
+
+      // 查找最后一个斜杠
+      const lastSlashIndex = url.lastIndexOf('/');
+      if (lastSlashIndex !== -1 && lastSlashIndex < url.length - 1) {
+        const lastPart = url.substring(lastSlashIndex + 1);
+
+        // 检查是否有查询参数
+        const queryIndex = lastPart.indexOf('?');
+        if (queryIndex !== -1) {
+          fileName = lastPart.substring(0, queryIndex);
+        } else {
+          fileName = lastPart;
+        }
+
+        // 如果文件名仍然为空或太短，使用默认名称
+        if (!fileName || fileName.length < 3) {
+          fileName = `download_${new Date().getTime()}.bin`;
+        }
+      }
+
+      // 确保文件名有扩展名
+      if (!fileName.includes('.')) {
+        fileName += this.guessFileExtension(url);
+      }
+
+      return fileName;
+    } catch (error) {
+      return `download_${new Date().getTime()}.bin`;
+    }
+  }
+
+  // 根据URL猜测文件扩展名
+  private guessFileExtension(url: string): string {
+    if (url.includes('.jpg') || url.includes('.jpeg')) {
+      return '.jpg';
+    } else if (url.includes('.png')) {
+      return '.png';
+    } else if (url.includes('.pdf')) {
+      return '.pdf';
+    } else if (url.includes('.mp4')) {
+      return '.mp4';
+    } else if (url.includes('.mp3')) {
+      return '.mp3';
+    } else if (url.includes('.zip')) {
+      return '.zip';
+    } else if (url.includes('.rar')) {
+      return '.rar';
+    } else if (url.includes('.7z')) {
+      return '.7z';
+    } else if (url.includes('.doc') || url.includes('.docx')) {
+      return '.docx';
+    } else if (url.includes('.xls') || url.includes('.xlsx')) {
+      return '.xlsx';
+    } else {
+      return '.bin';
+    }
+  }
+
+  // 显示下载完成对话框，让用户选择是否打开文件夹
+  private showDownloadCompleteDialogWithChoice() {
+    if (!this.currentDownloadPath) {
+      return;
+    }
+
+    const fileName: string = this.getFileNameFromPath(this.currentDownloadPath);
+
+    promptAction.showDialog({
+      title: '下载完成',
+      message: `文件 "${fileName}" 已下载完成！\n\n是否要打开下载文件夹？`,
+      buttons: [
+        {
+          text: '打开文件夹',
+          color: '#007DFF'
+        },
+        {
+          text: '仅查看',
+          color: '#999999'
+        }
+      ]
+    }).then((result) => {
+      if (result.index === 0) {
+        // 用户点击了"打开文件夹"
+        this.openDownloadDirectory();
+      } else {
+        // 用户点击了"仅查看"，只显示成功消息
+        promptAction.showToast({
+          message: '文件已保存到下载目录',
+          duration: 2000
+        });
+      }
+      this.clearDownloadState();
+    });
+  }
+
+  // 打开下载目录
+  private openDownloadDirectory(): void {
+    if (!this.currentDownloadDirUri) {
+      console.error("没有下载目录信息");
+      promptAction.showToast({
+        message: '无法打开下载目录',
+        duration: 3000
+      });
+      return;
+    }
+
+    try {
+      const context = getContext(this) as common.UIAbilityContext;
+      const TAG: string = '[OpenDownloadDirectory]';
+      const DOMAIN_NUMBER: number = 0xFF00;
+
+      let openLinkOptions: OpenLinkOptions = {
+        parameters: {
+          'fileUri': this.currentDownloadDirUri
+        }
+      };
+
+      console.info(`尝试打开目录: ${this.currentDownloadDirUri}`);
+
+      context.openLink('filemanager://openDirectory', openLinkOptions)
+        .then(() => {
+          console.info('打开下载目录成功');
+          hilog.info(DOMAIN_NUMBER, TAG, 'open download directory success.');
+        })
+        .catch((err: BusinessError) => {
+          console.error(`打开下载目录失败. Code is ${err.code}, message is ${err.message}`);
+          hilog.error(DOMAIN_NUMBER, TAG,
+            `open download directory failed. Code is ${err.code}, message is ${err.message}`);
+
+          // 如果打开失败，尝试使用默认方式
+          this.fallbackOpenDirectory();
+        });
+    } catch (paramError) {
+      const error = paramError as BusinessError;
+      console.error(`打开下载目录参数错误. Code is ${error.code}, message is ${error.message}`);
+      const TAG: string = '[OpenDownloadDirectory]';
+      const DOMAIN_NUMBER: number = 0xFF00;
+      hilog.error(DOMAIN_NUMBER, TAG,
+        `Failed to open download directory. Code is ${error.code}, message is ${error.message}`);
+
+      // 如果参数错误，尝试使用默认方式
+      this.fallbackOpenDirectory();
+    }
+  }
+
+  // 回退方式打开目录
+  private fallbackOpenDirectory(): void {
+    try {
+      const context = getContext(this) as common.UIAbilityContext;
+      const TAG: string = '[FallbackOpenDirectory]';
+      const DOMAIN_NUMBER: number = 0xFF00;
+
+      // 尝试使用简单的文件管理器URI
+      const link: string = 'filemanager://';
+      let openLinkOptions: OpenLinkOptions = {};
+
+      context.openLink(link, openLinkOptions)
+        .then(() => {
+          console.info('成功打开文件管理器');
+          hilog.info(DOMAIN_NUMBER, TAG, 'open file manager success.');
+        })
+        .catch((err: BusinessError) => {
+          console.error(`打开文件管理器失败. Code is ${err.code}, message is ${err.message}`);
+          hilog.error(DOMAIN_NUMBER, TAG, `open file manager failed. Code is ${err.code}, message is ${err.message}`);
+        });
+    } catch (error) {
+      console.error('回退方式打开目录失败: ' + JSON.stringify(error));
+    }
+  }
+
+  // 清理下载状态
+  private clearDownloadState(): void {
+    this.currentDownloadPath = '';
+    this.currentDownloadUrl = '';
+    this.currentFileName = '';
+    this.currentDownloadDirUri = '';
+  }
+
+  // 从路径中提取文件名
+  private getFileNameFromPath(filePath: string): string {
+    const segments: string[] = filePath.split('/');
+    return segments[segments.length - 1] || '未知文件';
+  }
+
+  build() {
+    Flex({ direction: FlexDirection.Column, alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center }) {
+      //
+      // // 下载进度显示
+      // if (this.isDownloading) {
+      //   Column() {
+      //     Text('正在下载文件...')
+      //       .fontSize(16)
+      //       .fontColor(Color.Black)
+      //       .margin({ bottom: 5 })
+      //
+      //     Text(`下载进度: ${this.downloadProgress}%`)
+      //       .fontSize(14)
+      //       .fontColor(Color.Blue)
+      //
+      //     Progress({ value: this.downloadProgress, total: 100 })
+      //       .width('80%')
+      //       .height(8)
+      //       .color(Color.Blue)
+      //       .backgroundColor('#EEEEEE')
+      //
+      //     Text(`文件: ${this.currentFileName}`)
+      //       .fontSize(12)
+      //       .fontColor(Color.Gray)
+      //       .margin({ top: 5 })
+      //   }
+      //   .width('95%')
+      //   .padding(10)
+      //   .backgroundColor('#F5F5F5')
+      //   .borderRadius(8)
+      //   .margin({ bottom: 10 })
+      // }
+
+      Web({
+        src: this.web,
+        controller: this.webviewController
+      })
+        .onPageEnd(() => {
+          console.info("Web页面加载完成，设置下载委托和Web通信代理");
+          this.isWebViewReady = true;
+          this.setupDownloadDelegate();
+          // 添加日志，确认页面加载完成
+          console.info("页面加载完成，javaScriptProxy应该已经注册");
+        })
+        .onPageBegin(() => {
+          this.isWebViewReady = false;
+        })
+        // =============== 新增：Web通信代理配置 ===============
+        .javaScriptProxy({
+          // 关键配置：注册代理对象
+          object: this.webProxy, // 要暴露的对象
+          name: "hostInstance", // 前端通过window.hostInstance访问
+          methodList: ["webRecord", "test", "getStatus"], // 暴露的方法列表
+          controller: this.webviewController
+        })
+        .flexGrow(1)
+        .width('100%')
+        .height('100%')
+        .domStorageAccess(true)
+        .javaScriptAccess(true)
+        .fileAccess(true)
+    }
     .width('100%')
     .height('100%')
-  }
-
-  /**
-   * 图片分析功能
-   */
-  dialogController: CustomDialogController | null = new CustomDialogController({
-    builder: ImageAnalysis({
-      cancel: () => {
-        this.onCancel();
-      },
-      confirm: () => {
-        this.onAccept();
-      }
-    }),
-    cancel: this.exitApp,
-    autoCancel: true,
-    alignment: DialogAlignment.Bottom,
-    offset: { dx: 0, dy: -20 },
-    gridCount: 4,
-    customStyle: false,
-    cornerRadius: 16
-  })
-
-  onCancel() {
-    console.info('调用相册');
-    fileSelect()
-  }
-
-  onAccept() {
-    console.info('使用相机拍照');
-    takePhoto()
-  }
-
-  // 在自定义组件即将析构销毁时将dialogController置空
-  aboutToDisappear() {
-    this.dialogController = null; // 将dialogController置空
-  }
-
-  exitApp() {
-    console.info('单击空白区域中的回拨');
-  }
-}
-
-@CustomDialog
-@Component
-struct ImageAnalysis {
-  // 若尝试在CustomDialog中传入多个其他的Controller，以实现在CustomDialog中打开另一个或另一些CustomDialog，那么此处需要将指向自己的controller放在所有controller的后面
-  cancel: () => void = () => {
-  }
-  confirm: () => void = () => {
-  }
-  controller?: CustomDialogController;
-  @StorageLink('languages') languages: string = 'ZH_CN'
-
-  build() {
-
-    Column() {
-      Text('您要以什么方式获取图片？')
-        .fontColor(CommonConfig.hintTextColor_select)
-        .fontSize(CommonConfig.fontSize_16)
-        .fontWeight(CommonConfig.fontWeight_400)
-        .margin({ bottom: 16 })
-      Text('从相册选择')
-        .fontColor(CommonConfig.hintTextColor_select)
-        .fontSize(CommonConfig.fontSize_14)
-        .fontWeight(CommonConfig.fontWeight_400)
-        .margin({ bottom: 8 })
-        .padding(12)
-        .backgroundColor(Color.White)
-        .borderRadius(8)
-        .width('100%')
-        .textAlign(TextAlign.Center)
-        .onClick(() => {
-          this.cancel()
-          this.controller?.close()
-        })
-      Text('使用相机拍照')
-        .fontColor(CommonConfig.hintTextColor_select)
-        .fontSize(CommonConfig.fontSize_14)
-        .fontWeight(CommonConfig.fontWeight_400)
-        .margin({ bottom: 16 })
-        .padding(12)
-        .backgroundColor(Color.White)
-        .borderRadius(8)
-        .width('100%')
-        .textAlign(TextAlign.Center)
-        .onClick(() => {
-          this.confirm()
-          this.controller?.close()
-        })
-      Text('取消')
-        .fontColor(CommonConfig.hintTextColor_select)
-        .fontSize(CommonConfig.fontSize_14)
-        .fontWeight(CommonConfig.fontWeight_400)
-        .padding(12)
-        .backgroundColor(Color.White)
-        .borderRadius(8)
-        .width('100%')
-        .textAlign(TextAlign.Center)
-        .onClick(() => {
-          this.controller?.close()
-        })
-    }
-    .alignItems(HorizontalAlign.Center)
-    .borderRadius(16)
-    .backgroundColor(CommonConfig.commonBackgroundColor)
-    .padding(16)
   }
 }
