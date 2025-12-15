@@ -3,8 +3,8 @@ import { CommonConfig } from "components_phone"
 import { common } from "@kit.AbilityKit"
 import { FocusController } from "@ohos.arkui.UIContext"
 import { LengthMetrics } from "@kit.ArkUI"
-import { AllShowAIWriting } from "./aiWriting/AllShowAIWriting"
-import { AllShowAIDrawing } from "./aiWriting/AllShowAIDrawing"
+import { AllShowAIWriting } from "./ai_list_show/AllShowAIWriting"
+import { AllShowAIDrawing } from "./ai_list_show/AllShowAIDrawing"
 
 export interface AIListType {
   image: string
