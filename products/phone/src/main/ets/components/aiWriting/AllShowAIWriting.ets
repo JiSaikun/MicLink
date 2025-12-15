@@ -310,5 +310,6 @@ export struct AllShowAIWriting {
     .backgroundColor((this.showaiWriting_Scene||this.showaiWriting_Length||this.showaiWriting_Language)?CommonConfig.commonBackgroundColor:Color.White)
     .height(this.currAIHeight)
     .width(this.currAIWidth)
+    .margin({right:8})
   }
 }

@@ -4,6 +4,7 @@ import { common } from "@kit.AbilityKit"
 import { FocusController } from "@ohos.arkui.UIContext"
 import { LengthMetrics } from "@kit.ArkUI"
 import { AllShowAIWriting } from "./aiWriting/AllShowAIWriting"
+import { AllShowAIDrawing } from "./aiWriting/AllShowAIDrawing"
 
 export interface AIListType {
   image: string
@@ -144,6 +145,27 @@ export struct Tab_ai {
           this.currAIWidth = '100%'
         })
         break
+      case 2:
+        if (this.showAIOption) {
+          return
+        }
+        this.showAIOption = true
+        this.currAIOption = 2
+        this.listScroller.scrollToIndex(2)
+        this.getUIContext()?.animateTo({
+          duration: 1200,
+          curve: Curve.Friction,
+          playMode: PlayMode.Alternate,
+          expectedFrameRateRange: {
+            min: 10,
+            max: 120,
+            expected: 60,
+          }
+        }, () => {
+          this.currAIHeight = 230
+          this.currAIWidth = '100%'
+        })
+        break
 
     }
   }
@@ -274,20 +296,26 @@ export struct Tab_ai {
           List({ scroller: this.listScroller }) {
             ForEach(this.aiList, (item: AIListType, index) => {
               ListItem() {
-                if (this.currAIOption === index && this.showAIOption) {
+                if (this.showAIOption && (this.currAIOption === index && this.currAIOption === 1)) {
                   /**
                    * AI写作，配置选项
                    */
-                  if (index === 1) {
-                    AllShowAIWriting({
-                      item: item,
-                      showAIOption: this.showAIOption,
-                      currAIHeight: this.currAIHeight,
-                      currAIWidth: this.currAIWidth
-                    })
-                      .margin({ right: this.aiList.length === index + 1 ? 0 : 8 })
-                  }
-
+                  AllShowAIWriting({
+                    item: item,
+                    showAIOption: this.showAIOption,
+                    currAIHeight: this.currAIHeight,
+                    currAIWidth: this.currAIWidth
+                  })
+                } else if (this.showAIOption && (this.currAIOption === index && index === 2)) {
+                  /**
+                   * AI绘图，配置选项
+                   */
+                  AllShowAIDrawing({
+                    item: item,
+                    showAIOption: this.showAIOption,
+                    currAIHeight: this.currAIHeight,
+                    currAIWidth: this.currAIWidth
+                  })
                 } else {
                   Flex({ alignItems: ItemAlign.Center }) {
                     Image($r(`app.media.${item.image}`))
