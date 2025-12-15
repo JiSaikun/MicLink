@@ -10,22 +10,40 @@ function commonText() {
 }
 
 @Component
-export struct AllShowAIWriting {
+export struct AllShowAIPPT {
   @StorageLink("paletteTheme") paletteTheme: string = CommonConfig.PaletteTheme
   @State item: AIListType | null = null
   @Link showAIOption: boolean //是否选择展示具体某个ai，并控制List的滚动能力
   @Link currAIHeight: number //被查看的ai界面高度
-  @Link currAIWidth: string //被查看的ai界面宽度
-  @State aiWriting_StyleList: string[] = ['简洁', '正式']
-  @State aiWriting_LengthList: string[] = ['短', '中', '长']
-  @State aiWriting_LanguageList: string[] = ['中文', '英文']
-  @StorageLink("aiWriting_Scene") aiWriting_Scene: number = 0 //写作场景
-  @State showaiWriting_Scene: boolean = false
-  @State showaiWriting_Length: boolean = false
-  @State showaiWriting_Language: boolean = false
-  @StorageLink("aiWriting_Style") aiWriting_Style: number = 100000 //写作风格
-  @StorageLink("aiWriting_Length") aiWriting_Length: number = 100000 //写作长度
-  @StorageLink("aiWriting_Language") aiWriting_Language: number = 100000 //写作语言
+  @Link currAIWidth: string //被查看的ai界面宽度  aiPpt
+  @State aiPpt_StyleList: string[] = ['简洁', '正式']
+  @State aiPpt_LengthList: string[] = ['短', '中', '长']
+  @State aiPpt_LanguageList: string[] = ['中文', '英文']
+  @StorageLink("aiaiPpt_Scene") aiaiPpt_Scene: number = 0 //写作场景
+  @State showaiPpt_Scene: boolean = false
+  @State showaiPpt_Length: boolean = false
+  @State showaiPpt_Language: boolean = false
+  @StorageLink("aiPpt_Style") aiPpt_Style: number = 100000 //写作风格
+  @StorageLink("aiPpt_Length") aiPpt_Length: number = 100000 //写作长度
+  @StorageLink("aiPpt_Language") aiPpt_Language: number = 100000 //写作语言
+  @Watch('currTemplate') @StorageLink("aiPpt_template") aiPpt_template: number = 100000 //PPT模板
+
+  currTemplate() {
+    if (this.aiPpt_template !== 100000) {
+      this.getUIContext()?.animateTo({
+        duration: 500,
+        curve: Curve.Friction,
+        playMode: PlayMode.Alternate,
+        expectedFrameRateRange: {
+          min: 10,
+          max: 120,
+          expected: 0,
+        }
+      }, () => {
+        this.currAIHeight = 358
+      })
+    }
+  }
 
   build() {
     Column() {
@@ -48,9 +66,9 @@ export struct AllShowAIWriting {
             .flexShrink(1)
             .width(24)
             .onClick(() => {
-              this.showaiWriting_Scene = false
-              this.showaiWriting_Length = false
-              this.showaiWriting_Language = false
+              this.showaiPpt_Scene = false
+              this.showaiPpt_Length = false
+              this.showaiPpt_Language = false
               this.getUIContext()?.animateTo({
                 duration: 1200,
                 curve: Curve.Friction,
@@ -83,23 +101,23 @@ export struct AllShowAIWriting {
             Text('场景')
               .commonText()
             List({ space: 8 }) {
-              ForEach(['通用', '论文', '作文', '文章', '宣传文案', '小说', '改写'],
+              ForEach(['通用', '工作计划', '内容策划', '市场分析', '年度总结', '旅行计划', '论文答辩'],
                 (item: string, index) => {
                   ListItem() {
                     Text(item)
                       .fontSize(CommonConfig.fontSize_12)
                       .fontWeight(CommonConfig.fontWeight_400)
-                      .fontColor(this.aiWriting_Scene === index ? this.paletteTheme :
+                      .fontColor(this.aiaiPpt_Scene === index ? this.paletteTheme :
                       CommonConfig.hintTextColor_select)
                       .borderRadius(8)
                       .padding(8)
                       .border({
                         width: 1,
-                        color: this.aiWriting_Scene === index ? this.paletteTheme :
+                        color: this.aiaiPpt_Scene === index ? this.paletteTheme :
                         CommonConfig.commonBorderColor
                       })
                       .onClick(() => {
-                        this.aiWriting_Scene = index
+                        this.aiaiPpt_Scene = index
                       })
                   }
                 }, (item: string) => item)
@@ -118,7 +136,7 @@ export struct AllShowAIWriting {
                     .fontWeight(CommonConfig.fontWeight_400)
                     .fontSize(CommonConfig.fontSize_12)
                     .fontColor(CommonConfig.hintTextColor_select)
-                  Text(this.aiWriting_Style !== 100000 ? this.aiWriting_StyleList[this.aiWriting_Style] : '不限')
+                  Text(this.aiPpt_Style !== 100000 ? this.aiPpt_StyleList[this.aiPpt_Style] : '不限')
                     .margin({ right: 4 })
                     .fontWeight(CommonConfig.fontWeight_400)
                     .fontSize(CommonConfig.fontSize_12)
@@ -132,14 +150,14 @@ export struct AllShowAIWriting {
                 .border({ width: 1, color: CommonConfig.commonBorderColor })
                 .id('bot')
                 .onClick(() => {
-                  this.showaiWriting_Scene = !this.showaiWriting_Scene
-                  this.showaiWriting_Length = false
-                  this.showaiWriting_Language = false
+                  this.showaiPpt_Scene = !this.showaiPpt_Scene
+                  this.showaiPpt_Length = false
+                  this.showaiPpt_Language = false
                 })
 
-                if (this.showaiWriting_Scene)
+                if (this.showaiPpt_Scene)
                 Column() {
-                  ForEach(this.aiWriting_StyleList, (item: string, index) => {
+                  ForEach(this.aiPpt_StyleList, (item: string, index) => {
                     Text(item)
                       .width('100%')
                       .textAlign(TextAlign.Center)
@@ -149,8 +167,8 @@ export struct AllShowAIWriting {
                       .fontColor(CommonConfig.hintTextColor_select)
                       .border({ width: { bottom: 1 }, color: CommonConfig.commonBorderColor })
                       .onClick(() => {
-                        this.aiWriting_Style = index
-                        this.showaiWriting_Scene = false
+                        this.aiPpt_Style = index
+                        this.showaiPpt_Scene = false
                       })
                   }, (item: string) => item)
                 }
@@ -174,7 +192,7 @@ export struct AllShowAIWriting {
                     .fontWeight(CommonConfig.fontWeight_400)
                     .fontSize(CommonConfig.fontSize_12)
                     .fontColor(CommonConfig.hintTextColor_select)
-                  Text(this.aiWriting_Length !== 100000 ? this.aiWriting_LengthList[this.aiWriting_Length] : '不限')
+                  Text(this.aiPpt_Length !== 100000 ? this.aiPpt_LengthList[this.aiPpt_Length] : '不限')
                     .margin({ right: 4 })
                     .fontWeight(CommonConfig.fontWeight_400)
                     .fontSize(CommonConfig.fontSize_12)
@@ -188,14 +206,14 @@ export struct AllShowAIWriting {
                 .border({ width: 1, color: CommonConfig.commonBorderColor })
                 .id('bot')
                 .onClick(() => {
-                  this.showaiWriting_Length = !this.showaiWriting_Length
-                  this.showaiWriting_Scene = false
-                  this.showaiWriting_Language = false
+                  this.showaiPpt_Length = !this.showaiPpt_Length
+                  this.showaiPpt_Scene = false
+                  this.showaiPpt_Language = false
                 })
 
-                if (this.showaiWriting_Length)
+                if (this.showaiPpt_Length)
                 List() {
-                  ForEach(this.aiWriting_LengthList, (item: string, index) => {
+                  ForEach(this.aiPpt_LengthList, (item: string, index) => {
                     ListItem() {
                       Text(item)
                         .width('100%')
@@ -206,8 +224,8 @@ export struct AllShowAIWriting {
                         .fontColor(CommonConfig.hintTextColor_select)
                         .border({ width: { bottom: 1 }, color: CommonConfig.commonBorderColor })
                         .onClick(() => {
-                          this.aiWriting_Length = index
-                          this.showaiWriting_Length = false
+                          this.aiPpt_Length = index
+                          this.showaiPpt_Length = false
                         })
                     }
 
@@ -236,7 +254,7 @@ export struct AllShowAIWriting {
                     .fontWeight(CommonConfig.fontWeight_400)
                     .fontSize(CommonConfig.fontSize_12)
                     .fontColor(CommonConfig.hintTextColor_select)
-                  Text(this.aiWriting_Language !== 100000 ? this.aiWriting_LanguageList[this.aiWriting_Language] :
+                  Text(this.aiPpt_Language !== 100000 ? this.aiPpt_LanguageList[this.aiPpt_Language] :
                     '不限')
                     .margin({ right: 4 })
                     .fontWeight(CommonConfig.fontWeight_400)
@@ -251,14 +269,14 @@ export struct AllShowAIWriting {
                 .border({ width: 1, color: CommonConfig.commonBorderColor })
                 .id('bot')
                 .onClick(() => {
-                  this.showaiWriting_Language = !this.showaiWriting_Language
-                  this.showaiWriting_Length = false
-                  this.showaiWriting_Scene = false
+                  this.showaiPpt_Language = !this.showaiPpt_Language
+                  this.showaiPpt_Length = false
+                  this.showaiPpt_Scene = false
                 })
 
-                if (this.showaiWriting_Language)
+                if (this.showaiPpt_Language)
                 Column() {
-                  ForEach(this.aiWriting_LanguageList, (item: string, index) => {
+                  ForEach(this.aiPpt_LanguageList, (item: string, index) => {
                     Text(item)
                       .width('100%')
                       .textAlign(TextAlign.Center)
@@ -268,8 +286,8 @@ export struct AllShowAIWriting {
                       .fontColor(CommonConfig.hintTextColor_select)
                       .border({ width: { bottom: 1 }, color: CommonConfig.commonBorderColor })
                       .onClick(() => {
-                        this.aiWriting_Language = index
-                        this.showaiWriting_Language = false
+                        this.aiPpt_Language = index
+                        this.showaiPpt_Language = false
                       })
                   }, (item: string) => item)
                 }
@@ -286,9 +304,100 @@ export struct AllShowAIWriting {
               }
               .align(Alignment.BottomStart)
 
-              Blank()
             }
-            .layoutWeight(1)
+            .height(34)
+
+            Text('模板')
+              .commonText()
+            if (this.aiPpt_template !== 100000) {
+              List() {
+                ListItem() {
+                  Row() {
+                    Image($r('app.media.Rectangle_497'))
+                      .height('100%')
+                      .width(60)
+                      .borderRadius(4)
+                      .margin({ right: 8 })
+                    Text('已选择模板')
+                      .fontSize(CommonConfig.fontSize_11)
+                      .fontColor(CommonConfig.hintTextColor)
+                      .fontWeight(CommonConfig.fontWeight_400)
+                  }
+                  .height('100%')
+                  .width('100%')
+                  .alignItems(VerticalAlign.Center)
+                  .padding({ bottom: 8, top: 8 })
+                  .border({ width: { top: 1, bottom: 1 }, color: CommonConfig.commonBorderColor })
+                }
+
+              }
+              .scrollBarWidth(0)
+              .layoutWeight(1)
+            }
+
+            Row() {
+              List({ space: 8 }) {
+                ForEach(['5K', '5K', '5K', '5K', '5K', '5K', '5K'],
+                  (item: string, index) => {
+                    ListItem() {
+                      Stack() {
+                        Image($r('app.media.Rectangle_497'))
+                          .width(159)
+                          .height('100%')
+                          .borderRadius(8)
+                          .border({
+                            width: 1,
+                            color: this.aiPpt_template === index ? this.paletteTheme :
+                            CommonConfig.commonBorderColor
+                          })
+                        Row() {
+                          Image($r('app.media.Hot'))
+                            .width(16)
+                            .margin({ right: 4 })
+                          Text(item)
+                            .fontColor(Color.White)
+                            .fontWeight(CommonConfig.fontWeight_400)
+                            .fontSize(CommonConfig.fontSize_11)
+                        }
+                        .borderRadius(100)
+                        .alignItems(VerticalAlign.Center)
+                        .backgroundColor('#818589')
+                        .padding({
+                          left: 4,
+                          top: 2,
+                          bottom: 2,
+                          right: 4
+                        })
+                        .margin(8)
+                      }
+                      .align(Alignment.BottomStart)
+                      .onClick(() => {
+                        if (this.aiPpt_template === index) {
+                          this.getUIContext()?.animateTo({
+                            duration: 500,
+                            curve: Curve.Friction,
+                            playMode: PlayMode.Alternate,
+                            expectedFrameRateRange: {
+                              min: 10,
+                              max: 120,
+                              expected: 0,
+                            },
+                            onFinish: () => this.aiPpt_template = 100000
+                          }, () => {
+                            this.currAIHeight = 300
+                          })
+                          return
+                        }
+                        this.aiPpt_template = index
+                      })
+                    }
+                  }, (item: string) => item)
+              }
+              .listDirection(Axis.Horizontal)
+              .height(90)
+              .scrollBarWidth(0)
+            }
+
           }
           .alignItems(HorizontalAlign.Start)
         }
@@ -307,7 +416,7 @@ export struct AllShowAIWriting {
       bottom: 8
     })
     .border({ width: 1, color: '#EAEAEA' })
-    .backgroundColor((this.showaiWriting_Scene || this.showaiWriting_Length || this.showaiWriting_Language) ?
+    .backgroundColor((this.showaiPpt_Scene || this.showaiPpt_Length || this.showaiPpt_Language) ?
     CommonConfig.commonBackgroundColor : Color.White)
     .height(this.currAIHeight)
     .width(this.currAIWidth)

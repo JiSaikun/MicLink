@@ -73,7 +73,6 @@ export struct AllShowAIDrawing {
         return this.ai_drawing_sharpen
       case 2:
         return this.ai_drawing_expand
-
     }
     return false
   }

@@ -5,6 +5,7 @@ import { FocusController } from "@ohos.arkui.UIContext"
 import { LengthMetrics } from "@kit.ArkUI"
 import { AllShowAIWriting } from "./ai_list_show/AllShowAIWriting"
 import { AllShowAIDrawing } from "./ai_list_show/AllShowAIDrawing"
+import { AllShowAIPPT } from "./ai_list_show/AllShowAIPPT"
 
 export interface AIListType {
   image: string
@@ -166,7 +167,27 @@ export struct Tab_ai {
           this.currAIWidth = '100%'
         })
         break
-
+      case 3:
+        if (this.showAIOption) {
+          return
+        }
+        this.showAIOption = true
+        this.currAIOption = 3
+        this.listScroller.scrollToIndex(3)
+        this.getUIContext()?.animateTo({
+          duration: 1200,
+          curve: Curve.Friction,
+          playMode: PlayMode.Alternate,
+          expectedFrameRateRange: {
+            min: 10,
+            max: 120,
+            expected: 60,
+          }
+        }, () => {
+          this.currAIHeight = 300
+          this.currAIWidth = '100%'
+        })
+        break
     }
   }
 
@@ -311,6 +332,16 @@ export struct Tab_ai {
                    * AI绘图，配置选项
                    */
                   AllShowAIDrawing({
+                    item: item,
+                    showAIOption: this.showAIOption,
+                    currAIHeight: this.currAIHeight,
+                    currAIWidth: this.currAIWidth
+                  })
+                } else if (this.showAIOption && (this.currAIOption === index && index === 3)) {
+                  /**
+                   * AIPPT，配置选项
+                   */
+                  AllShowAIPPT({
                     item: item,
                     showAIOption: this.showAIOption,
                     currAIHeight: this.currAIHeight,
