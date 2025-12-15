@@ -6,6 +6,7 @@ import { LengthMetrics } from "@kit.ArkUI"
 import { AllShowAIWriting } from "./ai_list_show/AllShowAIWriting"
 import { AllShowAIDrawing } from "./ai_list_show/AllShowAIDrawing"
 import { AllShowAIPPT } from "./ai_list_show/AllShowAIPPT"
+import { fileSelect, takePhoto } from "common"
 
 export interface AIListType {
   image: string
@@ -19,7 +20,6 @@ export interface ModelsItem { //大模型列表
   title: string
   recommended: boolean //是否被推荐
 }
-
 
 @Component
 export struct Tab_ai {
@@ -188,6 +188,8 @@ export struct Tab_ai {
           this.currAIWidth = '100%'
         })
         break
+      case 4:
+        this.dialogController?.open()
     }
   }
 
@@ -601,5 +603,112 @@ export struct Tab_ai {
     .align(Alignment.Bottom)
     .width('100%')
     .height('100%')
+  }
+
+  /**
+   * 图片分析功能
+   */
+  dialogController: CustomDialogController | null = new CustomDialogController({
+    builder: ImageAnalysis({
+      cancel: () => {
+        this.onCancel();
+      },
+      confirm: () => {
+        this.onAccept();
+      }
+    }),
+    cancel: this.exitApp,
+    autoCancel: true,
+    alignment: DialogAlignment.Bottom,
+    offset: { dx: 0, dy: -20 },
+    gridCount: 4,
+    customStyle: false,
+    cornerRadius: 16
+  })
+
+  onCancel() {
+    console.info('调用相册');
+    fileSelect()
+  }
+
+  onAccept() {
+    console.info('使用相机拍照');
+    takePhoto()
+  }
+
+  // 在自定义组件即将析构销毁时将dialogController置空
+  aboutToDisappear() {
+    this.dialogController = null; // 将dialogController置空
+  }
+
+  exitApp() {
+    console.info('单击空白区域中的回拨');
+  }
+}
+
+@CustomDialog
+@Component
+struct ImageAnalysis {
+  // 若尝试在CustomDialog中传入多个其他的Controller，以实现在CustomDialog中打开另一个或另一些CustomDialog，那么此处需要将指向自己的controller放在所有controller的后面
+  cancel: () => void = () => {
+  }
+  confirm: () => void = () => {
+  }
+  controller?: CustomDialogController;
+  @StorageLink('languages') languages: string = 'ZH_CN'
+
+  build() {
+
+    Column() {
+      Text('您要以什么方式获取图片？')
+        .fontColor(CommonConfig.hintTextColor_select)
+        .fontSize(CommonConfig.fontSize_16)
+        .fontWeight(CommonConfig.fontWeight_400)
+        .margin({ bottom: 16 })
+      Text('从相册选择')
+        .fontColor(CommonConfig.hintTextColor_select)
+        .fontSize(CommonConfig.fontSize_14)
+        .fontWeight(CommonConfig.fontWeight_400)
+        .margin({ bottom: 8 })
+        .padding(12)
+        .backgroundColor(Color.White)
+        .borderRadius(8)
+        .width('100%')
+        .textAlign(TextAlign.Center)
+        .onClick(() => {
+          this.cancel()
+          this.controller?.close()
+        })
+      Text('使用相机拍照')
+        .fontColor(CommonConfig.hintTextColor_select)
+        .fontSize(CommonConfig.fontSize_14)
+        .fontWeight(CommonConfig.fontWeight_400)
+        .margin({ bottom: 16 })
+        .padding(12)
+        .backgroundColor(Color.White)
+        .borderRadius(8)
+        .width('100%')
+        .textAlign(TextAlign.Center)
+        .onClick(() => {
+          this.confirm()
+          this.controller?.close()
+        })
+      Text('取消')
+        .fontColor(CommonConfig.hintTextColor_select)
+        .fontSize(CommonConfig.fontSize_14)
+        .fontWeight(CommonConfig.fontWeight_400)
+        .padding(12)
+        .backgroundColor(Color.White)
+        .borderRadius(8)
+        .width('100%')
+        .textAlign(TextAlign.Center)
+        .onClick(() => {
+          this.controller?.close()
+        })
+    }
+    .alignItems(HorizontalAlign.Center)
+    .borderRadius(16)
+    .backgroundColor(CommonConfig.commonBackgroundColor)
+    .padding(16)
   }
 }

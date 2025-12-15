@@ -41,7 +41,7 @@ export interface register_Response {
 /**
  * 从相册选择图片
  */
-async function fileSelect(): Promise<string> {
+export async function fileSelect(): Promise<string> {
   let photoSelectOptions = new photoAccessHelper.PhotoSelectOptions();
   photoSelectOptions.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
   photoSelectOptions.maxSelectNumber = 1; // 最多选择1个文件

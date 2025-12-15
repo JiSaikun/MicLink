@@ -10,7 +10,7 @@ import { UserLoginInfo } from '../model/UserLoginInfo';
 /**
  * 调用相机拍照
  */
-async function takePhoto(): Promise<string> {
+export async function takePhoto(): Promise<string> {
   const context = AppStorage.get('context') as common.UIAbilityContext;
   if (!context) {
     throw new Error('未获取到上下文');
