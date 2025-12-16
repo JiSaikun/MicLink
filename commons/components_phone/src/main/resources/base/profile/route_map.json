@@ -143,6 +143,14 @@
       "data": {
         "description": "AI会议"
       }
+    },
+    {
+        "name": "VoiceTranslation",
+      "pageSourceFile": "src/main/ets/components/VoiceTranslation.ets",
+      "buildFunction": "VoiceTranslationBuilder",
+      "data": {
+        "description": "翻译页面"
+      }
     }
   ]
 }

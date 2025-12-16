@@ -173,36 +173,36 @@ export struct SmartSettings {
           .padding({ top: 12, bottom: 12 })
           .border({ width: { bottom: 1 }, color: CommonConfig.commonBackgroundColor })
 
-          Row() {
-            Text(Languages.typing_input_mode[this.languages])
-              .fontSize(CommonConfig.fontSize_14)
-              .fontColor(CommonConfig.hintTextColor_select)
-              .fontWeight(CommonConfig.fontWeight_400)
-            Blank()
-            Row() {
-              Text(this.keystroke[this.keystroke_curr].value)
-                .fontSize(CommonConfig.fontSize_12)
-                .fontColor(CommonConfig.hintTextColor)
-                .fontWeight(CommonConfig.fontWeight_400)
-                .margin({ right: 8 })
-              Image($r('app.media.Arrow_to_the_right'))
-                .width(16)
-                .height(16)
-            }.onClick(() => {
-              let params: Languages_params = {
-                ListData: this.keystroke,
-                OperationType: 'typing_input_mode',
-                currLanguages: this.keystroke_curr,
-                device_isBle: this.device_isBle,
-                title: Languages.typing_input_mode[this.languages]
-              }
-              this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
-            })
-
-          }
-          .width('100%')
-          .alignItems(VerticalAlign.Center)
-          .padding({ top: 12, bottom: 12 })
+          // Row() {
+          //   Text(Languages.typing_input_mode[this.languages])
+          //     .fontSize(CommonConfig.fontSize_14)
+          //     .fontColor(CommonConfig.hintTextColor_select)
+          //     .fontWeight(CommonConfig.fontWeight_400)
+          //   Blank()
+          //   Row() {
+          //     Text(this.keystroke[this.keystroke_curr].value)
+          //       .fontSize(CommonConfig.fontSize_12)
+          //       .fontColor(CommonConfig.hintTextColor)
+          //       .fontWeight(CommonConfig.fontWeight_400)
+          //       .margin({ right: 8 })
+          //     Image($r('app.media.Arrow_to_the_right'))
+          //       .width(16)
+          //       .height(16)
+          //   }.onClick(() => {
+          //     let params: Languages_params = {
+          //       ListData: this.keystroke,
+          //       OperationType: 'typing_input_mode',
+          //       currLanguages: this.keystroke_curr,
+          //       device_isBle: this.device_isBle,
+          //       title: Languages.typing_input_mode[this.languages]
+          //     }
+          //     this.pageInfo.pushPath({ "name": 'Changelanguage', param: params })
+          //   })
+          //
+          // }
+          // .width('100%')
+          // .alignItems(VerticalAlign.Center)
+          // .padding({ top: 12, bottom: 12 })
         }
         .padding({ left: 12, right: 12 })
         .borderRadius(12)
@@ -288,7 +288,7 @@ export struct SmartSettings {
               .fontWeight(CommonConfig.fontWeight_400)
             Blank()
             Row() {
-              Text(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.wordScan_from_languages)]))
+              Text(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.wordScan_to_languages)]))
                 .fontSize(CommonConfig.fontSize_12)
                 .fontColor(CommonConfig.hintTextColor)
                 .fontWeight(CommonConfig.fontWeight_400)
@@ -299,8 +299,8 @@ export struct SmartSettings {
             }.onClick(() => {
               let params: Languages_params = {
                 ListData: this.convert_ttsLanguagesToOptions(),
-                OperationType: 'wordScan_from_languages',
-                currLanguages: this.getDefaultSelectedIndex_from(this.wordScan_from_languages),
+                OperationType: 'wordScan_to_languages',
+                currLanguages: this.getDefaultSelectedIndex_from(this.wordScan_to_languages),
                 device_isBle: this.device_isBle,
                 title: Languages.translation_language[this.languages]
               }
@@ -355,7 +355,7 @@ export struct SmartSettings {
               .fontWeight(CommonConfig.fontWeight_400)
             Blank()
             Row() {
-              Text(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.wordScan_from_languages)]))
+              Text(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.screenshotOCR_to_languages)]))
                 .fontSize(CommonConfig.fontSize_12)
                 .fontColor(CommonConfig.hintTextColor)
                 .fontWeight(CommonConfig.fontWeight_400)
@@ -366,8 +366,8 @@ export struct SmartSettings {
             }.onClick(() => {
               let params: Languages_params = {
                 ListData: this.convert_ttsLanguagesToOptions(),
-                OperationType: 'screenshotOCR_from_languages',
-                currLanguages: this.getDefaultSelectedIndex_from(this.screenshotOCR_from_languages),
+                OperationType: 'screenshotOCR_to_languages',
+                currLanguages: this.getDefaultSelectedIndex_from(this.screenshotOCR_to_languages),
                 device_isBle: this.device_isBle,
                 title: Languages.translation_language[this.languages]
               }

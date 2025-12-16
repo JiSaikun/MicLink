@@ -10,6 +10,7 @@ import { Reset } from 'common'
 import { common } from '@kit.AbilityKit'
 import { CommonConfig, Languages } from 'components_phone'
 import { Tab_ai } from '../components/Tab_ai'
+import { Overlay } from './Overlay'
 
 interface BarType {
   img: string
@@ -27,7 +28,7 @@ PersistentStorage.persistProp("paletteTheme", '#00aecc') //主题色
 PersistentStorage.persistProp("isEnableLongVoiceRecog", true) //是否开启长语音识别
 PersistentStorage.persistProp("isWordScan_Translation", true) //是否开启划词翻译功能
 PersistentStorage.persistProp("isOCR_Translate_Toggle", false) //是否开启截图识别/翻译
-PersistentStorage.persistProp("isAutoCloseVoiceTransPop", true) //是否开启语音翻译弹窗自动关闭
+PersistentStorage.persistProp("isAutoCloseVoiceTransPop", false) //是否开启语音翻译弹窗自动关闭
 PersistentStorage.persistProp("keystroke_curr", 0) //打字输入模式选项
 PersistentStorage.persistProp("EnhancedBrowserSearch", 0) //搜索引擎
 PersistentStorage.persistProp("from_languages", 'ZH_CN') //语音翻译源语言
@@ -207,6 +208,8 @@ struct Index {
   build() {
     Navigation(this.pageInfo) {
       Stack(){
+        // Overlay()
+        //   .zIndex(100)
         Column() {
           Tabs({ controller: this.controller }) {
             TabContent() {

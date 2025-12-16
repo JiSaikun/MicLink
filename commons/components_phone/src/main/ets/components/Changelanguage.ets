@@ -23,7 +23,9 @@ struct Changelanguage {
   @StorageLink('from_languages') from_languages: string = 'ZH_CN' //语音翻译源语言
   @StorageLink('to_languages') to_languages: string = 'EN_US' //语音翻译目标语言
   @StorageLink('wordScan_from_languages') wordScan_from_languages: string = 'ZH_CN' //划词翻译源语言
+  @StorageLink('wordScan_to_languages') wordScan_to_languages: string = 'EN_US' //划词翻译目标语言
   @StorageLink('screenshotOCR_from_languages') screenshotOCR_from_languages: string = 'ZH_CN' //截图识别/翻译源语言
+  @StorageLink('screenshotOCR_to_languages') screenshotOCR_to_languages: string = 'EN_US' //截图识别/翻译目标语言
 
   aboutToAppear(): void {
     this.params = this.pageInfo.getParamByName("Changelanguage")[0] as Languages_params
@@ -102,11 +104,11 @@ struct Changelanguage {
                 case 'to_languages': //翻译语言_目标语言
                   this.to_languages = this.getModelInfo.transLanguages[index].code
                   break
-                case 'wordScan_from_languages': //划词翻译语言_源语言
-                  this.wordScan_from_languages = this.getModelInfo.transLanguages[index].code
+                case 'wordScan_to_languages': //划词翻译语言_目标语言
+                  this.wordScan_to_languages = this.getModelInfo.transLanguages[index].code
                   break
-                case 'screenshotOCR_from_languages': //截图翻译语言_源语言
-                  this.screenshotOCR_from_languages = this.getModelInfo.transLanguages[index].code
+                case 'screenshotOCR_to_languages': //截图翻译语言_目标语言
+                  this.screenshotOCR_to_languages = this.getModelInfo.transLanguages[index].code
                   break
                 case 'EnhancedBrowserSearch': //语音搜索设置
                   AppStorage.setOrCreate('EnhancedBrowserSearch', index)

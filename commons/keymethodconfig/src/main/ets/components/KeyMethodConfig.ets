@@ -50,7 +50,7 @@ export class _KeyMethodConfig {
             //WebSocket  语音数据处理
             let inputMessage: inputMessageModel = {
               start: false,
-              "clientId": "clientId1751968608"+ new Date().toString(),
+              "clientId": "clientId1751968608" + new Date().toString(),
               "ptt": (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number].isPunctuationRecognition ?
                 '1' : '0',
               "serialNo": (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
@@ -81,7 +81,7 @@ export class _KeyMethodConfig {
             //WebSocket  语音数据处理
             let inputMessage: inputMessageModel = {
               start: false,
-              "clientId":"clientId1751968608"+ new Date().toString(),
+              "clientId": "clientId1751968608" + new Date().toString(),
               "ptt": ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].isPunctuationRecognition ?
                 '1' : '0',
               "serialNo": ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
@@ -122,6 +122,13 @@ export class _KeyMethodConfig {
         if (!Float_Window.showVoiceTranslation) {
           Float_Window.showVoiceTranslation = true
           Float_Window.creat_VoiceTranslation()
+        }
+        if (AppStorage.get('flax') && !AppStorage.get('isAutoCloseVoiceTransPop')) {
+          const  pageInfo=AppStorage.get('pageInfo') as NavPathStack
+          let pages= pageInfo.getAllPathName()
+          if (pages[pages.length-1]!=='VoiceTranslation') {
+            pageInfo.pushPath({ "name": 'VoiceTranslation' })
+          }
         }
         // else {  //窗口无法置顶
         //   Float_Window.show_float_window(Float_Window.window_VoiceTranslation)
@@ -229,7 +236,7 @@ export class _KeyMethodConfig {
       //WebSocket  语音数据处理
       let inputMessage: inputMessageModel = {
         start: false,
-        "clientId": "clientId1751968608"+ new Date().toString(),
+        "clientId": "clientId1751968608" + new Date().toString(),
         "ptt": (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number].isPunctuationRecognition ?
           '1' :
           '0',
@@ -254,7 +261,7 @@ export class _KeyMethodConfig {
       //WebSocket  语音数据处理
       let inputMessage: inputMessageModel = {
         start: false,
-        "clientId": "clientId1751968608"+ new Date().toString(),
+        "clientId": "clientId1751968608" + new Date().toString(),
         "ptt": ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].isPunctuationRecognition ?
           '1' :
           '0',
@@ -317,6 +324,13 @@ export class _KeyMethodConfig {
       if (!Float_Window.showVoiceTranslation) {
         Float_Window.showVoiceTranslation = true
         Float_Window.creat_VoiceTranslation()
+      }
+      if (AppStorage.get('flax') && !AppStorage.get('isAutoCloseVoiceTransPop')) {
+        const  pageInfo=AppStorage.get('pageInfo') as NavPathStack
+        let pages= pageInfo.getAllPathName()
+        if (pages[pages.length-1]!=='VoiceTranslation') {
+          pageInfo.pushPath({ "name": 'VoiceTranslation' })
+        }
       }
       if (AppStorage.get('voiceInputState')) {
         AppStorage.setOrCreate('voiceInputState', false) //语音状态
@@ -728,6 +742,13 @@ export class _KeyMethodConfig {
             Float_Window.showVoiceTranslation = true
             Float_Window.creat_VoiceTranslation()
           }
+          if (AppStorage.get('flax') && !AppStorage.get('isAutoCloseVoiceTransPop')) {
+            const  pageInfo=AppStorage.get('pageInfo') as NavPathStack
+            let pages= pageInfo.getAllPathName()
+            if (pages[pages.length-1]!=='VoiceTranslation') {
+              pageInfo.pushPath({ "name": 'VoiceTranslation' })
+            }
+          }
           _translate(params).then((res) => {
             console.log('翻译请求成功————翻译结果：' + res.data?.transText)
             systemPasteboard.clearData() //清空剪贴板
@@ -970,7 +991,7 @@ export class _KeyMethodConfig {
               //WebSocket  语音数据处理
               let inputMessage: inputMessageModel = {
                 start: false,
-                "clientId": "clientId1751968608"+ new Date().toString(),
+                "clientId": "clientId1751968608" + new Date().toString(),
                 "ptt": (AppStorage.get('devices') as DeviceArrayType_Ble[])[0].isPunctuationRecognition ?
                   '1' :
                   '0',
@@ -1012,7 +1033,7 @@ export class _KeyMethodConfig {
               //WebSocket  语音数据处理
               let inputMessage: inputMessageModel = {
                 start: false,
-                "clientId": "clientId1751968608"+ new Date().toString(),
+                "clientId": "clientId1751968608" + new Date().toString(),
                 "ptt": ConnectDevice.Communication[0].isPunctuationRecognition ?
                   '1' :
                   '0',
@@ -1052,7 +1073,7 @@ export class _KeyMethodConfig {
             //WebSocket  语音数据处理
             let inputMessage: inputMessageModel = {
               start: false,
-              "clientId": "clientId1751968608"+ new Date().toString(),
+              "clientId": "clientId1751968608" + new Date().toString(),
               "ptt": (AppStorage.get('devices') as DeviceArrayType_Ble[])[0].isPunctuationRecognition ?
                 '1' :
                 '0',
@@ -1088,7 +1109,7 @@ export class _KeyMethodConfig {
             }
             let inputMessage: inputMessageModel = {
               start: false,
-              "clientId":"clientId1751968608"+ new Date().toString(),
+              "clientId": "clientId1751968608" + new Date().toString(),
               "ptt": ConnectDevice.Communication[0].isPunctuationRecognition ?
                 '1' :
                 '0',
