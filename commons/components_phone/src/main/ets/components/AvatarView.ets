@@ -61,53 +61,92 @@ struct AvatarView {
   async saveImage() {
     console.info('保存头像到图库');
 
-    // 设置沙箱路径
-    let filePath = getContext().cacheDir + '/test' + Date.now() + '.png'
-    // 创建下载任务
-    const task = await request.downloadFile(getContext(), {
-      // 设置图片的源地址
-      url: this.userLoginInfo.avatar,
-      // 设置图片存储路径
-      filePath: filePath
-    })
-    // 监听下载任务
-    async () => {
-      // 保存图片的沙箱路径
-      console.info(`转换后的路径为：${fileUri.getUriFromPath(filePath)}`)
-      // 获取图片的沙箱路径
-      filePath = fileUri.getUriFromPath(filePath)
-      console.info(`filePath:${filePath}`)
-      let phAccessHelper = photoAccessHelper.getPhotoAccessHelper(this.context);
-      try {
-        // 指定待保存到媒体库的位于应用沙箱的图片uri
-        let srcFileUri = filePath;
-        let srcFileUris: Array<string> = [
-          fileUri.getUriFromPath(srcFileUri)
-        ];
-        // 指定待保存照片的创建选项，包括文件后缀和照片类型，标题和照片子类型可选
-        let photoCreationConfigs: Array<photoAccessHelper.PhotoCreationConfig> = [
-          {
-            fileNameExtension: 'png',
-            photoType: photoAccessHelper.PhotoType.IMAGE,
-          }
-        ];
-        // 基于弹窗授权的方式获取媒体库的目标uri
-        let desFileUris: Array<string> =
-          await phAccessHelper.showAssetsCreationDialog(srcFileUris, photoCreationConfigs);
-        // 将来源于应用沙箱的照片内容写入媒体库的目标uri
-        let desFile: fileIo.File =
-          await fileIo.open(desFileUris[0], fileIo.OpenMode.READ_WRITE | fileIo.OpenMode.CREATE);
-        let srcFile: fileIo.File = await fileIo.open(srcFileUri, fileIo.OpenMode.READ_ONLY);
-        await fileIo.copyFile(srcFile.fd, desFile.fd);
-        fileIo.closeSync(srcFile);
-        fileIo.closeSync(desFile);
-        console.info('create asset by dialog successfully');
-        // 删除沙箱中的图片
-        fileIo.rmdirSync(filePath)
-      } catch (err) {
-        console.error(`failed to create asset by dialog successfully errCode is: ${err.code}, ${err.message}`);
+    try {
+      // 设置沙箱路径
+      let filePath = getContext().cacheDir + '/test' + Date.now() + '.png';
+
+      // 创建下载任务
+      const task = await request.downloadFile(getContext(), {
+        // 设置图片的源地址
+        url: this.userLoginInfo.avatar,
+        // 设置图片存储路径
+        filePath: filePath
+      });
+
+      // 等待下载完成
+      const result = await task;
+      // if (result.code !== 0) {
+      //   console.error(`下载失败: ${result.code}, ${result.message}`);
+      //   return;
+      // }
+
+      console.info('下载成功，开始保存到媒体库');
+
+      // 获取图片的沙箱路径对应的URI
+      const srcFileUri = fileUri.getUriFromPath(filePath);
+      console.info(`转换后的路径为：${srcFileUri}`);
+
+      let phAccessHelper = photoAccessHelper.getPhotoAccessHelper(getContext());
+
+      // 指定待保存到媒体库的位于应用沙箱的图片uri
+      let srcFileUris: Array<string> = [srcFileUri];
+
+      // 指定待保存照片的创建选项
+      let photoCreationConfigs: Array<photoAccessHelper.PhotoCreationConfig> = [
+        {
+          fileNameExtension: 'png',
+          photoType: photoAccessHelper.PhotoType.IMAGE,
+          // 可以添加标题
+          title: 'avatar_' + Date.now()
+        }
+      ];
+
+      // 基于弹窗授权的方式获取媒体库的目标uri
+      let desFileUris: Array<string> = await phAccessHelper.showAssetsCreationDialog(
+        srcFileUris,
+        photoCreationConfigs
+      );
+
+      if (!desFileUris || desFileUris.length === 0) {
+        console.info('用户取消了保存操作');
+        // 删除临时文件
+        fileIo.unlinkSync(filePath);
+        return;
       }
-      console.info("Succeeded in creating PixelMap")
+
+      // 将来源于应用沙箱的照片内容写入媒体库的目标uri
+      let desFile = await fileIo.open(
+        desFileUris[0],
+        fileIo.OpenMode.READ_WRITE | fileIo.OpenMode.CREATE
+      );
+
+      let srcFile = await fileIo.open(srcFileUri, fileIo.OpenMode.READ_ONLY);
+      await fileIo.copyFile(srcFile.fd, desFile.fd);
+
+      fileIo.closeSync(srcFile);
+      fileIo.closeSync(desFile);
+
+      console.info('保存到媒体库成功');
+
+      // 删除沙箱中的临时图片
+      try {
+        fileIo.unlinkSync(filePath);
+        console.info('临时文件已删除');
+      } catch (unlinkErr) {
+        console.error(`删除临时文件失败: ${unlinkErr.message}`);
+      }
+
+    } catch (err) {
+      console.error(`保存头像失败: ${err.code}, ${err.message}`);
+
+      // // 确保出错时也尝试删除临时文件
+      // if (filePath && await fileIo.access(filePath)) {
+      //   try {
+      //     fileIo.unlinkSync(filePath);
+      //   } catch (cleanupErr) {
+      //     console.error(`清理临时文件失败: ${cleanupErr.message}`);
+      //   }
+      // }
     }
   }
 
