@@ -36,8 +36,8 @@ struct PersonalProfile {
             Image($r('app.media.Ellipse_47'))
               .width(16)
               .height(16)
-              .objectFit(ImageFit.Fill)
           }
+          .alignContent(Alignment.Center)
         }.align(Alignment.BottomEnd)
         .margin({ bottom: 8 })
 

@@ -25,6 +25,8 @@ export struct LeftBar {
   @State mark: boolean = false
   @State extend: boolean = true
   @State width_length: number = 248
+  @State back_right:string='back_right'
+  @State leftBar_back:string='leftBar_back_Gray'
   // 添加调试状态
   @State debugInfo: string = ''
   cursorCustom: CursorController = this.getUIContext().getCursorController();
@@ -93,7 +95,7 @@ export struct LeftBar {
         Image($r('app.media.MicLink_title'))
           .width(133)
         Blank()
-        Image($r('app.media.leftBar_back'))
+        Image($r(`app.media.${this.leftBar_back}`))
           .width(32)
           .onClick(() => {
             this.extend = false
@@ -117,9 +119,12 @@ export struct LeftBar {
           .onHover((flag) => {
             if (flag) {
               this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+              this.leftBar_back='leftBar_back'
+
             } else {
               console.info("restoreDefault");
               this.cursorCustom.restoreDefault();
+              this.leftBar_back='leftBar_back_Gray'
             }
           })
       }
@@ -135,8 +140,9 @@ export struct LeftBar {
             middle: { anchor: '__container__', align: HorizontalAlign.Center },
             center: { anchor: '__container__', align: VerticalAlign.Center },
           })
-        Image($r('app.media.back_right'))
+        Image($r(`app.media.${this.back_right}`))
           .width(32)
+          .height(32)
           .alignRules({
             start: { anchor: '__container__', align: HorizontalAlign.Center },
             center: { anchor: '__container__', align: VerticalAlign.Center },
@@ -145,9 +151,12 @@ export struct LeftBar {
           .onHover((flag) => {
             if (flag) {
               this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+              this.back_right="back_right_White"
             } else {
               console.info("restoreDefault");
               this.cursorCustom.restoreDefault();
+              this.back_right="back_right"
+
             }
           })
           .onClick(() => {

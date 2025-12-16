@@ -339,7 +339,7 @@ export struct Tab_profile {
             Flex({ alignItems: ItemAlign.Center }) {
               Image($r(`app.media.${item.icon}`))
                 .width(24)
-                .padding({ right: 12 })
+                .margin({ right: 12 })
               Text(item.title)
                 .fontSize(CommonConfig.fontSize_14)
                 .fontWeight(400)

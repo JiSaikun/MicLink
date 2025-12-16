@@ -24,8 +24,14 @@ export struct Tab_device {
         Image($r('app.media.MicLink_title'))
           .width(100)
         Blank()
-        Image($r('app.media.Group_137'))
-          .width(40)
+        Stack() {
+          Image($r('app.media.Group_137'))
+            .width(17)
+        }
+        .backgroundColor(Color.White)
+        .borderRadius(8)
+        .width(40)
+        .height(40)
       }
       .width('100%')
       .alignItems(VerticalAlign.Center)
@@ -160,10 +166,10 @@ export struct Tab_device {
         .margin({ bottom: 16 })
 
       } else {
-        Tabs(){
+        Tabs() {
           ForEach(this.devicesList, (item: DeviceArrayType, index) => {
             if (item.getModelInfo) {
-              TabContent(){
+              TabContent() {
                 Flex({ direction: FlexDirection.Column }) {
                   Column() {
                     Flex() {
@@ -195,7 +201,7 @@ export struct Tab_device {
 
                       Flex({ direction: FlexDirection.Column }) {
                         Column({ space: 4 }) {
-                          Column(){
+                          Column() {
                             if (item.mouseconfig?.batteryLevel as number >= 80) {
                               Image($r('app.media.power_level_full'))
                                 .width(24)
@@ -225,6 +231,7 @@ export struct Tab_device {
                         .width('100%')
                         .height(100)
                         .justifyContent(FlexAlign.Center)
+
                         Column({ space: 4 }) {
                           Image($r('app.media.USB_true'))
                             .visibility(item.connectionmethod === 1 ? Visibility.Visible : Visibility.None)
@@ -243,6 +250,7 @@ export struct Tab_device {
                         .width('100%')
                         .height(100)
                         .justifyContent(FlexAlign.Center)
+
                         Column({ space: 4 }) {
                           Image($r('app.media.Bluetooth_true'))
                             .visibility(item.connectionmethod === 2 ? Visibility.Visible : Visibility.None)
@@ -264,7 +272,7 @@ export struct Tab_device {
                       }
                       .layoutWeight(1)
                       .height('100%')
-                      .border({ width: {left:1}, color: '#EAEAEA', style: BorderStyle.Dashed })
+                      .border({ width: { left: 1 }, color: '#EAEAEA', style: BorderStyle.Dashed })
                       .padding({ left: 16 })
                     }
                     .width('100%')
@@ -288,7 +296,7 @@ export struct Tab_device {
                         .fontSize(CommonConfig.fontSize_14)
                         .fontColor(CommonConfig.hintTextColor_select)
                       Blank()
-                      Image($r('app.media.Frame_2531'))
+                      Image($r('app.media.Frame_2538'))
                         .width(16)
                     }
                     .width('100%')
@@ -311,7 +319,7 @@ export struct Tab_device {
                         .fontSize(CommonConfig.fontSize_14)
                         .fontColor(CommonConfig.hintTextColor_select)
                       Blank()
-                      Image($r('app.media.Frame_2531'))
+                      Image($r('app.media.Frame_2538'))
                         .width(16)
                     }
                     .width('100%')
@@ -379,7 +387,7 @@ export struct Tab_device {
           }, (item: DeviceArrayType) => JSON.stringify(item.Communication))
           ForEach(this.devices, (item: DeviceArrayType_Ble, index) => {
             if (item.getModelInfo) {
-              TabContent(){
+              TabContent() {
                 Flex({ direction: FlexDirection.Column }) {
                   Column() {
                     Flex() {
@@ -411,7 +419,7 @@ export struct Tab_device {
 
                       Flex({ direction: FlexDirection.Column }) {
                         Column({ space: 4 }) {
-                          Column(){
+                          Column() {
                             if (item.mouseconfig?.batteryLevel as number >= 80) {
                               Image($r('app.media.power_level_full'))
                                 .width(24)
@@ -442,6 +450,7 @@ export struct Tab_device {
                         .width('100%')
                         .height(100)
                         .justifyContent(FlexAlign.Center)
+
                         Column({ space: 4 }) {
                           Image($r('app.media.USB_true'))
                             .visibility(item.connectionmethod === 1 ? Visibility.Visible : Visibility.None)
@@ -482,7 +491,7 @@ export struct Tab_device {
                       }
                       .layoutWeight(1)
                       .height('100%')
-                      .border({ width: { left:1}, color: '#EAEAEA', style: BorderStyle.Dashed })
+                      .border({ width: { left: 1 }, color: '#EAEAEA', style: BorderStyle.Dashed })
                       .padding({ left: 16 })
                     }
                     .width('100%')
@@ -505,7 +514,7 @@ export struct Tab_device {
                         .fontSize(CommonConfig.fontSize_14)
                         .fontColor(CommonConfig.hintTextColor_select)
                       Blank()
-                      Image($r('app.media.Frame_2531'))
+                      Image($r('app.media.Frame_2538'))
                         .width(16)
                     }
                     .width('100%')
@@ -528,7 +537,7 @@ export struct Tab_device {
                         .fontSize(CommonConfig.fontSize_14)
                         .fontColor(CommonConfig.hintTextColor_select)
                       Blank()
-                      Image($r('app.media.Frame_2531'))
+                      Image($r('app.media.Frame_2538'))
                         .width(16)
                     }
                     .width('100%')
