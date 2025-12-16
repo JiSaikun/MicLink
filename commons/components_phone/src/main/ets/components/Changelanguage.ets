@@ -21,6 +21,7 @@ struct Changelanguage {
   @StorageLink('devices') devices: DeviceArrayType_Ble[] = []
   @State getModelInfo: getModelInfoModel = AppStorage.get('getModelInfo') as getModelInfoModel
   @StorageLink('from_languages') from_languages: string = 'ZH_CN' //语音翻译源语言
+  @StorageLink('to_languages') to_languages: string = 'EN_US' //语音翻译目标语言
   @StorageLink('wordScan_from_languages') wordScan_from_languages: string = 'ZH_CN' //划词翻译源语言
   @StorageLink('screenshotOCR_from_languages') screenshotOCR_from_languages: string = 'ZH_CN' //截图识别/翻译源语言
 
@@ -98,8 +99,8 @@ struct Changelanguage {
                       this.getModelInfo.languages[index].code
                   }
                   break
-                case 'from_languages': //翻译语言_源语言
-                  this.from_languages = this.getModelInfo.transLanguages[index].code
+                case 'to_languages': //翻译语言_目标语言
+                  this.to_languages = this.getModelInfo.transLanguages[index].code
                   break
                 case 'wordScan_from_languages': //划词翻译语言_源语言
                   this.wordScan_from_languages = this.getModelInfo.transLanguages[index].code

@@ -24,6 +24,7 @@ import { promptAction } from '@kit.ArkUI';
 import { fileUri } from '@kit.CoreFileKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { _KeyMethodConfig } from 'keymethodconfig';
+import { DeviceInfo } from 'mouse';
 
 // =============== 第一步：定义数据传输接口 ===============
 interface RecordData {
@@ -77,7 +78,8 @@ export struct Tab_ai {
   webviewController: webview.WebviewController = new webview.WebviewController();
   // 创建WebDownloadDelegate
   delegate: webview.WebDownloadDelegate = new webview.WebDownloadDelegate();
-  @State web: string='https://asrai.miclink.net/?sno=123123#/'
+  @Watch('refreshPage') @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null
+  @State web: string = 'https://asrai.miclink.net/?sno=123123#/'
   @State isWebViewReady: boolean = false
   @State downloadProgress: number = 0
   @State isDownloading: boolean = false
@@ -89,8 +91,23 @@ export struct Tab_ai {
   @Watch('change_FLAX') @State FLAX: boolean = false;
   @State currentState: number = 0;
   @State currentLanguage: string = '未设置';
+  @State refresh: boolean = true
   // 代理对象实例
   private webProxy: WebProxy = new WebProxy(this);
+  @Watch('refreshPage') @StorageLink('languages') languages: string = 'ZH_CN'
+
+  refreshPage() {
+    this.refresh = false
+    setTimeout(() => {
+      this.refresh = true
+    }, 20)
+  }
+
+  web_prefix(): string {
+    return `https://asrai.miclink.net?sno=${this.mouseconfig?.sn ? this.mouseconfig?.sn :
+      123}&productCode=${this.mouseconfig?.productType ? this.mouseconfig?.productType :
+      999999}&language=${this.languages}`
+  }
 
   // =============== 新增：Web通信处理方法 ===============
   onWebRecord(state: number, language: string): void {
@@ -590,35 +607,36 @@ export struct Tab_ai {
       //   .borderRadius(8)
       //   .margin({ bottom: 10 })
       // }
-
-      Web({
-        src: this.web,
-        controller: this.webviewController
-      })
-        .onPageEnd(() => {
-          console.info("Web页面加载完成，设置下载委托和Web通信代理");
-          this.isWebViewReady = true;
-          this.setupDownloadDelegate();
-          // 添加日志，确认页面加载完成
-          console.info("页面加载完成，javaScriptProxy应该已经注册");
-        })
-        .onPageBegin(() => {
-          this.isWebViewReady = false;
-        })
-        // =============== 新增：Web通信代理配置 ===============
-        .javaScriptProxy({
-          // 关键配置：注册代理对象
-          object: this.webProxy, // 要暴露的对象
-          name: "hostInstance", // 前端通过window.hostInstance访问
-          methodList: ["webRecord", "test", "getStatus"], // 暴露的方法列表
+      if (this.refresh) {
+        Web({
+          src: this.web_prefix(),
           controller: this.webviewController
         })
-        .flexGrow(1)
-        .width('100%')
-        .height('100%')
-        .domStorageAccess(true)
-        .javaScriptAccess(true)
-        .fileAccess(true)
+          .onPageEnd(() => {
+            console.info("Web页面加载完成，设置下载委托和Web通信代理");
+            this.isWebViewReady = true;
+            this.setupDownloadDelegate();
+            // 添加日志，确认页面加载完成
+            console.info("页面加载完成，javaScriptProxy应该已经注册");
+          })
+          .onPageBegin(() => {
+            this.isWebViewReady = false;
+          })
+          // =============== 新增：Web通信代理配置 ===============
+          .javaScriptProxy({
+            // 关键配置：注册代理对象
+            object: this.webProxy, // 要暴露的对象
+            name: "hostInstance", // 前端通过window.hostInstance访问
+            methodList: ["webRecord", "test", "getStatus"], // 暴露的方法列表
+            controller: this.webviewController
+          })
+          .flexGrow(1)
+          .width('100%')
+          .height('100%')
+          .domStorageAccess(true)
+          .javaScriptAccess(true)
+          .fileAccess(true)
+      }
     }
     .width('100%')
     .height('100%')

@@ -50,7 +50,7 @@ export class _KeyMethodConfig {
             //WebSocket  语音数据处理
             let inputMessage: inputMessageModel = {
               start: false,
-              "clientId": "clientId1751968608",
+              "clientId": "clientId1751968608"+ new Date().toString(),
               "ptt": (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number].isPunctuationRecognition ?
                 '1' : '0',
               "serialNo": (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
@@ -81,7 +81,7 @@ export class _KeyMethodConfig {
             //WebSocket  语音数据处理
             let inputMessage: inputMessageModel = {
               start: false,
-              "clientId": "clientId1751968608",
+              "clientId":"clientId1751968608"+ new Date().toString(),
               "ptt": ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].isPunctuationRecognition ?
                 '1' : '0',
               "serialNo": ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
@@ -229,7 +229,7 @@ export class _KeyMethodConfig {
       //WebSocket  语音数据处理
       let inputMessage: inputMessageModel = {
         start: false,
-        "clientId": "clientId1751968608",
+        "clientId": "clientId1751968608"+ new Date().toString(),
         "ptt": (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number].isPunctuationRecognition ?
           '1' :
           '0',
@@ -254,7 +254,7 @@ export class _KeyMethodConfig {
       //WebSocket  语音数据处理
       let inputMessage: inputMessageModel = {
         start: false,
-        "clientId": "clientId1751968608",
+        "clientId": "clientId1751968608"+ new Date().toString(),
         "ptt": ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].isPunctuationRecognition ?
           '1' :
           '0',
@@ -970,7 +970,7 @@ export class _KeyMethodConfig {
               //WebSocket  语音数据处理
               let inputMessage: inputMessageModel = {
                 start: false,
-                "clientId": "clientId1751968608",
+                "clientId": "clientId1751968608"+ new Date().toString(),
                 "ptt": (AppStorage.get('devices') as DeviceArrayType_Ble[])[0].isPunctuationRecognition ?
                   '1' :
                   '0',
@@ -1012,7 +1012,7 @@ export class _KeyMethodConfig {
               //WebSocket  语音数据处理
               let inputMessage: inputMessageModel = {
                 start: false,
-                "clientId": "clientId1751968608",
+                "clientId": "clientId1751968608"+ new Date().toString(),
                 "ptt": ConnectDevice.Communication[0].isPunctuationRecognition ?
                   '1' :
                   '0',
@@ -1052,7 +1052,7 @@ export class _KeyMethodConfig {
             //WebSocket  语音数据处理
             let inputMessage: inputMessageModel = {
               start: false,
-              "clientId": "clientId1751968608",
+              "clientId": "clientId1751968608"+ new Date().toString(),
               "ptt": (AppStorage.get('devices') as DeviceArrayType_Ble[])[0].isPunctuationRecognition ?
                 '1' :
                 '0',
@@ -1088,7 +1088,7 @@ export class _KeyMethodConfig {
             }
             let inputMessage: inputMessageModel = {
               start: false,
-              "clientId": "clientId1751968608",
+              "clientId":"clientId1751968608"+ new Date().toString(),
               "ptt": ConnectDevice.Communication[0].isPunctuationRecognition ?
                 '1' :
                 '0',

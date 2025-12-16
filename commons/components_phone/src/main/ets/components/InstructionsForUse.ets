@@ -43,6 +43,7 @@ struct InstructionsForUse {
             .layoutWeight(1)
             .padding(0)
             .backgroundColor(Color.White)
+            .borderRadius(0)
         }
         .width('100%')
         .backgroundColor(Color.White)

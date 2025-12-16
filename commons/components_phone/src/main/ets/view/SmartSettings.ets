@@ -221,7 +221,7 @@ export struct SmartSettings {
               .fontWeight(CommonConfig.fontWeight_400)
             Blank()
             Row() {
-              Text(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.from_languages)]))
+              Text(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.to_languages)]))
                 .fontSize(CommonConfig.fontSize_12)
                 .fontColor(CommonConfig.hintTextColor)
                 .fontWeight(CommonConfig.fontWeight_400)
@@ -232,8 +232,8 @@ export struct SmartSettings {
             }.onClick(() => {
               let params: Languages_params = {
                 ListData: this.convert_ttsLanguagesToOptions(),
-                OperationType: 'from_languages',
-                currLanguages: this.getDefaultSelectedIndex_from(this.from_languages),
+                OperationType: 'to_languages',
+                currLanguages: this.getDefaultSelectedIndex_from(this.to_languages),
                 device_isBle: this.device_isBle,
                 title: Languages.translation_language[this.languages]
               }
