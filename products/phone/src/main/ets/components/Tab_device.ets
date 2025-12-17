@@ -2,8 +2,9 @@ import { CommonConfig } from "components_phone"
 import { LengthMetrics } from "@kit.ArkUI"
 import { getModelInfoModel, imagesDataModel, imagesModel } from "../common/config/GetModelInfoModel"
 import { ConnectDevice, DeviceArrayType } from "mouse"
-import { DeviceArrayType_Ble } from "bluetooth"
+import { connectDevice, DeviceArrayType_Ble } from "bluetooth"
 import { adapterManager } from "api"
+import { common } from "@kit.AbilityKit"
 
 @Component
 export struct Tab_device {
@@ -32,6 +33,51 @@ export struct Tab_device {
         .borderRadius(8)
         .width(40)
         .height(40)
+        .onClick(()=>{
+          console.info('开始重新扫描蓝牙设备，清空现有连接');
+          for (let item of this.devices) {
+            console.info('关闭设备连接:', item.name);
+            item.BlueTooth_devices.closeconnectDevice()
+          }
+          AppStorage.setOrCreate('isBluetoothConnect_state', false)
+          // 延迟一点时间确保连接完全关闭
+          setTimeout(() => {
+            AppStorage.setOrCreate('devices', [])
+            console.info('设备列表已清空，开始重新扫描');
+
+            // 强制触发设备列表变化监听，确保UI更新
+            const tempDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || [];
+            AppStorage.setOrCreate('devices', [...tempDevices]);
+
+            // 在扫描开始后，设置一个定时器来强制更新UI
+            let lastDeviceCount = 0;
+            const updateTimer = setInterval(() => {
+              const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || [];
+              if (currentDevices.length > lastDeviceCount) {
+                console.log('检测到设备数量增加，强制更新UI', currentDevices.length, '->', lastDeviceCount);
+                this.devices = [...currentDevices];
+                this.forceUpdate();
+                lastDeviceCount = currentDevices.length;
+              }
+              // 如果设备数量没有变化，也强制更新一次确保UI同步
+              if (currentDevices.length > 0 && currentDevices.length === lastDeviceCount) {
+                console.log('设备数量未变，强制同步UI');
+                this.devices = [...currentDevices];
+                this.forceUpdate();
+                clearInterval(updateTimer);
+              }
+            }, 300); // 每300ms检查一次，更频繁
+
+            // 8秒后停止检查，避免无限循环
+            setTimeout(() => {
+              clearInterval(updateTimer);
+            }, 8000);
+
+            const context: common.UIAbilityContext =
+              this.getUIContext().getHostContext() as common.UIAbilityContext;
+            connectDevice(context)
+          }, 1000); // 等待1秒确保连接完全关闭
+        })
       }
       .width('100%')
       .alignItems(VerticalAlign.Center)

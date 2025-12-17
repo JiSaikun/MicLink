@@ -9,7 +9,7 @@ import { promptAction } from '@kit.ArkUI';
 export const checkStatus = (status: number) => {
   switch (status) {
     case 400:
-      promptAction.showToast({ message: "请求失败！请您稍后重试" })
+      // promptAction.showToast({ message: "请求失败！请您稍后重试" })
       break;
     case 401:
       promptAction.showToast({ message: "登录失效！请您重新登录" })
