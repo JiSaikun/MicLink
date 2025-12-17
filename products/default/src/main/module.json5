@@ -16,7 +16,8 @@
       },
       {
         "name": "ohos.permission.CUSTOM_SCREEN_CAPTURE",
-        "reason": '$string:app_name',
+        //屏幕截图
+        "reason": '$string:CUSTOM_SCREEN_CAPTURE',
         "usedScene": {
           "abilities": [
             "EntryAbility"
@@ -42,13 +43,9 @@
         "name": "ohos.permission.INPUT_KEYBOARD_CONTROLLER",
         "reason": "$string:INPUT_KEYBOARD_CONTROLLER"
       },
-      {
-        "name": "ohos.permission.ACCESS_DDK_HID",
-        "reason": "$string:ACCESS_DDK_HID"
-      },
-      //      {
-      //        "name": "ohos.permission.MANAGE_PASTEBOARD_APP_SHARE_OPTION",
-      //        "reason": "$string:MANAGE_PASTEBOARD_APP_SHARE_OPTION"
+      //      {//C开发 HID管理
+      //        "name": "ohos.permission.ACCESS_DDK_HID",
+      //        "reason": "$string:ACCESS_DDK_HID"
       //      },
       {
         "name": "ohos.permission.SYSTEM_FLOAT_WINDOW",
@@ -84,6 +81,10 @@
           "when": "inuse"
         }
       },
+      //      {
+      //        "name": "ohos.permission.MANAGE_PASTEBOARD_APP_SHARE_OPTION",
+      //        "reason": "$string:MANAGE_PASTEBOARD_APP_SHARE_OPTION"
+      //      },
       {
         'name': 'ohos.permission.ACCESS_BLUETOOTH',
         "reason": "$string:ACCESS_BLUETOOTH",
@@ -110,20 +111,31 @@
     "pages": "$profile:main_pages",
     "abilities": [
       {
-        "name": "EntryAbility", // UIAbility组件的名称
-        "srcEntry": "./ets/entryability/EntryAbility.ets",// UIAbility组件的代码路径
-        "description": "$string:EntryAbility_desc", // UIAbility组件的描述信息
-        "minWindowHeight": 600,//窗口最小宽度
-        "minWindowWidth": 1000,//窗口最小高度
-        "icon": "$media:layered_image",// UIAbility组件的图标
-        "label": "$string:EntryAbility_label", // UIAbility组件的标签
-        "startWindowIcon": "$media:Vector",// UIAbility组件启动页面图标资源文件的索引————启动背景图
-        "startWindowBackground": "$color:start_window_background", // UIAbility组件启动页面背景颜色资源文件的索引
+        "name": "EntryAbility",
+        // UIAbility组件的名称
+        "srcEntry": "./ets/entryability/EntryAbility.ets",
+        // UIAbility组件的代码路径
+        "description": "$string:EntryAbility_desc",
+        // UIAbility组件的描述信息
+        "minWindowHeight": 600,
+        //窗口最小宽度
+        "minWindowWidth": 1000,
+        //窗口最小高度
+        "icon": "$media:layered_image",
+        // UIAbility组件的图标
+        "label": "$string:EntryAbility_label",
+        // UIAbility组件的标签
+        "startWindowIcon": "$media:Vector",
+        // UIAbility组件启动页面图标资源文件的索引————启动背景图
+        "startWindowBackground": "$color:start_window_background",
+        // UIAbility组件启动页面背景颜色资源文件的索引
         "exported": true,
         "skills": [
           {
-            "entities": [/*描述组件的类别属性，用于缩小匹配范围*/
-              "entity.system.home",//桌面组件
+            "entities": [
+              /*描述组件的类别属性，用于缩小匹配范围*/
+              "entity.system.home",
+              //桌面组件
               //"entity.system.browsable"//（可浏览组件）
             ],
             "actions": [
@@ -142,7 +154,8 @@
             //            ]
           }
         ],
-        "backgroundModes": [//申请长时任务
+        "backgroundModes": [
+          //申请长时任务
           "bluetoothInteraction"
         ]
       }

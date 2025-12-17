@@ -5,6 +5,9 @@
       "value": "MyApplication_MicLink"
     },
     {
+      "name": "CUSTOM_SCREEN_CAPTURE",
+      "value": "用于屏幕截图功能"
+    },  {
       "name": "ACCESS_EXTENSIONAL_DEVICE_DRIVER",
       "value": "获取接入主设备的外部设备列表"
     },
