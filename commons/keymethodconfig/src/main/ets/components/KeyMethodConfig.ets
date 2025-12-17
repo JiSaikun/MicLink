@@ -817,12 +817,17 @@ export class _KeyMethodConfig {
 
     DPI_currInfo.curr -= 1
     AppStorage.setOrCreate('DPI_currInfo', DPI_currInfo)
+    AppStorage.setOrCreate('DPI_currIndex',  DPI_currInfo.curr)
     if (AppStorage.get('device_isBle')) {
       (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number].DPI_currInfo =
         DPI_currInfo
     } else {
       ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].DPI_currInfo = DPI_currInfo
     }
+    // if (AppStorage.get('flax_DPI')) {
+    //   AppStorage.setOrCreate('flax_DPI',false)
+    //   setTimeout(()=>AppStorage.setOrCreate('flax_DPI',true),500)
+    // }
   }
 
   /**
