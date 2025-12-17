@@ -21,6 +21,31 @@ struct InstructionsForUse {
   @State currTitleIndex: number = 0
   @State userLoginInfo: UserLoginInfo = AppStorage.get('userLoginInfo') as UserLoginInfo
 
+  // 原始常见问题数据
+  private originalCommonQuestions: string[] = ['问题的标题', '问题的标题', '问题的标题', '问题的标题']
+  // 原始使用手册数据
+  private originalManuals: string[] = [
+    'M20 使用手册', 'D8 使用手册', 'M191 使用手册', 'M131 使用手册',
+    'M20 使用手册', 'D8 使用手册', 'M191 使用手册', 'M131 使用手册',
+    'M20 使用手册', 'D8 使用手册', 'D8 使用手册', 'D8 使用手册', 'D8 使用手册'
+  ]
+
+  // 获取过滤后的常见问题
+  private getFilteredCommonQuestions(): string[] {
+    if (this.search === '') {
+      return this.originalCommonQuestions
+    }
+    return this.originalCommonQuestions.filter(item => item.includes(this.search))
+  }
+
+  // 获取过滤后的使用手册
+  private getFilteredManuals(): string[] {
+    if (this.search === '') {
+      return this.originalManuals
+    }
+    return this.originalManuals.filter(item => item.includes(this.search))
+  }
+
   build() {
     NavDestination() {
       Column() {
@@ -44,6 +69,9 @@ struct InstructionsForUse {
             .padding(0)
             .backgroundColor(Color.White)
             .borderRadius(0)
+            .onChange((value: string) => {
+              this.search = value
+            })
         }
         .width('100%')
         .backgroundColor(Color.White)
@@ -103,7 +131,7 @@ struct InstructionsForUse {
           Scroll() {
             Column() {
               if (this.currTitleIndex === 0) {
-                ForEach(['问题的标题', '问题的标题', '问题的标题', '问题的标题'], (item: string, index) => {
+                ForEach(this.getFilteredCommonQuestions(), (item: string, index) => {
                   Row() {
                     Text(item)
                       .fontColor(CommonConfig.hintTextColor_select)
@@ -116,33 +144,40 @@ struct InstructionsForUse {
                   }
                   .width('100%')
                   .padding({ top: 12, bottom: 12 })
-                  .border({ width: { bottom: index === 3 ? 0 : 1 }, color: CommonConfig.commonBackgroundColor })
+                  .border({
+                    width: {
+                      bottom: index === this.getFilteredCommonQuestions().length - 1 ? 0 : 1
+                    },
+                    color: CommonConfig.commonBackgroundColor
+                  })
                   .onClick(() => {
 
                   })
                 })
               } else {
-                ForEach(['M20 使用手册', 'D8 使用手册', 'M191 使用手册', 'M131 使用手册', 'M20 使用手册', 'D8 使用手册',
-                  'M191 使用手册', 'M131 使用手册',
-                  'M20 使用手册', 'D8 使用手册', 'D8 使用手册', 'D8 使用手册', 'D8 使用手册'],
-                  (item: string, index) => {
-                    Row() {
-                      Text(item)
-                        .fontColor(CommonConfig.hintTextColor_select)
-                        .fontSize(CommonConfig.fontSize_14)
-                        .fontWeight(CommonConfig.fontWeight_400)
-                      Blank()
-                      Image($r('app.media.Arrow_to_the_right'))
-                        .width(16)
-                        .height(16)
-                    }
-                    .width('100%')
-                    .padding({ top: 12, bottom: 12 })
-                    .border({ width: { bottom: index === 12 ? 0 : 1 }, color: CommonConfig.commonBackgroundColor })
-                    .onClick(() => {
-
-                    })
+                ForEach(this.getFilteredManuals(), (item: string, index) => {
+                  Row() {
+                    Text(item)
+                      .fontColor(CommonConfig.hintTextColor_select)
+                      .fontSize(CommonConfig.fontSize_14)
+                      .fontWeight(CommonConfig.fontWeight_400)
+                    Blank()
+                    Image($r('app.media.Arrow_to_the_right'))
+                      .width(16)
+                      .height(16)
+                  }
+                  .width('100%')
+                  .padding({ top: 12, bottom: 12 })
+                  .border({
+                    width: {
+                      bottom: index === this.getFilteredManuals().length - 1 ? 0 : 1
+                    },
+                    color: CommonConfig.commonBackgroundColor
                   })
+                  .onClick(() => {
+
+                  })
+                })
               }
             }
             .padding({ right: 12 })
