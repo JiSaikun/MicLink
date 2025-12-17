@@ -46,6 +46,32 @@ struct InstructionsForUse {
     return this.originalManuals.filter(item => item.includes(this.search))
   }
 
+  // 处理搜索输入变化
+  private handleSearchChange(value: string) {
+    this.search = value
+
+    if (value === '') {
+      return // 搜索为空时不进行自动切换
+    }
+
+    // 获取两个选项卡的搜索结果
+    const commonQuestionsResults = this.getFilteredCommonQuestions()
+    const manualsResults = this.getFilteredManuals()
+
+    // 检查是否需要自动切换选项卡
+    if (this.currTitleIndex === 1) { // 当前在使用手册选项卡
+      if (manualsResults.length === 0 && commonQuestionsResults.length > 0) {
+        // 使用手册中没有结果，但常见问题中有结果，自动切换到常见问题
+        this.currTitleIndex = 0
+      }
+    } else if (this.currTitleIndex === 0) { // 当前在常见问题选项卡
+      if (commonQuestionsResults.length === 0 && manualsResults.length > 0) {
+        // 常见问题中没有结果，但使用手册中有结果，自动切换到使用手册
+        this.currTitleIndex = 1
+      }
+    }
+  }
+
   build() {
     NavDestination() {
       Column() {
@@ -70,7 +96,7 @@ struct InstructionsForUse {
             .backgroundColor(Color.White)
             .borderRadius(0)
             .onChange((value: string) => {
-              this.search = value
+              this.handleSearchChange(value)
             })
         }
         .width('100%')
@@ -185,7 +211,6 @@ struct InstructionsForUse {
           .layoutWeight(1)
           .scrollBar(BarState.Off)
           .align(Alignment.TopStart)
-          // .edgeEffect(EdgeEffect.Spring)
           .scrollBarWidth(2)
           .edgeEffect(EdgeEffect.Spring)
           .padding({ left: 12 })
