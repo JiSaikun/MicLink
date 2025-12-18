@@ -11,6 +11,7 @@
     "common": "file:../../commons/common",
     "api": "file:../../commons/api",
     "mouse": "file:../../commons/mouse",
+    "config": "file:../../commons/config",
     "login": "file:../../features/login",
     "bluetooth": "file:../../commons/bluetooth"
   }

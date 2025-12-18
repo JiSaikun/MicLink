@@ -3,6 +3,7 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { backgroundTaskManager } from '@kit.BackgroundTasksKit';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { Notification } from 'config';
 
 // import fs from '@ohos.file.fs';
 
@@ -10,6 +11,7 @@ const DOMAIN = 0x0000;
 
 export default class PhoneAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+    Notification.init()
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
     // if (want.uri) {
     //   const fileUri = want.uri; // 获取文件URI

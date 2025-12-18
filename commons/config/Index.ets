@@ -16,3 +16,4 @@ export { getModelInfoModel,
 } from './src/main/ets/components/GetModelInfoModel'
 
 export { Languages } from './src/main/ets/components/Languages'
+export { Notification} from './src/main/ets/common/Notification'

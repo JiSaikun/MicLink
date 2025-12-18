@@ -8,6 +8,8 @@ import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
 import { Float_Window } from 'float_window';
 import { DeviceArrayType_Ble } from './BlueTooth_devices';
 import { webview } from '@kit.ArkWeb';
+import { Notification } from 'config';
+import { common, Want } from '@kit.AbilityKit';
 
 // 定义日志消息接口
 interface logMessageModel {
@@ -273,10 +275,18 @@ export class AudioWebSocketHandler_ble {
       } else {
         res.data.text = this.FINText + res.data.text
       }
-      if (this.webViewController&&!this.wending) {
+      if (AppStorage.get('flax') && !this.state&&!this.wending) {
+        if (AppStorage.get('isAI_assistant')) {
+          Notification.setOrCreate('语音助手', res.data.text)
+        } else {
+          Notification.setOrCreate('语音输入', res.data.text)
+        }
+      }
+
+      if (this.webViewController && !this.wending) {
         // 构建JS代码字符串
         const jsCode = `getRecordingText('${res.data.text}', '中间过度')`;
-        AppStorage.setOrCreate('getRecordingText',res.data.text)
+        AppStorage.setOrCreate('getRecordingText', res.data.text)
         console.error("执行JS代码: " + jsCode);
         this.webViewController.runJavaScript(jsCode).then((result: string) => {
           console.error("JS执行成功，返回值: " + result);
@@ -289,6 +299,45 @@ export class AudioWebSocketHandler_ble {
         if (AppStorage.get('isAI_assistant')) {
           if (this.wending && (res.data.type === 'LAST' || res.data.type === "FIN")) {
             AppStorage.setOrCreate('voiceInputText', res.data.text);
+            if (AppStorage.get('flax') && !this.state) {
+              Notification.clear()
+              Notification.state = false
+              /**
+               * 网页搜索 - 修复数组类型错误
+               */
+              if (res.data.text==='') {
+                return
+              }
+              const context: common.UIAbilityContext = AppStorage.get('context') as common.UIAbilityContext;
+              const encodedKeyword = encodeURIComponent( res.data.text);
+              let uri: string = '';
+
+              const searchEngine = AppStorage.get('EnhancedBrowserSearch') as number || 0;
+
+              // 修复错误3、4、5：明确指定数组类型
+              const searchEngines: SearchEngineConfig[] = [
+                { name: '百度', url: `https://www.baidu.com/s?wd=${encodedKeyword}` } as SearchEngineConfig,
+                { name: '谷歌', url: `https://www.google.com/search?q=${encodedKeyword}` } as SearchEngineConfig
+              ];
+
+              if (searchEngine >= 0 && searchEngine < searchEngines.length) {
+                uri = searchEngines[searchEngine].url;
+                console.log(`使用${searchEngines[searchEngine].name}搜索: ${ res.data.text}`);
+              } else {
+                uri = searchEngines[0].url;
+                console.log(`使用默认搜索引擎搜索: ${ res.data.text}`);
+              }
+
+              const want: Want = {
+                action: 'ohos.want.action.viewData',
+                entities: ['entity.system.browsable'],
+                uri: uri
+              };
+
+              context.startAbility(want).catch((err: BusinessError) => {
+                console.error('搜索失败:', err.message);
+              });
+            }
             return;
           } else {
             AppStorage.setOrCreate('linshi', res.data.text);
@@ -367,6 +416,10 @@ export class AudioWebSocketHandler_ble {
           devices[deviceIndex]?.BlueTooth_devices) {
           devices[deviceIndex].BlueTooth_devices.send([0x20, 0x01, 0x19])
             .then(() => {
+              if (AppStorage.get('flax') && !this.state) {
+                Notification.clear()
+                Notification.state = false
+              }
               setTimeout(() => {
                 systemPasteboard.clearData();
               }, PASTEBOARD_CLEAR_DELAY_MS);
@@ -416,6 +469,9 @@ export class AudioWebSocketHandler_ble {
           text: res.data?.text as string,
         };
         AppStorage.setOrCreate('voiceTranslationText', dataArray);
+        if (AppStorage.get('flax') && AppStorage.get('isAutoCloseVoiceTransPop')) {
+          Notification.setOrCreate('语音翻译', res.data?.transText)
+        }
         if (this.wending) {
           setTimeout(() => {
             AppStorage.setOrCreate('changeText', true)
@@ -438,6 +494,10 @@ export class AudioWebSocketHandler_ble {
                   if (currentDevice?.BlueTooth_devices) {
                     currentDevice.BlueTooth_devices.send([0x20, 0x01, 0x19])
                       .then(() => {
+                        if (AppStorage.get('flax') && AppStorage.get('isAutoCloseVoiceTransPop')) {
+                          Notification.clear()
+                          Notification.state = false
+                        }
                         console.error('执行粘贴操作: ' + dataArray.transText);
                         Float_Window.showVoiceTranslation = false;
                         if (currentDevice.BlueTooth_devices.audioDataState) {
@@ -1179,4 +1239,9 @@ export class AudioWebSocketHandler_ble {
     this.lastSentSampleIndex = 0;
     console.log('AudioWebSocketHandler_ble资源已完全清理');
   }
+}
+// 定义搜索引擎配置接口
+interface SearchEngineConfig {
+  name: string;
+  url: string;
 }

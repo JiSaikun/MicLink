@@ -24,6 +24,118 @@ import { OpenFileWithSystemApp } from 'api';
 import { AudioWebSocketHandler_ble, BlueTooth_devices, DeviceArrayType_Ble } from 'bluetooth';
 import { webview } from '@kit.ArkWeb';
 import { promptAction } from '@kit.ArkUI';
+import { Notification } from 'config';
+import { notificationManager } from '@kit.NotificationKit';
+
+const TAG: string = '[_KeyMethodConfig]';
+const DOMAIN_NUMBER: number = 0xFF00;
+
+async function getSlot(): Promise<boolean> { //用户已经开启了通知权限，检查用户是否开启了横屏通知
+  return new Promise((resolve, reject) => {
+    let getSlotCallback = (err: BusinessError, data: notificationManager.NotificationSlot): void => {
+      if (err) {
+        hilog.error(DOMAIN_NUMBER, TAG, `Failed to get slot. Code is ${err.code}, message is ${err.message}`);
+      } else {
+        hilog.info(DOMAIN_NUMBER, TAG, `Succeeded in getting slot.`);
+        hilog.warn(DOMAIN_NUMBER, TAG, `slot enable status is ${JSON.stringify(data)}`);
+        if (data != null) {
+          hilog.warn(DOMAIN_NUMBER, TAG, `slot enable status is ${JSON.stringify(data)}`);
+          hilog.info(DOMAIN_NUMBER, TAG, `slot enable status is ${JSON.stringify(data.level)}`);
+          hilog.info(DOMAIN_NUMBER, TAG,
+            `vibrationEnabled status is ${JSON.stringify(data.vibrationEnabled)}`);
+          hilog.info(DOMAIN_NUMBER, TAG, `lightEnabled status is ${JSON.stringify(data.lightEnabled)}`);
+          let a = (data as NotificationSlot).reminderMode
+          if (a === 63 || (!data.sound && a === 63)) { //开启了横屏通知
+            if (!Notification.state) {
+              resolve(true)
+            }
+          } else { //没有开启横屏通知
+            promptAction.showDialog({
+              message: "你当前没有开启横屏通知！！！",
+              buttons: [{ text: '去开启', color: '#007DFF' }, { text: '拒绝', color: '#FF3B30' }]
+            })
+              .then((res: promptAction.ShowDialogSuccessResponse) => {
+                if (res.index === 0) { //去开启横屏通知
+                  notificationManager.openNotificationSettings(AppStorage.get('context') as common.UIAbilityContext)
+                    .then(() => {
+                      resolve(false)
+                      hilog.info(DOMAIN_NUMBER, TAG, `[ANS] openNotificationSettings success`);
+                    })
+                    .catch((err: BusinessError) => {
+                      hilog.error(DOMAIN_NUMBER, TAG,
+                        `[ANS] openNotificationSettings failed, code is ${err.code}, message is ${err.message}`);
+                    });
+                } else {
+                  resolve(true)
+                  AppStorage.setOrCreate('sdajfhjk', true)
+                  // promptAction.showToast({ message: '开启语音翻译操作' })
+                }
+              })
+          }
+        }
+      }
+    }
+    let slotType: notificationManager.SlotType = notificationManager.SlotType.SERVICE_INFORMATION;
+    notificationManager.getSlot(slotType,
+      getSlotCallback as (err: BusinessError, data: notificationManager.NotificationSlot) => void);
+  })
+
+
+}
+
+async function LandscapeNotification(callBack: () => void): Promise<boolean> {
+  return new Promise((resolve, reject) => {
+    Notification.init()
+      .then((initrequest) => {
+        if (!initrequest) { //请求被拒绝
+          promptAction.showDialog({
+            message: "你拒绝了通知弹窗的权限",
+            buttons: [{ text: '去开启', color: '#007DFF' }, { text: '拒绝', color: '#FF3B30' }]
+          })
+            .then((res: promptAction.ShowDialogSuccessResponse) => {
+              if (res.index === 0) {
+                notificationManager.openNotificationSettings(AppStorage.get('context') as common.UIAbilityContext)
+                  .then(() => {
+                    hilog.info(DOMAIN_NUMBER, TAG, `[ANS] openNotificationSettings success`);
+                    resolve(false)
+                  })
+                  .catch((err: BusinessError) => {
+                    hilog.error(DOMAIN_NUMBER, TAG,
+                      `[ANS] openNotificationSettings failed, code is ${err.code}, message is ${err.message}`);
+                  });
+              } else {
+                AppStorage.setOrCreate('sdajfhjk', true)
+                // promptAction.showToast({ message: '开启语音翻译操作' })
+                resolve(false)
+              }
+            })
+        } else { //查看用户是否开启了横幅通知
+          console.error('查看用户是否开启了横幅通知')
+          resolve(true)
+
+          // addSlot回调
+          // let addSlotCallBack = (err: BusinessError): void => {
+          //   if (err) {
+          //     hilog.error(DOMAIN_NUMBER, TAG, `创建指定类型的通知渠道失败:addSlot failed, code is ${err.code}, message is ${err.message}`);
+          //   } else {
+          //     hilog.info(DOMAIN_NUMBER, TAG, `创建指定类型的通知渠道成功:addSlot success`);
+          //     // getSlot回调
+          //     getSlot()
+          //       .then((getSoltRes) => {
+          //         if (getSoltRes) {
+          //           resolve(true)
+          //         } else {
+          //           LandscapeNotification(callBack)
+          //         }
+          //       })
+          //   }
+          // }
+          // notificationManager.addSlot(notificationManager.SlotType.SERVICE_INFORMATION, addSlotCallBack);
+        }
+      })
+
+  })
+}
 
 export class _KeyMethodConfig {
   /**
@@ -31,12 +143,42 @@ export class _KeyMethodConfig {
    * 0：语音输入
    * 1：语音翻译
    */
-  static voiceInput(state: number = 0, isAI_assistant: boolean = false) {
+  static async voiceInput(state: number = 0, isAI_assistant: boolean = false) {
     if (!(AppStorage.get('device_isBle') ?
     (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
       0].BlueTooth_devices.audioDataState :
     ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState
     )) {
+      // if (!AppStorage.get('sdajfhjk')) {
+      if (AppStorage.get('flax')) {
+        if (state) { //语音翻译
+          if (AppStorage.get('isAutoCloseVoiceTransPop')) {
+            if (await LandscapeNotification(() => {
+            })) {
+              if (!Notification.state) {
+                Notification.state = true
+                Notification.setOrCreate('语音翻译', '请讲话')
+              }
+            } else {
+              return
+            }
+          }
+        } else {
+            if (await LandscapeNotification(() => {
+            })) {
+              if (!Notification.state) {
+                console.warn('警告1')
+                Notification.state = true
+                Notification.setOrCreate(isAI_assistant?'语音助手':'语音输入', '请讲话')
+              }
+            } else {
+              console.warn('警告2')
+              return
+            }
+
+        }
+      }
+      // }
       if (AppStorage.get('device_isBle')) {
         (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
           0].BlueTooth_devices.send([0x62])
@@ -124,9 +266,9 @@ export class _KeyMethodConfig {
           Float_Window.creat_VoiceTranslation()
         }
         if (AppStorage.get('flax') && !AppStorage.get('isAutoCloseVoiceTransPop')) {
-          const  pageInfo=AppStorage.get('pageInfo') as NavPathStack
-          let pages= pageInfo.getAllPathName()
-          if (pages[pages.length-1]!=='VoiceTranslation') {
+          const pageInfo = AppStorage.get('pageInfo') as NavPathStack
+          let pages = pageInfo.getAllPathName()
+          if (pages[pages.length-1] !== 'VoiceTranslation') {
             pageInfo.pushPath({ "name": 'VoiceTranslation' })
           }
         }
@@ -143,6 +285,10 @@ export class _KeyMethodConfig {
       }
 
     } else {
+      Notification.state=false
+      // setTimeout(()=>{
+      //   Notification.clear()
+      // },2000)
       if (AppStorage.get('device_isBle')) {
         (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
           0].BlueTooth_devices.send([0x63])
@@ -216,7 +362,37 @@ export class _KeyMethodConfig {
   /**
    * 语音输入_长按按下
    */
-  static voiceInput_long(state: number = 0, isAI_assistant: boolean = false) {
+  static async voiceInput_long(state: number = 0, isAI_assistant: boolean = false) {
+    // if (!AppStorage.get('sdajfhjk')) {
+    if (AppStorage.get('flax')) {
+      if (state) { //语音翻译
+        if (AppStorage.get('isAutoCloseVoiceTransPop')) {
+          if (await LandscapeNotification(() => {
+          })) {
+            if (!Notification.state) {
+              Notification.state = true
+              Notification.setOrCreate('语音翻译', '请讲话')
+            }
+          } else {
+            return
+          }
+        }
+      } else {
+        if (await LandscapeNotification(() => {
+        })) {
+          if (!Notification.state) {
+            console.warn('警告1')
+            Notification.state = true
+            Notification.setOrCreate(isAI_assistant?'语音助手':'语音输入', '请讲话')
+          }
+        } else {
+          console.warn('警告2')
+          return
+        }
+
+      }
+    }
+    // }
     console.log('[语音调试] voiceInput_long 开始，state:', state, 'isAI_assistant:', isAI_assistant);
     if (AppStorage.get('device_isBle')) {
       BlueTooth_devices.audioData = []
@@ -326,9 +502,9 @@ export class _KeyMethodConfig {
         Float_Window.creat_VoiceTranslation()
       }
       if (AppStorage.get('flax') && !AppStorage.get('isAutoCloseVoiceTransPop')) {
-        const  pageInfo=AppStorage.get('pageInfo') as NavPathStack
-        let pages= pageInfo.getAllPathName()
-        if (pages[pages.length-1]!=='VoiceTranslation') {
+        const pageInfo = AppStorage.get('pageInfo') as NavPathStack
+        let pages = pageInfo.getAllPathName()
+        if (pages[pages.length-1] !== 'VoiceTranslation') {
           pageInfo.pushPath({ "name": 'VoiceTranslation' })
         }
       }
@@ -372,6 +548,10 @@ export class _KeyMethodConfig {
    * 语音输入_长按抬起
    */
   static endvoiceInput_long(state: number = 0) {
+    Notification.state=false
+    // setTimeout(()=>{
+    //   Notification.clear()
+    // },2000)
     console.log('[语音调试] endvoiceInput_long 开始，state:', state);
     if (AppStorage.get('device_isBle')) {
       console.log('[语音调试] 结束蓝牙语音输入');
@@ -743,9 +923,9 @@ export class _KeyMethodConfig {
             Float_Window.creat_VoiceTranslation()
           }
           if (AppStorage.get('flax') && !AppStorage.get('isAutoCloseVoiceTransPop')) {
-            const  pageInfo=AppStorage.get('pageInfo') as NavPathStack
-            let pages= pageInfo.getAllPathName()
-            if (pages[pages.length-1]!=='VoiceTranslation') {
+            const pageInfo = AppStorage.get('pageInfo') as NavPathStack
+            let pages = pageInfo.getAllPathName()
+            if (pages[pages.length-1] !== 'VoiceTranslation') {
               pageInfo.pushPath({ "name": 'VoiceTranslation' })
             }
           }
@@ -817,7 +997,7 @@ export class _KeyMethodConfig {
 
     DPI_currInfo.curr -= 1
     AppStorage.setOrCreate('DPI_currInfo', DPI_currInfo)
-    AppStorage.setOrCreate('DPI_currIndex',  DPI_currInfo.curr)
+    AppStorage.setOrCreate('DPI_currIndex', DPI_currInfo.curr)
     if (AppStorage.get('device_isBle')) {
       (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number].DPI_currInfo =
         DPI_currInfo
@@ -1147,3 +1327,22 @@ interface shortcutType {
   keyPreview: string
   pressedKeys: number[]
 }
+
+interface NotificationSlot {
+  "type": number,
+  "notificationType": number,
+  "level": number,
+  "desc": string,
+  "badgeFlag": boolean,
+  "bypassDnd": boolean,
+  "lockscreenVisibility": number,
+  "vibrationEnabled": boolean,
+  "sound": string,
+  "lightEnabled": boolean,
+  "lightColor": number,
+  "vibrationValues": number[],
+  "enabled": boolean,
+  "authorizedStatus": number,
+  "reminderMode": number
+}
+
