@@ -3,8 +3,9 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { SmartMouseAudioProcessor } from './SmartMouseAudioProcessor'
 import { getModelInfo_Params, productImg_Params } from '../model/MouseInfoModel'
 import { _getModelInfo, _productImg } from '../viewmodel/UserViewModel'
-import { getModelInfoModel, keyInfosModel } from 'config'
+import { getModelInfoModel, keyInfosModel, keyInfos_childsModel, keyInfos_childs_childsModel } from 'config'
 import { AudioWebSocketHandler } from 'api';
+import { keyConfigExclusion } from './keyConfigExclusion';
 
 // 按键类型枚举
 export enum KeyPressType {
@@ -204,7 +205,7 @@ export interface DeviceArrayType {
   speech_Recognition_languages: string //语音识别语种
   productImg: string,
   PRODUCT_TYPE: PRODUCT_TYPE, //设备类型
-  name:string
+  name: string
 }
 
 export interface KeymethodConfig {
@@ -289,7 +290,7 @@ export class ConnectDevice {
                     speech_Recognition_languages: 'ZH_CN',
                     productImg: '',
                     PRODUCT_TYPE: PRODUCT_TYPE.DEFAULT,
-                    name:ConnectDevice.targetDevice[index].productName
+                    name: ConnectDevice.targetDevice[index].productName
                   }
                   ConnectDevice.Communication.push(device)
                   Communication_.connectDevice()
@@ -318,7 +319,7 @@ export class ConnectDevice {
             speech_Recognition_languages: 'ZH_CN',
             productImg: '',
             PRODUCT_TYPE: PRODUCT_TYPE.DEFAULT,
-            name:ConnectDevice.targetDevice[index].productName
+            name: ConnectDevice.targetDevice[index].productName
           }
           ConnectDevice.Communication.push(device)
           Communication_.connectDevice()
@@ -396,7 +397,8 @@ export class Communication {
   // 设置音频WebSocket处理器
   public setAudioWebSocketHandler(handler: AudioWebSocketHandler): void {
     // 如果有旧的处理器，先销毁它
-    if (this.audioWebSocketHandler && this.audioWebSocketHandler !== handler && typeof this.audioWebSocketHandler.destroy === 'function') {
+    if (this.audioWebSocketHandler && this.audioWebSocketHandler !== handler &&
+      typeof this.audioWebSocketHandler.destroy === 'function') {
       console.log('清理旧的音频WebSocket处理器...');
       this.audioWebSocketHandler.destroy();
     }
@@ -615,7 +617,8 @@ export class Communication {
       // 发送心跳包，查询设备信息，发送成功后会自动更新lastReceivedTime
       this.sendHeartbeatTest();
     } else if (timeSinceLastReceive > this.HEARTBEAT_TIMEOUT) {
-      console.log(`心跳超时但距离上次心跳发送不足${this.HEARTBEAT_SEND_INTERVAL}ms（还需等待${this.HEARTBEAT_SEND_INTERVAL - timeSinceLastHeartbeat}ms），跳过此次心跳包发送`);
+      console.log(`心跳超时但距离上次心跳发送不足${this.HEARTBEAT_SEND_INTERVAL}ms（还需等待${this.HEARTBEAT_SEND_INTERVAL -
+        timeSinceLastHeartbeat}ms），跳过此次心跳包发送`);
     } else {
       // 连接正常，不需要发送心跳包
       console.log('连接正常，无需发送心跳包');
@@ -2066,27 +2069,32 @@ export class Communication {
           console.log('获取用户按键模式详情数据', JSON.stringify(res.data));
           if (res.status === 200) {
             let getModelInfo: getModelInfoModel = res.data as getModelInfoModel;
-            ConnectDevice.Communication[this.device_currIndex].getModelInfo = getModelInfo;
-            const newList: DeviceArrayType[] = JSON.parse(JSON.stringify(ConnectDevice.Communication));
-            AppStorage.setOrCreate('devicesList', newList);
-            if (AppStorage.get('flax')) {
-              AppStorage.setOrCreate('flax',false)
-              setTimeout(()=>{
-                AppStorage.setOrCreate('flax',true)
-              },10)
-            }
-            /**
-             * 判断当前设备是否是键盘
-             */
-            if ((ConnectDevice.Communication[this.device_currIndex].getModelInfo as getModelInfoModel).functions.length !==
-              0) {
-              for (let item
-                of (ConnectDevice.Communication[this.device_currIndex].getModelInfo as getModelInfoModel).functions) {
-                if (item.code === 'keyboard') {
-                  ConnectDevice.Communication[this.device_currIndex].PRODUCT_TYPE = PRODUCT_TYPE.keyboard;
+
+            keyConfigExclusion(getModelInfo).then((res)=>{
+              ConnectDevice.Communication[this.device_currIndex].getModelInfo =res
+                const newList: DeviceArrayType[] = JSON.parse(JSON.stringify(ConnectDevice.Communication));
+              AppStorage.setOrCreate('devicesList', newList);
+
+              if (AppStorage.get('flax')) {
+                AppStorage.setOrCreate('flax', false)
+                setTimeout(() => {
+                  AppStorage.setOrCreate('flax', true)
+                }, 10)
+              }
+              /**
+               * 判断当前设备是否是键盘
+               */
+              if ((ConnectDevice.Communication[this.device_currIndex].getModelInfo as getModelInfoModel).functions.length !==
+                0) {
+                for (let item
+                  of (ConnectDevice.Communication[this.device_currIndex].getModelInfo as getModelInfoModel).functions) {
+                  if (item.code === 'keyboard') {
+                    ConnectDevice.Communication[this.device_currIndex].PRODUCT_TYPE = PRODUCT_TYPE.keyboard;
+                  }
                 }
               }
-            }
+            })
+
           }
         }).catch(() => {
           console.log('获取设备模型信息请求失败');

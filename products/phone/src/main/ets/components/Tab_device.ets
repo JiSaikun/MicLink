@@ -396,13 +396,11 @@ export struct Tab_device {
                         .padding(8)
                         .borderRadius(16)
                         .onClick(() => {
-                          if (this.getModelInfo) {
                             AppStorage.setOrCreate('device_show_currIndex', index)
                             AppStorage.setOrCreate('getModelInfo',
                               ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo)
                             this.device_isBle = false
                             this.pageInfo.pushPath({ "name": 'DevicesConfig', param: this.device_isBle })
-                          }
                         })
 
                     }
@@ -501,6 +499,7 @@ export struct Tab_device {
                           Image($r('app.media.USB_true'))
                             .visibility(item.connectionmethod === 1 ? Visibility.Visible : Visibility.None)
                             .width(24)
+                            .padding(4)
                           Image($r('app.media.USB_false'))
                             .visibility(item.connectionmethod === 1 ? Visibility.None : Visibility.Visible)
                             .width(24)

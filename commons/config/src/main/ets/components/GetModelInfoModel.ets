@@ -34,11 +34,11 @@ export interface keyInfosModel {
   opId: number,
   keyId: number,
   keyUp: string,
-  attr2: string,
-  attr1: string,
+  attr2?: string,
+  attr1?: string,
   childs: keyInfos_childsModel[]
   parentId: number
-  attr0: string
+  attr0?: string
   cmdId: number
   names: LanguageNames
   name: string
@@ -57,11 +57,11 @@ export interface keyInfos_childsModel {
   opId: number,
   keyId: number,
   keyUp: string,
-  attr2: string,
-  attr1: string,
+  attr2?: string,
+  attr1?: string,
   childs: keyInfos_childs_childsModel[]
   parentId: number
-  attr0: string
+  attr0?: string
   cmdId: number
   names: LanguageNames
   opName: string

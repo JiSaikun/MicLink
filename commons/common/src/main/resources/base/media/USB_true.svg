@@ -1,13 +1,10 @@
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g clip-path="url(#clip0_338_16993)">
-<path d="M9 4.5H15C15.8284 4.5 16.5 5.17157 16.5 6V11.5H7.5V6C7.5 5.17157 8.17157 4.5 9 4.5Z" stroke="#31373D"/>
-<rect x="4.5" y="11.5" width="15" height="8" rx="1.5" stroke="#31373D"/>
-<path d="M11 7L11 8" stroke="#31373D" stroke-linecap="round"/>
-<path d="M13 7L13 8" stroke="#31373D" stroke-linecap="round"/>
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_338_17025)">
+<path d="M11 0C12.1046 0 13 0.895431 13 2V7H14C15.1046 7 16 7.89543 16 9V14C16 15.1046 15.1046 16 14 16H2C0.964349 16 0.113005 15.2128 0.0107422 14.2041L0 14V9C0 7.89543 0.895431 7 2 7H3V2C3 0.895431 3.89543 1.61064e-08 5 0H11ZM2 8C1.44772 8 1 8.44772 1 9V14C1 14.5523 1.44772 15 2 15H14C14.5523 15 15 14.5523 15 14V9C15 8.44771 14.5523 8 14 8H2ZM5 1C4.44772 1 4 1.44772 4 2V7H12V2C12 1.44772 11.5523 1 11 1H5ZM7 2.5C7.27614 2.5 7.5 2.72386 7.5 3V4C7.5 4.27614 7.27614 4.5 7 4.5C6.72386 4.5 6.5 4.27614 6.5 4V3C6.5 2.72386 6.72386 2.5 7 2.5ZM9 2.5C9.27614 2.5 9.5 2.72386 9.5 3V4C9.5 4.27614 9.27614 4.5 9 4.5C8.72386 4.5 8.5 4.27614 8.5 4V3C8.5 2.72386 8.72386 2.5 9 2.5Z" fill="#31373D"/>
 </g>
 <defs>
-<clipPath id="clip0_338_16993">
-<rect width="16" height="16" fill="white" transform="translate(4 4)"/>
+<clipPath id="clip0_338_17025">
+<rect width="16" height="16" fill="white"/>
 </clipPath>
 </defs>
 </svg>

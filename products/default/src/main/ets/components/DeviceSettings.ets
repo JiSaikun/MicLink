@@ -197,6 +197,7 @@ export struct DeviceSettings {
                       Image($r('app.media.USB_true'))
                         .visibility(item.connectionmethod === 1 ? Visibility.Visible : Visibility.None)
                         .margin({ left: 10 }).width(24)
+                        .padding(4)
                       Image($r('app.media.USB_false'))
                         .visibility(item.connectionmethod === 1 ? Visibility.None : Visibility.Visible)
                         .margin({ left: 10 }).width(24)
