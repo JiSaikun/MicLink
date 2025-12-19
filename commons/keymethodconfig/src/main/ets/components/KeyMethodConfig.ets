@@ -144,6 +144,8 @@ export class _KeyMethodConfig {
    * 1：语音翻译
    */
   static async voiceInput(state: number = 0, isAI_assistant: boolean = false) {
+    AppStorage.setOrCreate('isAI_assistant', isAI_assistant)
+
     if (!(AppStorage.get('device_isBle') ?
     (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
       0].BlueTooth_devices.audioDataState :
@@ -151,7 +153,6 @@ export class _KeyMethodConfig {
     )) {
       // if (!AppStorage.get('sdajfhjk')) {
       if (AppStorage.get('flax')) {
-        AppStorage.setOrCreate('isAI_assistant', isAI_assistant)
         if (state) { //语音翻译
           if (AppStorage.get('isAutoCloseVoiceTransPop')) {
             if (await LandscapeNotification(() => {
@@ -364,6 +365,7 @@ export class _KeyMethodConfig {
    * 语音输入_长按按下
    */
   static async voiceInput_long(state: number = 0, isAI_assistant: boolean = false) {
+    AppStorage.setOrCreate('isAI_assistant', isAI_assistant)
     // if (!AppStorage.get('sdajfhjk')) {
     if (AppStorage.get('flax')) {
       if (state) { //语音翻译
