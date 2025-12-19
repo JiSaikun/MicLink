@@ -17,6 +17,7 @@ import {
   _getModelInfo
 } from 'mouse';
 import { AudioWebSocketHandler_ble } from './AudioWebSocketHandler_ble';
+import { Notification } from 'config';
 
 // // 获取设备连接状态
 // try {
@@ -502,6 +503,11 @@ export class BlueTooth_devices {
             }
             // byte[5]: 电量
             this.deviceInfo.batteryLevel = data[5];
+            if (this.deviceInfo.batteryLevel < 10) {
+              if (AppStorage.get("flax")) {
+                Notification.setOrCreate("低电量提醒", '', '', 2)
+              }
+            }
             // byte[6]: 当前回报率
             const reportRateCode = data[6];
             switch (reportRateCode) {

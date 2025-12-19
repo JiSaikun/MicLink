@@ -77,9 +77,9 @@ export class Notification {
       return false;
     }
   }
-  static async setOrCreate(title:string='',text:string='',additionalText=''){
+  static async setOrCreate(title:string='',text:string='',additionalText:string='',ID:number=1){
     let notificationRequest: notificationManager.NotificationRequest = {
-      id: 1,
+      id: ID,
       content: {
         notificationContentType: notificationManager.ContentType.NOTIFICATION_CONTENT_BASIC_TEXT, // 普通文本类型通知
         normal: {

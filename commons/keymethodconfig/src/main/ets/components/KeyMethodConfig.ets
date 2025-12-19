@@ -151,6 +151,7 @@ export class _KeyMethodConfig {
     )) {
       // if (!AppStorage.get('sdajfhjk')) {
       if (AppStorage.get('flax')) {
+        AppStorage.setOrCreate('isAI_assistant', isAI_assistant)
         if (state) { //语音翻译
           if (AppStorage.get('isAutoCloseVoiceTransPop')) {
             if (await LandscapeNotification(() => {

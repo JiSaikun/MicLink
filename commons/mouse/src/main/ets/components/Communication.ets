@@ -6,6 +6,7 @@ import { _getModelInfo, _productImg } from '../viewmodel/UserViewModel'
 import { getModelInfoModel, keyInfosModel, keyInfos_childsModel, keyInfos_childs_childsModel } from 'config'
 import { AudioWebSocketHandler } from 'api';
 import { keyConfigExclusion } from './keyConfigExclusion';
+import { Notification } from 'config';
 
 // 按键类型枚举
 export enum KeyPressType {
@@ -1228,6 +1229,11 @@ export class Communication {
           }
           // byte[5]: 电量
           this.deviceInfo.batteryLevel = data[5];
+          if (this.deviceInfo.batteryLevel < 10) {
+            if (AppStorage.get("flax")) {
+              Notification.setOrCreate("低电量提醒", '', '', 2)
+            }
+          }
           // byte[6]: 当前回报率
           const reportRateCode = data[6];
           switch (reportRateCode) {
@@ -2070,9 +2076,9 @@ export class Communication {
           if (res.status === 200) {
             let getModelInfo: getModelInfoModel = res.data as getModelInfoModel;
 
-            keyConfigExclusion(getModelInfo).then((res)=>{
-              ConnectDevice.Communication[this.device_currIndex].getModelInfo =res
-                const newList: DeviceArrayType[] = JSON.parse(JSON.stringify(ConnectDevice.Communication));
+            keyConfigExclusion(getModelInfo).then((res) => {
+              ConnectDevice.Communication[this.device_currIndex].getModelInfo = res
+              const newList: DeviceArrayType[] = JSON.parse(JSON.stringify(ConnectDevice.Communication));
               AppStorage.setOrCreate('devicesList', newList);
 
               if (AppStorage.get('flax')) {
