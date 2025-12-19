@@ -275,7 +275,7 @@ export class AudioWebSocketHandler_ble {
       } else {
         res.data.text = this.FINText + res.data.text
       }
-      if (AppStorage.get('flax') && !this.state&&!this.wending) {
+      if ((AppStorage.get('flax') && !this.state&&!this.wending)&&!this.webViewController ) {
         if (AppStorage.get('isAI_assistant')) {
           Notification.setOrCreate('语音助手', res.data.text)
         } else {
