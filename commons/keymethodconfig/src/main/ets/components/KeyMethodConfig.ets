@@ -288,9 +288,9 @@ export class _KeyMethodConfig {
 
     } else {
       Notification.state=false
-      setTimeout(()=>{
-        Notification.clear()
-      },2000)
+      // setTimeout(()=>{
+      //   Notification.clear()
+      // },2000)
       if (AppStorage.get('device_isBle')) {
         (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
           0].BlueTooth_devices.send([0x63])
@@ -552,9 +552,9 @@ export class _KeyMethodConfig {
    */
   static endvoiceInput_long(state: number = 0) {
     Notification.state=false
-    setTimeout(()=>{
-      Notification.clear()
-    },2000)
+    // setTimeout(()=>{
+    //   Notification.clear()
+    // },2000)
     console.log('[语音调试] endvoiceInput_long 开始，state:', state);
     if (AppStorage.get('device_isBle')) {
       console.log('[语音调试] 结束蓝牙语音输入');

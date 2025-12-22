@@ -13,6 +13,11 @@ import { webview } from '@kit.ArkWeb';
 import { Notification } from 'config';
 import { common, Want } from '@kit.AbilityKit';
 
+interface sendQueueType {
+  chunk: Int16Array,
+  start: boolean
+}
+
 // 定义日志消息接口
 interface logMessageModel {
   "start": boolean,
@@ -105,7 +110,6 @@ export class AudioWebSocketHandler {
   private sendIntervalId: number | null = null;
   private isSending: boolean = false;
   private pendingChunks: Int16Array[][] = [];
-  private lastSentIndex: number = 0; // 记录已发送的位置
   private completionCheckId: number | null = null;
   private pendingInitTimerId: number | null = null; // 初始化延迟定时器
   private isClosing: boolean = false; // 新增：标记是否正在关闭
@@ -146,6 +150,18 @@ export class AudioWebSocketHandler {
   private readonly MAX_BUFFER_SIZE = 50; // 最大缓冲分片数
   private readonly MIN_SAMPLES_FOR_COMPLETION = 1024; // 最小采样点数才开始检测完成（约0.064秒@16kHz）
   private webViewController: webview.WebviewController | null = null
+
+  // 新增优化相关属性（简化为类似蓝牙的实时发送模式）
+  private lastSentSampleIndex: number = 0; // 采样点索引（仿蓝牙模式）
+  private lastSendTime: number = 0; // 记录上次发送时间
+  private readonly MIN_SEND_INTERVAL: number = 10; // 最小发送间隔10ms，保持响应性
+  private cachedTotalSamples: number = 0; // 缓存总采样点数
+  private lastCacheUpdateTime: number = 0; // 缓存更新时间
+  private sessionStartTime: number = 0; // 会话开始时间
+  private readonly MAX_SESSION_DURATION: number = Number.MAX_SAFE_INTEGER; // 禁用会话超时，支持长时语音传输
+  private completionDetectionStartTime: number = 0; // 完成检测开始时间
+  private readonly MAX_NO_DATA_TIMEOUT: number = 10000; // 10秒内没有数据则超时
+
   // Base64编码表
   private base64Chars: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
@@ -171,13 +187,18 @@ export class AudioWebSocketHandler {
     this.wending = false
     this.FINText = ''
     this.isSending = false;
-    this.lastSentIndex = 0;
     this.isClosing = false;
     this.hasSentStart = false;
     this.hasSentEnd = false;
     this.totalSamplesCache = 0;
     this.failedChunksCount = 0;
     this.metrics.sessionStartTime = Date.now();
+
+    // 新增初始化
+    this.lastSentSampleIndex = 0;
+    this.cachedTotalSamples = 0;
+    this.lastCacheUpdateTime = Date.now();
+    this.sessionStartTime = Date.now();
   }
 
   public connect(): void {
@@ -216,7 +237,7 @@ export class AudioWebSocketHandler {
           // 启动心跳机制
           this.setupHeartbeat();
 
-          // 使用优化的实时发送方式
+          // 使用优化的实时发送方式（仿蓝牙模式）
           this.startRealTimeAudioSending();
         } else {
           console.error("连接错误:" + JSON.stringify(err));
@@ -293,7 +314,7 @@ export class AudioWebSocketHandler {
       } else {
         res.data.text = this.FINText + res.data.text
       }
-      if ((AppStorage.get('flax') && !this.state&&!this.wending)&&!this.webViewController ) {
+      if ((AppStorage.get('flax') && !this.state && !this.wending) && !this.webViewController) {
         if (AppStorage.get('isAI_assistant')) {
           Notification.setOrCreate('语音助手', res.data.text)
         } else {
@@ -326,11 +347,11 @@ export class AudioWebSocketHandler {
               /**
                * 网页搜索 - 修复数组类型错误
                */
-              if (res.data.text==='') {
+              if (res.data.text === '') {
                 return
               }
               const context: common.UIAbilityContext = AppStorage.get('context') as common.UIAbilityContext;
-              const encodedKeyword = encodeURIComponent( res.data.text);
+              const encodedKeyword = encodeURIComponent(res.data.text);
               let uri: string = '';
 
               const searchEngine = AppStorage.get('EnhancedBrowserSearch') as number || 0;
@@ -343,10 +364,10 @@ export class AudioWebSocketHandler {
 
               if (searchEngine >= 0 && searchEngine < searchEngines.length) {
                 uri = searchEngines[searchEngine].url;
-                console.log(`使用${searchEngines[searchEngine].name}搜索: ${ res.data.text}`);
+                console.log(`使用${searchEngines[searchEngine].name}搜索: ${res.data.text}`);
               } else {
                 uri = searchEngines[0].url;
-                console.log(`使用默认搜索引擎搜索: ${ res.data.text}`);
+                console.log(`使用默认搜索引擎搜索: ${res.data.text}`);
               }
 
               const want: Want = {
@@ -430,10 +451,10 @@ export class AudioWebSocketHandler {
       if (this.state === 0 && this.wending && !AppStorage.get('isAI_assistant')) {
         this.wending = false
         // 语音输入模式
-        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20,
+        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number || 0].Communication.getDeviceInfo([0x20,
           0x01, 0x19])
           .then(() => {
-            if (AppStorage.get('flax') && !this.state&&!this.wending) {
+            if (AppStorage.get('flax') && !this.state && !this.wending) {
               Notification.clear()
               Notification.state = false
             }
@@ -456,12 +477,12 @@ export class AudioWebSocketHandler {
 
   private handleTranslation(text: string, systemPasteboard: pasteboard.SystemPasteboard, type: string): void {
     let params: translate_Params = {
-      appkey: (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+      appkey: (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number ||
         0].getModelInfo as getModelInfoModel).appkey,
       from: AppStorage.get('from_languages') ? AppStorage.get('from_languages') as string : 'ZH_CN',
-      productCode: ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+      productCode: ConnectDevice.Communication[AppStorage.get('device_currIndex') as number ||
         0].Communication.deviceInfo.productType.toString(),
-      sno: ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.deviceInfo.sn,
+      sno: ConnectDevice.Communication[AppStorage.get('device_currIndex') as number || 0].Communication.deviceInfo.sn,
       text: text,
       to: AppStorage.get('to_languages') ? AppStorage.get('to_languages') as string : 'EN_US'
     };
@@ -496,7 +517,7 @@ export class AudioWebSocketHandler {
                 Float_Window.destroyWindow(Float_Window.window_VoiceTranslation)
                 setTimeout(() => {
                   // 语音输入模式
-                  ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+                  ConnectDevice.Communication[AppStorage.get('device_currIndex') as number ||
                     0].Communication.getDeviceInfo([0x20,
                     0x01, 0x19])
                     .then(() => {
@@ -506,13 +527,13 @@ export class AudioWebSocketHandler {
                       }
                       console.error('执行粘贴操作: ' + dataArray.transText);
                       Float_Window.showVoiceTranslation = false
-                      if (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+                      if (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number ||
                         0].Communication.audioDataState) {
-                        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+                        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number ||
                           0].Communication.getDeviceInfo([0x63])
-                        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+                        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number ||
                           0].Communication.audioDataState =
-                          !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+                          !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number ||
                             0].Communication.audioDataState
                       }
                       setTimeout(() => {
@@ -715,7 +736,6 @@ export class AudioWebSocketHandler {
         this.totalSamplesCache -= this.audioData[i].length;
       }
       this.audioData.splice(0, framesToRemove);
-      this.lastSentIndex = Math.max(0, this.lastSentIndex - framesToRemove);
       console.log(`🧹 内存清理：删除${framesToRemove}帧旧数据`);
     }
   }
@@ -898,114 +918,40 @@ export class AudioWebSocketHandler {
     return this.base64Encode(byteArray);
   }
 
-  // 将音频数据分片为1024字节的块（异步处理避免阻塞主线程）
-  private async chunkAudioDataAsync(audioData: Int16Array[]): Promise<Int16Array[]> {
-    const chunks: Int16Array[] = [];
-
-    // 将所有音频数据合并为一个大的Int16Array
-    let totalLength = 0;
-    for (const frame of audioData) {
-      totalLength += frame.length;
-    }
-
-    // 减少详细日志输出以提高性能
-    // console.log(`2.4G分片前总采样点数: ${totalLength}, 总字节数: ${totalLength * 2}`);
-
-    const combinedData = new Int16Array(totalLength);
-    let offset = 0;
-    for (const frame of audioData) {
-      combinedData.set(frame, offset);
-      offset += frame.length;
-
-      // 每处理100帧数据，让出主线程控制权
-      if (offset % 100 === 0) {
-        await this.delay(1);
-      }
-    }
-
-    // 按512个采样点（1024字节）分块，异步处理
-    for (let i = 0; i < combinedData.length; i += this.SAMPLES_PER_CHUNK) {
-      const endIndex = Math.min(i + this.SAMPLES_PER_CHUNK, combinedData.length);
-      const chunk = combinedData.slice(i, endIndex);
-      chunks.push(chunk);
-
-      // 每处理10个分片，让出主线程控制权
-      if (chunks.length % 10 === 0) {
-        await this.delay(1);
-      }
-    }
-
-    // console.log(`2.4G总共生成 ${chunks.length} 个分片`);
-
-    return chunks;
-  }
-
-  // 保留同步版本用于兼容性，但添加警告
-  private chunkAudioData(audioData: Int16Array[]): Int16Array[] {
-    console.warn('使用同步chunkAudioData方法，可能阻塞主线程。建议使用chunkAudioDataAsync');
-    return this.chunkAudioDataSync(audioData);
-  }
-
-  private chunkAudioDataSync(audioData: Int16Array[]): Int16Array[] {
-    const chunks: Int16Array[] = [];
-
-    let totalLength = 0;
-    for (const frame of audioData) {
-      totalLength += frame.length;
-    }
-
-    const combinedData = new Int16Array(totalLength);
-    let offset = 0;
-    for (const frame of audioData) {
-      combinedData.set(frame, offset);
-      offset += frame.length;
-    }
-
-    for (let i = 0; i < combinedData.length; i += this.SAMPLES_PER_CHUNK) {
-      const endIndex = Math.min(i + this.SAMPLES_PER_CHUNK, combinedData.length);
-      const chunk = combinedData.slice(i, endIndex);
-      chunks.push(chunk);
-    }
-
-    return chunks;
-  }
-
-  // 延迟函数
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  // ========== 优化的1024字节分片发送方法 ==========
+  // ========== 优化的实时音频发送方法（仿蓝牙模式）==========
 
   private startRealTimeAudioSending(): void {
-    console.log('开始实时音频发送 - 1024字节分片');
+    console.log('开始实时音频发送 - 仿蓝牙实时模式');
+
+    // 重置发送相关状态
+    this.lastSentSampleIndex = 0;
+    this.lastSendTime = Date.now();
+    this.cachedTotalSamples = 0;
+    this.lastCacheUpdateTime = Date.now();
+    this.sessionStartTime = Date.now();
 
     // 延迟一小段时间，让音频数据有时间积累
-    const initTimerId = setTimeout(async () => {
-      // 检查对象是否仍然有效
-      if (this.isClosing || !this.ws || this.lastSentIndex < 0) {
+    this.pendingInitTimerId = setTimeout(() => {
+      if (this.isClosing || !this.ws) {
         return;
       }
 
-      // 发送现有数据（如果有的话）
-      await this.sendExistingDataIfAvailable();
+      // 1. 发送初始数据（如果有）
+      this.sendExistingDataImmediately();
 
-      // 设置实时监听新数据
-      this.setupRealTimeListener();
+      // 2. 设置实时监听新数据（仿蓝牙模式）
+      this.setupRealTimeListenerBluetoothStyle();
 
-      // 设置完成检测
+      // 3. 设置完成检测
       this.setupCompletionDetection();
 
-      // 设置无数据超时检测
+      // 4. 设置无数据超时检测
       this.setupNoDataTimeout();
-    }, 500); // 500ms延迟，让数据有时间积累
-
-    // 存储初始化定时器ID以便清理
-    this.pendingInitTimerId = initTimerId;
+    }, 100) as number; // 缩短延迟到100ms
   }
 
-  private async sendExistingDataIfAvailable(): Promise<void> {
-    if (this.audioData.length === 0 || this.isClosing || this.lastSentIndex < 0 || !this.ws) {
+  private async sendExistingDataImmediately(): Promise<void> {
+    if (this.audioData.length === 0) {
       return;
     }
 
@@ -1014,28 +960,28 @@ export class AudioWebSocketHandler {
     try {
       this.isSending = true;
 
-      // 创建音频数据的快照，避免并发修改问题
-      const audioDataSnapshot = [...this.audioData];
-      const chunks = await this.chunkAudioDataAsync(audioDataSnapshot);
-      console.log(`生成 ${chunks.length} 个1024字节分片`);
+      // 使用连续分片获取新数据（仿蓝牙模式）
+      const chunks = this.getContinuousAudioChunksFromStart();
 
-      for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
-        if (this.isClosing) {
-          break;
-        }
+      if (chunks.length > 0) {
+        console.log(`生成 ${chunks.length} 个连续1024字节分片`);
 
-        const chunk = chunks[chunkIndex];
-        console.log(`2.4G发送分片 ${chunkIndex + 1}/${chunks.length}, 大小: ${chunk.length} 采样点`);
-        await this.sendAudioChunk(chunk, chunkIndex, chunks.length);
+        for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
+          if (this.isClosing) {
+            break;
+          }
 
-        // 控制发送速率
-        if (chunkIndex < chunks.length - 1) {
-          await this.delay(this.SEND_INTERVAL_MS);
+          const chunk = chunks[chunkIndex];
+          await this.sendAudioChunkImmediately(chunk, chunkIndex, chunks.length);
+
+          // 更新采样点索引
+          this.lastSentSampleIndex += chunk.length;
+
+          // 立即发送，不延迟
         }
       }
 
-      this.lastSentIndex = this.audioData.length;
-      console.log(`现有数据发送完成，最后发送位置: ${this.lastSentIndex}`);
+      console.log(`现有数据发送完成，最后发送采样点位置: ${this.lastSentSampleIndex}`);
 
     } catch (error) {
       console.error('发送现有数据错误:', error);
@@ -1044,13 +990,20 @@ export class AudioWebSocketHandler {
     }
   }
 
-  private setupRealTimeListener(): void {
-    console.log('设置实时监听器');
+  private setupRealTimeListenerBluetoothStyle(): void {
+    console.log('设置实时监听器（仿蓝牙模式）');
 
-    this.sendIntervalId = setInterval(async () => {
+    // 清理旧的定时器
+    if (this.sendIntervalId !== null) {
+      clearInterval(this.sendIntervalId);
+      this.sendIntervalId = null;
+    }
+
+    // 设置新的定时器，使用20ms检查间隔（与蓝牙一致）
+    this.sendIntervalId = setInterval(() => {
       try {
         // 检查对象是否仍然有效（防止GC后的访问）
-        if (!this || this.isClosing || this.lastSentIndex < 0 || !this.ws) {
+        if (!this || this.isClosing || !this.ws) {
           return;
         }
 
@@ -1058,37 +1011,45 @@ export class AudioWebSocketHandler {
           return;
         }
 
-        // 检查是否有新数据
-        if (this.audioData && this.audioData.length > this.lastSentIndex) {
-          await this.sendNewDataImmediately();
+        // 添加节流控制：确保最小发送间隔
+        const currentTime = Date.now();
+        if (currentTime - this.lastSendTime < this.MIN_SEND_INTERVAL) {
+          return;
+        }
+
+        // 检查是否有新数据（基于采样点总数）
+        const totalSamples = this.calculateTotalSamplesCached();
+
+        if (totalSamples > this.lastSentSampleIndex) {
+          this.lastSendTime = currentTime;
+          this.processNewDataImmediately();
         }
       } catch (error) {
-        console.error('实时监听器回调异常:', error);
+        console.error('2.4G实时监听器回调异常:', error);
         // 如果出现异常，清理定时器
         if (this && this.cleanupIntervals) {
           this.cleanupIntervals();
         }
       }
-    }, this.CHECK_INTERVAL_MS) as number;
+    }, this.CHECK_INTERVAL_MS) as number; // 使用20ms检查间隔，与蓝牙一致
   }
 
-  private async sendNewDataImmediately(): Promise<void> {
-    const newDataCount = this.audioData.length - this.lastSentIndex;
-    if (newDataCount <= 0 || this.isSending || this.isClosing) {
+  private async processNewDataImmediately(): Promise<void> {
+    // 计算总采样点数来检查是否有新数据
+    const totalSamples = this.calculateTotalSamplesCached();
+
+    if (totalSamples <= this.lastSentSampleIndex || this.isSending || this.isClosing) {
       return;
     }
-
-    // 有新数据时重置超时
-    this.resetNoDataTimeout();
 
     try {
       this.isSending = true;
 
-      const newData = this.audioData.slice(this.lastSentIndex);
-      const chunks = await this.chunkAudioDataAsync(newData);
+      // 使用连续分片获取新数据
+      const chunks = this.getContinuousAudioChunks();
 
       if (chunks.length > 0) {
-        console.log(`发送 ${chunks.length} 个新数据分片`);
+        console.log(`发送 ${chunks.length} 个新数据连续分片`);
 
         for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
           if (this.isClosing) {
@@ -1096,16 +1057,16 @@ export class AudioWebSocketHandler {
           }
 
           const chunk = chunks[chunkIndex];
-          await this.sendAudioChunk(chunk, chunkIndex, chunks.length);
+          await this.sendAudioChunkImmediately(chunk, chunkIndex, chunks.length);
 
-          // 最小延迟
-          if (chunkIndex < chunks.length - 1) {
-            await this.delay(this.SEND_INTERVAL_MS);
-          }
+          // 更新全局采样点位置
+          this.lastSentSampleIndex += chunk.length;
+
+          // 立即发送，不延迟
         }
       }
 
-      this.lastSentIndex = this.audioData.length;
+      console.log(`新数据发送完成，当前采样点位置: ${this.lastSentSampleIndex}`);
 
     } catch (error) {
       console.error('发送新数据错误:', error);
@@ -1114,47 +1075,210 @@ export class AudioWebSocketHandler {
     }
   }
 
+  private async sendAudioChunkImmediately(chunk: Int16Array, chunkIndex: number, totalChunks: number): Promise<void> {
+    try {
+      if (this.isClosing) {
+        return;
+      }
+
+      if (!chunk || chunk.length === 0) {
+        return;
+      }
+
+      // 添加超时控制，防止长时间阻塞
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('发送音频分片超时')), 2000);
+      });
+
+      const sendPromise = new Promise<void>((resolve) => {
+        try {
+          const base64Audio = this.int16ToBase64(chunk);
+
+          if (!base64Audio) {
+            resolve();
+            return;
+          }
+
+          // 减少日志输出频率，避免阻塞
+          if (chunkIndex % 10 === 0 || chunkIndex < 3) {
+            console.log(`2.4G分片 ${chunkIndex}/${totalChunks} Base64长度: ${base64Audio.length}`);
+          }
+
+          // 确保整个会话只发送一次start=true
+          // 只依赖hasSentStart标志，不依赖chunkIndex（因为chunkIndex在不同方法中会重置）
+          const isStart = !this.hasSentStart;
+          if (isStart) {
+            this.hasSentStart = true;
+            console.log('🎤 2.4G发送开始标志 start=true，当前采样点位置:', this.lastSentSampleIndex);
+          }
+          const isEnd = false;
+
+          const inputMessage: inputMessageModel = {
+            "start": isStart,
+            "clientId": this.inputMessage.clientId,
+            "ptt": this.inputMessage.ptt,
+            "serialNo": this.inputMessage.serialNo,
+            "phrases": this.inputMessage.phrases,
+            "format": this.inputMessage.format || "pcm",
+            "apiKey": this.inputMessage.apiKey,
+            "language": this.inputMessage.language,
+            "end": isEnd,
+            "rate": this.inputMessage.rate,
+            "deviceNo": this.inputMessage.deviceNo,
+            "content": base64Audio
+          };
+
+          const success = this.sendMessage(inputMessage);
+          if (!success) {
+            console.error('发送音频数据失败');
+          }
+
+          // 更新性能指标
+          this.metrics.totalChunksSent++;
+          this.metrics.totalBytesSent += chunk.length * 2;
+          this.metrics.lastChunkTime = Date.now();
+
+          resolve();
+        } catch (error) {
+          console.error(`音频分片处理错误:`, error);
+          resolve(); // 继续执行，不中断整个流程
+        }
+      });
+
+      await Promise.race([sendPromise, timeoutPromise]);
+
+    } catch (error) {
+      console.error(`发送音频分片错误:`, error);
+      // 如果是超时错误，标记为需要重试或跳过
+      if (error.message && error.message.includes('超时')) {
+        console.warn('音频分片发送超时，跳过此分片');
+        this.metrics.failedChunks++;
+      }
+    }
+  }
+
+  // 获取连续的音频分片，从全局采样点位置开始
+  private getContinuousAudioChunks(): Int16Array[] {
+    const chunks: Int16Array[] = [];
+
+    // 计算总采样点数
+    const totalSamples = this.calculateTotalSamplesCached();
+
+    // 如果没有新数据，返回空数组
+    if (totalSamples <= this.lastSentSampleIndex) {
+      return chunks;
+    }
+
+    // 创建合并的数据缓冲区
+    const combinedData = new Int16Array(totalSamples);
+    let offset = 0;
+    for (const frame of this.audioData) {
+      combinedData.set(frame, offset);
+      offset += frame.length;
+    }
+
+    // 从上次发送的位置开始连续分片
+    for (let i = this.lastSentSampleIndex; i < combinedData.length; i += this.SAMPLES_PER_CHUNK) {
+      const endIndex = Math.min(i + this.SAMPLES_PER_CHUNK, combinedData.length);
+      const chunk = combinedData.slice(i, endIndex);
+      chunks.push(chunk);
+      console.log(`2.4G连续分片 ${chunks.length}: 从采样点${i}到${endIndex - 1}, 大小: ${chunk.length}采样点`);
+    }
+
+    console.log(`2.4G连续分片总共生成 ${chunks.length} 个分片，从全局采样点${this.lastSentSampleIndex}开始`);
+    return chunks;
+  }
+
+  private getContinuousAudioChunksFromStart(): Int16Array[] {
+    const chunks: Int16Array[] = [];
+
+    // 计算总采样点数
+    let totalSamples = 0;
+    for (let i = 0; i < this.audioData.length; i++) {
+      totalSamples += this.audioData[i].length;
+    }
+
+    if (totalSamples <= 0) {
+      return chunks;
+    }
+
+    // 创建合并的数据缓冲区
+    const combinedData = new Int16Array(totalSamples);
+    let offset = 0;
+    for (const frame of this.audioData) {
+      combinedData.set(frame, offset);
+      offset += frame.length;
+    }
+
+    // 从0开始连续分片
+    for (let i = 0; i < combinedData.length; i += this.SAMPLES_PER_CHUNK) {
+      const endIndex = Math.min(i + this.SAMPLES_PER_CHUNK, combinedData.length);
+      const chunk = combinedData.slice(i, endIndex);
+      chunks.push(chunk);
+    }
+
+    return chunks;
+  }
+
+  // 获取总采样点数（带缓存优化）- 仿蓝牙版本
+  private calculateTotalSamplesCached(): number {
+    const currentTime = Date.now();
+    // 缓存100ms内的计算结果，避免频繁计算，减少主线程开销
+    if (currentTime - this.lastCacheUpdateTime < 100) {
+      return this.cachedTotalSamples;
+    }
+
+    let totalSamples = 0;
+    const length = this.audioData.length;
+    // 批量计算，减少循环开销
+    for (let i = 0; i < length; i++) {
+      totalSamples += this.audioData[i].length;
+    }
+
+    this.cachedTotalSamples = totalSamples;
+    this.lastCacheUpdateTime = currentTime;
+    return totalSamples;
+  }
+
+  // ========== 完成检测和无数据超时 ==========
+
   private setupCompletionDetection(): void {
-    console.log('设置完成检测');
+    console.log('2.4G设置完成检测');
 
     let lastDataLength = this.audioData.length;
     let stableCount = 0;
-    const maxStableCount = 50; // 1秒无新数据 (20ms * 50) - 缩短检测时间
-    let initialDelayCount = 0;
-    const initialDelayMax = 25; // 500ms初始延迟 (20ms * 25)
+    this.completionDetectionStartTime = Date.now(); // 记录开始检测的时间
 
     this.completionCheckId = setInterval(() => {
       try {
         // 检查对象是否仍然有效（防止GC后的访问）
-        if (!this || this.isClosing || this.lastSentIndex < 0 || !this.ws) {
+        if (!this || this.isClosing) {
           if (this && this.cleanupIntervals) {
             this.cleanupIntervals();
           }
           return;
         }
 
-        // 初始延迟，让数据有时间积累
-        initialDelayCount++;
-        if (initialDelayCount < initialDelayMax) {
-          return; // 跳过初始延迟期间的检查
-        }
-
+        // 检查当前数组长度
         const currentLength = this.audioData.length;
 
-        // 计算总采样点数
-        let totalSamples = 0;
-        for (const frame of this.audioData) {
-          totalSamples += frame.length;
-        }
+        // 计算总采样点数，用于最小数据量检查
+        const currentTotalSamples = this.calculateTotalSamplesCached();
 
         // 只有在至少有最小数据量后才开始检测完成，避免误判
-        if (totalSamples < this.MIN_SAMPLES_FOR_COMPLETION) {
-          if (stableCount % 50 === 0) { // 减少日志频率
-            console.log(`2.4G采样点不足(${totalSamples}/${this.MIN_SAMPLES_FOR_COMPLETION})，继续等待...`);
-            console.log(`[2.4G调试] 当前audioData帧数: ${this.audioData.length}, currentLength: ${currentLength}`);
-            console.log(`[2.4G调试] audioDataState: ${ConnectDevice.Communication[AppStorage.get('device_currIndex') as number ||
-              0]?.Communication?.audioDataState}`);
+        if (currentTotalSamples < this.MIN_SAMPLES_FOR_COMPLETION) {
+          // 检查是否超时（10秒内没有数据）
+          const elapsedTime = Date.now() - this.completionDetectionStartTime;
+          if (elapsedTime > this.MAX_NO_DATA_TIMEOUT) {
+            console.warn(`2.4G设备${this.MAX_NO_DATA_TIMEOUT / 1000}秒内未收到音频数据，停止检测并清理资源`);
+            this.cleanupIntervals();
+            return;
           }
+
+          if (stableCount % 50 === 0) { // 减少日志频率
+            console.log(`2.4G采样点不足(${currentTotalSamples}/${this.MIN_SAMPLES_FOR_COMPLETION})，继续等待...（已等待${Math.floor(elapsedTime / 1000)}秒）`);
+          }
+          stableCount++;
           return;
         }
 
@@ -1162,29 +1286,32 @@ export class AudioWebSocketHandler {
         const audioDataState = ConnectDevice.Communication[AppStorage.get('device_currIndex') as number ||
           0]?.Communication?.audioDataState || false;
 
+        if (stableCount % 50 === 0) { // 每秒输出一次状态
+          console.log(`2.4G完成检测状态 - 数组长度: ${currentLength}, audioDataState: ${audioDataState}, 稳定计数: ${stableCount}`);
+        }
+
         if (currentLength === lastDataLength) {
           stableCount++;
 
-          if (stableCount % 25 === 0 || stableCount >= maxStableCount) { // 减少日志频率
-            console.log(`2.4G数据稳定计数: ${stableCount}/${maxStableCount} (${stableCount *
-            this.CHECK_INTERVAL_MS}ms), audioDataState: ${audioDataState}`);
+          if (stableCount % 25 === 0 || stableCount >= 50) { // 减少日志频率
+            console.log(`2.4G数据稳定计数: ${stableCount}/50 (${stableCount * this.CHECK_INTERVAL_MS}ms), audioDataState: ${audioDataState}`);
           }
 
-          // 如果音频采集已停止且数据稳定超过阈值，发送结束标记
-          if (stableCount >= maxStableCount) {
-            console.log(`2.4G数据稳定超过${maxStableCount * this.CHECK_INTERVAL_MS}ms，发送结束标记`);
+          // 如果数据稳定超过阈值，发送结束标记
+          if (stableCount >= 50) {
+            console.log(`2.4G数据稳定超过${50 * this.CHECK_INTERVAL_MS}ms（1秒），发送结束标记`);
             this.sendEndMarker();
             this.cleanupIntervals();
           }
         } else {
           if (stableCount > 0 && stableCount % 10 === 0) { // 减少日志频率
-            console.log(`2.4G接收到新数据，重置稳定计数 (之前: ${stableCount})`);
+            console.log(`2.4G接收到新数据，重置稳定计数 (之前: ${stableCount})，当前数组长度: ${currentLength}`);
           }
           stableCount = 0;
           lastDataLength = currentLength;
         }
       } catch (error) {
-        console.error('完成检测回调异常:', error);
+        console.error('2.4G完成检测回调异常:', error);
         // 如果出现异常，清理定时器
         if (this && this.cleanupIntervals) {
           this.cleanupIntervals();
@@ -1199,12 +1326,12 @@ export class AudioWebSocketHandler {
     this.noDataTimeoutId = setTimeout(() => {
       try {
         // 检查对象是否仍然有效（防止GC后的访问）
-        if (!this || this.isClosing || this.lastSentIndex < 0 || !this.ws) {
+        if (!this || this.isClosing) {
           return;
         }
 
         console.warn(`2.4G音频数据超时: ${this.NO_DATA_TIMEOUT_MS}ms内未收到任何音频数据`);
-        console.log(`当前音频数据状态: 帧数=${this.audioData.length}, 已发送索引=${this.lastSentIndex}`);
+        console.log(`当前音频数据状态: 帧数=${this.audioData.length}, 已发送索引=${this.lastSentSampleIndex}`);
 
         // 发送结束标记并停止语音输入
         this.sendEndMarker();
@@ -1217,85 +1344,6 @@ export class AudioWebSocketHandler {
         }
       }
     }, this.NO_DATA_TIMEOUT_MS) as number;
-  }
-
-  private resetNoDataTimeout(): void {
-    if (this.noDataTimeoutId !== null) {
-      clearTimeout(this.noDataTimeoutId);
-      this.noDataTimeoutId = null;
-    }
-    // 重新启动超时检测
-    this.setupNoDataTimeout();
-  }
-
-  private async sendAudioChunk(chunk: Int16Array, chunkIndex: number, totalChunks: number): Promise<void> {
-    const startTime = Date.now();
-
-    try {
-      if (this.isClosing) {
-        return;
-      }
-
-      if (!chunk || chunk.length === 0) {
-        return;
-      }
-
-      const base64Audio = this.int16ToBase64(chunk);
-
-      if (!base64Audio) {
-        return;
-      }
-
-      // 降低日志频率，避免性能开销
-      if (chunkIndex % 10 === 0 || chunkIndex < 3) {
-        console.log(`2.4G分片 ${chunkIndex}/${totalChunks} Base64长度: ${base64Audio.length}`);
-      }
-
-      // 确保整个会话只发送一次start=true
-      // 只依赖hasSentStart标志，不依赖chunkIndex（因为chunkIndex在不同方法中会重置）
-      const isStart = !this.hasSentStart;
-      if (isStart) {
-        this.hasSentStart = true;
-        console.log('🎤 2.4G发送开始标志 start=true，当前索引位置:', this.lastSentIndex);
-        console.log('🎤 ⚠️ 这是本会话第一次发送start标志');
-      } else {
-        if (chunkIndex % 50 === 0) {
-          console.log('✓ start标志已发送过，跳过（hasSentStart=true）');
-        }
-      }
-      const isEnd = false;
-
-      const inputMessage: inputMessageModel = {
-        "start": isStart,
-        "clientId": this.inputMessage.clientId,
-        "ptt": this.inputMessage.ptt,
-        "serialNo": this.inputMessage.serialNo,
-        "phrases": this.inputMessage.phrases,
-        "format": this.inputMessage.format || "pcm",
-        "apiKey": this.inputMessage.apiKey,
-        "language": this.inputMessage.language,
-        "end": isEnd,
-        "rate": this.inputMessage.rate,
-        "deviceNo": this.inputMessage.deviceNo,
-        "content": base64Audio
-      };
-
-      // 使用带重试的发送方法
-      const success = this.sendMessageWithRetry(inputMessage);
-
-      if (success) {
-        // 更新性能指标
-        this.metrics.totalChunksSent++;
-        this.metrics.totalBytesSent += chunk.length * 2;
-        this.metrics.lastChunkTime = Date.now();
-      } else {
-        console.error(`❌ 发送音频分片失败: ${chunkIndex}/${totalChunks}`);
-      }
-
-    } catch (error) {
-      console.error(`发送音频分片错误:`, error);
-      this.metrics.failedChunks++;
-    }
   }
 
   private sendEndMarker(): void {
@@ -1328,12 +1376,16 @@ export class AudioWebSocketHandler {
     console.error(this.wending + '\t' + '发送结束标记', JSON.stringify(endMessage.rate));
   }
 
+  // 延迟函数
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
   // 清理资源
   public destroy(): void {
     console.log('开始销毁AudioWebSocketHandler');
 
     // 立即标记对象为无效状态，防止定时器回调继续执行
-    this.lastSentIndex = -1; // 无效标记
     this.isClosing = true;
     this.hasSentStart = false; // 重置start标志，为下次会话做准备
     this.hasSentEnd = false; // 重置end标志，为下次会话做准备
@@ -1347,6 +1399,7 @@ export class AudioWebSocketHandler {
       this.pendingChunks = [];
       this.isSending = false;
       this.ws = null;
+      this.lastSentSampleIndex = 0;
       console.log('AudioWebSocketHandler资源已完全清理');
     });
   }
