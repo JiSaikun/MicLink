@@ -427,6 +427,124 @@ export struct Tab_device {
                 .height('100%')
 
               }
+            }else   {
+              TabContent(){
+                Column(){
+                  Column() {
+                    /**
+                     * 没有设备连接
+                     */
+                    Image($r('app.media.VacancyPage'))
+                      .width(171)
+                      .margin({ top: 18, bottom: 23 })
+                    Row() {
+                      Text('未连接设备，前往连接')
+                        .fontColor(Color.White)
+                        .fontSize(CommonConfig.fontSize_14)
+                        .fontWeight(CommonConfig.fontWeight_400)
+                    }
+                    .width('100%')
+                    .borderRadius(12)
+                    .backgroundColor(this.paletteTheme)
+                    .justifyContent(FlexAlign.Center)
+                    .padding(12)
+
+                  }
+                  .width('100%')
+                  .borderRadius(16)
+                  .padding(12)
+                  .backgroundColor(CommonConfig.commonBackgroundColor)
+                  .border({ width: 1, color: Color.White })
+                  .margin({ bottom: 16 })
+
+                  Column({ space: 8 }) {
+                    Row() {
+                      Image($r('app.media.Frame_2133'))
+                        .width(24)
+                        .margin({ right: 12 })
+                      Text('AI 服务器连接')
+                        .fontWeight(CommonConfig.fontWeight_400)
+                        .fontSize(CommonConfig.fontSize_14)
+                        .fontColor(CommonConfig.hintTextColor_select)
+                      Blank()
+                      Image($r('app.media.fork'))
+                        .width(16)
+                    }
+                    .width('100%')
+                    .borderRadius(8)
+                    .padding({
+                      left: 12,
+                      top: 10,
+                      right: 12,
+                      bottom: 10
+                    })
+                    .backgroundColor(Color.White)
+                    .alignItems(VerticalAlign.Center)
+
+                    Row() {
+                      Image($r('app.media.Frame_1'))
+                        .width(24)
+                        .margin({ right: 12 })
+                      Text('设备连接')
+                        .fontWeight(CommonConfig.fontWeight_400)
+                        .fontSize(CommonConfig.fontSize_14)
+                        .fontColor(CommonConfig.hintTextColor_select)
+                      Blank()
+                      Image($r('app.media.fork'))
+                        .width(16)
+                    }
+                    .width('100%')
+                    .borderRadius(8)
+                    .padding({
+                      left: 12,
+                      top: 10,
+                      right: 12,
+                      bottom: 10
+                    })
+                    .backgroundColor(Color.White)
+                    .alignItems(VerticalAlign.Center)
+
+                    Row() {
+                      Image($r('app.media.smartphone'))
+                        .width(24)
+                        .margin({ right: 12 })
+                      Text('设备设置')
+                        .fontWeight(CommonConfig.fontWeight_400)
+                        .fontSize(CommonConfig.fontSize_14)
+                        .fontColor(CommonConfig.hintTextColor_select)
+                      Blank()
+                      Text('去设置')
+                        .fontWeight(CommonConfig.fontWeight_400)
+                        .fontSize(CommonConfig.fontSize_11)
+                        .fontColor(CommonConfig.hintTextColor)
+                        .backgroundColor('#EAEAEA')
+                        .padding(8)
+                        .borderRadius(16)
+                        .onClick(() => {
+                          adapterManager.openBluetooth(this.getUIContext())
+                        })
+
+                    }
+                    .width('100%')
+                    .borderRadius(8)
+                    .padding({
+                      left: 12,
+                      top: 10,
+                      right: 12,
+                      bottom: 10
+                    })
+                    .backgroundColor(Color.White)
+                    .alignItems(VerticalAlign.Center)
+                  }
+                  .width('100%')
+                  .borderRadius(16)
+                  .padding(8)
+                  .backgroundColor(CommonConfig.commonBackgroundColor)
+                  .border({ width: 1, color: Color.White })
+                  .margin({ bottom: 16 })
+
+                }
+              }
             }
           }, (item: DeviceArrayType) => JSON.stringify(item.Communication))
           ForEach(this.devices, (item: DeviceArrayType_Ble, index) => {
@@ -642,6 +760,124 @@ export struct Tab_device {
 
                 }
                 .height('100%')
+              }
+            }else  {
+              TabContent(){
+                Column(){
+                  Column() {
+                    /**
+                     * 没有设备连接
+                     */
+                    Image($r('app.media.VacancyPage'))
+                      .width(171)
+                      .margin({ top: 18, bottom: 23 })
+                    Row() {
+                      Text('未连接设备，前往连接')
+                        .fontColor(Color.White)
+                        .fontSize(CommonConfig.fontSize_14)
+                        .fontWeight(CommonConfig.fontWeight_400)
+                    }
+                    .width('100%')
+                    .borderRadius(12)
+                    .backgroundColor(this.paletteTheme)
+                    .justifyContent(FlexAlign.Center)
+                    .padding(12)
+
+                  }
+                  .width('100%')
+                  .borderRadius(16)
+                  .padding(12)
+                  .backgroundColor(CommonConfig.commonBackgroundColor)
+                  .border({ width: 1, color: Color.White })
+                  .margin({ bottom: 16 })
+
+                  Column({ space: 8 }) {
+                    Row() {
+                      Image($r('app.media.Frame_2133'))
+                        .width(24)
+                        .margin({ right: 12 })
+                      Text('AI 服务器连接')
+                        .fontWeight(CommonConfig.fontWeight_400)
+                        .fontSize(CommonConfig.fontSize_14)
+                        .fontColor(CommonConfig.hintTextColor_select)
+                      Blank()
+                      Image($r('app.media.fork'))
+                        .width(16)
+                    }
+                    .width('100%')
+                    .borderRadius(8)
+                    .padding({
+                      left: 12,
+                      top: 10,
+                      right: 12,
+                      bottom: 10
+                    })
+                    .backgroundColor(Color.White)
+                    .alignItems(VerticalAlign.Center)
+
+                    Row() {
+                      Image($r('app.media.Frame_1'))
+                        .width(24)
+                        .margin({ right: 12 })
+                      Text('设备连接')
+                        .fontWeight(CommonConfig.fontWeight_400)
+                        .fontSize(CommonConfig.fontSize_14)
+                        .fontColor(CommonConfig.hintTextColor_select)
+                      Blank()
+                      Image($r('app.media.fork'))
+                        .width(16)
+                    }
+                    .width('100%')
+                    .borderRadius(8)
+                    .padding({
+                      left: 12,
+                      top: 10,
+                      right: 12,
+                      bottom: 10
+                    })
+                    .backgroundColor(Color.White)
+                    .alignItems(VerticalAlign.Center)
+
+                    Row() {
+                      Image($r('app.media.smartphone'))
+                        .width(24)
+                        .margin({ right: 12 })
+                      Text('设备设置')
+                        .fontWeight(CommonConfig.fontWeight_400)
+                        .fontSize(CommonConfig.fontSize_14)
+                        .fontColor(CommonConfig.hintTextColor_select)
+                      Blank()
+                      Text('去设置')
+                        .fontWeight(CommonConfig.fontWeight_400)
+                        .fontSize(CommonConfig.fontSize_11)
+                        .fontColor(CommonConfig.hintTextColor)
+                        .backgroundColor('#EAEAEA')
+                        .padding(8)
+                        .borderRadius(16)
+                        .onClick(() => {
+                          adapterManager.openBluetooth(this.getUIContext())
+                        })
+
+                    }
+                    .width('100%')
+                    .borderRadius(8)
+                    .padding({
+                      left: 12,
+                      top: 10,
+                      right: 12,
+                      bottom: 10
+                    })
+                    .backgroundColor(Color.White)
+                    .alignItems(VerticalAlign.Center)
+                  }
+                  .width('100%')
+                  .borderRadius(16)
+                  .padding(8)
+                  .backgroundColor(CommonConfig.commonBackgroundColor)
+                  .border({ width: 1, color: Color.White })
+                  .margin({ bottom: 16 })
+
+                }
               }
             }
           }, (item: DeviceArrayType_Ble) => JSON.stringify(item.BlueTooth_devices.device_address))
