@@ -63,11 +63,12 @@ PersistentStorage.persistProp("screenshot_recognition_shortcut", { keyPreview: '
 PersistentStorage.persistProp("custom_shortcut", { keyPreview: '', pressedKeys: [] }) //自定义快捷键
 PersistentStorage.persistProp("paletteTheme", ThemeConfig.PaletteTheme) //主题颜色
 PersistentStorage.persistProp("resolutionScale", 'followSystem') //分辨率缩放
+
 @Entry
 @Component
 struct Index {
   @StorageLink("login") login: boolean = true
-  @StorageLink("keyConfigExclusion") keyConfigExclusion: string[] =  ["Action_ST"]//按键配置剔除  截图翻译
+  @StorageLink("keyConfigExclusion") keyConfigExclusion: string[] = ["Action_ST"] //按键配置剔除  截图翻译
   @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null
   @StorageLink("currpageIsAI") currpageIsAI: boolean = false
   @Watch('refreshPage') @StorageLink('languages') languages: string = 'ZH_CN'
@@ -104,6 +105,7 @@ struct Index {
   @Watch('onResolutionChange') @StorageLink("resolutionScale") resolutionScale: string = 'followSystem'
   @State scaleValue: number = 1.0
   @State refresh: boolean = true
+  @StorageLink("refreshDevicesList") refreshDevicesList: boolean = true
 
   refreshPage() {
     this.refresh = false
@@ -423,7 +425,9 @@ struct Index {
               TabContent() { // 设备设置
                 Stack() {
                   if (this.isDeviceSettingsActive) {
-                    DeviceSettings()
+                    if (this.refreshDevicesList) {
+                      DeviceSettings()
+                    }
                   }
                   Topbar()
                 }
