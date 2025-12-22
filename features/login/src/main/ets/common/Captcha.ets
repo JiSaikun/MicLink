@@ -27,7 +27,8 @@ export struct Captcha {
         .placeholderColor(config.login_dafault_text_font_color)
         .fontSize(config.login_dafault_text_font_size)
         .fontWeight(config.login_dafault_text_font_weight)
-      Text(this.sendState ? `${this.countdown}s` :  Languages.verificationRetrieval[AppStorage.get('languages') as string])//获取验证码
+      Text(this.sendState ? `${this.countdown}s` :
+      Languages.verificationRetrieval[AppStorage.get('languages') as string])//获取验证码
         .fontColor('#fff')
         .layoutWeight(1)
         .fontSize(12)
@@ -74,7 +75,7 @@ export struct Captcha {
           // 若两者都不匹配，保持accountType为空（无需额外代码）
           if (!accountType) {
             promptAction.showToast({
-              message: Languages.login_invalidAccountFormat[AppStorage.get('languages') as string],//账号格式不正确,请输入正确的手机号/邮箱
+              message: Languages.login_invalidAccountFormat[AppStorage.get('languages') as string], //账号格式不正确,请输入正确的手机号/邮箱
               duration: 2000,
               alignment: 4 // 鸿蒙 Alignment.Center 的枚举值为 4，避免直接引用可能的类型问题
             });
@@ -84,7 +85,8 @@ export struct Captcha {
           const params: getCode_Params = {
             account: this.phone.trim(), // 传参时去除空格，保证数据准确性
             accountType: accountType,
-            codeType: codeType
+            codeType: codeType,
+            country:accountType==='PHONE'?'86':''
           }
           // 5. 接口请求（原逻辑保留，仅参数替换为上面构造的params）
           _getCode(params)

@@ -6,7 +6,8 @@ import { BaseParams } from 'api';
 export interface getCode_Params extends BaseParams {
   account: string
   accountType: string
-  codeType: string
+  codeType: string,
+  country:string
 }
 
 /**
