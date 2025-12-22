@@ -32,6 +32,7 @@ PersistentStorage.persistProp("isAutoCloseVoiceTransPop", false) //是否开启�
 PersistentStorage.persistProp("keystroke_curr", 0) //打字输入模式选项
 PersistentStorage.persistProp("EnhancedBrowserSearch", 0) //搜索引擎
 PersistentStorage.persistProp("from_languages", 'ZH_CN') //语音翻译源语言
+PersistentStorage.persistProp("downloadDirectoryUri", '')
 PersistentStorage.persistProp("to_languages", 'EN_US') //语音翻译目标语言
 PersistentStorage.persistProp("wordScan_from_languages", 'ZH_CN') //划词翻译源语言
 PersistentStorage.persistProp("wordScan_to_languages", 'EN_US') //划词翻译目标语言

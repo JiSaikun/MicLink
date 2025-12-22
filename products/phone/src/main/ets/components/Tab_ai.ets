@@ -95,6 +95,7 @@ export struct Tab_ai {
   // 代理对象实例
   private webProxy: WebProxy = new WebProxy(this);
   @Watch('refreshPage') @StorageLink('languages') languages: string = 'ZH_CN'
+  @StorageLink("downloadDirectoryUri") downloadDirectoryUri: string = ''
 
   refreshPage() {
     this.refresh = false
@@ -212,7 +213,7 @@ export struct Tab_ai {
         if (documentSaveResult.length > 0) {
           const dirUri = documentSaveResult[0];
           console.info('DOWNLOAD目录URI: ' + dirUri);
-
+          this.downloadDirectoryUri=dirUri
           // 保存下载目录URI，用于后续打开文件夹
           this.currentDownloadDirUri = dirUri;
 
