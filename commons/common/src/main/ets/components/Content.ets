@@ -8,6 +8,9 @@ import { promptAction } from '@kit.ArkUI';
 import { fileUri } from '@kit.CoreFileKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { _KeyMethodConfig } from 'keymethodconfig';
+import { DeviceArrayType_Ble } from 'bluetooth';
+import { ConnectDevice } from 'mouse';
+import { Languages } from 'config';
 
 // =============== 第一步：定义数据传输接口 ===============
 interface RecordData {
@@ -92,6 +95,20 @@ export struct Content {
 
   change_FLAX() {
     console.error('currentState:', this.currentState)
+    if ((!((AppStorage.get('devices') as DeviceArrayType_Ble[]).length + ConnectDevice.Communication.length))&&this.currentState===1) {
+        // 显示录音提示框
+      promptAction.showDialog({
+        title: Languages.noDeviceConnected[AppStorage.get('languages') as string],
+        message: Languages.connectDeviceFirst[AppStorage.get('languages') as string]+':\n'+Languages.bluetoothConnection[AppStorage.get('languages') as string]+'\n'+Languages.usbConnection[AppStorage.get('languages') as string],
+        buttons: [
+          {
+            text: Languages.closeReminder[AppStorage.get('languages') as string],
+            color: '#FF3B30'
+          }
+        ]
+      });
+      return
+    }
     switch (this.currentState) {
       case 1:
         /**

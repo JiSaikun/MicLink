@@ -1146,11 +1146,6 @@ export class _KeyMethodConfig {
 
   static async voiceInput_AICon(WebviewController: webview.WebviewController, language: string,
     voiceInput_AICon: boolean = true) {
-    if ((AppStorage.get('devices') as DeviceArrayType_Ble[]).length + ConnectDevice.Communication.length) {
-    } else {
-      return
-    }
-
 
     if (!((AppStorage.get('devices') as DeviceArrayType_Ble[]).length ?
     (AppStorage.get('devices') as DeviceArrayType_Ble[])[
