@@ -116,6 +116,9 @@ export struct Tab_device {
           .backgroundColor(this.paletteTheme)
           .justifyContent(FlexAlign.Center)
           .padding(12)
+          .onClick(() => {
+            adapterManager.openBluetooth(this.getUIContext())
+          })
 
         }
         .width('100%')
@@ -188,9 +191,6 @@ export struct Tab_device {
               .backgroundColor('#EAEAEA')
               .padding(8)
               .borderRadius(16)
-              .onClick(() => {
-                adapterManager.openBluetooth(this.getUIContext())
-              })
 
           }
           .width('100%')
@@ -448,6 +448,9 @@ export struct Tab_device {
                     .backgroundColor(this.paletteTheme)
                     .justifyContent(FlexAlign.Center)
                     .padding(12)
+                    .onClick(() => {
+                      adapterManager.openBluetooth(this.getUIContext())
+                    })
 
                   }
                   .width('100%')
@@ -520,9 +523,7 @@ export struct Tab_device {
                         .backgroundColor('#EAEAEA')
                         .padding(8)
                         .borderRadius(16)
-                        .onClick(() => {
-                          adapterManager.openBluetooth(this.getUIContext())
-                        })
+
 
                     }
                     .width('100%')
@@ -782,7 +783,9 @@ export struct Tab_device {
                     .backgroundColor(this.paletteTheme)
                     .justifyContent(FlexAlign.Center)
                     .padding(12)
-
+                    .onClick(() => {
+                      adapterManager.openBluetooth(this.getUIContext())
+                    })
                   }
                   .width('100%')
                   .borderRadius(16)
@@ -854,9 +857,6 @@ export struct Tab_device {
                         .backgroundColor('#EAEAEA')
                         .padding(8)
                         .borderRadius(16)
-                        .onClick(() => {
-                          adapterManager.openBluetooth(this.getUIContext())
-                        })
 
                     }
                     .width('100%')
