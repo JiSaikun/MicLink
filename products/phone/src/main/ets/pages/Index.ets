@@ -87,7 +87,8 @@ struct Index {
   //   recommended: false
   // }]
   @StorageLink("paletteTheme") paletteTheme: string = CommonConfig.PaletteTheme
-  @StorageLink("keyConfigExclusion") keyConfigExclusion: string[] =  ["Action_ST", "Action_LockScreen"]//按键配置剔除  截图翻译、一键锁屏
+  @StorageLink("keyConfigExclusion") keyConfigExclusion: string[] =  ["Action_ST", "Action_LockScreen",'Action_SK']//按键配置剔除
+  //  截图翻译、一键锁屏、快捷按键
   @StorageLink("login") login: boolean = true
   @Provide('pageInfo') pageInfo: NavPathStack = new NavPathStack()
   @StorageLink("pageInfo") pageInfo_: NavPathStack = this.pageInfo
@@ -394,5 +395,6 @@ struct Index {
     }
     .hideToolBar(true)
     .hideTitleBar(true)
+
   }
 }
