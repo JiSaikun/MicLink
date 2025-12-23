@@ -260,10 +260,10 @@ export struct Content {
       // 显示选择对话框，让用户决定是否打开文件夹
       this.showDownloadCompleteDialogWithChoice();
 
-      promptAction.showToast({
-        message: '下载完成',
-        duration: 2000
-      });
+      // promptAction.showToast({
+      //   message: '下载完成',
+      //   duration: 2000
+      // });
     });
 
     // 监听下载失败事件

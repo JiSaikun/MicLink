@@ -44,6 +44,12 @@ PersistentStorage.persistProp("keyConfigExclusion ", ["Action_ST", "Action_LockS
 @Entry
 @Component
 struct Index {
+  // interface ModelsItem    {
+  //   image: string,
+  //   name:string,
+  //   title: string,
+  //   recommended: boolean
+  // }
   // @State models: ModelsItem[] = [
   //   {
   //     image: 'deepseek',
