@@ -18,8 +18,7 @@ struct AboutSoftware {
   build() {
     NavDestination() {
       Column() {
-        // TopTitle({ title: Languages.membershipPackage[this.languages], isback: false })
-        TopTitle({ title: '关于软件', isback: false })
+        TopTitle({ title: Languages.aboutSoftware[this.languages], isback: false })
           .margin({ bottom: 80 })
         Image($r('app.media.MicLink'))
           .width(44)
@@ -27,7 +26,7 @@ struct AboutSoftware {
           .margin({ bottom: 32 })
         Column() {
           Row() {
-            Text('当前版本')
+            Text(Languages.currentVersion[this.languages]) // 当前版本
               .fontWeight(CommonConfig.fontWeight_400)
               .fontSize(CommonConfig.fontSize_14)
               .fontColor(CommonConfig.hintTextColor_select)
@@ -39,11 +38,11 @@ struct AboutSoftware {
           }
           .padding({ top: 12, bottom: 12 })
           .alignItems(VerticalAlign.Center)
-          .border({width:{bottom:1},color:CommonConfig.commonBackgroundColor})
+          .border({ width: { bottom: 1 }, color: CommonConfig.commonBackgroundColor })
           .width("100%")
-          Row() {
 
-            Text('检查版本更新')
+          Row() {
+            Text(Languages.checkVersionUpdate[this.languages])  // 检查版本更新
               .fontSize(CommonConfig.fontSize_14)
               .fontColor(CommonConfig.hintTextColor_select)
               .fontWeight(CommonConfig.fontWeight_400)
@@ -63,8 +62,9 @@ struct AboutSoftware {
         .borderRadius(12)
         .padding({ left: 12, right: 12 })
         .backgroundColor(Color.White)
+
         Blank()
-        Text('软件版本:'+'V2.7.17（14）')
+        Text(Languages.softwareVersion[this.languages] + ': V2.7.17（14）')
           .fontWeight(CommonConfig.fontWeight_400)
           .fontSize(CommonConfig.fontSize_12)
           .fontColor(CommonConfig.hintTextColor)

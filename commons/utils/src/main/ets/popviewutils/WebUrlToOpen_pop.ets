@@ -30,7 +30,7 @@ export struct WebUrlToOpen_pop {
     AppStorage.setOrCreate('webUrlToOpen', formattedUrl);
 
     promptAction.showToast({
-      message: `已使用 ${protocol} 协议`,
+      message: `${Languages.used[this.languages]} ${protocol} ${Languages.agreement[this.languages]}`,
       duration: 1500
     });
 
@@ -54,7 +54,7 @@ export struct WebUrlToOpen_pop {
         .backgroundColor(this.paletteTheme)
 
         TextInput({
-          placeholder: Languages.enter_web_url_placeholder[this.languages] + '\n例如: www.example.com 或 https://example.com',
+          placeholder: Languages.enter_web_url_placeholder[this.languages] + '\n'+`${Languages.forExample[this.languages] }: www.example.com ${Languages.or[this.languages] } https://example.com`,
           text: $$this.webUrlToOpen
         })
           .backgroundColor('#fff')
@@ -94,7 +94,7 @@ export struct WebUrlToOpen_pop {
               const urlRegex = /^(https?:\/\/)?[\w.-]+\.[a-z]{2,}.*$/i;
               if (!urlRegex.test(this.webUrlToOpen)) {
                 promptAction.showToast({
-                  message: Languages.please_enter_valid_website[this.languages] + '\n例如: www.example.com 或 https://example.com',
+                  message: Languages.please_enter_valid_website[this.languages] + '\n'+`${Languages.forExample[this.languages] }: www.example.com ${Languages.or[this.languages] } https://example.com`,
                   duration: 2000
                 });
                 return
@@ -121,10 +121,11 @@ export struct WebUrlToOpen_pop {
 
       // 协议选择弹窗
       if (this.showProtocolSelection) {
+        //
         Column() {
           Column() {
             Row() {
-              Text('选择协议类型')
+              Text(Languages.selectProtocolType[this.languages])
                 .fontSize(16)
                 .fontWeight(500)
                 .fontColor(Color.Black)
@@ -137,7 +138,7 @@ export struct WebUrlToOpen_pop {
 
             // HTTPS 选项
             Row() {
-              Text('使用 HTTPS (推荐)')
+              Text(Languages.useHttpsRecommended[this.languages])
                 .fontSize(14)
                 .fontColor(Color.Black)
             }
@@ -159,7 +160,7 @@ export struct WebUrlToOpen_pop {
 
             // HTTP 选项
             Row() {
-              Text('使用 HTTP')
+              Text(Languages.useHttp[this.languages])
                 .fontSize(14)
                 .fontColor(Color.Black)
             }
@@ -181,7 +182,7 @@ export struct WebUrlToOpen_pop {
 
             // 取消按钮
             Row() {
-              Text('取消')
+              Text(Languages.cancel[this.languages])
                 .fontSize(14)
                 .fontColor('#007DFF')
             }

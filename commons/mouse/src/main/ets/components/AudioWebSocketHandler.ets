@@ -2,7 +2,7 @@ import { webSocket } from '@kit.NetworkKit';
 import { pasteboard } from '@kit.BasicServicesKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 // import { inputMethodEngine } from '@kit.IMEKit';
-import { getModelInfoModel } from 'config'
+import { getModelInfoModel, Languages } from 'config'
 import { Communication, ConnectDevice } from './Communication'
 import { _translate } from '../viewmodel/UserViewModel'
 import { translate_Params, translate_Response } from '../model/MouseInfoModel'
@@ -316,9 +316,9 @@ export class AudioWebSocketHandler {
       }
       if ((AppStorage.get('flax') && !this.state && !this.wending) && !this.webViewController) {
         if (AppStorage.get('isAI_assistant')) {
-          Notification.setOrCreate('语音助手', res.data.text)
+          Notification.setOrCreate(Languages.voiceAssistant[AppStorage.get('languages') as string], res.data.text)
         } else {
-          Notification.setOrCreate('语音输入', res.data.text)
+          Notification.setOrCreate(Languages.voiceInput[AppStorage.get('languages') as string], res.data.text)
         }
       }
       if (this.webViewController && !this.wending) {
@@ -496,7 +496,7 @@ export class AudioWebSocketHandler {
         };
         AppStorage.setOrCreate('voiceTranslationText', dataArray);
         if (AppStorage.get('flax') && AppStorage.get('isAutoCloseVoiceTransPop')) {
-          Notification.setOrCreate('语音翻译', res.data?.transText)
+          Notification.setOrCreate(Languages.voiceTranslation[AppStorage.get('languages') as string], res.data?.transText)
         }
         if (this.wending) {
           setTimeout(() => {

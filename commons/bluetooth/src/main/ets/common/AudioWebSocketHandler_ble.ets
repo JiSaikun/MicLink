@@ -2,7 +2,7 @@ import { webSocket } from '@kit.NetworkKit';
 import { pasteboard } from '@kit.BasicServicesKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 // import { inputMethodEngine } from '@kit.IMEKit';
-import { getModelInfoModel } from 'config'
+import { getModelInfoModel, Languages } from 'config'
 import { _translate, translate_Params, translate_Response, inputMessageModel } from 'mouse'
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
 import { Float_Window } from 'float_window';
@@ -277,9 +277,9 @@ export class AudioWebSocketHandler_ble {
       }
       if ((AppStorage.get('flax') && !this.state&&!this.wending)&&!this.webViewController ) {
         if (AppStorage.get('isAI_assistant')) {
-          Notification.setOrCreate('语音助手', res.data.text)
+          Notification.setOrCreate(Languages.voiceAssistant[AppStorage.get('languages') as string], res.data.text)
         } else {
-          Notification.setOrCreate('语音输入', res.data.text)
+          Notification.setOrCreate(Languages.voiceInput[AppStorage.get('languages') as string], res.data.text)
         }
       }
 
@@ -470,7 +470,7 @@ export class AudioWebSocketHandler_ble {
         };
         AppStorage.setOrCreate('voiceTranslationText', dataArray);
         if (AppStorage.get('flax') && AppStorage.get('isAutoCloseVoiceTransPop')) {
-          Notification.setOrCreate('语音翻译', res.data?.transText)
+          Notification.setOrCreate(Languages.voiceTranslation[AppStorage.get('languages') as string], res.data?.transText)
         }
         if (this.wending) {
           setTimeout(() => {

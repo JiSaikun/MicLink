@@ -20,6 +20,52 @@ struct AvatarView {
   @StorageLink('languages') languages: string = 'ZH_CN'
   @State userLoginInfo: UserLoginInfo = AppStorage.get('userLoginInfo') as UserLoginInfo
   context = getContext(this)
+
+  build() {
+    NavDestination() {
+      Row() {
+        Image($r('app.media.page_back_icon'))
+          .width(32)
+          .height(32)
+          .onClick(() => {
+            this.pageInfo.pop()
+          })
+        Text(Languages.editProfile[this.languages])
+          .fontWeight(CommonConfig.fontWeight_700)
+          .fontSize(CommonConfig.fontSize_16)
+          .fontColor(CommonConfig.hintTextColor_select)
+
+        Image($r('app.media.Frame_2696'))
+          .width(24)
+          .height(24)
+          .onClick(() => {
+            this.dialogController?.open()
+          })
+      }
+      .alignItems(VerticalAlign.Center)
+      .justifyContent(FlexAlign.SpaceBetween)
+      .width('100%')
+      .padding({
+        top: 6,
+        bottom: 6,
+        left: 16,
+        right: 16
+      })
+      .margin({ left: 16, right: 16, bottom: 12 })
+
+      Column() {
+        Image(this.userLoginInfo?.avatar ? this.userLoginInfo.avatar : $r('app.media.avatar'))
+          .width('100%')
+      }
+      .justifyContent(FlexAlign.Center)
+      .layoutWeight(1)
+      .width('100%')
+
+    }
+    .backgroundColor(CommonConfig.commonBackgroundColor)
+    .hideTitleBar(true)
+    .hideToolBar(true)
+  }
   dialogController: CustomDialogController | null = new CustomDialogController({
     builder: SelectImageMode({
       takeAPhoto: () => {
@@ -45,14 +91,14 @@ struct AvatarView {
   })
 
   takeAPhoto() {
-    console.info('单击第一个按钮时回调');
+    console.info('调用相机');
     if (this.userLoginInfo?.token) {
       UpdateAvatar_Camera()
     }
   }
 
   imageLibrary() {
-    console.info('单击第一个按钮时回调');
+    console.info('调用图库');
     if (this.userLoginInfo?.token) {
       updateAvatar()
     }
@@ -162,52 +208,6 @@ struct AvatarView {
   exitApp() {
     console.info('单击空白区域中的回拨');
   }
-
-  build() {
-    NavDestination() {
-      Row() {
-        Image($r('app.media.page_back_icon'))
-          .width(32)
-          .height(32)
-          .onClick(() => {
-            this.pageInfo.pop()
-          })
-        Text(Languages.editProfile[this.languages])
-          .fontWeight(CommonConfig.fontWeight_700)
-          .fontSize(CommonConfig.fontSize_16)
-          .fontColor(CommonConfig.hintTextColor_select)
-
-        Image($r('app.media.Frame_2696'))
-          .width(24)
-          .height(24)
-          .onClick(() => {
-            this.dialogController?.open()
-          })
-      }
-      .alignItems(VerticalAlign.Center)
-      .justifyContent(FlexAlign.SpaceBetween)
-      .width('100%')
-      .padding({
-        top: 6,
-        bottom: 6,
-        left: 16,
-        right: 16
-      })
-      .margin({ left: 16, right: 16, bottom: 12 })
-
-      Column() {
-        Image(this.userLoginInfo?.avatar ? this.userLoginInfo.avatar : $r('app.media.avatar'))
-          .width('100%')
-      }
-      .justifyContent(FlexAlign.Center)
-      .layoutWeight(1)
-      .width('100%')
-
-    }
-    .backgroundColor(CommonConfig.commonBackgroundColor)
-    .hideTitleBar(true)
-    .hideToolBar(true)
-  }
 }
 
 @CustomDialog
@@ -227,13 +227,13 @@ struct SelectImageMode {
 
   build() {
     Column({ space: 8 }) {
-      Text('更换头像')
+      Text(Languages.changeAvatar[this.languages])
         .fontColor(CommonConfig.hintTextColor_select)
         .fontSize(CommonConfig.fontSize_16)
         .fontWeight(CommonConfig.fontWeight_400)
         .margin({ bottom: 8 })
 
-      Text('拍照')
+      Text(Languages.takePhoto[this.languages])
         .backgroundColor('#EAEAEA')
         .fontSize(CommonConfig.fontSize_16)
         .fontColor(CommonConfig.hintTextColor_select)
@@ -246,7 +246,7 @@ struct SelectImageMode {
           this.takeAPhoto()
           this.controller?.close()
         })
-      Text('从手机相册选择')
+      Text(Languages.selectFromAlbum[this.languages])
         .backgroundColor('#EAEAEA')
         .fontSize(CommonConfig.fontSize_16)
         .fontColor(CommonConfig.hintTextColor_select)
@@ -259,7 +259,7 @@ struct SelectImageMode {
           this.imageLibrary()
           this.controller?.close()
         })
-      Text('保存图片')
+      Text(Languages.saveImage[this.languages])
         .backgroundColor('#EAEAEA')
         .fontSize(CommonConfig.fontSize_16)
         .fontColor(CommonConfig.hintTextColor_select)
@@ -272,7 +272,7 @@ struct SelectImageMode {
           this.saveImage()
           this.controller?.close()
         })
-      Text('取消')
+      Text(Languages.cancel[this.languages])
         .backgroundColor('#EAEAEA')
         .fontSize(CommonConfig.fontSize_16)
         .fontColor(CommonConfig.hintTextColor_select)

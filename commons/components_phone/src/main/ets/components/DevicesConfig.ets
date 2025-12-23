@@ -93,8 +93,7 @@ struct DevicesConfig {
 
   build() {
     NavDestination() {
-      // TopTitle({ title: Languages.editProfile[this.languages] })
-      TopTitle({ title: "设备设置" })
+      TopTitle({ title: Languages.deviceSetup[this.languages] })
         .margin({ bottom: 12 })
       Flex() {
         ForEach(this.TabsData, (item: string, index) => {

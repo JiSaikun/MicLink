@@ -87,7 +87,7 @@ struct InstructionsForUse {
           Image($r('app.media.search'))
             .width(24)
             .margin({ right: 8 })
-          TextInput({ placeholder: '搜索问题', text: $$this.search })
+          TextInput({ placeholder: Languages.searchQuestion[this.languages], text: $$this.search })
             .placeholderColor(CommonConfig.hintTextColor)
             .fontSize(CommonConfig.fontSize_14)
             .fontWeight(400)

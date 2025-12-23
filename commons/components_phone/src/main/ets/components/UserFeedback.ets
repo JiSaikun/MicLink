@@ -24,16 +24,15 @@ struct UserFeedback {
   build() {
     NavDestination() {
       Column() {
-        // TopTitle({ title: Languages.membershipPackage[this.languages], isback: false })
-        TopTitle({ title: '用户反馈', isback: false })
+        TopTitle({ title: Languages.userFeedback[this.languages], isback: false })
           .margin({ bottom: 12 })
-        Text('问题和意见')
+        Text(Languages.problemsAndSuggestions[this.languages])
           .fontSize(CommonConfig.fontSize_14)
           .fontWeight(CommonConfig.fontWeight_400)
           .fontColor(CommonConfig.hintTextColor)
           .margin({ bottom: 12 })
         Column() {
-          TextArea({ text: $$this.feedbackText,placeholder:'你可以描述你遇到的问题' })
+          TextArea({ text: $$this.feedbackText,placeholder:Languages.describeYourProblem[this.languages] })
             .placeholderColor(CommonConfig.hintTextColor)
             .fontColor(CommonConfig.hintTextColor_select)
             .fontWeight(CommonConfig.fontWeight_400)
@@ -69,7 +68,7 @@ struct UserFeedback {
               .width(24)
               .height(24)
               .margin({ bottom: 10 })
-            Text('添加图片')
+            Text(Languages.addImage[this.languages])
               .fontColor(CommonConfig.hintTextColor)
               .fontSize(CommonConfig.fontSize_11)
               .fontWeight(CommonConfig.fontWeight_400)
@@ -83,7 +82,7 @@ struct UserFeedback {
         }
 
         Blank()
-        Text('提交')
+        Text(Languages.submit[this.languages])
           .width('100%')
           .padding(12)
           .borderRadius(12)
