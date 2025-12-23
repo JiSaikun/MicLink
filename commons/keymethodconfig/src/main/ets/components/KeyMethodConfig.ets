@@ -51,8 +51,9 @@ async function getSlot(): Promise<boolean> { //用户已经开启了通知权限
             }
           } else { //没有开启横屏通知
             promptAction.showDialog({
-              message: Languages.noLandscapeNotificationEnabled[AppStorage.get('languages') as string],// 你当前没有开启横屏通知!!!
-              buttons: [{ text: Languages.goToEnable[AppStorage.get('languages') as string], color: '#007DFF' }, { text: Languages.refuse[AppStorage.get('languages') as string], color: '#FF3B30' }]
+              message: Languages.noLandscapeNotificationEnabled[AppStorage.get('languages') as string], // 你当前没有开启横屏通知!!!
+              buttons: [{ text: Languages.goToEnable[AppStorage.get('languages') as string], color: '#007DFF' },
+                { text: Languages.refuse[AppStorage.get('languages') as string], color: '#FF3B30' }]
             })
               .then((res: promptAction.ShowDialogSuccessResponse) => {
                 if (res.index === 0) { //去开启横屏通知
@@ -88,9 +89,11 @@ async function LandscapeNotification(callBack: () => void): Promise<boolean> {
     Notification.init()
       .then((initrequest) => {
         if (!initrequest) { //请求被拒绝
-          promptAction.showDialog({// 你拒绝了通知弹窗的权限
+          promptAction.showDialog({
+            // 你拒绝了通知弹窗的权限
             message: Languages.notificationPermissionDenied[AppStorage.get('languages') as string],
-            buttons: [{ text: Languages.goToEnable[AppStorage.get('languages') as string], color: '#007DFF' }, { text: Languages.refuse[AppStorage.get('languages') as string], color: '#FF3B30' }]
+            buttons: [{ text: Languages.goToEnable[AppStorage.get('languages') as string], color: '#007DFF' },
+              { text: Languages.refuse[AppStorage.get('languages') as string], color: '#FF3B30' }]
           })
             .then((res: promptAction.ShowDialogSuccessResponse) => {
               if (res.index === 0) {
@@ -159,23 +162,27 @@ export class _KeyMethodConfig {
             })) {
               if (!Notification.state) {
                 Notification.state = true
-                Notification.setOrCreate(Languages.voiceTranslation[AppStorage.get('languages') as string], Languages.pleaseSpeak[AppStorage.get('languages') as string])
+                Notification.setOrCreate(Languages.voiceTranslation[AppStorage.get('languages') as string],
+                  Languages.pleaseSpeak[AppStorage.get('languages') as string])
               }
             } else {
               return
             }
           }
         } else {
-            if (await LandscapeNotification(() => {
-            })) {
-              if (!Notification.state) {
-                Notification.state = true
+          if (await LandscapeNotification(() => {
+          })) {
+            if (!Notification.state) {
+              Notification.state = true
 
-                Notification.setOrCreate(isAI_assistant?Languages.voiceAssistant[AppStorage.get('languages') as string]:Languages.voiceInput[AppStorage.get('languages') as string], Languages.pleaseSpeak[AppStorage.get('languages') as string])
-              }
-            } else {
-              return
+              Notification.setOrCreate(isAI_assistant ?
+              Languages.voiceAssistant[AppStorage.get('languages') as string] :
+              Languages.voiceInput[AppStorage.get('languages') as string],
+                Languages.pleaseSpeak[AppStorage.get('languages') as string])
             }
+          } else {
+            return
+          }
 
         }
       }
@@ -286,7 +293,7 @@ export class _KeyMethodConfig {
       }
 
     } else {
-      Notification.state=false
+      Notification.state = false
       // setTimeout(()=>{
       //   Notification.clear()
       // },2000)
@@ -373,7 +380,8 @@ export class _KeyMethodConfig {
           })) {
             if (!Notification.state) {
               Notification.state = true
-                Notification.setOrCreate(Languages.voiceTranslation[AppStorage.get('languages') as string], Languages.pleaseSpeak[AppStorage.get('languages') as string])
+              Notification.setOrCreate(Languages.voiceTranslation[AppStorage.get('languages') as string],
+                Languages.pleaseSpeak[AppStorage.get('languages') as string])
             }
           } else {
             return
@@ -385,7 +393,9 @@ export class _KeyMethodConfig {
           if (!Notification.state) {
             console.warn('警告1')
             Notification.state = true
-                Notification.setOrCreate(isAI_assistant?Languages.voiceAssistant[AppStorage.get('languages') as string]:Languages.voiceInput[AppStorage.get('languages') as string], Languages.pleaseSpeak[AppStorage.get('languages') as string])
+            Notification.setOrCreate(isAI_assistant ? Languages.voiceAssistant[AppStorage.get('languages') as string] :
+            Languages.voiceInput[AppStorage.get('languages') as string],
+              Languages.pleaseSpeak[AppStorage.get('languages') as string])
           }
         } else {
           console.warn('警告2')
@@ -550,7 +560,7 @@ export class _KeyMethodConfig {
    * 语音输入_长按抬起
    */
   static endvoiceInput_long(state: number = 0) {
-    Notification.state=false
+    Notification.state = false
     // setTimeout(()=>{
     //   Notification.clear()
     // },2000)

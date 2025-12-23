@@ -18,18 +18,25 @@ export function keyConfigExclusion(getModelInfo: getModelInfoModel): Promise<get
       let new_keyInfos: keyInfosModel[] = [];
       // 2. 遍历一级keyInfos（修改循环变量名，避免嵌套冲突）
       getModelInfo.keyInfos?.forEach((keyInfoItem) => {
-        if (!keyInfoItem) return; // 空值保护
+        if (!keyInfoItem) {
+          return;
+        } // 空值保护
 
         let new_keyInfos_childs: keyInfos_childsModel[] = [];
         // 3. 遍历二级childs
         keyInfoItem.childs?.forEach((childItem) => {
-          if (!childItem) return; // 空值保护
-
+          if (!childItem) {
+            return;
+          } // 空值保护
+          if (!(childItem.operation === 'sk' || childItem.operation === 'lk')) { // 只保留单击与长按:原因获取灰色特例鼠标时出现了双击的情况了，但现在的Windows端并未保留
+            return
+          }
           let new_keyInfos_childs_childs: keyInfos_childs_childsModel[] = [];
           // 4. 遍历三级childs，过滤需要剔除的cmd
           childItem.childs?.forEach((grandChildItem) => {
-            if (!grandChildItem) return; // 空值保护
-
+            if (!grandChildItem) {
+              return;
+            } // 空值保护
             // 判断当前项是否需要保留（不在剔除列表中则保留）
             const needKeep = !excludeCmds.includes(grandChildItem.cmd || '');
             if (needKeep) {
@@ -85,9 +92,11 @@ export function keyConfigExclusion(getModelInfo: getModelInfoModel): Promise<get
         new_keyInfos.push(keyInfos);
       });
 
-      console.log("剔除前的按键配置：", JSON.stringify(getModelInfo.keyInfos[0].childs[0].childs[getModelInfo.keyInfos[0].childs[0].childs.length-1]));
-      console.log("剔除条件：",JSON.stringify(AppStorage.get('keyConfigExclusion')));
-      console.log("剔除后的按键配置：", JSON.stringify(new_keyInfos[0].childs[0].childs[new_keyInfos[0].childs[0].childs.length-1]));
+      console.log("剔除前的按键配置：",
+        JSON.stringify(getModelInfo.keyInfos[0].childs[0].childs[getModelInfo.keyInfos[0].childs[0].childs.length-1]));
+      console.log("剔除条件：", JSON.stringify(AppStorage.get('keyConfigExclusion')));
+      console.log("剔除后的按键配置：",
+        JSON.stringify(new_keyInfos[0].childs[0].childs[new_keyInfos[0].childs[0].childs.length-1]));
 
       // ========== 核心修复：替换对象扩展运算符，手动赋值所有字段 ==========
       const resultData: getModelInfoModel = {
