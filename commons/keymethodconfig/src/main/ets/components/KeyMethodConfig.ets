@@ -934,7 +934,7 @@ export class _KeyMethodConfig {
             Float_Window.showVoiceTranslation = true
             Float_Window.creat_VoiceTranslation()
           }
-          if (AppStorage.get('flax') && !AppStorage.get('isAutoCloseVoiceTransPop')) {
+          if (AppStorage.get('flax')) {
             const pageInfo = AppStorage.get('pageInfo') as NavPathStack
             let pages = pageInfo.getAllPathName()
             if (pages[pages.length-1] !== 'VoiceTranslation') {
