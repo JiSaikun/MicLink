@@ -859,7 +859,7 @@ struct FileManagement {
 
   build() {
     NavDestination() {
-      TopTitle({ title: Languages.membershipPackage[this.languages], isback: false })
+      TopTitle({ title: Languages.fileManagement[this.languages], isback: false })
         .margin({ left: 16, right: 16, bottom: 12 })
       Column() {
         // // 顶部标题栏

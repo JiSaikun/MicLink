@@ -2,6 +2,7 @@ import { CommonConfig } from "../common/CommonConfig"
 import { Languages } from "../common/Languages"
 import { TopTitle } from "../common/TopTitle"
 import { LengthMetrics } from "@kit.ArkUI"
+import { AppUtil } from "common"
 
 @Builder
 export function AboutSoftwareBuilder() {
@@ -31,7 +32,7 @@ struct AboutSoftware {
               .fontSize(CommonConfig.fontSize_14)
               .fontColor(CommonConfig.hintTextColor_select)
             Blank()
-            Text('V2.7.17（14）')
+            Text(`V${AppUtil.getVersionName()}`)
               .fontWeight(CommonConfig.fontWeight_400)
               .fontSize(CommonConfig.fontSize_12)
               .fontColor(CommonConfig.hintTextColor)
@@ -46,6 +47,9 @@ struct AboutSoftware {
               .fontSize(CommonConfig.fontSize_14)
               .fontColor(CommonConfig.hintTextColor_select)
               .fontWeight(CommonConfig.fontWeight_400)
+              .onClick(()=>{
+                AppUtil.checkAppUpdate()
+              })
             Blank()
             Image($r('app.media.Arrow_to_the_right'))
               .width(16)
@@ -64,7 +68,7 @@ struct AboutSoftware {
         .backgroundColor(Color.White)
 
         Blank()
-        Text(Languages.softwareVersion[this.languages] + ': V2.7.17（14）')
+        Text(Languages.softwareVersion[this.languages] + `: V${AppUtil.getVersionName()}`)
           .fontWeight(CommonConfig.fontWeight_400)
           .fontSize(CommonConfig.fontSize_12)
           .fontColor(CommonConfig.hintTextColor)

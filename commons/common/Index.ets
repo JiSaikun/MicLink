@@ -18,3 +18,4 @@ export { UserLoginInfo } from './src/main/ets/model/UserLoginInfo'
 export { register_Response, updateAvatar,fileSelect } from './src/main/ets/common/UpdateAvatar'
 
 export { UpdateAvatar_Camera,takePhoto } from './src/main/ets/common/UpdateAvatar_Camera'
+export { AppUtil } from './src/main/ets/common/AppUtil'

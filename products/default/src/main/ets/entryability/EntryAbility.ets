@@ -3,6 +3,7 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { backgroundTaskManager } from '@kit.BackgroundTasksKit';
+import { AppUtil } from 'common';
 
 // import fs from '@ohos.file.fs';
 
@@ -12,7 +13,7 @@ export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
-
+    AppUtil.init(this.context)
     // if (want.uri) { //申请允许其他应用的文件导入到本应用中。
     //   const fileUri = want.uri; // 获取文件URI
     //   console.warn('获取文件URI:'+fileUri)

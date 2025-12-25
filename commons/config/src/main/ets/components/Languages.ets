@@ -5672,4 +5672,29 @@ export class Languages {
     "TH_TH": "คุณยังไม่ได้เปิดการแจ้งเตือนแนวนอนในขณะนี้!!!",
     "JA_JP": "現在、横画面通知が有効になっていません!!!"
   }
+  static readonly alreadyLatestVersion: LanguageNames = {
+    "DE_DE": "Es ist bereits die neueste Version",
+    "KA_KA": "ეს უკვე უახლესი ვერსიაა",
+    "ZH_TW": "目前已是最新版本",
+    "KO_KR": "현재 최신 버전입니다",
+    "EN_US": "You are already using the latest version",
+    "AR_SA": "أنت تستخدم بالفعل أحدث إصدار",
+    "ZH_CN": "当前已是最新版本",
+    "ES_ES": "Ya estás usando la versión más reciente",
+    "ZH_TI": "ཁྱེད་ཀྱིས་ད་ལམ་ལས་འགྱུར་བའི་ཐོན་རིམ་ཆེན་མོ་བཟོས་ཡོད།",
+    "IT_IT": "Stai già usando l'ultima versione",
+    "RU_RU": "Вы уже используете последнюю версию",
+    "FIL_PH": "You are already using the latest version",
+    "MAY_MAY": "Anda sudah menggunakan versi terkini",
+    "UYGUR": "ھازىر ئەڭ يېڭى خىلەپىيەتىدىكى ئىشلەتىۋېرىڭىز",
+    "TR_TR": "Zaten en son sürümü kullanıyorsunuz",
+    "ID_ID": "Anda sudah menggunakan versi terbaru",
+    "VI_VN": "Bạn đang sử dụng phiên bản mới nhất",
+    "MO_MO": "目前已是最新版本",
+    "FR_FR": "Vous utilisez déjà la dernière version",
+    "MN_MN": "Танд оновдсон хамгийн сүүлийн хувилбар байна",
+    "TH_TH": "คุณกำลังใช้เวอร์ชันล่าสุดอยู่",
+    "JA_JP": "現在、最新バージョンをお使いです"
+  }
+
 }
