@@ -10,7 +10,6 @@ import { Reset } from 'common'
 import { common } from '@kit.AbilityKit'
 import { CommonConfig, Languages } from 'components_phone'
 import { Tab_ai } from '../components/Tab_ai'
-import { Overlay } from './Overlay'
 
 interface BarType {
   img: string
@@ -277,7 +276,6 @@ struct Index {
         .height('100%')
         .backgroundImage(this.currPageIndex !== 1 ? $r('app.media.background_1') : '')
         .backgroundImageSize({ width: '100%', height: '100%' })
-
         // if (this.firstShow) {
         //   Stack() {
         //     Column()
