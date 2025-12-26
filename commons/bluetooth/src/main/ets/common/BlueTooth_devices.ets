@@ -208,7 +208,7 @@ export class BlueTooth_devices {
         }
         console.warn(`蓝牙设备 ${this.device_address} 15秒内未收到特征值变化，移除设备`);
         // this.send([0x69])
-        // this.removeDeviceFromList();
+        this.removeDeviceFromList();
       } catch (error) {
         console.error('蓝牙设备超时回调异常:', error);
       }
@@ -230,7 +230,7 @@ export class BlueTooth_devices {
           return;
         }
         console.warn(`蓝牙设备 ${this.device_address} 15秒内未收到特征值变化，移除设备`);
-        // this.removeDeviceFromList();
+        this.removeDeviceFromList();
         // this.send([0x69])
       } catch (error) {
         console.error('蓝牙设备超时回调异常:', error);
@@ -1817,7 +1817,7 @@ export class BlueTooth_devices {
       .then((result: Array<ble.GattService>) => {
         console.info('获取服务成功，发现', result.length, '个服务');
         for (let item of result) {
-          // console.warn(JSON.stringify(item))
+          console.warn(JSON.stringify(item))
           if (item.serviceUuid === '00010203-0405-0607-0809-0a0b0c0d1911') {
             for (let characteristic of item.characteristics) {
               if (characteristic.characteristicUuid === '00010203-0405-0607-0809-0A0B0C0D2B18') {
