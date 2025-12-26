@@ -27,6 +27,7 @@ import { CreateNewInstruction_pop } from 'command_ai';
 import { DeviceSettings } from '../components/DeviceSettings';
 import { connectDevice, DeviceArrayType_Ble } from 'bluetooth';
 import { DraggableResizableRect } from 'api'; //截图翻译
+import { sideFunctionList } from 'config';
 
 
 PersistentStorage.persistProp("login", false)
@@ -76,6 +77,7 @@ struct Index {
   @StorageLink("pageInfo") pageInfo_: NavPathStack = this.pageInfo
   @Watch('change_mouse_KeyPressType') @StorageLink("mouse_KeyPressType") mouse_KeyPressType: KeyPressType =
     KeyPressType.DEFAULT
+  @StorageLink("sideFunctionList") flax: sideFunctionList | null = null
   @StorageLink("device_isBle") device_isBle: boolean = false
   @State web: string = ''
   @State currentIndex: number = 0
@@ -106,6 +108,7 @@ struct Index {
   @State scaleValue: number = 1.0
   @State refresh: boolean = true
   @StorageLink("refreshDevicesList") refreshDevicesList: boolean = true
+  @StorageLink("Unconnected") Unconnected: boolean = false//是否有设备连接
 
   refreshPage() {
     this.refresh = false
@@ -136,14 +139,14 @@ struct Index {
     console.log('onTabsControllerIndexChange called:', this.tabsControllerIndex)
     if (this.tabsController) {
       // 导航库逻辑
-      if (this.tabsControllerIndex === 4) {
+      if (this.tabsControllerIndex === 5) {
         this.isNavigationLibActive = true
       } else {
         this.isNavigationLibActive = false
       }
 
       // 设备设置逻辑 - 每次进入都刷新状态，触发重新渲染
-      if (this.tabsControllerIndex === 7) {
+      if (this.tabsControllerIndex === 0) {
         // 使用setTimeout确保状态变化生效后再设置为true，触发重新渲染
         this.isDeviceSettingsActive = true
       } else {
@@ -350,77 +353,6 @@ struct Index {
             if (this.refresh)
             Tabs({ controller: this.tabsController, index: this.tabsControllerIndex }) {
               // 确保 TabContent 数量与 AiModel_data + bottom_data 匹配
-              TabContent() { // AI-助手
-                Stack() {
-                  Content({ web: this.web_prefix() + this.web })
-                  Topbar()
-                }
-                .height('100%')
-                .align(Alignment.TopStart)
-              }
-
-              TabContent() { // AI-办公
-                Stack() {
-                  Content({
-                    web: this.web_prefix() + this.web
-                    // web: 'https://asrai.miclink.net/?sno=123&productCode=999999&config=configMiclink_B_1755079145452#/aiOffice'
-                  })
-                  Topbar()
-                }
-                .height('100%')
-                .align(Alignment.TopStart)
-              }
-
-              TabContent() { // AI-智能体
-                Stack() {
-                  Content({ web: this.web_prefix() + this.web })
-                  Topbar()
-                }
-                .height('100%')
-                .align(Alignment.TopStart)
-              }
-
-              TabContent() { // AI-指令
-                Stack() {
-                  Content_Ai({
-                    isShow_CreateNewInstruction_pop: this.isShow_CreateNewInstruction_pop,
-                    isShow_EditInstruction_pop: this.isShow_EditInstruction_pop,
-                    EditInstruction_pop_currIndex: this.EditInstruction_pop_currIndex
-                  })
-                  Topbar()
-                }
-                .height('100%')
-                .align(Alignment.TopStart)
-              }
-
-              TabContent() { // 导航库
-                Stack() {
-                  if (this.isNavigationLibActive) {
-                    Content({ web: this.web_prefix() + this.web })
-                  }
-                  Topbar()
-                }
-                .height('100%')
-                .align(Alignment.TopStart)
-              }
-
-              TabContent() { // 视频库
-                Stack() {
-                  Content({ web: this.web_prefix() + this.web })
-                  Topbar()
-                }
-                .height('100%')
-                .align(Alignment.TopStart)
-              }
-
-              TabContent() { // 模板库
-                Stack() {
-                  Content({ web: this.web_prefix() + this.web })
-                  Topbar()
-                }
-                .height('100%')
-                .align(Alignment.TopStart)
-              }
 
               TabContent() { // 设备设置
                 Stack() {
@@ -435,6 +367,84 @@ struct Index {
                 .align(Alignment.TopStart)
               }
 
+              if (this.flax)
+              TabContent() { // AI-助手
+                Stack() {
+                  Content({ web: this.web_prefix() + this.web })
+                  Topbar()
+                }
+                .height('100%')
+                .align(Alignment.TopStart)
+              }
+              if (this.flax)
+              TabContent() { // AI-办公
+                Stack() {
+                  Content({
+                    web: this.web_prefix() + this.web
+                    // web: 'https://asrai.miclink.net/?sno=123&productCode=999999&config=configMiclink_B_1755079145452#/aiOffice'
+                  })
+                  Topbar()
+                }
+                .height('100%')
+                .align(Alignment.TopStart)
+              }
+              if (this.flax)
+              TabContent() { // AI-智能体
+                Stack() {
+                  Content({ web: this.web_prefix() + this.web })
+                  Topbar()
+                }
+                .height('100%')
+                .align(Alignment.TopStart)
+              }
+
+              if (this.flax)
+              TabContent() { // AI-指令
+                Stack() {
+                  Content_Ai({
+                    isShow_CreateNewInstruction_pop: this.isShow_CreateNewInstruction_pop,
+                    isShow_EditInstruction_pop: this.isShow_EditInstruction_pop,
+                    EditInstruction_pop_currIndex: this.EditInstruction_pop_currIndex
+                  })
+                  Topbar()
+                }
+                .height('100%')
+                .align(Alignment.TopStart)
+              }
+
+              if (this.flax)
+              TabContent() { // 导航库
+                Stack() {
+                  if (this.isNavigationLibActive) {
+                    Content({ web: this.web_prefix() + this.web })
+                  }
+                  Topbar()
+                }
+                .height('100%')
+                .align(Alignment.TopStart)
+              }
+
+              if (this.flax)
+              TabContent() { // 视频库
+                Stack() {
+                  Content({ web: this.web_prefix() + this.web })
+                  Topbar()
+                }
+                .height('100%')
+                .align(Alignment.TopStart)
+              }
+
+              if (this.flax)
+              TabContent() { // 模板库
+                Stack() {
+                  Content({ web: this.web_prefix() + this.web })
+                  Topbar()
+                }
+                .height('100%')
+                .align(Alignment.TopStart)
+              }
+
+              if (this.flax)
               TabContent() { // 企业中心
                 Stack() {
                   Content({ web: 'https://www.miclink.info/' })
@@ -444,6 +454,7 @@ struct Index {
                 .align(Alignment.TopStart)
               }
 
+              if (this.flax)
               TabContent() { // 帮助中心
                 Stack() {
                   Content({ web: this.web_prefix() + this.web })

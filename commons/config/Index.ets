@@ -12,7 +12,7 @@ export { getModelInfoModel,
   keyInfos_childs_childsModel,
   imagesModel,
   imagesDataModel,
-  languagesModel
+  languagesModel,troubleshoot_functions,troubleshoot_sideFunctionInFunctions,sideFunction,handle_sideFunctionInFunctions,sideFunctionList
 } from './src/main/ets/components/GetModelInfoModel'
 
 export { Languages } from './src/main/ets/components/Languages'

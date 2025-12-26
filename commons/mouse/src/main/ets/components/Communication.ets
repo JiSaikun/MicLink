@@ -3,7 +3,14 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { SmartMouseAudioProcessor } from './SmartMouseAudioProcessor'
 import { getModelInfo_Params, productImg_Params } from '../model/MouseInfoModel'
 import { _getModelInfo, _productImg } from '../viewmodel/UserViewModel'
-import { getModelInfoModel, keyInfosModel, keyInfos_childsModel, keyInfos_childs_childsModel } from 'config'
+import {
+  getModelInfoModel,
+  handle_sideFunctionInFunctions,
+  keyInfosModel,
+  keyInfos_childsModel,
+  keyInfos_childs_childsModel,
+  troubleshoot_sideFunctionInFunctions
+} from 'config'
 import { AudioWebSocketHandler } from 'api';
 import { keyConfigExclusion } from './keyConfigExclusion';
 import { Notification } from 'config';
@@ -2099,6 +2106,12 @@ export class Communication {
                   }
                 }
               }
+              troubleshoot_sideFunctionInFunctions(getModelInfo, "SideFunction")
+                .then((res) => {
+                  if (res >= 0) {
+                    handle_sideFunctionInFunctions(getModelInfo.functions[res])
+                  }
+                })
             })
 
           }

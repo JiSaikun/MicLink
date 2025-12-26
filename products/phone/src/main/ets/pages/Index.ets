@@ -136,6 +136,7 @@ struct Index {
   }
 
   aboutToAppear(): void {
+    console.warn(JSON.stringify(JSON.parse("{     \"Function\":[{\"name\":\"ai-助手\",\"url\":\"https://asrai.miclink.net?sno=SN&productCode=PRDUCTCODE&language=LANGUAGE\"},{\"name\":\"ai-办公\",\"url\":\"https://asrai.miclink.net?sno=SN&productCode=PRDUCTCODE&language=LANGUAGE&config=config_pad#/aiOffice\"},{\"name\":\"ai-智能体\",\"url\":\"https://asrai.miclink.net?sno=SN&productCode=PRDUCTCODE&language=LANGUAGE#/aiAgent\"},{\"name\":\"导航库\",\"url\":\"https://asrai.miclink.net?sno=SN&productCode=PRDUCTCODE&language=LANGUAGE#/navLibrary\"},{\"name\":\"模板库\",\"url\":\"https://asrai.miclink.net?sno=SN&productCode=PRDUCTCODE&language=LANGUAGE#/temLibrary\"},{\"name\":\"帮助中心\",\"url\":\"https://asrai.miclink.net?sno=SN&productCode=PRDUCTCODE&language=LANGUAGE#/helpCenter\"},{\"name\":\"视频库\",\"url\":\"https://asrai.miclink.net/?sno=SN&productCode=PRDUCTCODE&language=LANGUAGE#/videoGallery\"}],     \"Level\":\"1\" }")))
     setTimeout(() => {
       this.controller.changeIndex(1)
     }, 10)

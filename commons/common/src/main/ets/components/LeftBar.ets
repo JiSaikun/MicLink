@@ -1,5 +1,5 @@
 import { Ai_Model, AiModel_data, bottom_data } from '../model/LeftBar_DataModel'
-import { Languages } from 'config'
+import { Languages, sideFunctionList } from 'config'
 import { ThemeConfig } from '../common/ThemeConfig'
 import { CursorController } from '@kit.ArkUI'
 import { pointer } from '@kit.InputKit'
@@ -25,10 +25,11 @@ export struct LeftBar {
   @State mark: boolean = false
   @State extend: boolean = true
   @State width_length: number = 248
-  @State back_right:string='back_right'
-  @State leftBar_back:string='leftBar_back_Gray'
+  @State back_right: string = 'back_right'
+  @State leftBar_back: string = 'leftBar_back_Gray'
   // 添加调试状态
   @State debugInfo: string = ''
+  @StorageLink("sideFunctionList") flax: sideFunctionList |null=null
   cursorCustom: CursorController = this.getUIContext().getCursorController();
 
   // 方法：为16进制颜色添加透明度
@@ -86,6 +87,52 @@ export struct LeftBar {
     // console.log('初始主题颜色:', this.paletteTheme)
   }
 
+  isShow(name: string): boolean {
+    if (name === 'deviceSettings') {
+      return true
+    }
+    // console.warn('',JSON.stringify(this.flax?.Function))
+    if (this.flax) {
+      switch (name) {
+        case "assistant":
+          if (this.flax.Function.findIndex(item => item.name === "ai-助手") === -1) {
+            return false
+          }
+          break
+        case "office":
+          if (this.flax.Function.findIndex(item => item.name === "ai-办公") === -1) {
+            return false
+          }
+          break
+        case "agent":
+          if (this.flax.Function.findIndex(item => item.name === "ai-智能体") === -1) {
+            return false
+          }
+          break
+        case "navigation":
+          if (this.flax.Function.findIndex(item => item.name === "导航库") === -1) {
+            return false
+          }
+          break
+        case "video":
+          if (this.flax.Function.findIndex(item => item.name === "视频库") === -1) {
+            return false
+          }
+          break
+        case "template":
+          if (this.flax.Function.findIndex(item => item.name === "模板库") === -1) {
+            return false
+          }
+          break
+      }
+
+    } else {
+      return false
+    }
+
+    return true
+  }
+
   build() {
     // 每次构建时更新调试信息
     // this.debugInfo = `主题: ${this.paletteTheme}, 带透明度: ${this.getPaletteThemeWithOpacity()}`
@@ -119,12 +166,12 @@ export struct LeftBar {
           .onHover((flag) => {
             if (flag) {
               this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
-              this.leftBar_back='leftBar_back'
+              this.leftBar_back = 'leftBar_back'
 
             } else {
               console.info("restoreDefault");
               this.cursorCustom.restoreDefault();
-              this.leftBar_back='leftBar_back_Gray'
+              this.leftBar_back = 'leftBar_back_Gray'
             }
           })
       }
@@ -151,11 +198,11 @@ export struct LeftBar {
           .onHover((flag) => {
             if (flag) {
               this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
-              this.back_right="back_right_White"
+              this.back_right = "back_right_White"
             } else {
               console.info("restoreDefault");
               this.cursorCustom.restoreDefault();
-              this.back_right="back_right"
+              this.back_right = "back_right"
 
             }
           })
@@ -184,141 +231,150 @@ export struct LeftBar {
       .margin({ bottom: 20 })
       .flexGS()
 
-      // 顶部选项 - 每次构建时动态计算颜色
-      ForEach(this.aiModelData, (item: Ai_Model, index) => {
-        Flex({ alignItems: ItemAlign.Center }) {
-          Image(this.currentIndex === index ? $r(`app.media.${item.select}`) : $r(`app.media.${item.img}`))
-            .width(16).height(16)
-            .objectFit(ImageFit.Fill)
-            .margin({ right: 13 })
-          Text(item.title[this.languages])
-            .fontSize(14)
-            .fontWeight(400)
-            .lineHeight(14)
-            .fontColor(this.currentIndex === index ? this.paletteTheme : '')
-            .visibility(this.extend ? Visibility.Visible : Visibility.None)
-        }
-        .onHover((flag) => {
-          if (flag) {
-            this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
-          } else {
-            console.info("restoreDefault");
-            this.cursorCustom.restoreDefault();
+        // 顶部选项 - 每次构建时动态计算颜色
+        ForEach(this.aiModelData, (item: Ai_Model, index) => {
+
+          if (this.isShow(item.img)) {
+            Flex({ alignItems: ItemAlign.Center }) {
+              Image(this.currentIndex === index ? $r(`app.media.${item.select}`) : $r(`app.media.${item.img}`))
+                .width(16).height(16)
+                .objectFit(ImageFit.Fill)
+                .margin({ right: 13 })
+              Text(item.title[this.languages])
+                .fontSize(14)
+                .fontWeight(400)
+                .lineHeight(14)
+                .fontColor(this.currentIndex === index ? this.paletteTheme : '')
+                .visibility(this.extend ? Visibility.Visible : Visibility.None)
+            }
+            .onHover((flag) => {
+              if (flag) {
+                this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+              } else {
+                console.info("restoreDefault");
+                this.cursorCustom.restoreDefault();
+              }
+            })
+            .backgroundColor(this.currentIndex === index ? this.getPaletteThemeWithOpacity() : '#f8f8f8')
+            .padding({ left: 13 })
+            .height(40)
+            .borderRadius(8)
+            .width('100%')
+            .onClick(() => {
+              console.log('Top item clicked:', index, item.title[this.languages])
+              this.web = item.web
+              this.tabsControllerIndex = index
+              setTimeout(() => {
+                this.pageInfo.clear()
+              }, 200)
+            })
+            .flexGS()
           }
-        })
-        .backgroundColor(this.currentIndex === index ? this.getPaletteThemeWithOpacity() : '#f8f8f8')
-        .padding({ left: 13 })
-        .height(40)
-        .borderRadius(8)
-        .width('100%')
-        .onClick(() => {
-          console.log('Top item clicked:', index, item.title[this.languages])
-          this.web = item.web
-          this.tabsControllerIndex = index
-          setTimeout(() => {
-            this.pageInfo.clear()
-          }, 200)
-        })
-        .flexGS()
-      }, (item: Ai_Model) => item.img)
 
-      Divider()
-        .width('100%')
-        .height(1)
-        .margin({ top: 5, bottom: 5 })
-        .backgroundColor('#eaeaea')
+        }, (item: Ai_Model) => item.img)
 
-      // 对话记录 - 每次构建时动态计算颜色
-      Flex({ alignItems: ItemAlign.Center }) {
-        Image(this.mark ? $r(`app.media.select_sessionSecord`) : $r(`app.media.sessionSecord`))
-          .width(16).height(16)
-          .objectFit(ImageFit.Fill)
-          .margin({ right: 13 })
-        Text(Languages.sessionSecord[this.languages])
-          .fontSize(14)
-          .fontWeight(400)
-          .lineHeight(14)
-          .fontColor(this.mark ? this.paletteTheme : '')
-          .visibility(this.extend ? Visibility.Visible : Visibility.None)
-        Blank()
-        Image($r('app.media.showDown'))
-          .width(16)
-          .rotate({
-            angle: this.mark ? 90 : 0
-          })
-          .visibility(this.extend ? Visibility.Visible : Visibility.None)
-          .margin({ right: 13 })
-      }
-      .onHover((flag) => {
-        if (flag) {
-          this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
-        } else {
-          console.info("restoreDefault");
-          this.cursorCustom.restoreDefault();
-        }
-      })
-      .flexGS()
-      .backgroundColor(this.mark ? this.getPaletteThemeWithOpacity() : '#f8f8f8')
-      .padding({ left: 13 })
-      .height(40)
-      .borderRadius(8)
-      .width('100%')
-      .onClick(() => {
-        this.mark = !this.mark
-      })
+        Divider()
+          .width('100%')
+          .height(1)
+          .margin({ top: 5, bottom: 5 })
+          .backgroundColor('#eaeaea')
 
-      Scroll() {
-        // 对话记录内容可以在这里添加
-      }
-      .edgeEffect(EdgeEffect.Spring)
-      .height(160)
-      .visibility(this.extend && this.mark ? Visibility.Visible : Visibility.None)
-      .width('100%')
-      .scrollBar(BarState.Off)
-      .flexGS()
+        /*      // 对话记录 - 每次构建时动态计算颜色
+              Flex({ alignItems: ItemAlign.Center }) {
+                Image(this.mark ? $r(`app.media.select_sessionSecord`) : $r(`app.media.sessionSecord`))
+                  .width(16).height(16)
+                  .objectFit(ImageFit.Fill)
+                  .margin({ right: 13 })
+                Text(Languages.sessionSecord[this.languages])
+                  .fontSize(14)
+                  .fontWeight(400)
+                  .lineHeight(14)
+                  .fontColor(this.mark ? this.paletteTheme : '')
+                  .visibility(this.extend ? Visibility.Visible : Visibility.None)
+                Blank()
+                Image($r('app.media.showDown'))
+                  .width(16)
+                  .rotate({
+                    angle: this.mark ? 90 : 0
+                  })
+                  .visibility(this.extend ? Visibility.Visible : Visibility.None)
+                  .margin({ right: 13 })
+              }
+              .onHover((flag) => {
+                if (flag) {
+                  this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+                } else {
+                  console.info("restoreDefault");
+                  this.cursorCustom.restoreDefault();
+                }
+              })
+              .flexGS()
+              .backgroundColor(this.mark ? this.getPaletteThemeWithOpacity() : '#f8f8f8')
+              .padding({ left: 13 })
+              .height(40)
+              .borderRadius(8)
+              .width('100%')
+              .onClick(() => {
+                this.mark = !this.mark
+              })
 
-      Column()
-        .height(1)
-        .margin(20)
-        .flexGrow(50)
+              Scroll() {
+                // 对话记录内容可以在这里添加
+              }
+              .edgeEffect(EdgeEffect.Spring)
+              .height(160)
+              .visibility(this.extend && this.mark ? Visibility.Visible : Visibility.None)
+              .width('100%')
+              .scrollBar(BarState.Off)
+              .flexGS()*/
 
-      // 底部选项 - 每次构建时动态计算颜色
-      ForEach(this.bottom_data, (item: Ai_Model, index) => {
-        Flex({ alignItems: ItemAlign.Center }) {
-          Image(this.bottomCurrIndex === index ? $r(`app.media.${item.select}`) : $r(`app.media.${item.img}`))
-            .width(16).height(16)
-            .objectFit(ImageFit.Fill)
-            .margin({ right: 13 })
-          Text(item.title[this.languages])
-            .fontSize(14)
-            .fontWeight(400)
-            .lineHeight(14)
-            .fontColor(this.bottomCurrIndex === index ? this.paletteTheme : '')
-            .visibility(this.extend ? Visibility.Visible : Visibility.None)
-        }
-        .onHover((flag) => {
-          if (flag) {
-            this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
-          } else {
-            console.info("restoreDefault");
-            this.cursorCustom.restoreDefault();
+        Column()
+          .height(1)
+          .margin(20)
+          // .flexGrow(50)
+          .layoutWeight(1)
+        // 底部选项 - 每次构建时动态计算颜色
+        ForEach(this.bottom_data, (item: Ai_Model, index) => {
+
+          if (this.isShow(item.img)) {
+            Flex({ alignItems: ItemAlign.Center }) {
+              Image(this.bottomCurrIndex === index ? $r(`app.media.${item.select}`) : $r(`app.media.${item.img}`))
+                .width(16).height(16)
+                .objectFit(ImageFit.Fill)
+                .margin({ right: 13 })
+              Text(item.title[this.languages])
+                .fontSize(14)
+                .fontWeight(400)
+                .lineHeight(14)
+                .fontColor(this.bottomCurrIndex === index ? this.paletteTheme : '')
+                .visibility(this.extend ? Visibility.Visible : Visibility.None)
+            }
+            .onHover((flag) => {
+              if (flag) {
+                this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+              } else {
+                console.info("restoreDefault");
+                this.cursorCustom.restoreDefault();
+              }
+            })
+            .backgroundColor(this.bottomCurrIndex === index ? this.getPaletteThemeWithOpacity() : '#f8f8f8')
+            .padding({ left: 13 })
+            .height(40)
+            .borderRadius(8)
+            .width('100%')
+            .onClick(() => {
+              console.log('Bottom item clicked:', index, item.title[this.languages])
+              this.web = item.web
+              this.tabsControllerIndex = index + this.aiModelData.length
+              setTimeout(() => {
+                this.pageInfo.clear()
+              }, 200)
+            })
+            .flexGS()
           }
-        })
-        .backgroundColor(this.bottomCurrIndex === index ? this.getPaletteThemeWithOpacity() : '#f8f8f8')
-        .padding({ left: 13 })
-        .height(40)
-        .borderRadius(8)
-        .width('100%')
-        .onClick(() => {
-          console.log('Bottom item clicked:', index, item.title[this.languages])
-          this.web = item.web
-          this.tabsControllerIndex = index + this.aiModelData.length
-          setTimeout(() => {
-            this.pageInfo.clear()
-          }, 200)
-        })
-        .flexGS()
-      }, (item: Ai_Model) => item.img)
+
+        }, (item: Ai_Model) => item.img)
+
 
     }
     .width(this.width_length)

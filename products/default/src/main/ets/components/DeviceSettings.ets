@@ -26,6 +26,7 @@ export struct DeviceSettings {
   @State devices: DeviceArrayType_Ble[] = []
   @Provide device_isBle: boolean = false //该设备是否是蓝牙连接
   cursorCustom: CursorController = this.getUIContext().getCursorController();
+  @StorageLink("Unconnected") Unconnected: boolean = false //是否有设备连接
 
   onDevicesChange() {
     console.log('DeviceSettings: 设备列表发生变化，当前设备数量:', this.devicesLink ? this.devicesLink.length : 0)
@@ -37,13 +38,6 @@ export struct DeviceSettings {
     }
     // 强制触发UI更新
     this.forceUpdate()
-  }
-
-  a() {
-    console.error('设备长度', this.devicesList.length)
-    if (this.devicesList.length) {
-      console.error('设备长度::', this.devicesList[0].getModelInfo)
-    }
   }
 
   // 强制更新方法
@@ -132,227 +126,234 @@ export struct DeviceSettings {
           .width('100%')
 
           // .borderWidth(1)
-
-          Grid() {
-            ForEach(this.devicesList, (item: DeviceArrayType, index) => {
-              if (item.getModelInfo) {
-                GridItem() {
-                  Column() {
-                    Row() {
-                      Text('')
-                        .fontSize(18)
-                        .fontWeight(500)
-                        .lineHeight(18)
-                        .fontColor('#31373d')
-                      Blank()
+          if (this.Unconnected){
+            Grid() {
+              ForEach(this.devicesList, (item: DeviceArrayType, index) => {
+                if (item.getModelInfo) {
+                  GridItem() {
+                    Column() {
                       Row() {
-                        if (item.mouseconfig?.batteryLevel as number >= 80) {
-                          Image($r('app.media.power_level_full'))
-                            .width(20).height(10)
-                        } else if (item.mouseconfig?.batteryLevel as number >= 60) {
-                          Image($r('app.media.power_level_80'))
-                            .width(20).height(10)
-                        } else if (item.mouseconfig?.batteryLevel as number >= 40) {
-                          Image($r('app.media.power_level_60'))
-                            .width(20).height(10)
-                        } else if (item.mouseconfig?.batteryLevel as number >= 20) {
-                          Image($r('app.media.power_level_40'))
-                            .width(20).height(10)
-                        } else {
-                          Image($r('app.media.power_level_20'))
-                            .width(20).height(10)
-                        }
-                        Text(item.name)
-                          .margin({ left: 5 })
+                        Text('')
                           .fontSize(18)
                           .fontWeight(500)
                           .lineHeight(18)
                           .fontColor('#31373d')
-                      }
-                      .visibility(Visibility.Visible) // 总是显示设备名称
-
-                      // Text('未连接')
-                      Text(Languages.notConnected[this.languages])
-                        .fontSize(14)
-                        .fontWeight(400)
-                        .lineHeight(14)
-                        .fontColor('#eb5e12')
-                        .visibility(item.getModelInfo ? Visibility.None : Visibility.Visible)
-                    }
-                    .width('100%')
-
-                    Image(item.getModelInfo && (item.getModelInfo as getModelInfoModel).images &&
-                    (item.getModelInfo as getModelInfoModel).images.length ?
-                    this.getdeviesImage(item.getModelInfo as getModelInfoModel) : $r('app.media.HM_001_white'))
-                      .width('100%')
-                      .margin({ bottom: 15, top: 15 })
-
-                    Row() {
-                      Image($r('app.media.Cloud_true'))
-                        .visibility(item.connectionmethod === 0 ? Visibility.Visible : Visibility.None)
-                        .margin({ left: 10 }).width(24)
-                      Image($r('app.media.Cloud_false'))
-                        .visibility(item.connectionmethod === 0 ? Visibility.None : Visibility.Visible)
-                        .margin({ left: 10 }).width(24)
-                      Image($r('app.media.USB_true'))
-                        .visibility(item.connectionmethod === 1 ? Visibility.Visible : Visibility.None)
-                        .margin({ left: 10 }).width(24)
-                        .padding(4)
-                      Image($r('app.media.USB_false'))
-                        .visibility(item.connectionmethod === 1 ? Visibility.None : Visibility.Visible)
-                        .margin({ left: 10 }).width(24)
-                      Image($r('app.media.Bluetooth_true'))
-                        .visibility(item.connectionmethod === 2 ? Visibility.Visible : Visibility.None)
-                        .margin({ left: 10 }).width(24)
-                      Image($r('app.media.Bluetooth_false'))
-                        .visibility(item.connectionmethod === 2 ? Visibility.None : Visibility.Visible)
-                        .margin({ left: 10 }).width(24)
-                    }
-                    .justifyContent(FlexAlign.End)
-                    .width('100%')
-                  }
-                  .padding(24)
-                  .borderRadius(16)
-                  .border({ width: 2, color: '#e6e8eb' })
-                  .onMouse((event?: MouseEvent) => {
-                    if (event && !item.getModelInfo?.images) {
-                      if (event.stopPropagation) {
-                        event.stopPropagation();
-                      }
-                    }
-                  })
-                  .onHover((flag) => {
-                    if (flag) {
-                      this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
-                    } else {
-                      console.info("restoreDefault");
-                      this.cursorCustom.restoreDefault();
-                    }
-                  })
-                  .onClick(() => {
-                    if (item.getModelInfo) {
-                      AppStorage.setOrCreate('device_show_currIndex', index)
-                      AppStorage.setOrCreate('getModelInfo',
-                        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo)
-                      this.device_isBle = false
-                      this.isShowConfig = true
-                    }
-                  })
-                }
-              }
-            }, (item: DeviceArrayType) => JSON.stringify(item.Communication))
-            ForEach(this.devices, (item: DeviceArrayType_Ble, index) => {
-              if (item.getModelInfo){
-                GridItem() {
-                  Column() {
-                    Row() {
-                      Text('')
-                        .fontSize(18)
-                        .fontWeight(500)
-                        .lineHeight(18)
-                        .fontColor('#31373d')
-                      Blank()
-                      Row() {
-                        if (item.mouseconfig?.batteryLevel as number >= 80) {
-                          Image($r('app.media.power_level_full'))
-                            .width(20).height(10)
-                        } else if (item.mouseconfig?.batteryLevel as number >= 60) {
-                          Image($r('app.media.power_level_80'))
-                            .width(20).height(10)
-                        } else if (item.mouseconfig?.batteryLevel as number >= 40) {
-                          Image($r('app.media.power_level_60'))
-                            .width(20).height(10)
-                        } else if (item.mouseconfig?.batteryLevel as number >= 20) {
-                          Image($r('app.media.power_level_40'))
-                            .width(20).height(10)
-                        } else {
-                          Image($r('app.media.power_level_20'))
-                            .width(20).height(10)
+                        Blank()
+                        Row() {
+                          if (item.mouseconfig?.batteryLevel as number >= 80) {
+                            Image($r('app.media.power_level_full'))
+                              .width(20).height(10)
+                          } else if (item.mouseconfig?.batteryLevel as number >= 60) {
+                            Image($r('app.media.power_level_80'))
+                              .width(20).height(10)
+                          } else if (item.mouseconfig?.batteryLevel as number >= 40) {
+                            Image($r('app.media.power_level_60'))
+                              .width(20).height(10)
+                          } else if (item.mouseconfig?.batteryLevel as number >= 20) {
+                            Image($r('app.media.power_level_40'))
+                              .width(20).height(10)
+                          } else {
+                            Image($r('app.media.power_level_20'))
+                              .width(20).height(10)
+                          }
+                          Text(item.name)
+                            .margin({ left: 5 })
+                            .fontSize(18)
+                            .fontWeight(500)
+                            .lineHeight(18)
+                            .fontColor('#31373d')
                         }
-                        Text(item.name)
-                          .margin({ left: 5 })
+                        .visibility(Visibility.Visible) // 总是显示设备名称
+
+                        // Text('未连接')
+                        Text(Languages.notConnected[this.languages])
+                          .fontSize(14)
+                          .fontWeight(400)
+                          .lineHeight(14)
+                          .fontColor('#eb5e12')
+                          .visibility(item.getModelInfo ? Visibility.None : Visibility.Visible)
+                      }
+                      .width('100%')
+
+                      Image(item.getModelInfo && (item.getModelInfo as getModelInfoModel).images &&
+                      (item.getModelInfo as getModelInfoModel).images.length ?
+                      this.getdeviesImage(item.getModelInfo as getModelInfoModel) : $r('app.media.HM_001_white'))
+                        .width('100%')
+                        .margin({ bottom: 15, top: 15 })
+
+                      Row() {
+                        Image($r('app.media.Cloud_true'))
+                          .visibility(item.connectionmethod === 0 ? Visibility.Visible : Visibility.None)
+                          .margin({ left: 10 }).width(24)
+                        Image($r('app.media.Cloud_false'))
+                          .visibility(item.connectionmethod === 0 ? Visibility.None : Visibility.Visible)
+                          .margin({ left: 10 }).width(24)
+                        Image($r('app.media.USB_true'))
+                          .visibility(item.connectionmethod === 1 ? Visibility.Visible : Visibility.None)
+                          .margin({ left: 10 }).width(24)
+                          .padding(4)
+                        Image($r('app.media.USB_false'))
+                          .visibility(item.connectionmethod === 1 ? Visibility.None : Visibility.Visible)
+                          .margin({ left: 10 }).width(24)
+                        Image($r('app.media.Bluetooth_true'))
+                          .visibility(item.connectionmethod === 2 ? Visibility.Visible : Visibility.None)
+                          .margin({ left: 10 }).width(24)
+                        Image($r('app.media.Bluetooth_false'))
+                          .visibility(item.connectionmethod === 2 ? Visibility.None : Visibility.Visible)
+                          .margin({ left: 10 }).width(24)
+                      }
+                      .justifyContent(FlexAlign.End)
+                      .width('100%')
+                    }
+                    .padding(24)
+                    .borderRadius(16)
+                    .border({ width: 2, color: '#e6e8eb' })
+                    .onMouse((event?: MouseEvent) => {
+                      if (event && !item.getModelInfo?.images) {
+                        if (event.stopPropagation) {
+                          event.stopPropagation();
+                        }
+                      }
+                    })
+                    .onHover((flag) => {
+                      if (flag) {
+                        this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+                      } else {
+                        console.info("restoreDefault");
+                        this.cursorCustom.restoreDefault();
+                      }
+                    })
+                    .onClick(() => {
+                      if (item.getModelInfo) {
+                        AppStorage.setOrCreate('device_show_currIndex', index)
+                        AppStorage.setOrCreate('getModelInfo',
+                          ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo)
+                        this.device_isBle = false
+                        this.isShowConfig = true
+                      }
+                    })
+                  }
+                }
+              }, (item: DeviceArrayType) => JSON.stringify(item.Communication))
+              ForEach(this.devices, (item: DeviceArrayType_Ble, index) => {
+                if (item.getModelInfo) {
+                  GridItem() {
+                    Column() {
+                      Row() {
+                        Text('')
                           .fontSize(18)
                           .fontWeight(500)
                           .lineHeight(18)
                           .fontColor('#31373d')
+                        Blank()
+                        Row() {
+                          if (item.mouseconfig?.batteryLevel as number >= 80) {
+                            Image($r('app.media.power_level_full'))
+                              .width(20).height(10)
+                          } else if (item.mouseconfig?.batteryLevel as number >= 60) {
+                            Image($r('app.media.power_level_80'))
+                              .width(20).height(10)
+                          } else if (item.mouseconfig?.batteryLevel as number >= 40) {
+                            Image($r('app.media.power_level_60'))
+                              .width(20).height(10)
+                          } else if (item.mouseconfig?.batteryLevel as number >= 20) {
+                            Image($r('app.media.power_level_40'))
+                              .width(20).height(10)
+                          } else {
+                            Image($r('app.media.power_level_20'))
+                              .width(20).height(10)
+                          }
+                          Text(item.name)
+                            .margin({ left: 5 })
+                            .fontSize(18)
+                            .fontWeight(500)
+                            .lineHeight(18)
+                            .fontColor('#31373d')
+                        }
+                        .visibility(Visibility.Visible) // 总是显示设备名称
+
+                        // Text('未连接')
+                        Text(Languages.notConnected[this.languages])
+                          .fontSize(14)
+                          .fontWeight(400)
+                          .lineHeight(14)
+                          .fontColor('#eb5e12')
+                          .visibility(item.getModelInfo ? Visibility.None : Visibility.Visible)
                       }
-                      .visibility(Visibility.Visible) // 总是显示设备名称
-
-                      // Text('未连接')
-                      Text(Languages.notConnected[this.languages])
-                        .fontSize(14)
-                        .fontWeight(400)
-                        .lineHeight(14)
-                        .fontColor('#eb5e12')
-                        .visibility(item.getModelInfo ? Visibility.None : Visibility.Visible)
-                    }
-                    .width('100%')
-
-                    Image(item.getModelInfo && (item.getModelInfo as getModelInfoModel).images &&
-                    (item.getModelInfo as getModelInfoModel).images.length ?
-                    this.getdeviesImage(item.getModelInfo as getModelInfoModel) : $r('app.media.HM_001_white'))
                       .width('100%')
-                      .margin({ bottom: 15, top: 15 })
 
-                    Row() {
-                      Image($r('app.media.Cloud_true'))
-                        .visibility(item.connectionmethod === 0 ? Visibility.Visible : Visibility.None)
-                        .margin({ left: 10 }).width(24)
-                      Image($r('app.media.Cloud_false'))
-                        .visibility(item.connectionmethod === 0 ? Visibility.None : Visibility.Visible)
-                        .margin({ left: 10 }).width(24)
-                      Image($r('app.media.USB_true'))
-                        .visibility(item.connectionmethod === 1 ? Visibility.Visible : Visibility.None)
-                        .margin({ left: 10 }).width(24)
-                      Image($r('app.media.USB_false'))
-                        .visibility(item.connectionmethod === 1 ? Visibility.None : Visibility.Visible)
-                        .margin({ left: 10 }).width(24)
-                      Image($r('app.media.Bluetooth_true'))
-                        .visibility(item.connectionmethod === 2 ? Visibility.Visible : Visibility.None)
-                        .margin({ left: 10 }).width(24)
-                      Image($r('app.media.Bluetooth_false'))
-                        .visibility(item.connectionmethod === 2 ? Visibility.None : Visibility.Visible)
-                        .margin({ left: 10 }).width(24)
-                    }
-                    .justifyContent(FlexAlign.End)
-                    .width('100%')
-                  }
-                  .padding(24)
-                  .borderRadius(16)
-                  .border({ width: 2, color: '#e6e8eb' })
-                  .onMouse((event?: MouseEvent) => {
-                    if (event && !item.getModelInfo?.images) {
-                      if (event.stopPropagation) {
-                        event.stopPropagation();
+                      Image(item.getModelInfo && (item.getModelInfo as getModelInfoModel).images &&
+                      (item.getModelInfo as getModelInfoModel).images.length ?
+                      this.getdeviesImage(item.getModelInfo as getModelInfoModel) : $r('app.media.HM_001_white'))
+                        .width('100%')
+                        .margin({ bottom: 15, top: 15 })
+
+                      Row() {
+                        Image($r('app.media.Cloud_true'))
+                          .visibility(item.connectionmethod === 0 ? Visibility.Visible : Visibility.None)
+                          .margin({ left: 10 }).width(24)
+                        Image($r('app.media.Cloud_false'))
+                          .visibility(item.connectionmethod === 0 ? Visibility.None : Visibility.Visible)
+                          .margin({ left: 10 }).width(24)
+                        Image($r('app.media.USB_true'))
+                          .visibility(item.connectionmethod === 1 ? Visibility.Visible : Visibility.None)
+                          .margin({ left: 10 }).width(24)
+                        Image($r('app.media.USB_false'))
+                          .visibility(item.connectionmethod === 1 ? Visibility.None : Visibility.Visible)
+                          .margin({ left: 10 }).width(24)
+                        Image($r('app.media.Bluetooth_true'))
+                          .visibility(item.connectionmethod === 2 ? Visibility.Visible : Visibility.None)
+                          .margin({ left: 10 }).width(24)
+                        Image($r('app.media.Bluetooth_false'))
+                          .visibility(item.connectionmethod === 2 ? Visibility.None : Visibility.Visible)
+                          .margin({ left: 10 }).width(24)
                       }
+                      .justifyContent(FlexAlign.End)
+                      .width('100%')
                     }
-                  })
-                  .onHover((flag) => {
-                    if (flag) {
-                      this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
-                    } else {
-                      console.info("restoreDefault");
-                      this.cursorCustom.restoreDefault();
-                    }
-                  })
-                  .onClick(() => {
-                    if (item.getModelInfo) { // 只要有设备信息就可以点击
-                      AppStorage.setOrCreate('device_show_currIndex', index)
-                      AppStorage.setOrCreate('getModelInfo',
-                        this.devices[AppStorage.get('device_show_currIndex') as number].getModelInfo)
-                      this.device_isBle = true
-                      this.isShowConfig = true
-                    }
-                  })
-                }
+                    .padding(24)
+                    .borderRadius(16)
+                    .border({ width: 2, color: '#e6e8eb' })
+                    .onMouse((event?: MouseEvent) => {
+                      if (event && !item.getModelInfo?.images) {
+                        if (event.stopPropagation) {
+                          event.stopPropagation();
+                        }
+                      }
+                    })
+                    .onHover((flag) => {
+                      if (flag) {
+                        this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+                      } else {
+                        console.info("restoreDefault");
+                        this.cursorCustom.restoreDefault();
+                      }
+                    })
+                    .onClick(() => {
+                      if (item.getModelInfo) { // 只要有设备信息就可以点击
+                        AppStorage.setOrCreate('device_show_currIndex', index)
+                        AppStorage.setOrCreate('getModelInfo',
+                          this.devices[AppStorage.get('device_show_currIndex') as number].getModelInfo)
+                        this.device_isBle = true
+                        this.isShowConfig = true
+                      }
+                    })
+                  }
 
-              }
-            }, (item: DeviceArrayType_Ble) => item.BlueTooth_devices.device_address)
+                }
+              }, (item: DeviceArrayType_Ble) => item.BlueTooth_devices.device_address)
+            }
+            .columnsTemplate('1fr 1fr 1fr') // 每行3个等宽列
+            .columnsGap(15) // 列间距
+            .rowsGap(30) // 行间距
+            .width('100%')
           }
-          .columnsTemplate('1fr 1fr 1fr') // 每行3个等宽列
-          .columnsGap(15) // 列间距
-          .rowsGap(30) // 行间距
-          .width('100%')
+          else {
+            Column(){
+              Text('设备未连接')
+            }.layoutWeight(1)
+          }
+
         }
         .padding({
           left: 24,

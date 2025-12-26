@@ -4,7 +4,9 @@ import { abilityAccessCtrl, common, Permissions } from '@kit.AbilityKit';
 import { connection } from '@kit.ConnectivityKit';
 import { LengthMetrics } from '@kit.ArkUI';
 import { hilog } from '@kit.PerformanceAnalysisKit';
-import { getModelInfoModel, keyInfosModel } from 'config'
+import { getModelInfoModel,
+  handle_sideFunctionInFunctions,
+  keyInfosModel, troubleshoot_sideFunctionInFunctions } from 'config'
 import {
   DeviceInfo,
   DPI_currInfoModel,
@@ -1579,6 +1581,12 @@ export class BlueTooth_devices {
                       }
                     }
                   }
+                  troubleshoot_sideFunctionInFunctions(getModelInfo,"SideFunction")
+                    .then((res)=>{
+                      if (res>=0) {
+                        handle_sideFunctionInFunctions(getModelInfo.functions[res])
+                      }
+                    })
                 })
 
 

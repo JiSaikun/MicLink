@@ -3,6 +3,13 @@ import { Communication, ConnectDevice } from 'mouse'
 
 export async function Reset() {
   // (AppStorage.get('pageInfo') as NavPathStack).clear()
+  AppStorage.setOrCreate('Unconnected', false)
+  setTimeout(() => {
+    if (!AppStorage.get('Unconnected')) {
+      AppStorage.setOrCreate('sideFunctionList',null)
+      console.warn('asdddddddddfjhas',JSON.stringify(AppStorage.get('sideFunctionList')))
+    }
+  }, 5000)
   for (let item of ConnectDevice.Communication) {
     item.Communication.deviceInfo.sn = ''
     item.getModelInfo = null
@@ -50,7 +57,7 @@ export async function Reset() {
     // AppStorage.setOrCreate("isOCR_Translate_Toggle", true) //是否开启截图识别/翻译
     // AppStorage.setOrCreate("isAutoCloseVoiceTransPop", true) //是否开启语音翻译弹窗自动关闭
   }
-  if (AppStorage.get('devices')&&(AppStorage.get('devices') as DeviceArrayType_Ble[]).length) {
+  if (AppStorage.get('devices') && (AppStorage.get('devices') as DeviceArrayType_Ble[]).length) {
     // 获取当前的蓝牙设备列表并关闭所有连接
     const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || []
     console.info('Reset: 开始关闭蓝牙设备连接，当前设备数量:', currentDevices.length)
