@@ -283,7 +283,7 @@ struct Index {
     console.log('应用最小化')
     Float_Window.creat_hide()
   }
-
+@State canReset:boolean=true
   aboutToAppear(): void {
     ThemeConfig.PaletteTheme = this.paletteTheme
     // const context =  this.getUIContext().getHostContext() as common.UIAbilityContext;//正规；暂不做更改
@@ -302,11 +302,17 @@ struct Index {
     let isPhysicalKeyboardExist = true;
     try {
       inputDevice.on("change", (data: inputDevice.DeviceListener) => {
-        Reset()
         console.log(`Device event info: ${JSON.stringify(data)}`);
         inputDevice.getKeyboardType(data.deviceId, (err: Error, type: inputDevice.KeyboardType) => {
           console.log("The keyboard type is: " + type);
           if (type == inputDevice.KeyboardType.ALPHABETIC_KEYBOARD && data.type == 'add') {
+            if (this.canReset){
+              this.canReset=false
+              setTimeout(()=>{
+                this.canReset=true
+              },50)
+              Reset()
+            }
             isPhysicalKeyboardExist = true;
             ConnectDevice.connectDevice().then(() => {
               for (let item of ConnectDevice.Communication) {
@@ -318,9 +324,10 @@ struct Index {
 
           } else if (type == inputDevice.KeyboardType.ALPHABETIC_KEYBOARD && data.type == 'remove') {
             isPhysicalKeyboardExist = false;
-            for (let item of ConnectDevice.Communication) {
-              item.Communication.changPhysicalKeyboardExistState(isPhysicalKeyboardExist)
-            }
+            Reset(false)
+              for (let item of ConnectDevice.Communication) {
+                item.Communication.changPhysicalKeyboardExistState(isPhysicalKeyboardExist)
+              }
           }
         });
       });

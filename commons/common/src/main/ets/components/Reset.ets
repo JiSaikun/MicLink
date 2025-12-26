@@ -1,15 +1,8 @@
 import { DeviceArrayType_Ble } from 'bluetooth'
 import { Communication, ConnectDevice } from 'mouse'
 
-export async function Reset() {
+export async function Reset(flax:boolean=true) {
   // (AppStorage.get('pageInfo') as NavPathStack).clear()
-  AppStorage.setOrCreate('Unconnected', false)
-  setTimeout(() => {
-    if (!AppStorage.get('Unconnected')) {
-      AppStorage.setOrCreate('sideFunctionList',null)
-      console.warn('asdddddddddfjhas',JSON.stringify(AppStorage.get('sideFunctionList')))
-    }
-  }, 5000)
   for (let item of ConnectDevice.Communication) {
     item.Communication.deviceInfo.sn = ''
     item.getModelInfo = null
@@ -57,6 +50,7 @@ export async function Reset() {
     // AppStorage.setOrCreate("isOCR_Translate_Toggle", true) //是否开启截图识别/翻译
     // AppStorage.setOrCreate("isAutoCloseVoiceTransPop", true) //是否开启语音翻译弹窗自动关闭
   }
+  if (flax)
   if (AppStorage.get('devices') && (AppStorage.get('devices') as DeviceArrayType_Ble[]).length) {
     // 获取当前的蓝牙设备列表并关闭所有连接
     const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || []
@@ -81,6 +75,12 @@ export async function Reset() {
       AppStorage.setOrCreate('devices', newEmptyDevices)
       console.info('Reset: 二次确认蓝牙设备列表清空')
     }, 50)
+    AppStorage.setOrCreate('Unconnected', false)
+    setTimeout(() => {
+      if (!AppStorage.get('Unconnected')) {
+        AppStorage.setOrCreate('sideFunctionList',null)
+      }
+    }, 5000)
   }
 
 }

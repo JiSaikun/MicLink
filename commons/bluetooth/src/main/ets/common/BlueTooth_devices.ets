@@ -1392,6 +1392,9 @@ export class BlueTooth_devices {
           if (this._getModelInfo) {
             this._getModelInfo = false
             _getModelInfo(params).then((res) => {
+              setTimeout(()=>{
+                this._getModelInfo = true
+              },10000)
               console.log('获取用户按键模式详情数据1111', '\n', JSON.stringify(res.status), JSON.stringify(res.data));
               if ((res.status === 200 || res.statusCode === 200) && res.data) {
                 let getModelInfo: getModelInfoModel = res.data;
@@ -1817,7 +1820,7 @@ export class BlueTooth_devices {
       .then((result: Array<ble.GattService>) => {
         console.info('获取服务成功，发现', result.length, '个服务');
         for (let item of result) {
-          console.warn(JSON.stringify(item))
+          // console.warn(JSON.stringify(item))
           if (item.serviceUuid === '00010203-0405-0607-0809-0a0b0c0d1911') {
             for (let characteristic of item.characteristics) {
               if (characteristic.characteristicUuid === '00010203-0405-0607-0809-0A0B0C0D2B18') {
@@ -2160,15 +2163,15 @@ function getPairedDevices() {
           let remoteDeviceName: string = connection.getRemoteDeviceName(item, true);
           console.log('获取对端蓝牙设备的名称:', remoteDeviceName);
 
-          try {
-            connection.getRemoteProfileUuids(item, (err: BusinessError, data: Array<connection.ProfileUuids>) => {
-              console.error('getRemoteProfileUuids, err: ' + JSON.stringify(err) + '\n' + item +
-                '\t蓝牙Profile协议的UUID: ' + JSON.stringify(data));
-            });
-          } catch (err) {
-            console.error('errCode: ' + (err as BusinessError).code + ', errMessage: ' +
-            (err as BusinessError).message);
-          }
+          // try {
+          //   connection.getRemoteProfileUuids(item, (err: BusinessError, data: Array<connection.ProfileUuids>) => {
+          //     console.error('getRemoteProfileUuids, err: ' + JSON.stringify(err) + '\n' + item +
+          //       '\t蓝牙Profile协议的UUID: ' + JSON.stringify(data));
+          //   });
+          // } catch (err) {
+          //   console.error('errCode: ' + (err as BusinessError).code + ', errMessage: ' +
+          //   (err as BusinessError).message);
+          // }
 
           let device = new BlueTooth_devices(item);
 
