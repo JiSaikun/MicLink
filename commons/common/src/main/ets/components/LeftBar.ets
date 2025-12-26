@@ -124,6 +124,11 @@ export struct LeftBar {
             return false
           }
           break
+        case "helpCenter":
+          if (this.flax.Function.findIndex(item => item.name === "帮助中心") === -1) {
+            return false
+          }
+          break
       }
 
     } else {

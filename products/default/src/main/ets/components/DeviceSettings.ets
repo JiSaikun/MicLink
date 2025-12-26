@@ -1,6 +1,6 @@
 import { CursorController, LengthMetrics } from "@kit.ArkUI"
 import { connectDevice, DeviceArrayType_Ble } from "bluetooth"
-import { getModelInfoModel, imagesDataModel, imagesModel, Languages } from "config"
+import { getModelInfoModel, imagesDataModel, imagesModel, Languages, sideFunctionList } from "config"
 import { DeviceArrayType, DeviceInfo, MouseICType, ConnectDevice } from 'mouse'
 import { DevicesConfig } from './DevicesConfig'
 import { common } from "@kit.AbilityKit"
@@ -27,6 +27,7 @@ export struct DeviceSettings {
   @Provide device_isBle: boolean = false //该设备是否是蓝牙连接
   cursorCustom: CursorController = this.getUIContext().getCursorController();
   @StorageLink("Unconnected") Unconnected: boolean = false //是否有设备连接
+  @StorageLink("sideFunctionList") sideFunctionList: sideFunctionList | null = null
 
   onDevicesChange() {
     console.log('DeviceSettings: 设备列表发生变化，当前设备数量:', this.devicesLink ? this.devicesLink.length : 0)
@@ -126,7 +127,7 @@ export struct DeviceSettings {
           .width('100%')
 
           // .borderWidth(1)
-          if (this.Unconnected){
+          if (this.Unconnected && this.sideFunctionList) {
             Grid() {
               ForEach(this.devicesList, (item: DeviceArrayType, index) => {
                 if (item.getModelInfo) {
@@ -347,11 +348,20 @@ export struct DeviceSettings {
             .columnsGap(15) // 列间距
             .rowsGap(30) // 行间距
             .width('100%')
-          }
-          else {
-            Column(){
-              Text('设备未连接')
+          } else {
+            Column({space:24}) {
+              Image($r('app.media.Unconnected'))
+                .width(371)
+              Text('未检测到设备')
+                .fontColor('#BBBDBF')
+                .fontWeight(500)
+                .fontSize(18)
+              Text('请检查设备是否开启，或连接状态正常。')
+                .fontColor('#BBBDBF')
+                .fontWeight(400)
+                .fontSize(14)
             }.layoutWeight(1)
+            .justifyContent(FlexAlign.Center)
           }
 
         }

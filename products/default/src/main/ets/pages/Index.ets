@@ -28,6 +28,7 @@ import { DeviceSettings } from '../components/DeviceSettings';
 import { connectDevice, DeviceArrayType_Ble } from 'bluetooth';
 import { DraggableResizableRect } from 'api'; //截图翻译
 import { sideFunctionList } from 'config';
+import { url } from '@kit.ArkTS';
 
 
 PersistentStorage.persistProp("login", false)
@@ -108,7 +109,7 @@ struct Index {
   @State scaleValue: number = 1.0
   @State refresh: boolean = true
   @StorageLink("refreshDevicesList") refreshDevicesList: boolean = true
-  @StorageLink("Unconnected") Unconnected: boolean = false//是否有设备连接
+  @StorageLink("Unconnected") Unconnected: boolean = false //是否有设备连接
 
   refreshPage() {
     this.refresh = false
@@ -128,10 +129,38 @@ struct Index {
     }
   }
 
-  web_prefix(): string {
-    return `https://asrai.miclink.net?sno=${this.mouseconfig?.sn ? this.mouseconfig?.sn :
-      123}&productCode=${this.mouseconfig?.productType ? this.mouseconfig?.productType :
-      999999}&language=${this.languages}`
+  return_url(condition: string): string {
+    return (this.flax?.Function[this.flax.Function.findIndex(item => item.name ===
+      condition)].url as string).replaceAll('SN', this.mouseconfig?.sn ? this.mouseconfig?.sn : "123")
+      .replaceAll('PRDUCTCODE',
+        this.mouseconfig?.productType ? this.mouseconfig?.productType.toString() : "999999")
+      .replaceAll("LANGUAGE", this.languages)
+
+  }
+
+  web_prefix(web: number): string {
+    let url: string = ''
+    if (this.flax) {
+      switch (web) {
+        case 1:
+          return this.return_url("ai-助手")
+        case 2:
+          return this.return_url("ai-办公")
+        case 3:
+          return this.return_url("ai-智能体")
+        case 5:
+           return this.return_url("导航库")
+        case 6:
+          return this.return_url("视频库")
+        case 7:
+          return this.return_url("模板库")
+        case 9:
+          return this.return_url("帮助中心")
+      }
+    }
+    return url
+    // return `https://asrai.miclink.net?sno=${this.mouseconfig?.sn ? this.mouseconfig?.sn :
+    //   123}&productCode=${}&language=${this.languages}` + this.web
   }
 
   // TabsControllerIndex 变化监听
@@ -370,7 +399,7 @@ struct Index {
               if (this.flax)
               TabContent() { // AI-助手
                 Stack() {
-                  Content({ web: this.web_prefix() + this.web })
+                  Content({ web: this.web_prefix(1) })
                   Topbar()
                 }
                 .height('100%')
@@ -380,7 +409,7 @@ struct Index {
               TabContent() { // AI-办公
                 Stack() {
                   Content({
-                    web: this.web_prefix() + this.web
+                    web: this.web_prefix(2)
                     // web: 'https://asrai.miclink.net/?sno=123&productCode=999999&config=configMiclink_B_1755079145452#/aiOffice'
                   })
                   Topbar()
@@ -391,7 +420,7 @@ struct Index {
               if (this.flax)
               TabContent() { // AI-智能体
                 Stack() {
-                  Content({ web: this.web_prefix() + this.web })
+                  Content({ web: this.web_prefix(3) })
                   Topbar()
                 }
                 .height('100%')
@@ -416,7 +445,7 @@ struct Index {
               TabContent() { // 导航库
                 Stack() {
                   if (this.isNavigationLibActive) {
-                    Content({ web: this.web_prefix() + this.web })
+                    Content({ web: this.web_prefix(5) })
                   }
                   Topbar()
                 }
@@ -427,7 +456,7 @@ struct Index {
               if (this.flax)
               TabContent() { // 视频库
                 Stack() {
-                  Content({ web: this.web_prefix() + this.web })
+                  Content({ web: this.web_prefix(6) })
                   Topbar()
                 }
                 .height('100%')
@@ -437,7 +466,7 @@ struct Index {
               if (this.flax)
               TabContent() { // 模板库
                 Stack() {
-                  Content({ web: this.web_prefix() + this.web })
+                  Content({ web: this.web_prefix(7) })
                   Topbar()
                 }
                 .height('100%')
@@ -457,7 +486,7 @@ struct Index {
               if (this.flax)
               TabContent() { // 帮助中心
                 Stack() {
-                  Content({ web: this.web_prefix() + this.web })
+                  Content({ web: this.web_prefix(9) })
                   Topbar()
                 }
                 .height('100%')
