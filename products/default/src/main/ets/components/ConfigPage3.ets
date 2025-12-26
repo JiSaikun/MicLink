@@ -103,18 +103,30 @@ export struct ConfigPage3 {
 
   }
 
-  isShow(name: string): boolean {
-    if (this.getModelInfo.functions.length === 0) {
-      return true
-    }
+  isShowDPI(): boolean {
     for (let item of this.getModelInfo.functions) {
-      if (item.name === name) {
-        return true
+      if (item.name === "HideDPI"&&item.code==="YES") {
+        return false
       }
     }
-    return false
+    return true
   }
-
+  isShowReportRate(): boolean {
+    for (let item of this.getModelInfo.functions) {
+      if (item.name === 'HideReportRate'&&item.code==="YES") {
+        return false
+      }
+    }
+    return true
+  }
+  isShowAmbientLightSwitch(): boolean {
+    for (let item of this.getModelInfo.functions) {
+      if (item.name === 'HideAmbientLightSwitch'&&item.code==="YES") {
+        return false
+      }
+    }
+    return true
+  }
   aboutToAppear(): void {
     if (this.device_isBle) {
       this.currLED = this.devices[AppStorage.get('device_show_currIndex') as number].currLED
@@ -131,7 +143,7 @@ export struct ConfigPage3 {
         .fontWeight(400)
         .fontColor('#a4aab2')
         .margin({ bottom: 20 })
-      if (this.isShow('DPI')) {
+      if (this.isShowDPI()) {
         Text("DPI")
           .fontSize($r('app.float.default_text_font_size_14'))
           .fontWeight(400)
@@ -158,7 +170,7 @@ export struct ConfigPage3 {
           .backgroundColor(Color.White)
       }
 
-      if (this.isShow('ReportRate')) {
+      if (this.isShowReportRate()) {
         Text(Languages.return[this.languages])
           .fontSize($r('app.float.default_text_font_size_14'))
           .fontWeight(400)
@@ -185,7 +197,7 @@ export struct ConfigPage3 {
           .backgroundColor(Color.White)
 
       }
-      if (this.isShow("AmbientLightSwitch")) {
+      if (this.isShowAmbientLightSwitch()) {
         Row() {
           Text(Languages.lighting[this.languages])
             .fontSize($r('app.float.default_text_font_size_14'))
