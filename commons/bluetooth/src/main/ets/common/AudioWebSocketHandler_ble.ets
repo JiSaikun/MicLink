@@ -480,7 +480,7 @@ export class AudioWebSocketHandler_ble {
         systemPasteboard.clearData();
         // console.error('翻译文本已复制到剪贴板: ' + dataArray);
         // console.error('翻译文本已复制到剪贴板: ' + AppStorage.get('isAutoCloseVoiceTransPop')+(type === 'LAST' || type === "FIN"));
-        if (AppStorage.get('isAutoCloseVoiceTransPop') && (type === 'LAST' || type === "FIN")) {
+        if (AppStorage.get('isAutoCloseVoiceTransPop') && (type === 'LAST' || type === "FIN")&&this.wending) {
           // console.error('翻译文本已复制到剪贴板1: ' + dataArray.transText);
           try {
             const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, dataArray.transText);
