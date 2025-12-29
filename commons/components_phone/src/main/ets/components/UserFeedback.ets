@@ -28,6 +28,7 @@ struct UserFeedback {
   @StorageLink('dstPath_imgs') dstPath_imgs: string[] = []
   @State userLoginInfo: UserLoginInfo = AppStorage.get('userLoginInfo') as UserLoginInfo
   @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null
+
   build() {
     NavDestination() {
       Column() {
@@ -104,7 +105,7 @@ struct UserFeedback {
           .fontColor(Color.White)
           .backgroundColor(this.paletteTheme)
           .onClick(() => {
-            if (!(this.userLoginInfo&&this.mouseconfig)) {
+            if (!(this.userLoginInfo && this.mouseconfig)) {
               return
             }
             if (!(this.feedbackText)) {
@@ -113,7 +114,7 @@ struct UserFeedback {
               });
               return
             }
-            this.dstPath_imgs=[]
+            this.dstPath_imgs = []
             let parmas: feedbackAdd_Params = {
               content: JSON.stringify({
                 "remark": this.feedbackText,
@@ -138,14 +139,15 @@ struct UserFeedback {
                 console.log(`上传进度: ${current}/${total}`);
               }).then((results) => {
 
-                parmas.content=JSON.stringify({
+                parmas.content = JSON.stringify({
                   "remark": this.feedbackText,
                   "imgs": this.dstPath_imgs
                 })
                 // 上传成功,上传反馈问题
                 _feedbackAdd(parmas).then((res: feedbackAddy_Response) => {
-                  console.log("问题上传反馈:",JSON.stringify(res))
-                  this.feedbackText=''
+                  console.log("问题上传反馈:", JSON.stringify(res))
+                  this.feedbackText = ''
+                  this.imageUris = []
                   this.getUIContext().getPromptAction().showToast({
                     message: ('反馈意见已上传')
                   });
@@ -157,8 +159,9 @@ struct UserFeedback {
                * 没有图片，直接上传问题
                */
               _feedbackAdd(parmas).then((res: feedbackAddy_Response) => {
-                console.log("问题上传反馈",JSON.stringify(res))
-                this.feedbackText=''
+                console.log("问题上传反馈", JSON.stringify(res))
+                this.feedbackText = ''
+                this.imageUris = []
                 this.getUIContext().getPromptAction().showToast({
                   message: ('反馈意见已上传')
                 });
