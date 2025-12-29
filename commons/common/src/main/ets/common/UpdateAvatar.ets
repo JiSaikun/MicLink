@@ -181,7 +181,7 @@ export async function uploadAvatar(filePath: string): Promise<void> {
           console.info('上传响应数据:', data.result);
           // 解析响应数据
           AppStorage.setOrCreate('userLoginInfo',(JSON.parse(data.result as string) as resType).data)
-          console.error('asdfglfjkhsdkj',JSON.stringify(AppStorage.get('userLoginInfo')))
+          // console.error('asdfglfjkhsdkj',JSON.stringify(AppStorage.get('userLoginInfo')))
           // let responseData: any;
           // if (typeof data.result === 'string') {
           //   responseData = JSON.parse(data.result);

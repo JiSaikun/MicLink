@@ -159,6 +159,7 @@ export async function uploadAvatar(filePath: string): Promise<void> {
         try {
           console.info('上传响应状态码:', data.responseCode);
           console.info('上传响应数据:', data.result);
+          AppStorage.setOrCreate('userLoginInfo',(JSON.parse(data.result as string) as resType).data)
 
           // 这里可以添加对服务器响应的具体处理逻辑
           // 根据实际API响应结构调整判断条件
@@ -175,7 +176,10 @@ export async function uploadAvatar(filePath: string): Promise<void> {
     );
   });
 }
+interface resType{
+  data:UserLoginInfo
 
+}
 /**
  * 删除临时文件
  */
