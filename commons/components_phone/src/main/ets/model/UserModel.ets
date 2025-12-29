@@ -21,6 +21,7 @@ export interface addCustomerKey_Response extends BaseParams {
   // sno: string //设备号
   // userModelId: string //按鍵模式ID
 }
+
 /**
  * 重置按键设置
  */
@@ -28,6 +29,7 @@ export interface resetCustomerKey_Params extends BaseParams {
   sno: string //设备号
   userModelId: string //按鍵模式ID
 }
+
 export interface resetCustomerKey_Response extends BaseParams {
   // cmdId: string //指令ID
   // keyId: string //按键ID
@@ -45,6 +47,9 @@ export interface feedbackAdd_Params {
   serialNo?: string //设备序列号
   title?: string //标题
 }
-export interface feedbackAddy_Response {
 
+export interface feedbackAddy_Response<T> {
+  statusCode: number
+  message: string
+  data: T
 }

@@ -35,6 +35,6 @@ export function _resetCustomerKey(params: resetCustomerKey_Params) {
  * @param params
  * @returns
  */
-export function _feedbackAdd(params: feedbackAdd_Params):Promise<AxiosResponse<feedbackAddy_Response>> {
-  return axios.post<feedbackAddy_Response, AxiosResponse<feedbackAddy_Response>, feedbackAdd_Params>('http://att.miclink.net/api/feedback/add',params)
+export function _feedbackAdd(params: feedbackAdd_Params):Promise<AxiosResponse<feedbackAddy_Response<string>>> {
+  return axios.post<feedbackAddy_Response<string>, AxiosResponse<feedbackAddy_Response<string>>, feedbackAdd_Params>('http://att.miclink.net/api/feedback/add',params)
 }

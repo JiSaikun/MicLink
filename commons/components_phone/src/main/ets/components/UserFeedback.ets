@@ -10,6 +10,7 @@ import { ImageUploader, UserLoginInfo } from "common";
 import { _feedbackAdd } from "../viewmodel/UserViewModel";
 import { feedbackAddy_Response, feedbackAdd_Params } from "../model/UserModel";
 import { DeviceInfo } from "mouse";
+import { AxiosResponse } from "@ohos/axios";
 
 @Builder
 export function UserFeedbackBuilder() {
@@ -144,13 +145,20 @@ struct UserFeedback {
                   "imgs": this.dstPath_imgs
                 })
                 // 上传成功,上传反馈问题
-                _feedbackAdd(parmas).then((res: feedbackAddy_Response) => {
-                  console.log("问题上传反馈:", JSON.stringify(res))
-                  this.feedbackText = ''
-                  this.imageUris = []
-                  this.getUIContext().getPromptAction().showToast({
-                    message: ('反馈意见已上传')
-                  });
+                _feedbackAdd(parmas).then((res:AxiosResponse<feedbackAddy_Response<string>>) => {
+                  console.log("问题上传反馈:", JSON.stringify(res.data))
+                  if (res.data.statusCode===200) {
+                    this.feedbackText = ''
+                    this.imageUris = []
+                    this.getUIContext().getPromptAction().showToast({
+                      message: ('反馈意见已上传')
+                    });
+                  }else {
+                    console.log('问题反馈失败：',res.data.statusCode)
+                    this.getUIContext().getPromptAction().showToast({
+                      message: (res.data.message)
+                    });
+                  }
                 })
               })
 
@@ -158,13 +166,20 @@ struct UserFeedback {
               /**
                * 没有图片，直接上传问题
                */
-              _feedbackAdd(parmas).then((res: feedbackAddy_Response) => {
-                console.log("问题上传反馈", JSON.stringify(res))
-                this.feedbackText = ''
-                this.imageUris = []
-                this.getUIContext().getPromptAction().showToast({
-                  message: ('反馈意见已上传')
-                });
+              _feedbackAdd(parmas).then((res:AxiosResponse<feedbackAddy_Response<string>>) => {
+                console.log("问题上传反馈:", JSON.stringify(res.data))
+                if (res.data.statusCode===200) {
+                  this.feedbackText = ''
+                  this.imageUris = []
+                  this.getUIContext().getPromptAction().showToast({
+                    message: ('反馈意见已上传')
+                  });
+                }else {
+                  console.log('问题反馈失败：',res.data.statusCode)
+                  this.getUIContext().getPromptAction().showToast({
+                    message: (res.data.message)
+                  });
+                }
               })
             }
 

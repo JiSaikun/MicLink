@@ -114,7 +114,10 @@ async function savePhotoToSandbox(fileUri: string): Promise<string> {
     throw new Error('保存图片失败');
   }
 }
+interface resType{
+  data:UserLoginInfo
 
+}
 /**
  * 上传头像到服务器
  */
@@ -176,8 +179,9 @@ export async function uploadAvatar(filePath: string): Promise<void> {
         try {
           console.info('上传响应状态码:', data.responseCode);
           console.info('上传响应数据:', data.result);
-
-          // // 解析响应数据
+          // 解析响应数据
+          AppStorage.setOrCreate('userLoginInfo',(JSON.parse(data.result as string) as resType).data)
+          console.error('asdfglfjkhsdkj',JSON.stringify(AppStorage.get('userLoginInfo')))
           // let responseData: any;
           // if (typeof data.result === 'string') {
           //   responseData = JSON.parse(data.result);
