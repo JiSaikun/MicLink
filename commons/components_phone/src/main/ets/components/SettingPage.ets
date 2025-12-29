@@ -12,6 +12,7 @@ struct SettingPage {
   @StorageLink("paletteTheme") paletteTheme: string = CommonConfig.PaletteTheme
   @Consume('pageInfo') pageInfo: NavPathStack
   @StorageLink('languages') languages: string = 'ZH_CN'
+  @StorageLink('Backgrounding') Backgrounding: boolean = false//手机专属标记
   dialogController: CustomDialogController | null = new CustomDialogController({
     builder: LogOut({
       cancel: () => {
@@ -102,8 +103,9 @@ struct SettingPage {
               .fontColor(CommonConfig.hintTextColor_select)
               .fontWeight(CommonConfig.fontWeight_400)
             Blank()
-            Toggle({ type: ToggleType.Switch, isOn: true }).onChange((value: boolean) => {
+            Toggle({ type: ToggleType.Switch, isOn: this.Backgrounding }).onChange((value: boolean) => {
               // 处理开关逻辑
+              this.Backgrounding=value
             })
               .selectedColor(this.paletteTheme)
               .height(22)
