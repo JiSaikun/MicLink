@@ -7,7 +7,7 @@ import notification from '@ohos.notification';
 const TAG: string = '[Notification]';
 const DOMAIN_NUMBER: number = 0xFF00;
 
-export class Notification {
+export class  Notification {
   static state:boolean=false
   static async init(): Promise<boolean> {
     try {

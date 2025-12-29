@@ -1,5 +1,13 @@
+import axios, { AxiosResponse } from '@ohos/axios';
 import { http } from 'api'
-import { addCustomerKey_Params,addCustomerKey_Response ,resetCustomerKey_Params,resetCustomerKey_Response} from '../model/UserModel'
+import {
+  addCustomerKey_Params,
+  addCustomerKey_Response,
+  feedbackAddy_Response,
+  feedbackAdd_Params,
+  resetCustomerKey_Params,
+  resetCustomerKey_Response
+} from '../model/UserModel'
 
 
 // getCode_Params为参数的类型声明，之后在页面中传入参数时，TS能够正确推断并代码提示
@@ -22,3 +30,11 @@ export function _resetCustomerKey(params: resetCustomerKey_Params) {
   return http.post<resetCustomerKey_Response, resetCustomerKey_Params>('/api/resetCustomerKey', params);
 }
 
+/**
+ * 客户反馈
+ * @param params
+ * @returns
+ */
+export function _feedbackAdd(params: feedbackAdd_Params):Promise<AxiosResponse<feedbackAddy_Response>> {
+  return axios.post<feedbackAddy_Response, AxiosResponse<feedbackAddy_Response>, feedbackAdd_Params>('http://att.miclink.net/api/feedback/add',params)
+}
