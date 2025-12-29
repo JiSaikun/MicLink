@@ -307,7 +307,7 @@ export class BlueTooth_devices {
     const devices = this.devices;
     if (!devices || !Array.isArray(devices) || this.device_currIndex < 0 || this.device_currIndex >= devices.length) {
       console.error('设备数组或索引无效:',
-        { devices: !!devices, deviceIndex: this.device_currIndex, length: devices?.length });
+        JSON.stringify({ devices: !!devices, deviceIndex: this.device_currIndex, length: devices?.length }));
       return;
     }
 

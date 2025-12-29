@@ -1,4 +1,5 @@
-import { ConnectDevice, _getModelInfo, DeviceInfo, KeyPressType, getModelInfo_Params, DeviceArrayType } from 'mouse'
+import { ConnectDevice, _getModelInfo, DeviceInfo, KeyPressType, getModelInfo_Params, DeviceArrayType,
+  keyConfigExclusion } from 'mouse'
 import { ConfigPage1 } from './ConfigPage1'
 import { ConfigPage2 } from './ConfigPage2'
 import { ConfigPage3 } from './ConfigPage3'
@@ -272,22 +273,23 @@ export struct DevicesConfig {
     _getModelInfo(params).then((res) => {
       console.log('获取用户按键模式详情数据', JSON.stringify(res.data))
       if (res.status === 200) {
-        let getModelInfo: getModelInfoModel = res.data as getModelInfoModel
-        // 更新数据
-        if (this.device_isBle) {
-          this.devices[AppStorage.get('device_show_currIndex') as number].getModelInfo = getModelInfo
-        } else {
-          ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo = getModelInfo
-        }
-        AppStorage.setOrCreate('getModelInfo', getModelInfo)
-        if (this.device_isBle) {
-          this.devices[AppStorage.get('device_show_currIndex') as number].KeymethodConfig = []
-        } else {
-          // 重置 KeymethodConfig，让 ConfigPage2 重新初始化
-          ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].KeymethodConfig = []
-        }
+         keyConfigExclusion(res.data as getModelInfoModel).then((getModelInfo)=>{
+           // 更新数据
+           if (this.device_isBle) {
+             this.devices[AppStorage.get('device_show_currIndex') as number].getModelInfo = getModelInfo
+           } else {
+             ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo = getModelInfo
+           }
+           AppStorage.setOrCreate('getModelInfo', getModelInfo)
+           if (this.device_isBle) {
+             this.devices[AppStorage.get('device_show_currIndex') as number].KeymethodConfig = []
+           } else {
+             // 重置 KeymethodConfig，让 ConfigPage2 重新初始化
+             ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].KeymethodConfig = []
+           }
+           console.log('数据重置完成，ConfigPage2 将自动重新初始化')
+        })
 
-        console.log('数据重置完成，ConfigPage2 将自动重新初始化')
       }
     }).catch(() => {
       console.error('获取模型信息失败:',)

@@ -179,7 +179,7 @@ export struct DeviceSettings {
                       Image(item.getModelInfo && (item.getModelInfo as getModelInfoModel).images &&
                       (item.getModelInfo as getModelInfoModel).images.length ?
                       this.getdeviesImage(item.getModelInfo as getModelInfoModel) : $r('app.media.HM_001_white'))
-                        .width('100%')
+                        .layoutWeight(1)
                         .margin({ bottom: 15, top: 15 })
 
                       Row() {
@@ -233,6 +233,7 @@ export struct DeviceSettings {
                         this.isShowConfig = true
                       }
                     })
+                    .aspectRatio(312/356)
                   }
                 }
               }, (item: DeviceArrayType) => JSON.stringify(item.Communication))
@@ -286,7 +287,7 @@ export struct DeviceSettings {
                       Image(item.getModelInfo && (item.getModelInfo as getModelInfoModel).images &&
                       (item.getModelInfo as getModelInfoModel).images.length ?
                       this.getdeviesImage(item.getModelInfo as getModelInfoModel) : $r('app.media.HM_001_white'))
-                        .width('100%')
+                        .layoutWeight(1)
                         .margin({ bottom: 15, top: 15 })
 
                       Row() {
@@ -314,6 +315,7 @@ export struct DeviceSettings {
                     }
                     .padding(24)
                     .borderRadius(16)
+                    .aspectRatio(312/356)
                     .border({ width: 2, color: '#e6e8eb' })
                     .onMouse((event?: MouseEvent) => {
                       if (event && !item.getModelInfo?.images) {
