@@ -278,11 +278,10 @@ export struct LeftBar {
 
         }, (item: Ai_Model) => item.img)
 
-        Divider()
+        Column()
           .width('100%')
-          .height(1)
+          .border({width:{top:1},color:'#eaeaea'})
           .margin({ top: 5, bottom: 5 })
-          .backgroundColor('#eaeaea')
 
         /*      // 对话记录 - 每次构建时动态计算颜色
               Flex({ alignItems: ItemAlign.Center }) {
