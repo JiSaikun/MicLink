@@ -96,7 +96,7 @@ struct PersonalProfile {
       .margin({ bottom: 12, top: 12 })
       .padding(12)
       .onClick(() => {
-        // this.pageInfo.pushPath({"name":'UpdatePhone'})   //暂无切换手机号接口
+        this.pageInfo.pushPath({"name":'UpdatePhone'})
       })
 
     }

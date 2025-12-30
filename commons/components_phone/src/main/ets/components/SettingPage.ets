@@ -175,7 +175,7 @@ struct LogOut {
         .fontWeight(CommonConfig.fontWeight_400)
         .margin({ bottom: 16 })
       Text(Languages.confirm[this.languages])
-        .backgroundColor('#EAEAEA')
+        .backgroundColor(Color.White)
         .fontSize(CommonConfig.fontSize_16)
         .fontColor('#FF0509')
         .fontWeight(CommonConfig.fontWeight_400)
@@ -189,7 +189,7 @@ struct LogOut {
           this.controller?.close()
         })
       Text(Languages.cancel[this.languages])
-        .backgroundColor('#EAEAEA')
+        .backgroundColor(Color.White)
         .fontSize(CommonConfig.fontSize_16)
         .fontColor(CommonConfig.hintTextColor_select)
         .fontWeight(CommonConfig.fontWeight_400)
@@ -201,7 +201,8 @@ struct LogOut {
 
     }
     .alignItems(HorizontalAlign.Center)
-    .borderRadius(16)
+    .backgroundColor(CommonConfig.commonBorderColor)
+    .borderRadius({topLeft:16,topRight:16})
     .padding(16)
   }
 }

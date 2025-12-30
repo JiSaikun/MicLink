@@ -30,11 +30,14 @@ struct UpdatePhone {
     NavDestination() {
       TopTitle({ title: '', isback: false })
       Stack() {
-        UpdatePhone_EMAIL()
-          .margin({ top: 76 })
+
 
         if (!this.isEMAIL) { //手机号
           UpdatePhone_PHONE({isEMAIL:this.isEMAIL})
+            .margin({ top: 76 })
+        }else {
+          UpdatePhone_EMAIL()
+            .margin({ top: 76 })
         }
       }
       .align(Alignment.TopStart)

@@ -12,6 +12,7 @@ export struct UpdatePhone_PHONE {
   @StorageLink("paletteTheme") paletteTheme: string = CommonConfig.PaletteTheme
   @Link isEMAIL: boolean
   @State updataCountry: boolean = false
+  @State phone:string=''
 
   build() {
     Stack() {
@@ -70,8 +71,14 @@ export struct UpdatePhone_PHONE {
             .fontWeight(CommonConfig.fontWeight_400)
             .fontColor(CommonConfig.hintTextColor)
             .margin({ right: 12 })
-          Text(this.userLoginInfo ? this.userLoginInfo.account : '123 4567 8989')
+          // Text(this.userLoginInfo ? this.userLoginInfo.account : '123 4567 8989')
+          TextInput({placeholder:"输入手机号",text:this.phone})
+            .borderRadius(0)
+            .type(InputType.Number)
+            .padding(0)
+            .layoutWeight(1)
             .fontSize(CommonConfig.fontSize_14)
+            .backgroundColor(Color.White)
             .fontColor(CommonConfig.hintTextColor_select)
             .fontWeight(CommonConfig.fontWeight_400)
         }
@@ -92,7 +99,9 @@ export struct UpdatePhone_PHONE {
           .fontWeight(CommonConfig.fontWeight_400)
           .fontColor(Color.White)
           .backgroundColor(this.paletteTheme)
-          .onClick(() => this.isEMAIL = true)
+          .onClick(() => {
+            // this.isEMAIL = true
+          })
 
 
       }
