@@ -89,18 +89,30 @@ export struct DeviceSettings {
 
   }
 
-  isShow(name: string): boolean {
-    if (this.getModelInfo.functions.length === 0) {
-      return true
-    }
+  isShowDPI(): boolean {
     for (let item of this.getModelInfo.functions) {
-      if (item.name === name) {
-        return true
+      if (item.name === "HideDPI"&&item.code==="YES") {
+        return false
       }
     }
-    return false
+    return true
   }
-
+  isShowReportRate(): boolean {
+    for (let item of this.getModelInfo.functions) {
+      if (item.name === 'HideReportRate'&&item.code==="YES") {
+        return false
+      }
+    }
+    return true
+  }
+  isShowAmbientLightSwitch(): boolean {
+    for (let item of this.getModelInfo.functions) {
+      if (item.name === 'HideAmbientLightSwitch'&&item.code==="YES") {
+        return false
+      }
+    }
+    return true
+  }
   aboutToAppear(): void {
     if (this.device_isBle) {
       this.currLED = this.devices[AppStorage.get('device_show_currIndex') as number].currLED
@@ -118,7 +130,7 @@ export struct DeviceSettings {
           .fontColor(CommonConfig.hintTextColor)
 
         Column() {
-          if (this.isShow('DPI')) {
+          if (this.isShowDPI()) {
 
             Row() {
               Text("DPI")
@@ -154,7 +166,7 @@ export struct DeviceSettings {
             .padding({ top: 12, bottom: 12 })
 
           }
-          if (this.isShow('ReportRate')) {
+          if (this.isShowReportRate()) {
             Row() {
               Text(Languages.return[this.languages])
                 .fontSize(CommonConfig.fontSize_14)
@@ -190,7 +202,7 @@ export struct DeviceSettings {
             .padding({ top: 12, bottom: 12 })
 
           }
-          if (this.isShow("AmbientLightSwitch")) {
+          if (this.isShowAmbientLightSwitch()) {
             Row() {
               Text(Languages.lighting[this.languages])
                 .fontSize(CommonConfig.fontSize_14)
