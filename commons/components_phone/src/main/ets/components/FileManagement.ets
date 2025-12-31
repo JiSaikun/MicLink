@@ -1261,7 +1261,7 @@ struct FileManagement {
                 }, (item: FileInfo) => JSON.stringify(item))
               }
               .width('100%')
-              .flexGrow(1)
+              .layoutWeight(1)
             }
           }
         }
