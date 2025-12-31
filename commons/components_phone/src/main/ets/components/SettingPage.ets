@@ -158,10 +158,6 @@ struct LogOut {
   controller?: CustomDialogController;
   @StorageLink('languages') languages: string = 'ZH_CN'
 
-
-
-
-
   build() {
     Column() {
       Text(Languages.confirmLogout[this.languages])

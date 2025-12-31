@@ -27,6 +27,7 @@ import { _KeyMethodConfig } from 'keymethodconfig';
 import { ConnectDevice, DeviceInfo } from 'mouse';
 import { DeviceArrayType_Ble } from 'bluetooth';
 import { Languages } from 'components_phone';
+import { sideFunctionList } from 'config';
 
 // =============== 第一步：定义数据传输接口 ===============
 interface RecordData {
@@ -80,7 +81,7 @@ export struct Tab_ai {
   webviewController: webview.WebviewController = new webview.WebviewController();
   // 创建WebDownloadDelegate
   delegate: webview.WebDownloadDelegate = new webview.WebDownloadDelegate();
-  @Watch('refreshPage') @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null
+  @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null
   @State web: string = 'https://asrai.miclink.net/?sno=123123#/'
   @State isWebViewReady: boolean = false
   @State downloadProgress: number = 0
@@ -98,6 +99,8 @@ export struct Tab_ai {
   private webProxy: WebProxy = new WebProxy(this);
   @Watch('refreshPage') @StorageLink('languages') languages: string = 'ZH_CN'
   @StorageLink("downloadDirectoryUri") downloadDirectoryUri: string = ''
+  @Watch('refreshPage') @StorageLink("sideFunctionList") sideFunctionList: sideFunctionList | null = null
+  @State isShowAiPage: boolean = false
 
   refreshPage() {
     this.refresh = false
@@ -107,9 +110,21 @@ export struct Tab_ai {
   }
 
   web_prefix(): string {
-    return `https://asrai.miclink.net?sno=${this.mouseconfig?.sn ? this.mouseconfig?.sn :
-      123}&productCode=${this.mouseconfig?.productType ? this.mouseconfig?.productType :
-      999999}&language=${this.languages}`
+    let url: string = ''
+    if (this.sideFunctionList) {
+      this.isShowAiPage = true
+      return (this.sideFunctionList?.Function[this.sideFunctionList.Function.findIndex(item => item.name ===
+        "ai-助手")].url as string).replaceAll('SN', this.mouseconfig?.sn ? this.mouseconfig?.sn : "123")
+        .replaceAll('PRDUCTCODE',
+          this.mouseconfig?.productType ? this.mouseconfig?.productType.toString() : "999999")
+        .replaceAll("LANGUAGE", this.languages)
+    } else {
+      this.isShowAiPage = false
+    }
+    return url
+    // return `https://asrai.miclink.net?sno=${this.mouseconfig?.sn ? this.mouseconfig?.sn :
+    //   123}&productCode=${this.mouseconfig?.productType ? this.mouseconfig?.productType :
+    //   999999}&language=${this.languages}`
   }
 
   // =============== 新增：Web通信处理方法 ===============
@@ -128,11 +143,14 @@ export struct Tab_ai {
 
   change_FLAX() {
     console.error('currentState:', this.currentState)
-    if ((!((AppStorage.get('devices') as DeviceArrayType_Ble[]).length + ConnectDevice.Communication.length))&&this.currentState===1) {
+    if ((!((AppStorage.get('devices') as DeviceArrayType_Ble[]).length + ConnectDevice.Communication.length)) &&
+      this.currentState === 1) {
       // 显示录音提示框
       promptAction.showDialog({
         title: Languages.noDeviceConnected[AppStorage.get('languages') as string],
-        message: Languages.connectDeviceFirst[AppStorage.get('languages') as string]+':\n'+Languages.bluetoothConnection[AppStorage.get('languages') as string]+'\n'+Languages.usbConnection[AppStorage.get('languages') as string],
+        message: Languages.connectDeviceFirst[AppStorage.get('languages') as string] + ':\n' +
+        Languages.bluetoothConnection[AppStorage.get('languages') as string] + '\n' +
+        Languages.usbConnection[AppStorage.get('languages') as string],
         buttons: [
           {
             text: Languages.closeReminder[AppStorage.get('languages') as string],
@@ -229,7 +247,7 @@ export struct Tab_ai {
         if (documentSaveResult.length > 0) {
           const dirUri = documentSaveResult[0];
           console.info('DOWNLOAD目录URI: ' + dirUri);
-          this.downloadDirectoryUri=dirUri
+          this.downloadDirectoryUri = dirUri
           // 保存下载目录URI，用于后续打开文件夹
           this.currentDownloadDirUri = dirUri;
 
@@ -625,34 +643,54 @@ export struct Tab_ai {
       //   .margin({ bottom: 10 })
       // }
       if (this.refresh) {
-        Web({
-          src: this.web_prefix(),
-          controller: this.webviewController
-        })
-          .onPageEnd(() => {
-            console.info("Web页面加载完成，设置下载委托和Web通信代理");
-            this.isWebViewReady = true;
-            this.setupDownloadDelegate();
-            // 添加日志，确认页面加载完成
-            console.info("页面加载完成，javaScriptProxy应该已经注册");
-          })
-          .onPageBegin(() => {
-            this.isWebViewReady = false;
-          })
-          // =============== 新增：Web通信代理配置 ===============
-          .javaScriptProxy({
-            // 关键配置：注册代理对象
-            object: this.webProxy, // 要暴露的对象
-            name: "hostInstance", // 前端通过window.hostInstance访问
-            methodList: ["webRecord", "test", "getStatus"], // 暴露的方法列表
+        Stack() {
+          if (!this.isShowAiPage) {
+            Column({ space: 24 }) {
+              Image($r('app.media.Unconnected'))
+                .width(350)
+              Text('未检测到设备')
+                .fontColor('#BBBDBF')
+                .fontWeight(500)
+                .fontSize(18)
+              Text('请检查设备是否开启，或连接状态正常。')
+                .fontColor('#BBBDBF')
+                .fontWeight(400)
+                .fontSize(14)
+            }.layoutWeight(1)
+            .justifyContent(FlexAlign.Center)
+            .zIndex(100)
+          }
+          Web({
+            src: this.web_prefix(),
             controller: this.webviewController
           })
-          .flexGrow(1)
-          .width('100%')
-          .height('100%')
-          .domStorageAccess(true)
-          .javaScriptAccess(true)
-          .fileAccess(true)
+            .onPageEnd(() => {
+              console.info("Web页面加载完成，设置下载委托和Web通信代理");
+              this.isWebViewReady = true;
+              this.setupDownloadDelegate();
+              // 添加日志，确认页面加载完成
+              console.info("页面加载完成，javaScriptProxy应该已经注册");
+            })
+            .onPageBegin(() => {
+              this.isWebViewReady = false;
+            })
+            // =============== 新增：Web通信代理配置 ===============
+            .javaScriptProxy({
+              // 关键配置：注册代理对象
+              object: this.webProxy, // 要暴露的对象
+              name: "hostInstance", // 前端通过window.hostInstance访问
+              methodList: ["webRecord", "test", "getStatus"], // 暴露的方法列表
+              controller: this.webviewController
+            })
+            .flexGrow(1)
+            .width('100%')
+            .height('100%')
+            .domStorageAccess(true)
+            .javaScriptAccess(true)
+            .fileAccess(true)
+        }
+        .backgroundColor('#00ffffff')
+
       }
     }
     .width('100%')

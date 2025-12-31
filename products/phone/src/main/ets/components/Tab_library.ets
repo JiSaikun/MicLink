@@ -41,6 +41,7 @@ import { fileUri } from '@kit.CoreFileKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { _KeyMethodConfig } from 'keymethodconfig';
 import { DeviceInfo } from 'mouse';
+import { sideFunctionList } from 'config';
 
 // =============== 第一步：定义数据传输接口 ===============
 interface RecordData {
@@ -108,9 +109,11 @@ export struct Tab_library {
   @State currentLanguage: string = '未设置';
   // 代理对象实例
   private webProxy: WebProxy = new WebProxy(this);
-  @Watch('refreshPage') @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null
+  @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null
   @Watch('refreshPage') @StorageLink('languages') languages: string = 'ZH_CN'
   @State refresh: boolean = true
+  @Watch('refreshPage') @StorageLink("sideFunctionList") sideFunctionList: sideFunctionList | null = null
+  @State isShowAiPage: boolean = false
 
   refreshPage() {
     this.refresh = false
@@ -120,9 +123,21 @@ export struct Tab_library {
   }
 
   web_prefix(): string {
-    return `https://asrai.miclink.net?sno=${this.mouseconfig?.sn ? this.mouseconfig?.sn :
-      123}&productCode=${this.mouseconfig?.productType ? this.mouseconfig?.productType :
-      999999}&language=${this.languages}#/aiAgent`
+    let url: string = ''
+    if (this.sideFunctionList) {
+      this.isShowAiPage = true
+      return (this.sideFunctionList?.Function[this.sideFunctionList.Function.findIndex(item => item.name ===
+        "ai-智能体")].url as string).replaceAll('SN', this.mouseconfig?.sn ? this.mouseconfig?.sn : "123")
+        .replaceAll('PRDUCTCODE',
+          this.mouseconfig?.productType ? this.mouseconfig?.productType.toString() : "999999")
+        .replaceAll("LANGUAGE", this.languages)
+    }else {
+      this.isShowAiPage = false
+    }
+    return url
+    // return `https://asrai.miclink.net?sno=${this.mouseconfig?.sn ? this.mouseconfig?.sn :
+    //   123}&productCode=${this.mouseconfig?.productType ? this.mouseconfig?.productType :
+    //   999999}&language=${this.languages}#/aiAgent`
   }
 
   // =============== 新增：Web通信处理方法 ===============
@@ -624,34 +639,53 @@ export struct Tab_library {
       //   .margin({ bottom: 10 })
       // }
       if (this.refresh) {
-        Web({
-          src: this.web_prefix(),
-          controller: this.webviewController
-        })
-          .onPageEnd(() => {
-            console.info("Web页面加载完成，设置下载委托和Web通信代理");
-            this.isWebViewReady = true;
-            this.setupDownloadDelegate();
-            // 添加日志，确认页面加载完成
-            console.info("页面加载完成，javaScriptProxy应该已经注册");
-          })
-          .onPageBegin(() => {
-            this.isWebViewReady = false;
-          })
-          // =============== 新增：Web通信代理配置 ===============
-          .javaScriptProxy({
-            // 关键配置：注册代理对象
-            object: this.webProxy, // 要暴露的对象
-            name: "hostInstance", // 前端通过window.hostInstance访问
-            methodList: ["webRecord", "test", "getStatus"], // 暴露的方法列表
+        Stack(){
+          if (!this.isShowAiPage) {
+            Column({ space: 24 }) {
+              Image($r('app.media.Unconnected'))
+                .width(350)
+              Text('未检测到设备')
+                .fontColor('#BBBDBF')
+                .fontWeight(500)
+                .fontSize(18)
+              Text('请检查设备是否开启，或连接状态正常。')
+                .fontColor('#BBBDBF')
+                .fontWeight(400)
+                .fontSize(14)
+            }.layoutWeight(1)
+            .justifyContent(FlexAlign.Center)
+            .zIndex(100)
+          }
+          Web({
+            src: this.web_prefix(),
             controller: this.webviewController
           })
-          .flexGrow(1)
-          .width('100%')
-          .height('100%')
-          .domStorageAccess(true)
-          .javaScriptAccess(true)
-          .fileAccess(true)
+            .onPageEnd(() => {
+              console.info("Web页面加载完成，设置下载委托和Web通信代理");
+              this.isWebViewReady = true;
+              this.setupDownloadDelegate();
+              // 添加日志，确认页面加载完成
+              console.info("页面加载完成，javaScriptProxy应该已经注册");
+            })
+            .onPageBegin(() => {
+              this.isWebViewReady = false;
+            })
+            // =============== 新增：Web通信代理配置 ===============
+            .javaScriptProxy({
+              // 关键配置：注册代理对象
+              object: this.webProxy, // 要暴露的对象
+              name: "hostInstance", // 前端通过window.hostInstance访问
+              methodList: ["webRecord", "test", "getStatus"], // 暴露的方法列表
+              controller: this.webviewController
+            })
+            .flexGrow(1)
+            .width('100%')
+            .height('100%')
+            .domStorageAccess(true)
+            .javaScriptAccess(true)
+            .fileAccess(true)
+        }
+
       }
     }
     .width('100%')
