@@ -47,9 +47,9 @@ export struct SmartSettings {
     const deviceIndex = AppStorage.get('device_show_currIndex') as number || 0
 
     if (this.device_isBle) {
-        this.isPunctuationRecognition = this.devices[deviceIndex].isPunctuationRecognition
-        this.speech_Recognition_languages = this.devices[deviceIndex].speech_Recognition_languages //语音识别语种
-        this.speech_Recognition_languages_curr = this.getDefaultSelectedIndex_from(this.speech_Recognition_languages)
+      this.isPunctuationRecognition = this.devices[deviceIndex].isPunctuationRecognition
+      this.speech_Recognition_languages = this.devices[deviceIndex].speech_Recognition_languages //语音识别语种
+      this.speech_Recognition_languages_curr = this.getDefaultSelectedIndex_from(this.speech_Recognition_languages)
 
     } else {
       if (ConnectDevice.Communication && deviceIndex >= 0 && deviceIndex < ConnectDevice.Communication.length &&
@@ -84,7 +84,8 @@ export struct SmartSettings {
               type: ToggleType.Switch,
               isOn: this.device_isBle ?
               this.devices[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition :
-              ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition
+                ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].isPunctuationRecognition ||
+                  true
             }).onChange((value: boolean) => {
               // 处理开关逻辑
               if (value) {
