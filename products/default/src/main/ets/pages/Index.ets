@@ -29,6 +29,7 @@ import { connectDevice, DeviceArrayType_Ble } from 'bluetooth';
 import { DraggableResizableRect } from 'api'; //截图翻译
 import { sideFunctionList } from 'config';
 import { url } from '@kit.ArkTS';
+import { hilog } from '@kit.PerformanceAnalysisKit';
 
 
 PersistentStorage.persistProp("login", false)
@@ -304,32 +305,35 @@ struct Index {
     let isPhysicalKeyboardExist = true;
     try {
       inputDevice.on("change", (data: inputDevice.DeviceListener) => {
-
+        Reset()
         console.log(`Device event info: ${JSON.stringify(data)}`);
         inputDevice.getKeyboardType(data.deviceId, (err: Error, type: inputDevice.KeyboardType) => {
           console.log("The keyboard type is: " + type);
-          Reset()
           if (type == inputDevice.KeyboardType.ALPHABETIC_KEYBOARD && data.type == 'add') {
             isPhysicalKeyboardExist = true;
           } else if (type == inputDevice.KeyboardType.ALPHABETIC_KEYBOARD && data.type == 'remove') {
             isPhysicalKeyboardExist = false;
           }
-          ConnectDevice.connectDevice().then(() => {
-            for (let item of ConnectDevice.Communication) {
-              item.Communication.changPhysicalKeyboardExistState(isPhysicalKeyboardExist)
-            }
-            if (this.canReset) {
-              const context: common.UIAbilityContext =
-                this.getUIContext().getHostContext() as common.UIAbilityContext;
-              connectDevice(context)
-            }
-            this.canReset = false
-            setTimeout(() => {
-              this.canReset = true
-            }, 3000)
-
-          })
+          for (let item of ConnectDevice.Communication) {
+            item.Communication.changPhysicalKeyboardExistState(isPhysicalKeyboardExist)
+          }
         });
+        ConnectDevice.connectDevice().then(() => {
+          for (let item of ConnectDevice.Communication) {
+            item.Communication.changPhysicalKeyboardExistState(true)
+          }
+          if (this.canReset) {
+            hilog.warn(0x00,'热插拔','检索蓝牙设备');
+            const context: common.UIAbilityContext =
+              this.getUIContext().getHostContext() as common.UIAbilityContext;
+            connectDevice(context)
+          }
+          this.canReset = false
+          setTimeout(() => {
+            this.canReset = true
+          }, 500)
+
+        })
       });
     } catch (error) {
       console.error(`Get device info failed, error: ${JSON.stringify(error, ['code', 'message'])}`);
