@@ -15,7 +15,7 @@ interface ProductType {
 
 @Component
 export struct Tab_profile {
-  @State userLoginInfo: UserLoginInfo = AppStorage.get('userLoginInfo') as UserLoginInfo
+  @StorageLink('userLoginInfo') userLoginInfo: UserLoginInfo = AppStorage.get('userLoginInfo') as UserLoginInfo
   @StorageLink('languages') @Watch('onLanguagesChange') languages: string = 'ZH_CN'
   @Consume('pageInfo') pageInfo: NavPathStack
   @State bottList: bottListType[] = []
