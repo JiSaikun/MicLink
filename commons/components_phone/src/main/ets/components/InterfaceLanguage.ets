@@ -14,10 +14,8 @@ struct InterfaceLanguage {
   @StorageLink('languages') languages: string = 'ZH_CN'
   // 固定的语言代码列表（不变）
   private languageCodes: string[] = [
-    'ZH_CN', 'EN_US', 'ZH_TW', 'JA_JP', 'VI_VN', 'KO_KR',
-    'ID_ID', 'TH_TH', 'FIL_PH', 'MAY_MAY', 'RU_RU', 'TR_TR',
-    'FR_FR', 'DE_DE', 'IT_IT', 'ES_ES', 'MN_MN', 'AR_SA',
-    'KA_KA', 'UYGUR'
+    'ZH_CN','ZH_TW', 'EN_US',  'JA_JP',  'DE_DE', 'KO_KR','ES_ES','RU_RU', 'VI_VN','ID_ID', 'TH_TH', 'FIL_PH', 'MAY_MAY',
+     'TR_TR', 'IT_IT'
   ]
 
   // 根据语言代码获取显示名称（响应式）

@@ -16,9 +16,13 @@ export struct Settings {
 
   @State resolution: SelectOption[] = []
   @State languagesList: SelectOption[] = []
+  // @State languagesCode: string[] = [
+  //   'ZH_CN','ZH_TW', 'EN_US',  'JA_JP', 'VI_VN', 'KO_KR', 'ID_ID', 'TH_TH', 'FIL_PH', 'MAY_MAY',
+  //   'RU_RU', 'TR_TR', 'FR_FR', 'DE_DE', 'IT_IT', 'ES_ES', 'MN_MN', 'AR_SA', 'KA_KA', 'UYGUR'
+  // ]
   @State languagesCode: string[] = [
-    'ZH_CN', 'EN_US', 'ZH_TW', 'JA_JP', 'VI_VN', 'KO_KR', 'ID_ID', 'TH_TH', 'FIL_PH', 'MAY_MAY',
-    'RU_RU', 'TR_TR', 'FR_FR', 'DE_DE', 'IT_IT', 'ES_ES', 'MN_MN', 'AR_SA', 'KA_KA', 'UYGUR'
+    'ZH_CN','ZH_TW', 'EN_US',  'JA_JP', 'VI_VN', 'KO_KR', 'ID_ID', 'TH_TH', 'FIL_PH', 'MAY_MAY',
+    'RU_RU', 'TR_TR', 'DE_DE', 'IT_IT', 'ES_ES'
   ]
   @State resolutionValues: string[] = ['followSystem', '100%', '125%', '150%', '175%', '200%']
 
@@ -49,8 +53,8 @@ export struct Settings {
   getLanguageOptions(): SelectOption[] {
     return [
       { value: Languages.ZH_CN[this.languages] },
-      { value: Languages.EN_US[this.languages] },
       { value: Languages.ZH_TW[this.languages] },
+      { value: Languages.EN_US[this.languages] },
       { value: Languages.JA_JP[this.languages] },
       { value: Languages.VI_VN[this.languages] },
       { value: Languages.KO_KR[this.languages] },
@@ -60,14 +64,14 @@ export struct Settings {
       { value: Languages.MAY_MAY[this.languages] },
       { value: Languages.RU_RU[this.languages] },
       { value: Languages.TR_TR[this.languages] },
-      { value: Languages.FR_FR[this.languages] },
+      // { value: Languages.FR_FR[this.languages] },//法语
       { value: Languages.DE_DE[this.languages] },
       { value: Languages.IT_IT[this.languages] },
       { value: Languages.ES_ES[this.languages] },
-      { value: Languages.MN_MN[this.languages] },
-      { value: Languages.AR_SA[this.languages] },
-      { value: Languages.KA_KA[this.languages] },
-      { value: Languages.UYGUR[this.languages] }
+      // { value: Languages.MN_MN[this.languages] },//蒙古语
+      // { value: Languages.AR_SA[this.languages] },//阿拉伯语
+      // { value: Languages.KA_KA[this.languages] },//格鲁吉亚语
+      // { value: Languages.UYGUR[this.languages] }//维吾尔语
     ]
   }
 
