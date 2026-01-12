@@ -78,7 +78,10 @@ export async function Reset(flax:boolean=true) {
   AppStorage.setOrCreate('Unconnected', false)
   setTimeout(() => {
     if (!AppStorage.get('Unconnected')) {
-      AppStorage.setOrCreate('sideFunctionList',null)
+      /**
+       * 先注释下边的代码，因为设备休眠后之前的AI对话记录就会消失不见
+       */
+      // AppStorage.setOrCreate('sideFunctionList',null)
     }
   }, 5000)
 

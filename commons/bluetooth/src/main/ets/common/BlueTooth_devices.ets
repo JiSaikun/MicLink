@@ -31,8 +31,23 @@ import { Notification } from 'config';
 
 const permissions: Array<Permissions> = ['ohos.permission.ACCESS_BLUETOOTH'];
 
+// 应用级状态键：表示当前是否正在进行蓝牙扫描和连接
+const BLUETOOTH_SCANNING_KEY = 'bluetooth_isScanningAndConnecting';
+
+// 初始化状态：如果AppStorage中没有该键，则设置为false
+if (AppStorage.get(BLUETOOTH_SCANNING_KEY) === undefined) {
+  AppStorage.setOrCreate(BLUETOOTH_SCANNING_KEY, false);
+}
+
 // 使用UIExtensionAbility：将common.UIAbilityContext 替换为common.UIExtensionContext
 export function reqPermissionsFromUser(permissions: Array<Permissions>, context: common.UIAbilityContext): void {
+  // 从AppStorage获取扫描状态
+  const isScanningAndConnecting = AppStorage.get(BLUETOOTH_SCANNING_KEY) as boolean;
+  // 如果正在进行扫描和连接，直接返回，避免重复操作
+  if (isScanningAndConnecting) {
+    console.log('蓝牙扫描和连接正在进行中，拒绝新的扫描请求');
+    return;
+  }
   let atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
   // requestPermissionsFromUser会判断权限的授权状态来决定是否唤起弹窗。
   atManager.requestPermissionsFromUser(context, permissions).then((data) => {
@@ -2192,6 +2207,9 @@ function deepCopyDevices(devices: DeviceArrayType_Ble[]): DeviceArrayType_Ble[] 
 
 //获取已配对的蓝牙连接列表
 function getPairedDevices() {
+  // 设置应用级状态为true，表示正在进行扫描和连接
+  AppStorage.setOrCreate(BLUETOOTH_SCANNING_KEY, true);
+  
   try {
     // 获取已配对设备的地址数组
     let pairedDevices: Array<string> = connection.getPairedDevices();
@@ -2229,13 +2247,29 @@ function getPairedDevices() {
 
         } catch (deviceErr) {
           console.error('处理设备连接失败:', item, deviceErr);
+        } finally {
+          // 所有设备处理完成后，设置标志位为false
+          if (i === pairedDevices.length - 1) {
+            setTimeout(() => {
+              AppStorage.setOrCreate(BLUETOOTH_SCANNING_KEY, false);
+              console.log('蓝牙扫描和连接操作已完成');
+            }, (i + 1) * 200); // 等待最后一个设备的延迟连接完成
+          }
         }
       }, i * 200); // 每个设备间隔200ms
+    }
+
+    // 如果没有设备需要处理，直接设置应用级状态为false
+    if (pairedDevices.length === 0) {
+      AppStorage.setOrCreate(BLUETOOTH_SCANNING_KEY, false);
+      console.log('没有符合条件的蓝牙设备需要处理');
     }
 
   } catch (err) {
     console.error('Error getting paired devices. Code: ' + (err as BusinessError).code + ', Message: ' +
     (err as BusinessError).message);
+    // 发生错误时，设置应用级状态为false
+    AppStorage.setOrCreate(BLUETOOTH_SCANNING_KEY, false);
   }
 }
 
