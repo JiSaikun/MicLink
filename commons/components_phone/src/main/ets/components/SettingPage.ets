@@ -33,7 +33,8 @@ struct SettingPage {
 
   onCancel() {
     console.info('单击第一个按钮时回调');
-    this.pageInfo.pushPath({ "name": 'login&phone' })
+    this.pageInfo.pop()
+    // this.pageInfo.pushPath({ "name": 'login&phone' })
     AppStorage.setOrCreate('login', false)
     AppStorage.setOrCreate('userLoginInfo', null)
   }

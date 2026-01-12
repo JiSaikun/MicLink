@@ -14,13 +14,6 @@
       "data": {
         "description": "按键监听"
       }
-    }, {
-      "name": "login&phone",
-      "pageSourceFile": "src/main/ets/page/Login_phone.ets",
-      "buildFunction": "LoginBuilder",
-      "data": {
-        "description": "按键监听"
-      }
     }
   ]
 }

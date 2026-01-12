@@ -10,6 +10,7 @@ import { Reset } from 'common'
 import { common } from '@kit.AbilityKit'
 import { CommonConfig, Languages } from 'components_phone'
 import { Tab_ai } from '../components/Tab_ai'
+import { Login_phone } from 'login'
 
 interface BarType {
   img: string
@@ -188,9 +189,6 @@ struct Index {
       console.log(e)
     }
     this.pageInfo.disableAnimation(true)
-    if (!this.login) {
-      this.pageInfo.pushPath({ 'name': 'login&phone' })
-    }
   }
 
   change_mouse_KeyPressType() {
@@ -222,6 +220,10 @@ struct Index {
   build() {
     Navigation(this.pageInfo) {
       Stack() {
+        if (!this.login) {
+          Login_phone()
+            .zIndex(10000000)
+        }
         // Overlay()
         //   .zIndex(100)
         Column() {
