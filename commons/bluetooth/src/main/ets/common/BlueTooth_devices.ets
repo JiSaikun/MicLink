@@ -158,11 +158,26 @@ export class BlueTooth_devices {
   }
 
   public async closeconnectDevice() {
-    // await this.setCharacteristicChangeNotification(false)
-    console.log('清除设备：关闭特征值监听')
-    this.gattClient?.close()
+    try {
+      // 禁用特征值通知
+      await this.setCharacteristicChangeNotification(false);
+      console.log('清除设备：关闭特征值监听成功')
+    } catch (err) {
+      console.error('关闭特征值监听失败:', err);
+    }
+    
+    // 关闭GATT客户端连接
+    if (this.gattClient) {
+      this.gattClient.close();
+      this.gattClient = null; // 清空引用，避免重复调用
+    }
+    
+    // 停止所有定时器
     this.stopCharacteristicTimeout();
     this.stopDeviceValidationTimeout(); // 停止设备验证超时检测
+    
+    // 重置通知标志位
+    this.isSetCharacteristicChangeNotification = true;
   }
 
   // 设置音频WebSocket处理器
@@ -1663,12 +1678,9 @@ export class BlueTooth_devices {
     //   descriptorValue: arrayBuffer
     // };
     // descriptors[0] = descriptor;
+    // 移除限制，允许每次调用都执行通知设置
     if (state) {
-      if (this.isSetCharacteristicChangeNotification) {
-        this.isSetCharacteristicChangeNotification = false
-      } else {
-        return
-      }
+      this.isSetCharacteristicChangeNotification = false
     }
     let arrayBufferC = new ArrayBuffer(8);
     let characteristic: ble.BLECharacteristic = {
@@ -1735,10 +1747,24 @@ export class BlueTooth_devices {
 
   }
 
-  public connectDevice(deviceClass: BlueTooth_devices) {
+  private connectRetryCount: number = 0;
+  private readonly MAX_CONNECT_RETRIES: number = 3;
+  
+  public connectDevice(deviceClass: BlueTooth_devices, retryCount: number = 0) {
     try {
-      console.info('开始连接BLE设备:', this.device_address);
-      this.BlueTooth_devices = deviceClass
+      console.info(`开始连接BLE设备: ${this.device_address}, 重试次数: ${retryCount}`);
+      this.BlueTooth_devices = deviceClass;
+      
+      // 如果之前有GATT客户端，先关闭
+      if (this.gattClient) {
+        try {
+          this.gattClient.close();
+        } catch (err) {
+          console.error('关闭旧GATT客户端失败:', err);
+        }
+        this.gattClient = null;
+      }
+      
       this.gattClient = ble.createGattClientDevice(this.device_address);
       console.info('GATT客户端创建成功');
 
@@ -1750,8 +1776,20 @@ export class BlueTooth_devices {
       console.info('发起连接请求');
       // 注意：获取服务现在在ConnectStateChanged中处理，当连接状态变为2（已连接）时
     } catch (err) {
-      console.error('errCode: ' + (err as BusinessError).code + ', errMessage: ' +
-      (err as BusinessError).message);
+      console.error('连接失败:', err);
+      
+      // 重试逻辑
+      if (retryCount < this.MAX_CONNECT_RETRIES) {
+        const nextRetryCount = retryCount + 1;
+        console.info(`准备进行第 ${nextRetryCount} 次重试，当前设备地址: ${this.device_address}`);
+        
+        // 延迟重试，避免过于频繁
+        setTimeout(() => {
+          this.connectDevice(deviceClass, nextRetryCount);
+        }, 1000 * nextRetryCount); // 指数退避
+      } else {
+        console.error(`设备 ${this.device_address} 连接失败，已达到最大重试次数 ${this.MAX_CONNECT_RETRIES}`);
+      }
     }
   }
 
@@ -1789,10 +1827,16 @@ export class BlueTooth_devices {
         console.error('更新设备连接状态失败:', err);
       }
     } else if (connectState === 0) {
-      console.info('检测到蓝牙连接断开');
-      // 连接断开时停止特征值变化超时检测
-      this.stopCharacteristicTimeout();
-      // 连接断开时更新设备连接状态
+      console.info('检测到蓝牙连接断开，开始清理资源');
+      
+      // 调用closeconnectDevice方法完全清理资源
+      try {
+        this.closeconnectDevice();
+      } catch (err) {
+        console.error('清理资源失败:', err);
+      }
+      
+      // 更新设备连接状态
       try {
         if ((AppStorage.get('devices') as DeviceArrayType_Ble[]) &&
           (AppStorage.get('devices') as DeviceArrayType_Ble[]).length > 0 && this.device_currIndex >= 0 &&
@@ -2152,9 +2196,22 @@ function getPairedDevices() {
     // 获取已配对设备的地址数组
     let pairedDevices: Array<string> = connection.getPairedDevices();
     console.log('Paired devices:', pairedDevices); // 例如：['11:22:33:AA:BB:FF', '68:13:24:79:4C:8C']
+    
+    // 获取当前设备列表
+    const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || [];
 
     for (let i = 0; i < pairedDevices.length; i++) {
       const item = pairedDevices[i];
+      
+      // 检查设备是否已经在列表中
+      const deviceExists = currentDevices.some(device => 
+        device.BlueTooth_devices.device_address === item
+      );
+      
+      if (deviceExists) {
+        console.log(`设备 ${item} 已存在于列表中，跳过重复连接`);
+        continue;
+      }
 
       // 延迟连接，避免同时连接太多设备
       setTimeout(() => {
@@ -2162,16 +2219,6 @@ function getPairedDevices() {
           // 获取对端蓝牙设备的名称
           let remoteDeviceName: string = connection.getRemoteDeviceName(item, true);
           console.log('获取对端蓝牙设备的名称:', remoteDeviceName);
-
-          // try {
-          //   connection.getRemoteProfileUuids(item, (err: BusinessError, data: Array<connection.ProfileUuids>) => {
-          //     console.error('getRemoteProfileUuids, err: ' + JSON.stringify(err) + '\n' + item +
-          //       '\t蓝牙Profile协议的UUID: ' + JSON.stringify(data));
-          //   });
-          // } catch (err) {
-          //   console.error('errCode: ' + (err as BusinessError).code + ', errMessage: ' +
-          //   (err as BusinessError).message);
-          // }
 
           let device = new BlueTooth_devices(item);
 
