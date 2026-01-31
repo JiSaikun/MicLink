@@ -150,7 +150,6 @@ export class AudioWebSocketHandler {
   private readonly MAX_BUFFER_SIZE = 50; // 最大缓冲分片数
   private readonly MIN_SAMPLES_FOR_COMPLETION = 1024; // 最小采样点数才开始检测完成（约0.064秒@16kHz）
   private webViewController: webview.WebviewController | null = null
-
   // 新增优化相关属性（简化为类似蓝牙的实时发送模式）
   private lastSentSampleIndex: number = 0; // 采样点索引（仿蓝牙模式）
   private lastSendTime: number = 0; // 记录上次发送时间
@@ -397,15 +396,17 @@ export class AudioWebSocketHandler {
           return;
         }
         if (this.state) {
-          if (this.wending) {
-            if (res.data.type === 'LAST' || res.data.type === "FIN") {
-              this.handleTextResult(audioToText_res, res.data.type);
-            }
+          if (res.data.type === 'LAST' || res.data.type === "FIN") {
+            this.handleTranslation(audioToText_res, res.data.type);
             return
           }
-          this.handleTextResult(audioToText_res, res.data.type);
+          let dataArray: translate_Response = {
+            transText: (AppStorage.get('voiceTranslationText') as translate_Response).transText,
+            text: audioToText_res,
+          };
+          AppStorage.setOrCreate('voiceTranslationText', dataArray);
         } else {
-          if (!AppStorage.get('isAI_assistant')) {
+          if (!AppStorage.get('isAI_assistant') && (res.data.type === 'LAST' || res.data.type === "FIN")) {
             this.handleTextResult(audioToText_res, res.data.type);
           }
         }
@@ -422,11 +423,29 @@ export class AudioWebSocketHandler {
     try {
       const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, text);
       let systemPasteboard: pasteboard.SystemPasteboard = pasteboard.getSystemPasteboard();
-
       systemPasteboard.setData(pasteData)
         .then(() => {
           console.error('文本已复制到剪贴板: ' + text);
-          this.processClipboardText(text, systemPasteboard, type);
+          if (this.wending) {
+            this.wending = false;
+            setTimeout(() => {
+              // 语音输入模式
+              const deviceIndex = AppStorage.get('device_currIndex') as number || 0;
+              const communication = ConnectDevice.Communication[deviceIndex]?.Communication;
+              if (communication) {
+                communication.getDeviceInfo([0x20, 0x01, 0x19])
+                  .then(() => {
+                    if (AppStorage.get('flax') && !this.state) {
+                      Notification.clear()
+                      Notification.state = false
+                    }
+                    setTimeout(() => {
+                      systemPasteboard.clearData();
+                    }, 300);
+                  });
+              }
+            }, 50)
+          }
         })
         .catch((err: BusinessError) => {
           console.error('复制失败: ' + err.message);
@@ -436,53 +455,19 @@ export class AudioWebSocketHandler {
     }
   }
 
-  private processClipboardText(text: string, systemPasteboard: pasteboard.SystemPasteboard, type: string): void {
-    let atManager = abilityAccessCtrl.createAtManager();
-    try {
-      atManager.requestPermissionsFromUser(AppStorage.get('context'), ['ohos.permission.READ_PASTEBOARD']);
-    } catch (err) {
-      console.error(`权限申请失败: ${err.code}, ${err.message}`);
+  private handleTranslation(text: string, type: string): void {
+    const deviceIndex = AppStorage.get('device_currIndex') as number || 0;
+    const device = ConnectDevice.Communication[deviceIndex];
+    if (!device || !device.Communication) {
+      console.error('未找到可用设备，无法进行翻译');
+      return;
     }
 
-    systemPasteboard.getData().then((pasteData: pasteboard.PasteData) => {
-      console.log('剪贴板记录数量:', pasteData.getRecordCount());
-      let clipboardText: string = pasteData.getPrimaryText();
-
-      if (this.state === 0 && this.wending && !AppStorage.get('isAI_assistant')) {
-        this.wending = false
-        // 语音输入模式
-        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number || 0].Communication.getDeviceInfo([0x20,
-          0x01, 0x19])
-          .then(() => {
-            if (AppStorage.get('flax') && !this.state && !this.wending) {
-              Notification.clear()
-              Notification.state = false
-            }
-            setTimeout(() => {
-              systemPasteboard.clearData();
-            }, 2000);
-          });
-        return;
-      }
-
-      if (this.state === 1) {
-        // 语音翻译模式
-        this.handleTranslation(clipboardText, systemPasteboard, type);
-      }
-    })
-      .catch((err: BusinessError) => {
-        console.error('获取剪贴板数据失败: ' + err.message);
-      });
-  }
-
-  private handleTranslation(text: string, systemPasteboard: pasteboard.SystemPasteboard, type: string): void {
     let params: translate_Params = {
-      appkey: (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number ||
-        0].getModelInfo as getModelInfoModel).appkey,
+      appkey: (device.getModelInfo as getModelInfoModel).appkey,
       from: AppStorage.get('from_languages') ? AppStorage.get('from_languages') as string : 'ZH_CN',
-      productCode: ConnectDevice.Communication[AppStorage.get('device_currIndex') as number ||
-        0].Communication.deviceInfo.productType.toString(),
-      sno: ConnectDevice.Communication[AppStorage.get('device_currIndex') as number || 0].Communication.deviceInfo.sn,
+      productCode: device.Communication.deviceInfo.productType.toString(),
+      sno: device.Communication.deviceInfo.sn,
       text: text,
       to: AppStorage.get('to_languages') ? AppStorage.get('to_languages') as string : 'EN_US'
     };
@@ -496,17 +481,18 @@ export class AudioWebSocketHandler {
         };
         AppStorage.setOrCreate('voiceTranslationText', dataArray);
         if (AppStorage.get('flax') && AppStorage.get('isAutoCloseVoiceTransPop')) {
-          Notification.setOrCreate(Languages.voiceTranslation[AppStorage.get('languages') as string], res.data?.transText)
+          Notification.setOrCreate(Languages.voiceTranslation[AppStorage.get('languages') as string],
+            res.data?.transText)
         }
         if (this.wending) {
           setTimeout(() => {
             AppStorage.setOrCreate('changeText', true)
           }, 2000)
         }
-        systemPasteboard.clearData();
+        let systemPasteboard: pasteboard.SystemPasteboard = pasteboard.getSystemPasteboard();
         // console.error('翻译文本已复制到剪贴板: ' + dataArray);
         // console.error('翻译文本已复制到剪贴板: ' + AppStorage.get('isAutoCloseVoiceTransPop')+(type === 'LAST' || type === "FIN"));
-        if (AppStorage.get('isAutoCloseVoiceTransPop') && (type === 'LAST' || type === "FIN")&&this.wending) {
+        if (AppStorage.get('isAutoCloseVoiceTransPop') && (type === 'LAST' || type === "FIN") && this.wending) {
           // console.error('翻译文本已复制到剪贴板1: ' + dataArray.transText);
           try {
             const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, dataArray.transText);
@@ -517,29 +503,26 @@ export class AudioWebSocketHandler {
                 Float_Window.destroyWindow(Float_Window.window_VoiceTranslation)
                 setTimeout(() => {
                   // 语音输入模式
-                  ConnectDevice.Communication[AppStorage.get('device_currIndex') as number ||
-                    0].Communication.getDeviceInfo([0x20,
-                    0x01, 0x19])
-                    .then(() => {
-                      if (AppStorage.get('flax') && AppStorage.get('isAutoCloseVoiceTransPop')) {
-                        Notification.clear()
-                        Notification.state = false
-                      }
-                      console.error('执行粘贴操作: ' + dataArray.transText);
-                      Float_Window.showVoiceTranslation = false
-                      if (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number ||
-                        0].Communication.audioDataState) {
-                        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number ||
-                          0].Communication.getDeviceInfo([0x63])
-                        ConnectDevice.Communication[AppStorage.get('device_currIndex') as number ||
-                          0].Communication.audioDataState =
-                          !ConnectDevice.Communication[AppStorage.get('device_currIndex') as number ||
-                            0].Communication.audioDataState
-                      }
-                      setTimeout(() => {
-                        systemPasteboard.clearData();
-                      }, 2000);
-                    });
+                  const deviceIndex = AppStorage.get('device_currIndex') as number || 0;
+                  const communication = ConnectDevice.Communication[deviceIndex]?.Communication;
+                  if (communication) {
+                    communication.getDeviceInfo([0x20, 0x01, 0x19])
+                      .then(() => {
+                        if (AppStorage.get('flax') && AppStorage.get('isAutoCloseVoiceTransPop')) {
+                          Notification.clear()
+                          Notification.state = false
+                        }
+                        console.error('执行粘贴操作: ' + dataArray.transText);
+                        Float_Window.showVoiceTranslation = false
+                        if (communication.audioDataState) {
+                          communication.getDeviceInfo([0x63])
+                          communication.audioDataState = !communication.audioDataState
+                        }
+                        setTimeout(() => {
+                          systemPasteboard.clearData();
+                        }, 300);
+                      });
+                  }
                 }, 50);
               })
               .catch((err: BusinessError) => {
@@ -551,8 +534,8 @@ export class AudioWebSocketHandler {
         }
 
       } else {
-        AppStorage.setOrCreate('flax_yuyinfanyi_chachaobudaoyuyan',
-          !AppStorage.get('flax_yuyinfanyi_chachaobudaoyuyan'));
+        AppStorage.setOrCreate('flax_yuyinfanyi_chazhaobudaoyuyan',
+          !AppStorage.get('flax_yuyinfanyi_chazhaobudaoyuyan'));
       }
     })
       .catch(() => {
@@ -1276,7 +1259,8 @@ export class AudioWebSocketHandler {
           }
 
           if (stableCount % 50 === 0) { // 减少日志频率
-            console.log(`2.4G采样点不足(${currentTotalSamples}/${this.MIN_SAMPLES_FOR_COMPLETION})，继续等待...（已等待${Math.floor(elapsedTime / 1000)}秒）`);
+            console.log(`2.4G采样点不足(${currentTotalSamples}/${this.MIN_SAMPLES_FOR_COMPLETION})，继续等待...（已等待${Math.floor(elapsedTime /
+              1000)}秒）`);
           }
           stableCount++;
           return;
@@ -1294,7 +1278,8 @@ export class AudioWebSocketHandler {
           stableCount++;
 
           if (stableCount % 25 === 0 || stableCount >= 50) { // 减少日志频率
-            console.log(`2.4G数据稳定计数: ${stableCount}/50 (${stableCount * this.CHECK_INTERVAL_MS}ms), audioDataState: ${audioDataState}`);
+            console.log(`2.4G数据稳定计数: ${stableCount}/50 (${stableCount *
+            this.CHECK_INTERVAL_MS}ms), audioDataState: ${audioDataState}`);
           }
 
           // 如果数据稳定超过阈值，发送结束标记
@@ -1404,6 +1389,7 @@ export class AudioWebSocketHandler {
     });
   }
 }
+
 // 定义搜索引擎配置接口
 interface SearchEngineConfig {
   name: string;

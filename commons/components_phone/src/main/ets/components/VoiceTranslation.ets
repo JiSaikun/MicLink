@@ -623,10 +623,10 @@ struct VoiceTranslation {
     return langMap.get(currentLang) || item.name; // 默认中文简体
   }
 
-  @Watch('change_flax_yuyinfanyi_chachaobudaoyuyan') @StorageLink('flax_yuyinfanyi_chachaobudaoyuyan') flax_yuyinfanyi_chachaobudaoyuyan: boolean =
+  @Watch('change_flax_yuyinfanyi_chazhaobudaoyuyan') @StorageLink('flax_yuyinfanyi_chazhaobudaoyuyan') flax_yuyinfanyi_chazhaobudaoyuyan: boolean =
     true //语音翻译为true,文本翻译为false
 
-  change_flax_yuyinfanyi_chachaobudaoyuyan() {
+  change_flax_yuyinfanyi_chazhaobudaoyuyan() {
     promptAction.showToast({ message: '无法翻译到对应目标语言', backgroundColor: Color.Red, duration: 1000 });
   }
 

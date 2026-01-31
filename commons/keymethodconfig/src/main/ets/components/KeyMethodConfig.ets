@@ -952,8 +952,8 @@ export class _KeyMethodConfig {
               }
               AppStorage.setOrCreate('voiceTranslationText', dataArray)
             } else {
-              AppStorage.setOrCreate('flax_yuyinfanyi_chachaobudaoyuyan',
-                !AppStorage.get('flax_yuyinfanyi_chachaobudaoyuyan'))
+              AppStorage.setOrCreate('flax_yuyinfanyi_chazhaobudaoyuyan',
+                !AppStorage.get('flax_yuyinfanyi_chazhaobudaoyuyan'))
             }
 
           })

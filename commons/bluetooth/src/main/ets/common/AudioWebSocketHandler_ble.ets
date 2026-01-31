@@ -453,9 +453,7 @@ export class AudioWebSocketHandler_ble {
             // 语音翻译模式
             this.handleTranslation(audioToText_res, res.data.type);
             return
-
           }
-          // this.handleTextResult(audioToText_res, res.data.type);
           let dataArray: translate_Response = {
             transText: (AppStorage.get('voiceTranslationText') as translate_Response).transText,
             text: audioToText_res,
@@ -605,8 +603,8 @@ export class AudioWebSocketHandler_ble {
         }
 
       } else {
-        AppStorage.setOrCreate('flax_yuyinfanyi_chachaobudaoyuyan',
-          !AppStorage.get('flax_yuyinfanyi_chachaobudaoyuyan'));
+        AppStorage.setOrCreate('flax_yuyinfanyi_chazhaobudaoyuyan',
+          !AppStorage.get('flax_yuyinfanyi_zhachaobudaoyuyan'));
       }
     })
       .catch(() => {
