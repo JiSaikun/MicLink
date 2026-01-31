@@ -192,7 +192,7 @@ struct VoiceTranslation {
         Image($r('app.media.MicLink'))
           .width(48)
         Stack() {
-          Image($r("app.media.float_window_deafult"))
+          Image($r(this.voiceTranslationState?"app.media.floating_anim":"app.media.float_window_deafult"))
             .width(100)
             .height(100)
           if (this.voiceOrText) {

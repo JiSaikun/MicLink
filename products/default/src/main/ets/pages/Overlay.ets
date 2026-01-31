@@ -9,13 +9,15 @@ export struct Overlay {
   @StorageLink('isAI_assistant') isAI_assistant: boolean = false
   @StorageLink('assistant') assistant: boolean = false
 
+
+
   /**
    * 处理语音指令
    */
   changeText(): void {
     if (this.isAI_assistant && this.voiceInputText) {
       new AI_Assistant().changeText()
-      this.linshi=''
+      this.linshi = ''
     }
   }
 
@@ -23,9 +25,10 @@ export struct Overlay {
     Flex({ direction: FlexDirection.Column }) {
       Flex() {
         Stack() {
-          Image($r("app.media.float_window_deafult"))
+          Image($r(this.voiceInputState?"app.media.floating_anim":"app.media.float_window_deafult"))
             .width(100)
             .height(100)
+
           if (this.isAI_assistant) {
             Image($r(`${this.voiceInputState ? 'app.media.AI_assistant' : 'app.media.unAI_assistant'}`))
               .width(32)
@@ -40,7 +43,7 @@ export struct Overlay {
         .width(100)
 
         Scroll() {
-          Text(this.voiceInputText?this.voiceInputText:this.linshi)
+          Text(this.voiceInputText ? this.voiceInputText : this.linshi)
             .textAlign(TextAlign.Start)
             .padding({ right: 8, left: 8 })
             .fontSize(14)
@@ -56,7 +59,7 @@ export struct Overlay {
       .height('100%')
       .padding(24)
       .borderRadius(16)
-      .backgroundColor(Color.White)
+      .backgroundColor('#F8F8F8')
     }
   }
 }
