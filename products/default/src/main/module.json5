@@ -14,27 +14,27 @@
         "name": "ohos.permission.INTERNET",
         "reason": "$string:INTERNET"
       },
-      {
-        "name": "ohos.permission.CUSTOM_SCREEN_CAPTURE",
-        //屏幕截图
-        "reason": '$string:CUSTOM_SCREEN_CAPTURE',
-        "usedScene": {
-          "abilities": [
-            "EntryAbility"
-          ],
-          "when": "inuse"
-        }
-      },
-      {
-        "name": "ohos.permission.MICROPHONE",
-        "reason": '$string:MICROPHONE',
-        "usedScene": {
-          "abilities": [
-            "EntryAbility"
-          ],
-          "when": "inuse"
-        }
-      },
+//      {
+//        "name": "ohos.permission.CUSTOM_SCREEN_CAPTURE",
+//        //屏幕截图
+//        "reason": '$string:CUSTOM_SCREEN_CAPTURE',
+//        "usedScene": {
+//          "abilities": [
+//            "EntryAbility"
+//          ],
+//          "when": "inuse"
+//        }
+//      },
+//      {
+//        "name": "ohos.permission.MICROPHONE",
+//        "reason": '$string:MICROPHONE',
+//        "usedScene": {
+//          "abilities": [
+//            "EntryAbility"
+//          ],
+//          "when": "inuse"
+//        }
+//      },
       {
         "name": "ohos.permission.ACCESS_EXTENSIONAL_DEVICE_DRIVER",
         "reason": "$string:ACCESS_EXTENSIONAL_DEVICE_DRIVER"

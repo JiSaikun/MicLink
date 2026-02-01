@@ -22,7 +22,7 @@
     },
     {
       "name": "INPUT_KEYBOARD_CONTROLLER",
-      "value": "设置功能键（如：CapsLock键）使能状态。使用Promise异步回调"
+      "value": "设置功能键（如：CapsLock键）使能状态"
     },
     {
       "name": "ACCESS_DDK_HID",
