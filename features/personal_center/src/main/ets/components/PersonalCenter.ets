@@ -1,4 +1,4 @@
-import { ThemeConfig, updateAvatar, UserLoginInfo } from 'common'
+import { AppUtil, ThemeConfig, updateAvatar, UserLoginInfo } from 'common'
 import { Languages } from 'config'
 import { LengthMetrics } from '@kit.ArkUI'
 import { RechargeRecord } from './RechargeRecord '
@@ -278,7 +278,7 @@ export struct PersonalCenter {
           .align(Alignment.TopStart)
 
           Row() {
-            Text(Languages.softwareVersion[this.languages] + '：' + 'V2.7.17')
+            Text(Languages.softwareVersion[this.languages] + '：' + `V${AppUtil.getVersionName()}`)
               .fontSize(ThemeConfig.TextSize_14)
               .fontColor(ThemeConfig.TextBodyColor)
               .fontWeight(ThemeConfig.TextWeight_400)

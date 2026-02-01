@@ -94,7 +94,7 @@
         "name": "PhoneAbility",
         "srcEntry": "./ets/phoneability/PhoneAbility.ets",
         "description": "$string:PhoneAbility_desc",
-        "icon": "$media:Icon_App",
+        "icon": "$media:layered_image",
         "label": "$string:PhoneAbility_label",
         "startWindowIcon": "$media:Vector",
         "startWindowBackground": "$color:start_window_background",

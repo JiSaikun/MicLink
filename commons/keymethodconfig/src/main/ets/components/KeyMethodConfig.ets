@@ -114,6 +114,7 @@ async function LandscapeNotification(callBack: () => void): Promise<boolean> {
             })
         } else { //查看用户是否开启了横幅通知
           console.error('查看用户是否开启了横幅通知')
+
           resolve(true)
 
           // addSlot回调

@@ -2,7 +2,7 @@
   "string": [
     {
       "name": "app_name",
-      "value": "MyApplication_MicLink"
+      "value": "MicLink"
     },
     {
       "name": "CUSTOM_SCREEN_CAPTURE",
