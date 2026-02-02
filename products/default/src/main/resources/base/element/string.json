@@ -58,7 +58,7 @@
     },
     {
       "name": "SYSTEM_FLOAT_WINDOW",
-      "value": "开发悬浮窗窗口"
+      "value": "MicLink 申请 ohos.permission.SYSTEM_FLOAT_WINDOW 权限，仅用于鸿蒙 2in1（PC）设备上的 “屏幕共享 + 协同交互” 场景，核心目的是通过悬浮窗实现 “标注、翻译、演算、指引” 等功能与共享屏幕的联动，解决远程办公、在线教学、技术支持场景中的效率痛点，且完全符合该权限限定的 “2in1（PC）设备 + 屏幕共享场景” 要求，无其他非必要用途。"
     },
     {
       "name": "KEEP_BACKGROUND_RUNNING",
