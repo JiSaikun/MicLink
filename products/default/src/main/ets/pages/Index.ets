@@ -30,7 +30,7 @@ import { DraggableResizableRect } from 'api'; //截图翻译
 import { sideFunctionList } from 'config';
 import { url } from '@kit.ArkTS';
 import { hilog } from '@kit.PerformanceAnalysisKit';
-
+import { Want } from '@kit.AbilityKit';
 
 PersistentStorage.persistProp("login", false)
 PersistentStorage.persistProp("userLoginInfo", null)
@@ -71,6 +71,7 @@ PersistentStorage.persistProp("resolutionScale", 'followSystem') //分辨率缩�
 @Component
 struct Index {
   @StorageLink("login") login: boolean = true
+  @Watch('restart')@StorageLink("netAvailable") netAvailable: boolean = true
   @StorageLink("keyConfigExclusion") keyConfigExclusion: string[] = ["Action_ST"] //按键配置剔除  截图翻译
   @StorageLink("mouseconfig") mouseconfig: DeviceInfo | null = null
   @StorageLink("currpageIsAI") currpageIsAI: boolean = false
@@ -111,7 +112,25 @@ struct Index {
   @State refresh: boolean = true
   @StorageLink("refreshDevicesList") refreshDevicesList: boolean = true
   @StorageLink("Unconnected") Unconnected: boolean = false //是否有设备连接
-
+  restart(){
+    if (this.netAvailable) {
+      /**
+       * 应用重启
+       */
+      // console.log('应用重启')
+      // let applicationContext = (this.getUIContext().getHostContext() as common.UIAbilityContext).getApplicationContext();
+      // let want: Want = {
+      //   bundleName: 'com.miclink.myapplication',
+      //   abilityName: 'EntryAbility'
+      // };
+      // try {
+      //   applicationContext.restartApp(want);
+      //   hilog.info(0x0000, 'testTag', '%{public}s', 'applicationContext.restartApp');
+      // } catch (error) {
+      //   console.error(`restartApp fail, error: ${JSON.stringify(error)}`);
+      // }
+    }
+  }
   refreshPage() {
     this.refresh = false
     setTimeout(() => {

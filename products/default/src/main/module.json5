@@ -14,6 +14,9 @@
         "name": "ohos.permission.INTERNET",
         "reason": "$string:INTERNET"
       },
+      {
+        "name": "ohos.permission.GET_NETWORK_INFO"
+      },
 //      {
 //        "name": "ohos.permission.CUSTOM_SCREEN_CAPTURE",
 //        //屏幕截图

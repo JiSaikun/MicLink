@@ -68,7 +68,7 @@ async function getSlot(): Promise<boolean> { //用户已经开启了通知权限
                     });
                 } else {
                   resolve(true)
-                  AppStorage.setOrCreate('sdajfhjk', true)
+                  // AppStorage.setOrCreate('sdajfhjk', true)
                   // promptAction.showToast({ message: '开启语音翻译操作' })
                 }
               })
@@ -107,7 +107,7 @@ async function LandscapeNotification(callBack: () => void): Promise<boolean> {
                       `[ANS] openNotificationSettings failed, code is ${err.code}, message is ${err.message}`);
                   });
               } else {
-                AppStorage.setOrCreate('sdajfhjk', true)
+                // AppStorage.setOrCreate('sdajfhjk', true)
                 // promptAction.showToast({ message: '开启语音翻译操作' })
                 resolve(false)
               }

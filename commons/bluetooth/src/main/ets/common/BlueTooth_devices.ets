@@ -1626,6 +1626,7 @@ export class BlueTooth_devices {
               }
             }).catch(() => {
               console.log('获取设备模型信息请求失败');
+              this._getModelInfo = true
             });
           }
 

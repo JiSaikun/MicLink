@@ -20,3 +20,4 @@ export { register_Response, updateAvatar,fileSelect } from './src/main/ets/commo
 export { UpdateAvatar_Camera,takePhoto } from './src/main/ets/common/UpdateAvatar_Camera'
 export { AppUtil } from './src/main/ets/common/AppUtil'
 export { ImageUploader } from './src/main/ets/common/ImageUploader'
+export { setupNetworkStatusListener } from './src/main/ets/common/setupNetworkStatusListener'

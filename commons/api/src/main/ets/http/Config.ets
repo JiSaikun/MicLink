@@ -42,12 +42,15 @@ instance.interceptors.response.use(
         duration: 2000,
         alignment: 4 // 鸿蒙 Alignment.Center 的枚举值为 4，避免直接引用可能的类型问题
       });
-      return Promise.reject(response.data);
+      return Promise.reject(response.data);2345
     }
   },
   (error: AxiosError) => {
-    logger.error('响应报错：', JSON.stringify(error.message));
+    logger.error('响应报错：', JSON.stringify(error));
     // 超时/网络错误处理
+    if (!AppStorage.get('netAvailable')){
+      promptAction.showToast({ message: '网络错误！请您稍后重试' });
+    }
     if (error.message.includes('timeout')) {
       promptAction.showToast({ message: '请求超时！请您稍后重试' });
     }
