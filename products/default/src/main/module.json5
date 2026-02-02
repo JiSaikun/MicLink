@@ -107,6 +107,9 @@
           ],
           "when": "always"
         }
+      },
+      {
+        "name": "ohos.permission.PREPARE_APP_TERMINATE"
       }
     ],
     "deliveryWithInstall": true,
@@ -155,12 +158,22 @@
             //                // 声明功能为文件打开
             //              }
             //            ]
-          }
+          },
         ],
         "backgroundModes": [
           //申请长时任务
           "bluetoothInteraction"
-        ]
+        ],
+      },
+      {
+        "name": "BackGroundAbility",
+        "srcEntry": "./ets/backgroundability/BackGroundAbility.ets",
+        "description": "$string:EntryAbility_desc",
+        "icon": "$media:layered_image",
+        "label": "$string:EntryAbility_label",
+        "startWindowIcon": "$media:startIcon",
+        "startWindowBackground": "$color:start_window_background",
+        "exported": true,
       }
     ],
     "extensionAbilities": [

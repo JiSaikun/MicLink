@@ -21,3 +21,4 @@ export { UpdateAvatar_Camera,takePhoto } from './src/main/ets/common/UpdateAvata
 export { AppUtil } from './src/main/ets/common/AppUtil'
 export { ImageUploader } from './src/main/ets/common/ImageUploader'
 export { setupNetworkStatusListener } from './src/main/ets/common/setupNetworkStatusListener'
+export { loadStatusBar,holdStatusBar } from './src/main/ets/common/statusBarUtils'

@@ -1,6 +1,8 @@
 import { LengthMetrics } from "@kit.ArkUI";
 import { ThemeConfig } from "common";
 import { Languages } from "config";
+import { autoStartupManager,common, Want } from "@kit.AbilityKit";
+import { hilog } from "@kit.PerformanceAnalysisKit";
 
 @Component
 export struct Settings {
@@ -8,10 +10,29 @@ export struct Settings {
   @Watch('updateOptions')@StorageLink('languages') languages: string = 'ZH_CN'
   @StorageLink("paletteTheme") paletteTheme: string = ThemeConfig.PaletteTheme
   @StorageLink("resolutionScale") resolutionScale: string = 'followSystem'
+  @State isAutoStartup:boolean=false
+  @State isAutoStartup_first:boolean=false
 
   aboutToAppear(): void {
     this.paletteTheme = ThemeConfig.PaletteTheme
     this.updateOptions()
+    this.getIsAutoStartup()
+  }
+  getIsAutoStartup(){
+    // 处理开关逻辑
+    try {
+      autoStartupManager.getAutoStartupStatusForSelf().then((isAutoStartup: boolean) => {
+        this.isAutoStartup= isAutoStartup
+        setTimeout(()=>{
+          this.isAutoStartup_first= true
+        },2000)
+        hilog.info(0, 'testTag', `getAutoStartupStatusForSelf success, isAutoStartup: ${JSON.stringify(isAutoStartup)}`);
+      }).catch((err: BusinessError) => {
+        hilog.error(0, 'testTag', `getAutoStartupStatusForSelf failed, err code: ${err.code}, err.message: ${err.message}`);
+      })
+    }catch (err) {
+      hilog.error(0, 'testTag', `getAutoStartupStatusForSelf failed, err code: ${err.code}, err.message: ${err.message}`);
+    }
   }
 
   @State resolution: SelectOption[] = []
@@ -25,7 +46,6 @@ export struct Settings {
     'RU_RU', 'TR_TR', 'DE_DE', 'IT_IT', 'ES_ES'
   ]
   @State resolutionValues: string[] = ['followSystem', '100%', '125%', '150%', '175%', '200%']
-
 
   onLanguagesChange() {
     this.updateOptions()
@@ -178,8 +198,33 @@ export struct Settings {
         .fontSize(ThemeConfig.TextSize_14)
         .fontWeight(ThemeConfig.TextWeight_400)
         .fontColor(ThemeConfig.TextBodyColor)
-      Toggle({ type: ToggleType.Switch, isOn: true }).onChange((value: boolean) => {
-        // 处理开关逻辑
+      Toggle({ type: ToggleType.Switch, isOn: this.isAutoStartup }).onChange((value: boolean) => {
+        if (!this.isAutoStartup_first) {
+          return
+        }
+        let want: Want = {
+          bundleName: 'com.huawei.hmos.settings',
+          abilityName: 'com.huawei.hmos.settings.MainAbility',
+          //uri: 'application_settings',//应用和元服务
+          uri: 'pc_app_setup_settings' //应用启动管理
+        };
+        let context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+        try {
+          context?.startAbility(want, (err: BusinessError) => {
+            if (err.code) {
+              // 处理业务逻辑错误
+              hilog.error(0, 'testTag', `startAbility failed, code is ${err.code}, message is ${err.message}`);
+              return;
+            }
+            // 执行正常业务
+            hilog.info(0, 'testTag', 'startAbility succeed');
+          });
+        } catch (err) {
+          // 处理入参错误异常
+          let code = (err as BusinessError).code;
+          let message = (err as BusinessError).message;
+          hilog.error(0, 'testTag', `startAbility failed, code is ${code}, message is ${message}`);
+        }
       })
         .selectedColor(this.paletteTheme)
         .height(22)
