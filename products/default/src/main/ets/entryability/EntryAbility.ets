@@ -24,7 +24,6 @@ export default class EntryAbility extends UIAbility {
     }
     //加载系统托盘
     loadStatusBar(this.context).then(() => {
-      setTimeout(()=>{
         //注册状态栏图标左键点击事件
         statusBarManager.on("statusBarIconClick", onStatusBarIconClick);
         setTimeout(()=>{
@@ -39,7 +38,6 @@ export default class EntryAbility extends UIAbility {
             }
           });
         }, 500);
-      }, 1000);
     });
     hilog.info(0x0000, 'testTag', '%{public}s', 'EntryAbility onCreate');
 
@@ -160,26 +158,16 @@ export default class EntryAbility extends UIAbility {
     hilog.info(0x0000, 'testTag', '%{public}s', 'EntryAbility onWindowStageCreate');
 
     myWindowStage = windowStage;
-    windowStage.getMainWindow().then((window: window.Window) => {
-      let title = "MicLink";
-      window.setWindowTitle(title).then(() => {
-        //hilog.info(0x0000, 'testTag', "setWindowTitle success");
-
-        if(!isAuto){ //非开机自启，才loadContent，显示主界面，否则不loadContent
-          windowStage.loadContent('pages/Index', (err) => {
-            if (err.code) {
-              hilog.error(0x0000, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err) ?? '');
-              return;
-            }
-            hilog.info(0x0000, 'testTag', 'Succeeded in loading the content.');
-          });
-          isLoadContent = true;
-        }
-
-      }).catch((err: BusinessError) => {
-        hilog.error(0x0000, 'testTag', `Failed to set the window title. Cause code: ${err.code}, message: ${err.message}`);
-      });
-    })
+    if(!isAuto){ //非开机自启，才loadContent，显示主界面，否则不loadContent
+      isLoadContent = true;
+    }
+    windowStage.loadContent('pages/Index', (err) => {
+      if (err.code) {
+        hilog.error(0x0000, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err) ?? '');
+        return;
+      }
+      hilog.info(0x0000, 'testTag', 'Succeeded in loading the content.');
+    });
   }
 
   onWindowStageDestroy(): void {

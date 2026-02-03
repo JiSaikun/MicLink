@@ -17,27 +17,27 @@
       {
         "name": "ohos.permission.GET_NETWORK_INFO"
       },
-//      {
-//        "name": "ohos.permission.CUSTOM_SCREEN_CAPTURE",
-//        //屏幕截图
-//        "reason": '$string:CUSTOM_SCREEN_CAPTURE',
-//        "usedScene": {
-//          "abilities": [
-//            "EntryAbility"
-//          ],
-//          "when": "inuse"
-//        }
-//      },
-//      {
-//        "name": "ohos.permission.MICROPHONE",
-//        "reason": '$string:MICROPHONE',
-//        "usedScene": {
-//          "abilities": [
-//            "EntryAbility"
-//          ],
-//          "when": "inuse"
-//        }
-//      },
+      //      {
+      //        "name": "ohos.permission.CUSTOM_SCREEN_CAPTURE",
+      //        //屏幕截图
+      //        "reason": '$string:CUSTOM_SCREEN_CAPTURE',
+      //        "usedScene": {
+      //          "abilities": [
+      //            "EntryAbility"
+      //          ],
+      //          "when": "inuse"
+      //        }
+      //      },
+      //      {
+      //        "name": "ohos.permission.MICROPHONE",
+      //        "reason": '$string:MICROPHONE',
+      //        "usedScene": {
+      //          "abilities": [
+      //            "EntryAbility"
+      //          ],
+      //          "when": "inuse"
+      //        }
+      //      },
       {
         "name": "ohos.permission.ACCESS_EXTENSIONAL_DEVICE_DRIVER",
         "reason": "$string:ACCESS_EXTENSIONAL_DEVICE_DRIVER"
@@ -145,8 +145,8 @@
               //"entity.system.browsable"//（可浏览组件）
             ],
             "actions": [
-              "action.system.home"
-              //              "ohos.want.action.viewData"//这是系统识别文件打开场景的固定值
+              "action.system.home",
+              "ohos.want.action.viewData"//这是系统识别文件打开场景的固定值
             ]
             //            "uris": [
             //              {
