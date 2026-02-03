@@ -74,7 +74,8 @@ export const loadStatusBar = async (context: common.UIAbilityContext): Promise<v
   const statusBarItem: statusBarManager.StatusBarItem = {
     icons: icon, // 指定图标
     quickOperation: operation, // 指定启动参数
-    statusBarGroupMenu: statusBarGroupMenus //可选，右键菜单项
+    statusBarGroupMenu: statusBarGroupMenus, //可选，右键菜单项
+    hoverTips:"MicLink"
   }
   try {
     statusBarManager.addToStatusBar(context, statusBarItem); // 调用 addToStatusBar 设置系统托盘
