@@ -263,7 +263,7 @@ export struct ConfigPage1 {
             this.cursorCustom.restoreDefault();
           }
         })
-        .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.languages[this.getDefaultSelectedIndex_from(this.speech_Recognition_languages)]))
+        .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.languages[this.getDefaultSelectedIndex_speech_Recognition_languages()]))
         .onSelect((index: number) => {
           AppStorage.setOrCreate('speech_Recognition_languages',this.getModelInfo.languages[index].code)
           if (this.device_isBle) {
@@ -274,7 +274,7 @@ export struct ConfigPage1 {
               this.getModelInfo.languages[index].code
           }
         })
-        .selected(this.getDefaultSelectedIndex_from(this.speech_Recognition_languages))
+        .selected(this.getDefaultSelectedIndex_speech_Recognition_languages())
         .width('100%')
         .font({ size: 14, weight: 400 })
         .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
@@ -828,7 +828,12 @@ export struct ConfigPage1 {
     }
     .width('100%')
   }
-
+  private getDefaultSelectedIndex_speech_Recognition_languages(from_languages: string=AppStorage.get('speech_Recognition_languages') as string): number {
+    const index = this.getModelInfo.languages.findIndex((item) => {
+      return item.code === from_languages;
+    });
+    return index !== -1 ? index : 0; // 找到返回索引，否则返回0
+  }
   private getDefaultSelectedIndex_from(from_languages: string): number {
     const index = this.getModelInfo.transLanguages.findIndex((item) => {
       return item.code === from_languages;
