@@ -265,6 +265,7 @@ export struct ConfigPage1 {
         })
         .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.languages[this.getDefaultSelectedIndex_from(this.speech_Recognition_languages)]))
         .onSelect((index: number) => {
+          AppStorage.setOrCreate('speech_Recognition_languages',this.getModelInfo.languages[index].code)
           if (this.device_isBle) {
             this.devices[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages =
               this.getModelInfo.languages[index].code

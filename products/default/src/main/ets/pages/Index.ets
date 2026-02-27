@@ -39,7 +39,7 @@ PersistentStorage.persistProp("table_data", []) //AI指令本地存储
 PersistentStorage.persistProp("keystroke_curr", 0) //打字模式
 PersistentStorage.persistProp("getModelInfo", null) //获取用户按键模式详情
 PersistentStorage.persistProp("languages", 'ZH_CN') //用户语言
-// PersistentStorage.persistProp("speech_Recognition_languages", 'ZH_CN') //语音识别语言
+PersistentStorage.persistProp("speech_Recognition_languages", 'ZH_CN') //语音识别语言
 PersistentStorage.persistProp("from_languages", 'ZH_CN') //语音翻译源语言
 PersistentStorage.persistProp("to_languages", 'EN_US') //语音翻译目标语言
 PersistentStorage.persistProp("wordScan_from_languages", 'ZH_CN') //划词翻译源语言
