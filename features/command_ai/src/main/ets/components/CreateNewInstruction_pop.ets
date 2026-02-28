@@ -312,7 +312,21 @@ export struct CreateNewInstruction_pop {
     }
 
     if (!this.execute || this.execute.trim() === '') {
-      promptAction.showToast({ message: Languages.please_set_execution_target[this.languages], duration: 2000 });
+      switch (this.category){
+        case 0:
+          promptAction.showToast({ message: Languages.please_set_execution_target[this.languages], duration: 2000 });
+          break
+        case 1:
+          promptAction.showToast({ message: Languages.please_enter_valid_website[this.languages], duration: 2000 });
+          break
+        case 2:
+          promptAction.showToast({ message: Languages.enter_one_click_text[this.languages], duration: 2000 });
+          break
+        case 3:
+          promptAction.showToast({ message: Languages.please_set_execution_target[this.languages], duration: 2000 });
+          break
+
+      }
       return false;
     }
 
@@ -524,7 +538,7 @@ export struct CreateNewInstruction_pop {
                   this.response_[this.currentindex]?.showFilePicker ||
                     this.response_[this.currentindex]?.showFolderPicker ||
                     this.response_[this.currentindex]?.showAppPicker ?
-                  Visibility.Visible : Visibility.None
+                    Visibility.Visible : Visibility.None
                 )
                 .onHover((flag) => {
                   if (flag) {
