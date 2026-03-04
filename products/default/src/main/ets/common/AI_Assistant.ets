@@ -309,8 +309,9 @@ export class AI_Assistant {
           if (AppStorage.get('device_isBle')) {
             (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
               0].BlueTooth_devices.send([0x20, 0x01, 0x19]);
-          }else {
-            ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x20, 0x01,
+          } else {
+            ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+              0].Communication.getDeviceInfo([0x20, 0x01,
               0x19]);
 
           }
@@ -340,7 +341,7 @@ export class AI_Assistant {
         uri: execute,
         type: mimeType
       };
-      await OpenFileWithSystemApp.context.startAbility(want);
+      await (AppStorage.get('context') as common.UIAbilityContext).startAbility(want);
       hilog.info(0x0000, 'FileOpener', 'System app launch request sent.');
     } catch (error) { // 修复错误1：明确指定error类型
       const err: BusinessError = error as BusinessError;

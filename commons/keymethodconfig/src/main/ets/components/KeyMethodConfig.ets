@@ -151,9 +151,9 @@ export class _KeyMethodConfig {
     AppStorage.setOrCreate('isAI_assistant', isAI_assistant)
 
     if (!(AppStorage.get('device_isBle') ?
-    (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-      0].BlueTooth_devices.audioDataState :
-    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState
+      (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+        0].BlueTooth_devices.audioDataState :
+      ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.audioDataState
     )) {
       // if (!AppStorage.get('sdajfhjk')) {
       if (AppStorage.get('flax')) {
@@ -177,8 +177,8 @@ export class _KeyMethodConfig {
               Notification.state = true
 
               Notification.setOrCreate(isAI_assistant ?
-              Languages.voiceAssistant[AppStorage.get('languages') as string] :
-              Languages.voiceInput[AppStorage.get('languages') as string],
+                Languages.voiceAssistant[AppStorage.get('languages') as string] :
+                Languages.voiceInput[AppStorage.get('languages') as string],
                 Languages.pleaseSpeak[AppStorage.get('languages') as string])
             }
           } else {
@@ -209,7 +209,8 @@ export class _KeyMethodConfig {
               "phrases": "",
               "format": "pcm",
               "apiKey": (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_show_currIndex') as number].getModelInfo?.appkey as string,
-              "language": state ? AppStorage.get('from_languages') as string : AppStorage.get('speech_Recognition_languages') as string,
+              "language": state ? AppStorage.get('from_languages') as string :
+                AppStorage.get('speech_Recognition_languages') as string,
               "end": false,
               "rate": (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_show_currIndex') as number].BlueTooth_devices.deviceInfo.sampleRate ?
                 "16k" : "8k",
@@ -240,7 +241,8 @@ export class _KeyMethodConfig {
               "format": "pcm",
               "apiKey": ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
                 0].getModelInfo?.appkey as string,
-              "language": state ? AppStorage.get('from_languages') as string :AppStorage.get('speech_Recognition_languages') as string,
+              "language": state ? AppStorage.get('from_languages') as string :
+                AppStorage.get('speech_Recognition_languages') as string,
               "end": false,
               "rate": ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.deviceInfo.sampleRate ?
                 "16k" : "8k",
@@ -393,7 +395,7 @@ export class _KeyMethodConfig {
             console.warn('警告1')
             Notification.state = true
             Notification.setOrCreate(isAI_assistant ? Languages.voiceAssistant[AppStorage.get('languages') as string] :
-            Languages.voiceInput[AppStorage.get('languages') as string],
+              Languages.voiceInput[AppStorage.get('languages') as string],
               Languages.pleaseSpeak[AppStorage.get('languages') as string])
           }
         } else {
@@ -432,7 +434,8 @@ export class _KeyMethodConfig {
         "phrases": "",
         "format": "pcm",
         "apiKey": (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_show_currIndex') as number].getModelInfo?.appkey as string,
-        "language": state ? AppStorage.get('from_languages') as string : AppStorage.get('speech_Recognition_languages') as string,
+        "language": state ? AppStorage.get('from_languages') as string :
+          AppStorage.get('speech_Recognition_languages') as string,
         "end": false,
         "rate": (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_show_currIndex') as number].BlueTooth_devices.deviceInfo.sampleRate ?
           "16k" : "8k",
@@ -456,7 +459,8 @@ export class _KeyMethodConfig {
         "phrases": "",
         "format": "pcm",
         "apiKey": ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].getModelInfo?.appkey as string,
-        "language": state ? AppStorage.get('from_languages') as string :AppStorage.get('speech_Recognition_languages') as string,
+        "language": state ? AppStorage.get('from_languages') as string :
+          AppStorage.get('speech_Recognition_languages') as string,
         "end": false,
         "rate": ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.deviceInfo.sampleRate ?
           "16k" : "8k",
@@ -907,22 +911,22 @@ export class _KeyMethodConfig {
           AppStorage.setOrCreate('voiceOrText', false)
           let params: translate_Params = {
             appkey: AppStorage.get('device_isBle') ?
-            ((AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-              0].getModelInfo as getModelInfoModel).appkey :
-            (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-              0].getModelInfo as getModelInfoModel).appkey, //获取用户按键模式详情中得到
+              ((AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+                0].getModelInfo as getModelInfoModel).appkey :
+              (ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+                0].getModelInfo as getModelInfoModel).appkey, //获取用户按键模式详情中得到
             from: AppStorage.get('wordScan_from_languages') ? AppStorage.get('wordScan_from_languages') as string :
               'ZH_CN', //源语言___后面配置
             productCode: AppStorage.get('device_isBle') ?
-            (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-              0].BlueTooth_devices.deviceInfo.productType.toString() :
-            ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-              0].Communication.deviceInfo.productType.toString(), //产品编码
+              (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+                0].BlueTooth_devices.deviceInfo.productType.toString() :
+              ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+                0].Communication.deviceInfo.productType.toString(), //产品编码
             sno: AppStorage.get('device_isBle') ?
-            (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-              0].BlueTooth_devices.deviceInfo.sn :
-            ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
-              0].Communication.deviceInfo.sn, //设备号
+              (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
+                0].BlueTooth_devices.deviceInfo.sn :
+              ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
+                0].Communication.deviceInfo.sn, //设备号
             text: text, //翻译内容
             to: AppStorage.get('wordScan_to_languages') ? AppStorage.get('wordScan_to_languages') as string :
               'EN_US' //翻译语言___后面配置
@@ -1107,7 +1111,7 @@ export class _KeyMethodConfig {
         uri: AppStorage.get('foldPath'),
         type: mimeType
       };
-      await OpenFileWithSystemApp.context.startAbility(want);
+      await (AppStorage.get('context') as common.UIAbilityContext).startAbility(want);
       hilog.info(0x0000, 'FileOpener', 'System app launch request sent.');
     } catch (error) { // 修复错误1：明确指定error类型
       const err: BusinessError = error as BusinessError;
@@ -1154,9 +1158,9 @@ export class _KeyMethodConfig {
     voiceInput_AICon: boolean = true) {
 
     if (!((AppStorage.get('devices') as DeviceArrayType_Ble[]).length ?
-    (AppStorage.get('devices') as DeviceArrayType_Ble[])[
-    0].BlueTooth_devices.audioDataState :
-    ConnectDevice.Communication[0].Communication.audioDataState)
+      (AppStorage.get('devices') as DeviceArrayType_Ble[])[
+      0].BlueTooth_devices.audioDataState :
+      ConnectDevice.Communication[0].Communication.audioDataState)
     ) {
 
       if ((AppStorage.get('devices') as DeviceArrayType_Ble[]).length) {
