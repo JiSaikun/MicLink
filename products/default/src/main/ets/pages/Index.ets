@@ -6,8 +6,7 @@ import {
   observeSystemLanguageChanges,
   AiModel_data,
   bottom_data,
-  ThemeConfig,
-  AppUtil
+  ThemeConfig
 } from 'common'
 import Content_Ai from 'command_ai/src/main/ets/components/Command_Ai'
 import { inputDevice } from '@kit.InputKit';
@@ -312,7 +311,6 @@ struct Index {
     // const context =  this.getUIContext().getHostContext() as common.UIAbilityContext;//正规；暂不做更改
     const context = getContext(this) as common.UIAbilityContext;
     AppStorage.setOrCreate('context', context);
-    AppUtil.init(context)
     AppStorage.setOrCreate('currpageIsAI', true);
     // 修复：初始化时获取正确的数据长度
     this.aiModelDataLength = AiModel_data.length;
