@@ -1,5 +1,5 @@
 import { common, contextConstant, StartOptions, Want } from "@kit.AbilityKit";
-import { statusBarManager } from "@kit.StatusBarExtensionKit";
+import { statusBarManager } from "@kit.DeskTopExtensionKit";
 import { image } from "@kit.ImageKit";
 import { hilog } from "@kit.PerformanceAnalysisKit";
 

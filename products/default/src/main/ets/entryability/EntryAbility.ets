@@ -4,7 +4,7 @@ import { window } from '@kit.ArkUI';
 import { BusinessError, commonEventManager, emitter } from '@kit.BasicServicesKit';
 import { backgroundTaskManager } from '@kit.BackgroundTasksKit';
 import { AppUtil, holdStatusBar, loadStatusBar, setupNetworkStatusListener } from 'common';
-import { statusBarManager } from '@kit.StatusBarExtensionKit';
+import { statusBarManager } from '@kit.DeskTopExtensionKit';
 
 // import fs from '@ohos.file.fs';
 
