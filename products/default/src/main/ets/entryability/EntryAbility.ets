@@ -29,13 +29,13 @@ export default class EntryAbility extends UIAbility {
         setTimeout(()=>{
           //维系系统托盘
           holdStatusBar(this.context).then(() => {
-            if(isAuto){ //若开机自启，则隐藏到托盘hideAbility，并且不loadContent，不显示主界面【代码在onWindowStageCreate】
-              this.context.hideAbility().then(() => {
-                hilog.info(0x0000, 'testTag', `hideAbility success`);
-              }).catch((err: BusinessError) => {
-                hilog.error(0x0000, 'testTag', `hideAbility fail, code is ${err.code}, message is ${err.message}`);
-              });
-            }
+            // if(isAuto){ //若开机自启，则隐藏到托盘hideAbility，并且不loadContent，不显示主界面【代码在onWindowStageCreate】
+            //   this.context.hideAbility().then(() => {
+            //     hilog.info(0x0000, 'testTag', `hideAbility success`);
+            //   }).catch((err: BusinessError) => {
+            //     hilog.error(0x0000, 'testTag', `hideAbility fail, code is ${err.code}, message is ${err.message}`);
+            //   });
+            // }
           });
         }, 500);
     });
@@ -158,9 +158,9 @@ export default class EntryAbility extends UIAbility {
     hilog.info(0x0000, 'testTag', '%{public}s', 'EntryAbility onWindowStageCreate');
 
     myWindowStage = windowStage;
-    if(!isAuto){ //非开机自启，才loadContent，显示主界面，否则不loadContent
+    // if(!isAuto){ //非开机自启，才loadContent，显示主界面，否则不loadContent
       isLoadContent = true;
-    }
+    // }
     windowStage.loadContent('pages/Index', (err) => {
       if (err.code) {
         hilog.error(0x0000, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err) ?? '');
@@ -178,16 +178,16 @@ export default class EntryAbility extends UIAbility {
   onForeground(): void {
     // Ability has brought to foreground
     hilog.info(0x0000, 'testTag', '%{public}s', 'EntryAbility onForeground');
-    if ( isAuto && !isFirst && !isLoadContent ){ //若开机自启，首次onForeground不需要loadContent；非首次onForeground且没有loadContent，则点击图标时loadContent
-      myWindowStage?.loadContent('pages/Index', (err) => {
-        if (err.code) {
-          hilog.error(0x0000, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err) ?? '');
-          return;
-        }
-        hilog.info(0x0000, 'testTag', 'onForeground Succeeded in loading the content.');
-      });
-      isLoadContent = true;
-    }
+    // if ( isAuto && !isFirst && !isLoadContent ){ //若开机自启，首次onForeground不需要loadContent；非首次onForeground且没有loadContent，则点击图标时loadContent
+    //   myWindowStage?.loadContent('pages/Index', (err) => {
+    //     if (err.code) {
+    //       hilog.error(0x0000, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err) ?? '');
+    //       return;
+    //     }
+    //     hilog.info(0x0000, 'testTag', 'onForeground Succeeded in loading the content.');
+    //   });
+    //   isLoadContent = true;
+    // }
     isFirst = false;
   }
 
@@ -206,16 +206,16 @@ function callback(error: BusinessError, data: void) {
   }
 }
 export function myShowUiAbility() {
-  if( isAuto && !isLoadContent){ //若开机自启且没有loadContent，则点击托盘时loadContent
-    myWindowStage?.loadContent('pages/Index', (err) => {
-      if (err.code) {
-        hilog.error(0x0000, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err) ?? '');
-        return;
-      }
-      hilog.info(0x0000, 'testTag', 'Succeeded in loading the content.');
-    });
-    isLoadContent = true;
-  }
+  // if( isAuto && !isLoadContent){ //若开机自启且没有loadContent，则点击托盘时loadContent
+  //   myWindowStage?.loadContent('pages/Index', (err) => {
+  //     if (err.code) {
+  //       hilog.error(0x0000, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err) ?? '');
+  //       return;
+  //     }
+  //     hilog.info(0x0000, 'testTag', 'Succeeded in loading the content.');
+  //   });
+  //   isLoadContent = true;
+  // }
   if (global_context) {
     global_context.showAbility().then(() => {
       hilog.info(0x0000, 'testTag', 'Succeeded in myShowUiAbility.');
