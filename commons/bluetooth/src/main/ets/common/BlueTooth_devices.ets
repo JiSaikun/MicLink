@@ -4,9 +4,12 @@ import { abilityAccessCtrl, common, Permissions } from '@kit.AbilityKit';
 import { connection } from '@kit.ConnectivityKit';
 import { LengthMetrics } from '@kit.ArkUI';
 import { hilog } from '@kit.PerformanceAnalysisKit';
-import { getModelInfoModel,
+import {
+  getModelInfoModel,
   handle_sideFunctionInFunctions,
-  keyInfosModel, troubleshoot_sideFunctionInFunctions } from 'config'
+  keyInfosModel,
+  troubleshoot_sideFunctionInFunctions
+} from 'config'
 import {
   DeviceInfo,
   DPI_currInfoModel,
@@ -64,6 +67,13 @@ export function reqPermissionsFromUser(permissions: Array<Permissions>, context:
         // 当用户拒绝授权时，系统应提示用户必须授予相应权限才能使用当前页面的功能，并指导用户前往系统设置开启所需权限。
         // 使用 console.warn 替代已弃用的 showToast
         console.warn('请打开蓝牙设备获取权限')
+        // atManager.requestPermissionOnSetting(context, ['ohos.permission.ACCESS_BLUETOOTH'])
+        //   .then((data: Array<abilityAccessCtrl.GrantStatus>) => {
+        //     console.info(`requestPermissionOnSetting success, result: ${data}`);
+        //   })
+        //   .catch((err: BusinessError) => {
+        //     console.error(`requestPermissionOnSetting fail, code: ${err.code}, message: ${err.message}`);
+        //   });
         return;
       }
     }
@@ -180,17 +190,17 @@ export class BlueTooth_devices {
     } catch (err) {
       console.error('关闭特征值监听失败:', err);
     }
-    
+
     // 关闭GATT客户端连接
     if (this.gattClient) {
       this.gattClient.close();
       this.gattClient = null; // 清空引用，避免重复调用
     }
-    
+
     // 停止所有定时器
     this.stopCharacteristicTimeout();
     this.stopDeviceValidationTimeout(); // 停止设备验证超时检测
-    
+
     // 重置通知标志位
     this.isSetCharacteristicChangeNotification = true;
   }
@@ -1422,9 +1432,9 @@ export class BlueTooth_devices {
           if (this._getModelInfo) {
             this._getModelInfo = false
             _getModelInfo(params).then((res) => {
-              setTimeout(()=>{
+              setTimeout(() => {
                 this._getModelInfo = true
-              },10000)
+              }, 10000)
               console.log('获取用户按键模式详情数据1111', '\n', JSON.stringify(res.status), JSON.stringify(res.data));
               if ((res.status === 200 || res.statusCode === 200) && res.data) {
                 let getModelInfo: getModelInfoModel = res.data;
@@ -1614,9 +1624,9 @@ export class BlueTooth_devices {
                       }
                     }
                   }
-                  troubleshoot_sideFunctionInFunctions(getModelInfo,"SideFunction")
-                    .then((res)=>{
-                      if (res>=0) {
+                  troubleshoot_sideFunctionInFunctions(getModelInfo, "SideFunction")
+                    .then((res) => {
+                      if (res >= 0) {
                         handle_sideFunctionInFunctions(getModelInfo.functions[res])
                       }
                     })
@@ -1765,12 +1775,12 @@ export class BlueTooth_devices {
 
   private connectRetryCount: number = 0;
   private readonly MAX_CONNECT_RETRIES: number = 3;
-  
+
   public connectDevice(deviceClass: BlueTooth_devices, retryCount: number = 0) {
     try {
       console.info(`开始连接BLE设备: ${this.device_address}, 重试次数: ${retryCount}`);
       this.BlueTooth_devices = deviceClass;
-      
+
       // 如果之前有GATT客户端，先关闭
       if (this.gattClient) {
         try {
@@ -1780,7 +1790,7 @@ export class BlueTooth_devices {
         }
         this.gattClient = null;
       }
-      
+
       this.gattClient = ble.createGattClientDevice(this.device_address);
       console.info('GATT客户端创建成功');
 
@@ -1793,12 +1803,12 @@ export class BlueTooth_devices {
       // 注意：获取服务现在在ConnectStateChanged中处理，当连接状态变为2（已连接）时
     } catch (err) {
       console.error('连接失败:', err);
-      
+
       // 重试逻辑
       if (retryCount < this.MAX_CONNECT_RETRIES) {
         const nextRetryCount = retryCount + 1;
         console.info(`准备进行第 ${nextRetryCount} 次重试，当前设备地址: ${this.device_address}`);
-        
+
         // 延迟重试，避免过于频繁
         setTimeout(() => {
           this.connectDevice(deviceClass, nextRetryCount);
@@ -1844,14 +1854,14 @@ export class BlueTooth_devices {
       }
     } else if (connectState === 0) {
       console.info('检测到蓝牙连接断开，开始清理资源');
-      
+
       // 调用closeconnectDevice方法完全清理资源
       try {
         this.closeconnectDevice();
       } catch (err) {
         console.error('清理资源失败:', err);
       }
-      
+
       // 更新设备连接状态
       try {
         if ((AppStorage.get('devices') as DeviceArrayType_Ble[]) &&
@@ -2210,23 +2220,23 @@ function deepCopyDevices(devices: DeviceArrayType_Ble[]): DeviceArrayType_Ble[] 
 function getPairedDevices() {
   // 设置应用级状态为true，表示正在进行扫描和连接
   AppStorage.setOrCreate(BLUETOOTH_SCANNING_KEY, true);
-  
+
   try {
     // 获取已配对设备的地址数组
     let pairedDevices: Array<string> = connection.getPairedDevices();
     console.log('Paired devices:', pairedDevices); // 例如：['11:22:33:AA:BB:FF', '68:13:24:79:4C:8C']
-    
+
     // 获取当前设备列表
     const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || [];
 
     for (let i = 0; i < pairedDevices.length; i++) {
       const item = pairedDevices[i];
-      
+
       // 检查设备是否已经在列表中
-      const deviceExists = currentDevices.some(device => 
-        device.BlueTooth_devices.device_address === item
+      const deviceExists = currentDevices.some(device =>
+      device.BlueTooth_devices.device_address === item
       );
-      
+
       if (deviceExists) {
         console.log(`设备 ${item} 已存在于列表中，跳过重复连接`);
         continue;
