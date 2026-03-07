@@ -1,7 +1,7 @@
 import { picker } from '@kit.CoreFileKit';
 import { fileIo as fs } from '@kit.CoreFileKit';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { common, OpenLinkOptions } from '@kit.AbilityKit';
+import { common, OpenLinkOptions, Want } from '@kit.AbilityKit';
 import { webview } from '@kit.ArkWeb';
 import { globalShortcutService } from 'utils';
 import { promptAction } from '@kit.ArkUI';
@@ -56,6 +56,20 @@ class WebProxy {
   // 可以添加更多方法...
   getStatus(): string {
     return 'WebProxy运行正常';
+  }
+
+  openUrl(defaultUrl: string): void {
+    const context: common.UIAbilityContext = AppStorage.get('context') as common.UIAbilityContext;
+    console.log('打开网址:', defaultUrl);
+    const want: Want = {
+      action: 'ohos.want.action.viewData',
+      entities: ['entity.system.browsable'],
+      uri: defaultUrl
+    };
+
+    context.startAbility(want).catch((err: BusinessError) => {
+      console.error('打开网页失败:', err.message);
+    });
   }
 }
 
@@ -603,6 +617,15 @@ export struct Content {
           this.setupDownloadDelegate();
           // 添加日志，确认页面加载完成
           console.info("页面加载完成，javaScriptProxy应该已经注册");
+          
+          // 将hostInstance.openUrl绑定到window.openUrl，以便前端直接调用
+          this.webviewController.runJavaScript("window.openUrl = function(url) { window.hostInstance.openUrl(url); };")
+            .then((result: string) => {
+              console.info("成功将openUrl绑定到window对象");
+            })
+            .catch((error: Error) => {
+              console.error("绑定openUrl到window对象失败: " + error.message);
+            });
         })
         .onPageBegin(() => {
           this.isWebViewReady = false;
@@ -612,7 +635,7 @@ export struct Content {
           // 关键配置：注册代理对象
           object: this.webProxy, // 要暴露的对象
           name: "hostInstance", // 前端通过window.hostInstance访问
-          methodList: ["webRecord", "test", "getStatus"], // 暴露的方法列表
+          methodList: ["webRecord", "test", "getStatus", "openUrl"], // 暴露的方法列表
           controller: this.webviewController
         })
         .flexGrow(1)
