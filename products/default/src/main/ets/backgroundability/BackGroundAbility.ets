@@ -17,7 +17,7 @@ export default class EntryAbility extends UIAbility {
       data: 'initial data', // 公共事件的初始数据
     };
     // 发布BackgroundAbility onPrepareToTerminate公共事件
-    commonEventManager.publish('BackgroundAbility_onPrepareToTerminate_event', options, (err: BusinessError) => {
+    commonEventManager.publish('com.miclink.myapplication.BackgroundAbility_onPrepareToTerminate_event', options, (err: BusinessError) => {
       if (err) {
         hilog.info(DOMAIN, 'testTag', `failed to publish common event, error: ${JSON.stringify(err)}`);
       } else {

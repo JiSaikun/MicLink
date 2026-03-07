@@ -128,7 +128,7 @@ export default class EntryAbility extends UIAbility {
     let subscriber: commonEventManager.CommonEventSubscriber | null = null;
     // 订阅者信息，其中的event字段需要替换为实际的事件名称。
     let subscribeInfo: commonEventManager.CommonEventSubscribeInfo = {
-      events: ['BackgroundAbility_onPrepareToTerminate_event'], // 订阅BackgroundAbility onPrepareToTerminate公共事件
+      events: ['com.miclink.myapplication.BackgroundAbility_onPrepareToTerminate_event'], // 订阅BackgroundAbility onPrepareToTerminate公共事件
     };
     // 创建订阅者回调
     commonEventManager.createSubscriber(subscribeInfo, (err: BusinessError, data: commonEventManager.CommonEventSubscriber) => {
