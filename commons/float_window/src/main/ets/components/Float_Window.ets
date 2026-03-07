@@ -19,9 +19,9 @@ export class Float_Window {
       return;
     }
 
-    // 检查是否已有窗口存在，如果存在则先销毁
+    // 先关闭已存在的主悬浮窗，再创建新的
     if (Float_Window.windowClass) {
-      console.info('Float window already exists, destroying before creating new one');
+      console.info('Main float window already exists, destroying before creating new one');
       Float_Window.destroyWindow(Float_Window.windowClass);
       Float_Window.windowClass = null;
     }
@@ -76,7 +76,7 @@ export class Float_Window {
       return;
     }
 
-    // 检查是否已有语音翻译窗口存在，如果存在则先销毁
+    // 先关闭已存在的语音翻译悬浮窗，再创建新的
     if (Float_Window.window_VoiceTranslation) {
       console.info('Voice translation window already exists, destroying before creating new one');
       Float_Window.destroyWindow(Float_Window.window_VoiceTranslation);
@@ -132,7 +132,7 @@ export class Float_Window {
       return;
     }
 
-    // 检查是否已有隐藏窗口存在，如果存在则先销毁
+    // 先关闭已存在的隐藏悬浮窗，再创建新的
     if (Float_Window.window_hide) {
       console.info('Hide window already exists, destroying before creating new one');
       Float_Window.destroyWindow(Float_Window.window_hide);
@@ -240,6 +240,16 @@ export class Float_Window {
         return;
       }
       console.info('Succeeded in destroying the window.');
+      // 重置窗口状态
+      if (windowClass === Float_Window.windowClass) {
+        Float_Window.windowClass = null;
+        Float_Window.showVoiceInput = 0;
+      } else if (windowClass === Float_Window.window_VoiceTranslation) {
+        Float_Window.window_VoiceTranslation = null;
+        Float_Window.showVoiceTranslation = false;
+      } else if (windowClass === Float_Window.window_hide) {
+        Float_Window.window_hide = null;
+      }
     });
   }
 
@@ -258,6 +268,16 @@ export class Float_Window {
         return;
       }
       console.info('Succeeded in destroying the window.');
+      // 重置窗口状态
+      if (windowClass === Float_Window.windowClass) {
+        Float_Window.windowClass = null;
+        Float_Window.showVoiceInput = 0;
+      } else if (windowClass === Float_Window.window_VoiceTranslation) {
+        Float_Window.window_VoiceTranslation = null;
+        Float_Window.showVoiceTranslation = false;
+      } else if (windowClass === Float_Window.window_hide) {
+        Float_Window.window_hide = null;
+      }
     });
   }
 
