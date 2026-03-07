@@ -70,12 +70,21 @@ export class Float_Window {
 
   static creat_VoiceTranslation(windowName = 'pages/VoiceTranslation', float_window_width = 1100,
     float_window_height = Float_Window.screen_height / 2) {
+    // 检查是否正在创建中，防止并发创建
+    if (Float_Window.isCreating) {
+      console.warn('Window creation already in progress, skipping duplicate creation');
+      return;
+    }
+
     // 检查是否已有语音翻译窗口存在，如果存在则先销毁
     if (Float_Window.window_VoiceTranslation) {
       console.info('Voice translation window already exists, destroying before creating new one');
       Float_Window.destroyWindow(Float_Window.window_VoiceTranslation);
       Float_Window.window_VoiceTranslation = null;
     }
+
+    // 设置创建锁
+    Float_Window.isCreating = true;
 
     // 1.创建悬浮窗。
     let windowClass: window.Window | null = null;
@@ -86,6 +95,7 @@ export class Float_Window {
       let errCode: number = err.code;
       if (errCode) {
         console.error('Failed to create the floatWindow. Cause: ' + JSON.stringify(err));
+        Float_Window.isCreating = false; // 释放创建锁
         return;
       }
       console.info('Succeeded in creating the floatWindow. Data: ' + JSON.stringify(data));
@@ -116,12 +126,21 @@ export class Float_Window {
   }
 
   static creat_hide(windowName = 'pages/FloatingWindow', float_window_width = 130, float_window_height = 130) {
+    // 检查是否正在创建中，防止并发创建
+    if (Float_Window.isCreating) {
+      console.warn('Window creation already in progress, skipping duplicate creation');
+      return;
+    }
+
     // 检查是否已有隐藏窗口存在，如果存在则先销毁
     if (Float_Window.window_hide) {
       console.info('Hide window already exists, destroying before creating new one');
       Float_Window.destroyWindow(Float_Window.window_hide);
       Float_Window.window_hide = null;
     }
+
+    // 设置创建锁
+    Float_Window.isCreating = true;
 
     // 1.创建悬浮窗。
     let windowClass: window.Window | null = null;
@@ -132,6 +151,7 @@ export class Float_Window {
       let errCode: number = err.code;
       if (errCode) {
         console.error('Failed to create the floatWindow. Cause: ' + JSON.stringify(err));
+        Float_Window.isCreating = false; // 释放创建锁
         return;
       }
       console.info('Succeeded in creating the floatWindow. Data: ' + JSON.stringify(data));
@@ -183,6 +203,8 @@ export class Float_Window {
                 });
               });
             }, 100);
+          } else {
+            Float_Window.isCreating = false; // 非超时错误，释放创建锁
           }
           return;
         }
@@ -192,9 +214,11 @@ export class Float_Window {
           let errCode: number = err.code;
           if (errCode) {
             console.error('Failed to show the window. Cause: ' + JSON.stringify(err));
+            Float_Window.isCreating = false; // 显示失败，释放创建锁
             return;
           }
           console.info('Succeeded in showing the window.');
+          Float_Window.isCreating = false; // 显示成功，释放创建锁
         });
       });
       windowClass.setWindowCornerRadius(1000)
