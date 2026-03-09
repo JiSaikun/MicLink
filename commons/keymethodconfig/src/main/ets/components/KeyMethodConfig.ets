@@ -270,8 +270,7 @@ export class _KeyMethodConfig {
         if (Float_Window.windowClass) {
           Float_Window.minimize_float_window()
         }
-        if (!Float_Window.showVoiceTranslation) {
-          Float_Window.showVoiceTranslation = true
+        if (!Float_Window.showVoiceTranslation && !Float_Window.window_VoiceTranslation) {
           Float_Window.creat_VoiceTranslation()
         }
         if (AppStorage.get('flax') && !AppStorage.get('isAutoCloseVoiceTransPop')) {
@@ -286,7 +285,9 @@ export class _KeyMethodConfig {
         // }
       } else {
         // if (!Float_Window.showVoiceInput) { //窗口没有显示时创建窗口
-        Float_Window.creat()
+        if (!Float_Window.windowClass) {
+          Float_Window.creat()
+        }
         // } else {
         //   Float_Window.show_float_window()
         // }
@@ -510,8 +511,7 @@ export class _KeyMethodConfig {
       if (Float_Window.windowClass) {
         Float_Window.minimize_float_window()
       }
-      if (!Float_Window.showVoiceTranslation) {
-        Float_Window.showVoiceTranslation = true
+      if (!Float_Window.showVoiceTranslation && !Float_Window.window_VoiceTranslation) {
         Float_Window.creat_VoiceTranslation()
       }
       if (AppStorage.get('flax') && !AppStorage.get('isAutoCloseVoiceTransPop')) {
@@ -536,7 +536,9 @@ export class _KeyMethodConfig {
     } else {
       AppStorage.setOrCreate('isAI_assistant', isAI_assistant)
       // if (!Float_Window.showVoiceInput) { //窗口没有显示时创建窗口
-      Float_Window.creat()
+      if (!Float_Window.windowClass) {
+        Float_Window.creat()
+      }
       // } else {
       //   Float_Window.show_float_window()
       // }
@@ -931,8 +933,7 @@ export class _KeyMethodConfig {
             to: AppStorage.get('wordScan_to_languages') ? AppStorage.get('wordScan_to_languages') as string :
               'EN_US' //翻译语言___后面配置
           }
-          if (!Float_Window.showVoiceTranslation) {
-            Float_Window.showVoiceTranslation = true
+          if (!Float_Window.showVoiceTranslation && !Float_Window.window_VoiceTranslation) {
             Float_Window.creat_VoiceTranslation()
           }
           if (AppStorage.get('flax')) {

@@ -24,6 +24,18 @@ export class Float_Window {
       console.info('Main float window already exists, destroying before creating new one');
       Float_Window.destroyWindow(Float_Window.windowClass);
       Float_Window.windowClass = null;
+      Float_Window.showVoiceInput = 0;
+    } else {
+      // 尝试通过窗口名称查找已存在的窗口
+      try {
+        const existingWindow = window.findWindow('floatWindow');
+        if (existingWindow) {
+          console.warn('[FloatWindow] Found existing main window by name, destroying it');
+          Float_Window.destroyWindow(existingWindow);
+        }
+      } catch (e) {
+        // 窗口不存在，正常情况
+      }
     }
 
     // 设置创建锁
@@ -72,15 +84,36 @@ export class Float_Window {
     float_window_height = Float_Window.screen_height / 2) {
     // 检查是否正在创建中，防止并发创建
     if (Float_Window.isCreating) {
-      console.warn('Window creation already in progress, skipping duplicate creation');
+      console.warn('[FloatWindow] Window creation already in progress, skipping duplicate creation');
+      // 如果窗口引用不存在但状态为true，重置状态
+      if (!Float_Window.window_VoiceTranslation && Float_Window.showVoiceTranslation) {
+        console.warn('[FloatWindow] Resetting inconsistent state: showVoiceTranslation=true but window_VoiceTranslation=null');
+        Float_Window.showVoiceTranslation = false;
+      }
       return;
     }
 
+    // 调试日志：检查当前状态
+    console.info(`[FloatWindow] creat_VoiceTranslation called - window_VoiceTranslation: ${Float_Window.window_VoiceTranslation}, showVoiceTranslation: ${Float_Window.showVoiceTranslation}`);
+
     // 先关闭已存在的语音翻译悬浮窗，再创建新的
     if (Float_Window.window_VoiceTranslation) {
-      console.info('Voice translation window already exists, destroying before creating new one');
+      console.info('[FloatWindow] Voice translation window already exists, destroying before creating new one');
       Float_Window.destroyWindow(Float_Window.window_VoiceTranslation);
       Float_Window.window_VoiceTranslation = null;
+      Float_Window.showVoiceTranslation = false;
+    } else {
+      console.info('[FloatWindow] No existing voice translation window found');
+      // 尝试通过窗口名称查找已存在的窗口
+      try {
+        const existingWindow = window.findWindow('floatWindow_VoiceTranslation');
+        if (existingWindow) {
+          console.warn('[FloatWindow] Found existing window by name, destroying it');
+          Float_Window.destroyWindow(existingWindow);
+        }
+      } catch (e) {
+        // 窗口不存在，正常情况
+      }
     }
 
     // 设置创建锁
@@ -94,13 +127,15 @@ export class Float_Window {
     window.createWindow(config, (err: BusinessError, data) => {
       let errCode: number = err.code;
       if (errCode) {
-        console.error('Failed to create the floatWindow. Cause: ' + JSON.stringify(err));
+        console.error('[FloatWindow] Failed to create the floatWindow. Cause: ' + JSON.stringify(err));
         Float_Window.isCreating = false; // 释放创建锁
         return;
       }
-      console.info('Succeeded in creating the floatWindow. Data: ' + JSON.stringify(data));
+      console.info('[FloatWindow] Succeeded in creating the floatWindow. Data: ' + JSON.stringify(data));
       windowClass = data;
-      Float_Window.window_VoiceTranslation = windowClass
+      Float_Window.window_VoiceTranslation = windowClass;
+      Float_Window.showVoiceTranslation = true; // 只有在成功创建后才设置为true
+      console.info(`[FloatWindow] window_VoiceTranslation assigned: ${Float_Window.window_VoiceTranslation}, showVoiceTranslation: ${Float_Window.showVoiceTranslation}`);
       Float_Window.windowClass?.setWindowFocusable(false);
       // 2.悬浮窗窗口创建成功后，设置悬浮窗的位置、大小及相关属性等。
       windowClass.moveWindowTo(Float_Window.screen_width - float_window_width - 10,
@@ -137,6 +172,17 @@ export class Float_Window {
       console.info('Hide window already exists, destroying before creating new one');
       Float_Window.destroyWindow(Float_Window.window_hide);
       Float_Window.window_hide = null;
+    } else {
+      // 尝试通过窗口名称查找已存在的窗口
+      try {
+        const existingWindow = window.findWindow('floatWindow_hide');
+        if (existingWindow) {
+          console.warn('[FloatWindow] Found existing hide window by name, destroying it');
+          Float_Window.destroyWindow(existingWindow);
+        }
+      } catch (e) {
+        // 窗口不存在，正常情况
+      }
     }
 
     // 设置创建锁
@@ -233,22 +279,28 @@ export class Float_Window {
     }
 
     // 4.销毁悬浮窗。当不再需要悬浮窗时，可根据具体实现逻辑，使用destroy对其进行销毁。
+    console.info(`[FloatWindow] Destroying window - windowClass: ${windowClass}, window_VoiceTranslation: ${Float_Window.window_VoiceTranslation}`);
     windowClass.destroyWindow((err: BusinessError) => {
       let errCode: number = err.code;
       if (errCode) {
-        console.error('Failed to destroy the window. Cause: ' + JSON.stringify(err));
+        console.error('[FloatWindow] Failed to destroy the window. Cause: ' + JSON.stringify(err));
         return;
       }
-      console.info('Succeeded in destroying the window.');
+      console.info('[FloatWindow] Succeeded in destroying the window.');
       // 重置窗口状态
       if (windowClass === Float_Window.windowClass) {
         Float_Window.windowClass = null;
         Float_Window.showVoiceInput = 0;
+        console.info('[FloatWindow] Reset windowClass and showVoiceInput');
       } else if (windowClass === Float_Window.window_VoiceTranslation) {
         Float_Window.window_VoiceTranslation = null;
         Float_Window.showVoiceTranslation = false;
+        console.info('[FloatWindow] Reset window_VoiceTranslation and showVoiceTranslation');
       } else if (windowClass === Float_Window.window_hide) {
         Float_Window.window_hide = null;
+        console.info('[FloatWindow] Reset window_hide');
+      } else {
+        console.warn(`[FloatWindow] Window not matched any reference: ${windowClass}`);
       }
     });
   }
