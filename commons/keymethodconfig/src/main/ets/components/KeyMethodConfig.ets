@@ -210,7 +210,7 @@ export class _KeyMethodConfig {
               "format": "pcm",
               "apiKey": (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_show_currIndex') as number].getModelInfo?.appkey as string,
               "language": state ? AppStorage.get('from_languages') as string :
-                AppStorage.get('speech_Recognition_languages') as string,
+                (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages,
               "end": false,
               "rate": (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_show_currIndex') as number].BlueTooth_devices.deviceInfo.sampleRate ?
                 "16k" : "8k",
@@ -242,7 +242,7 @@ export class _KeyMethodConfig {
               "apiKey": ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||
                 0].getModelInfo?.appkey as string,
               "language": state ? AppStorage.get('from_languages') as string :
-                AppStorage.get('speech_Recognition_languages') as string,
+                ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages,
               "end": false,
               "rate": ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.deviceInfo.sampleRate ?
                 "16k" : "8k",
@@ -435,7 +435,7 @@ export class _KeyMethodConfig {
         "format": "pcm",
         "apiKey": (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_show_currIndex') as number].getModelInfo?.appkey as string,
         "language": state ? AppStorage.get('from_languages') as string :
-          AppStorage.get('speech_Recognition_languages') as string,
+          (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages,
         "end": false,
         "rate": (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_show_currIndex') as number].BlueTooth_devices.deviceInfo.sampleRate ?
           "16k" : "8k",
@@ -460,7 +460,7 @@ export class _KeyMethodConfig {
         "format": "pcm",
         "apiKey": ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].getModelInfo?.appkey as string,
         "language": state ? AppStorage.get('from_languages') as string :
-          AppStorage.get('speech_Recognition_languages') as string,
+          ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].speech_Recognition_languages,
         "end": false,
         "rate": ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.deviceInfo.sampleRate ?
           "16k" : "8k",
