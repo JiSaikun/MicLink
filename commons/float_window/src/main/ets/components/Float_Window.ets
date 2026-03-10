@@ -13,13 +13,6 @@ export class Float_Window {
   static isCreating: boolean = false //防止并发创建窗口
 
   static creat(windowName = 'pages/Overlay', float_window_width = 1100, float_window_height = 300) {
-    if (AppStorage.get('Float_Window_flax') === 0) {
-      return
-    }
-    AppStorage.setOrCreate('Float_Window_flax',0)
-    setTimeout(() => {
-      AppStorage.setOrCreate('Float_Window_flax',-1)
-    }, 1000)
     // 检查是否正在创建中，防止并发创建
     if (Float_Window.isCreating) {
       console.warn('Window creation already in progress, skipping duplicate creation');
@@ -77,30 +70,12 @@ export class Float_Window {
 
   static creat_VoiceTranslation(windowName = 'pages/VoiceTranslation', float_window_width = 1100,
     float_window_height = Float_Window.screen_height / 2) {
-    console.error('打开语音翻译悬浮窗',new Date(),'\t',AppStorage.get('Float_Window_flax'))
-    if (AppStorage.get('Float_Window_flax') === 1) {
-      return
-    }
-    AppStorage.setOrCreate('Float_Window_flax',1)
-    setTimeout(() => {
-      AppStorage.setOrCreate('Float_Window_flax',-1)
-    }, 1000)
-
-    // 检查是否正在创建中，防止并发创建
-    if (Float_Window.isCreating) {
-      console.warn('Voice translation window creation already in progress, skipping duplicate creation');
-      return;
-    }
-
     // 检查是否已有语音翻译窗口存在，如果存在则先销毁
     if (Float_Window.window_VoiceTranslation) {
       console.info('Voice translation window already exists, destroying before creating new one');
       Float_Window.destroyWindow(Float_Window.window_VoiceTranslation);
       Float_Window.window_VoiceTranslation = null;
     }
-
-    // 设置创建锁
-    Float_Window.isCreating = true;
 
     // 1.创建悬浮窗。
     let windowClass: window.Window | null = null;
@@ -111,7 +86,6 @@ export class Float_Window {
       let errCode: number = err.code;
       if (errCode) {
         console.error('Failed to create the floatWindow. Cause: ' + JSON.stringify(err));
-        Float_Window.isCreating = false; // 释放创建锁
         return;
       }
       console.info('Succeeded in creating the floatWindow. Data: ' + JSON.stringify(data));
@@ -281,8 +255,7 @@ export class Float_Window {
   }
 
   // 增强的UI内容加载方法，带重试和超时处理
-  private static loadUIContentWithRetry(windowClass: window.Window, windowName: string, maxRetries: number,
-    baseDelay: number) {
+  private static loadUIContentWithRetry(windowClass: window.Window, windowName: string, maxRetries: number, baseDelay: number) {
     let retryCount = 0;
 
     const attemptLoad = () => {
@@ -295,15 +268,13 @@ export class Float_Window {
           console.error(`Failed to load content for ${windowName}. Error code: ${errCode}, message: ${err.message}`);
 
           // 检查是否是超时错误且还有重试次数
-          const isTimeoutError =
-            errCode === 1003 || err.message?.includes('timeout') || err.message?.includes('SetUIContent timeout');
+          const isTimeoutError = errCode === 1003 || err.message?.includes('timeout') || err.message?.includes('SetUIContent timeout');
           const shouldRetry = isTimeoutError && retryCount <= maxRetries;
 
           if (shouldRetry) {
             // 指数退避重试策略
             const delay = baseDelay * Math.pow(2, retryCount - 1);
-            console.info(`UIContent timeout detected, retrying in ${delay}ms (attempt ${retryCount}/${maxRetries +
-              1})`);
+            console.info(`UIContent timeout detected, retrying in ${delay}ms (attempt ${retryCount}/${maxRetries + 1})`);
 
             setTimeout(() => {
               attemptLoad();
