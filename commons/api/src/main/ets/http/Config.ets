@@ -42,7 +42,7 @@ instance.interceptors.response.use(
         duration: 2000,
         alignment: 4 // 鸿蒙 Alignment.Center 的枚举值为 4，避免直接引用可能的类型问题
       });
-      return Promise.reject(response.data);2345
+      return Promise.reject(response.data);
     }
   },
   (error: AxiosError) => {

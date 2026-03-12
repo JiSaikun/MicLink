@@ -1,50 +1,49 @@
-import { LengthMetrics } from "@kit.ArkUI"
-import { ThemeConfig } from "common"
+import { LengthMetrics, promptAction } from "@kit.ArkUI"
+import { ThemeConfig, UserLoginInfo } from "common"
 import { Languages } from "config"
-
-interface PackageInfo {
-  readonly price: number //价格
-  readonly uration: string //时长
-  readonly supportedFormats: string //支持的格式
-  readonly name: string //套餐名称
-}
+import { goodsSpecsItem, goods_Response, pay_Params, pay_Response } from "../model/UserModel"
+import { _goods, _pay, _queryOrderStatus } from "../viewmodel/UserViewModel"
 
 @Component
 export struct MemberCenter {
   @StorageLink('languages') languages: string = 'ZH_CN'
   @StorageLink("paletteTheme") paletteTheme: string = ThemeConfig.PaletteTheme
-  @State allPackageDetails: PackageInfo[] = [
-    {
-      name: '小时卡',
-      price: 2,
-      uration: '一小时',
-      supportedFormats: '支持TXT、Word等格式转换。'
-    }, {
-    name: '月卡',
-    price: 50,
-    uration: '时长',
-    supportedFormats: '支持TXT、Word等格式转换。'
-  }, {
-    name: '季卡',
-    price: 150,
-    uration: '时长',
-    supportedFormats: '支持TXT、Word等格式转换。'
-  }, {
-    name: '年卡',
-    price: 450,
-    uration: '时长',
-    supportedFormats: '支持TXT、Word等格式转换。'
-  }
-  ]
-  @Watch('changePackage') @State packageName: string = ''
-  @State packagePrice: number = 0
+  @State allPackageDetails: goods_Response | null = null
+  @Watch('changePackage') @State goodsInfo: goodsSpecsItem | null = null
   //value用来计数，初始化的值是1
   @State value: number = 1
   @State payment: string = 'wx'
   @State Selected: boolean = false
+  @State payState: boolean = false
+  @Watch('getPayState') @State payStateInfo: pay_Response | null = null
+  @State interval: number | null = null
+
+  getPayState() {
+    if (this.payStateInfo) {
+      this.interval = setInterval(() => {
+        _queryOrderStatus({ orderNo: this.payStateInfo?.orderId as string }).then((res) => {
+          console.log('asjdfhjdashjk', res.data?.orderStatus)
+          if (res.data?.orderStatus === 'SUCCESS') {
+            this.payStateInfo = null
+          }
+        })
+      }, 3000)
+    } else {
+      clearInterval(this.interval)
+    }
+  }
+
+  aboutToAppear(): void {
+    _goods().then((res) => {
+      if (res.statusCode === 200) {
+        this.allPackageDetails = (res.data as goods_Response[])[0]
+      }
+    })
+  }
 
   changePackage() {
     this.value = 1
+    this.payState = false
   }
 
   // 方法：为16进制颜色添加透明度
@@ -88,12 +87,12 @@ export struct MemberCenter {
   build() {
     Flex({ space: { main: LengthMetrics.px(24) }, direction: FlexDirection.Column }) {
       // Text(Languages.displaySettings[this.languages])
-      Text(Languages.fileTranscription[this.languages])
+      Text(this.allPackageDetails?.name)
         .fontSize(ThemeConfig.TextSize_14)
         .fontWeight(ThemeConfig.TextWeight_400)
         .fontColor(ThemeConfig.SecondaryTextColor)
       Grid() {
-        ForEach(this.allPackageDetails, (item: PackageInfo) => {
+        ForEach(this.allPackageDetails?.goodsSpecs, (item: goodsSpecsItem) => {
           GridItem() {
             Column({ space: 20 }) {
               Text(item.name)
@@ -101,7 +100,7 @@ export struct MemberCenter {
                 .fontWeight(ThemeConfig.TextWeight_400)
                 .fontColor(ThemeConfig.TextBodyColor)
               Flex({ alignItems: ItemAlign.End }) {
-                Text('￥' + item.price)
+                Text(item.priceShow)
                   .fontSize(ThemeConfig.TextSize_24)
                   .fontWeight(ThemeConfig.TextWeight_500)
                   .fontColor(ThemeConfig.TextBodyColor)
@@ -113,7 +112,7 @@ export struct MemberCenter {
                   .fontColor(ThemeConfig.SecondaryTextColor)
 
                 Blank()
-                Text(item.uration)
+                Text(item.remark)
                   .fontSize(ThemeConfig.TextSize_14)
                   .fontWeight(ThemeConfig.TextWeight_400)
                   .fontColor(this.paletteTheme)
@@ -138,102 +137,140 @@ export struct MemberCenter {
                 .textAlign(TextAlign.Center)
                 .padding(9)
                 .onClick(() => {
-                  this.packageName = item.name
-                  this.packagePrice = item.price
+                  this.goodsInfo = item
                 })
             }
             .alignItems(HorizontalAlign.Start)
             .width('100%')
           }
-          .border({ width: 1, color: item.name === this.packageName ? this.paletteTheme : '#EAEAEA' })
+          .border({ width: 1, color: item.remark === this.goodsInfo?.remark ? this.paletteTheme : '#EAEAEA' })
           .borderRadius(8)
           .padding(20)
-
-          .backgroundColor(this.packageName === item.name ? this.getPaletteThemeWithOpacity() : '#fff')
+          .backgroundColor(item.remark === this.goodsInfo?.remark ? this.getPaletteThemeWithOpacity() : '#fff')
         })
       }
       .columnsTemplate('1fr 1fr 1fr 1fr') // 每行3个等宽列
       // .rowsTemplate('auto') // 行高自适应内容
       .columnsGap(24) // 列间距
       .rowsGap(24) // 行间距
-      Text(Languages.toneCustomization[this.languages])
-        .fontSize(ThemeConfig.TextSize_14)
-        .fontWeight(ThemeConfig.TextWeight_400)
-        .fontColor(ThemeConfig.SecondaryTextColor)
-      Grid() {
-        GridItem() {
-          Column({ space: 20 }) {
-            Text('终身卡')
-              .fontSize(ThemeConfig.TextSize_14)
-              .fontWeight(ThemeConfig.TextWeight_400)
-              .fontColor(ThemeConfig.TextBodyColor)
-            Flex({ alignItems: ItemAlign.End }) {
-              Text('￥9.9')
-                .fontSize(ThemeConfig.TextSize_24)
-                .fontWeight(ThemeConfig.TextWeight_500)
-                .fontColor(ThemeConfig.TextBodyColor)
-                .margin({ right: 10 })
 
-              Text('人民币')
-                .fontSize(ThemeConfig.TextSize_12)
-                .fontWeight(ThemeConfig.TextWeight_400)
-                .fontColor(ThemeConfig.SecondaryTextColor)
-
-              Blank()
-              Text('终身')
-                .fontSize(ThemeConfig.TextSize_14)
-                .fontWeight(ThemeConfig.TextWeight_400)
-                .fontColor(this.paletteTheme)
-            }
-
-            Flex() {
-              Text()
-                .fontSize(ThemeConfig.TextSize_12)
-                .fontWeight(ThemeConfig.TextWeight_400)
-                .fontColor(ThemeConfig.SecondaryTextColor)
-                .flexGrow(1)
-                .flexShrink(1)
-            }
-
-            Text('购买套餐')
-              .width('100%')
-              .borderRadius(4)
-              .fontSize(ThemeConfig.TextSize_14)
-              .fontWeight(ThemeConfig.TextWeight_400)
-              .fontColor(Color.White)
-              .backgroundColor(this.paletteTheme)
-              .textAlign(TextAlign.Center)
-              .padding(9)
-          }
-          .alignItems(HorizontalAlign.Start)
-          .width('100%')
-        }
-        .border({ width: 1, color: this.packageName === '终身卡' ? this.paletteTheme : '#EAEAEA' })
-        .borderRadius(8)
-        .padding(20)
-        .onClick(() => {
-          this.packageName = '终身卡'
-          this.packagePrice = 9.9
-        })
-        .backgroundColor(this.packageName === '终身卡' ? this.getPaletteThemeWithOpacity() : '#fff')
-
-      }
-      .columnsTemplate('1fr 1fr 1fr 1fr') // 每行3个等宽列
-      // .rowsTemplate('auto') // 行高自适应内容
-      .columnsGap(24) // 列间距
-      .rowsGap(24) // 行间距
+      // Text(Languages.toneCustomization[this.languages])
+      //   .fontSize(ThemeConfig.TextSize_14)
+      //   .fontWeight(ThemeConfig.TextWeight_400)
+      //   .fontColor(ThemeConfig.SecondaryTextColor)
+      // Grid() {
+      //   GridItem() {
+      //     Column({ space: 20 }) {
+      //       Text('终身卡')
+      //         .fontSize(ThemeConfig.TextSize_14)
+      //         .fontWeight(ThemeConfig.TextWeight_400)
+      //         .fontColor(ThemeConfig.TextBodyColor)
+      //       Flex({ alignItems: ItemAlign.End }) {
+      //         Text('￥9.9')
+      //           .fontSize(ThemeConfig.TextSize_24)
+      //           .fontWeight(ThemeConfig.TextWeight_500)
+      //           .fontColor(ThemeConfig.TextBodyColor)
+      //           .margin({ right: 10 })
+      //
+      //         Text('人民币')
+      //           .fontSize(ThemeConfig.TextSize_12)
+      //           .fontWeight(ThemeConfig.TextWeight_400)
+      //           .fontColor(ThemeConfig.SecondaryTextColor)
+      //
+      //         Blank()
+      //         Text('终身')
+      //           .fontSize(ThemeConfig.TextSize_14)
+      //           .fontWeight(ThemeConfig.TextWeight_400)
+      //           .fontColor(this.paletteTheme)
+      //       }
+      //
+      //       Flex() {
+      //         Text()
+      //           .fontSize(ThemeConfig.TextSize_12)
+      //           .fontWeight(ThemeConfig.TextWeight_400)
+      //           .fontColor(ThemeConfig.SecondaryTextColor)
+      //           .flexGrow(1)
+      //           .flexShrink(1)
+      //       }
+      //
+      //       Text('购买套餐')
+      //         .width('100%')
+      //         .borderRadius(4)
+      //         .fontSize(ThemeConfig.TextSize_14)
+      //         .fontWeight(ThemeConfig.TextWeight_400)
+      //         .fontColor(Color.White)
+      //         .backgroundColor(this.paletteTheme)
+      //         .textAlign(TextAlign.Center)
+      //         .padding(9)
+      //     }
+      //     .alignItems(HorizontalAlign.Start)
+      //     .width('100%')
+      //   }
+      //   .border({ width: 1, color: this.packageName === '终身卡' ? this.paletteTheme : '#EAEAEA' })
+      //   .borderRadius(8)
+      //   .padding(20)
+      //   .onClick(() => {
+      //     this.packageName = '终身卡'
+      //     this.packagePrice = 9.9
+      //   })
+      //   .backgroundColor(this.packageName === '终身卡' ? this.getPaletteThemeWithOpacity() : '#fff')
+      //
+      // }
+      // .columnsTemplate('1fr 1fr 1fr 1fr') // 每行3个等宽列
+      // // .rowsTemplate('auto') // 行高自适应内容
+      // .columnsGap(24) // 列间距
+      // .rowsGap(24) // 行间距
 
 
       Text(Languages.purchasePackage[this.languages])
         .fontColor(ThemeConfig.TextBodyColor)
         .fontSize(ThemeConfig.TextSize_18)
         .fontWeight(ThemeConfig.TextWeight_500)
-        .visibility(this.packageName ? Visibility.Visible : Visibility.None)
+        .visibility(this.goodsInfo ? Visibility.Visible : Visibility.None)
 
       Row() {
-        Image($r('app.media.Rectangle_489'))
-          .width(300)
-          .margin({ right: 30 })
+        if (this.payState) {
+          if (this.payStateInfo) {
+            Image($r('app.media.Rectangle_489'))
+              .width(300)
+          } else {
+            Text('支付成功')
+              .width(300)
+              .height(300)
+              .textAlign(TextAlign.Center)
+          }
+        } else {
+          Text('去支付')
+            .width(300)
+            .height(300)
+            .textAlign(TextAlign.Center)
+            .onClick(() => {
+              if (!this.Selected) {
+                promptAction.showToast({
+                  message: '请同意自动续费服务协议和个人定于服务协议',
+                  duration: 1000,
+                  alignment: Alignment.Center
+                });
+                return
+              }
+              this.payStateInfo = null
+              let param: pay_Params = {
+                goodsId: this.goodsInfo?.goodsId as number,
+                goodsSpecsId: this.goodsInfo?.id as number,
+                goodsType: this.goodsInfo?.unit as string,
+                payType: this.payment === 'wx' ? "WECHAT" : 'ALIPAY',
+                token: (AppStorage.get('userLoginInfo') as UserLoginInfo).token
+              }
+              console.log('token', JSON.stringify(param))
+              _pay(param).then((res) => {
+                console.warn(JSON.stringify(res))
+                if (res.statusCode === 200) {
+                  this.payStateInfo = res.data
+                  this.payState = true
+                }
+              })
+            })
+        }
         Flex({
           direction: FlexDirection.Column,
           space: { main: LengthMetrics.px(30) },
@@ -251,7 +288,7 @@ export struct MemberCenter {
               .fontWeight(ThemeConfig.TextWeight_400)
               .fontColor(ThemeConfig.TextBodyColor)
             Blank()
-            Text(this.packageName)
+            Text(this.goodsInfo?.name)
               .fontSize(ThemeConfig.TextSize_14)
               .fontWeight(ThemeConfig.TextWeight_400)
               .fontColor(ThemeConfig.TextBodyColor)
@@ -336,7 +373,7 @@ export struct MemberCenter {
               .fontWeight(ThemeConfig.TextWeight_400)
               .fontColor(ThemeConfig.TextBodyColor)
             Blank()
-            Text((this.packagePrice * this.value).toFixed(2) + '￥')
+            Text((Number((this.goodsInfo?.priceShow)?.replace("￥", '')) * this.value).toFixed(2) + '￥')
               .fontSize(ThemeConfig.TextSize_18)
               .fontWeight(ThemeConfig.TextWeight_500)
               .fontColor(ThemeConfig.TextBodyColor)
@@ -372,8 +409,9 @@ export struct MemberCenter {
 
         }
         .layoutWeight(1)
+        .margin({ left: 30 })
       }
-      .visibility(this.packageName ? Visibility.Visible : Visibility.None)
+      .visibility(this.goodsInfo ? Visibility.Visible : Visibility.None)
       .alignItems(VerticalAlign.Top)
       .width('100%')
       .padding({ bottom: 20 })

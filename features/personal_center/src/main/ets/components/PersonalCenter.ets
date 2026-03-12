@@ -251,7 +251,7 @@ export struct PersonalCenter {
                     })
                     .borderRadius(4)
                     .onClick(() => {
-                      // this.curr_Index = index
+                      this.curr_Index = index
                     })
                     .backgroundColor(this.curr_Index === index ? '#fff' : "#f8f8f8")
                 }, (item: string) => item)
