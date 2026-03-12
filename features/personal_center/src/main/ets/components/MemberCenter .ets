@@ -22,7 +22,6 @@ export struct MemberCenter {
     if (this.payStateInfo) {
       this.interval = setInterval(() => {
         _queryOrderStatus({ orderNo: this.payStateInfo?.orderId as string }).then((res) => {
-          console.log('asjdfhjdashjk', res.data?.orderStatus)
           if (res.data?.orderStatus === 'SUCCESS') {
             this.payStateInfo = null
           }
@@ -231,7 +230,7 @@ export struct MemberCenter {
       Row() {
         if (this.payState) {
           if (this.payStateInfo) {
-            Image($r('app.media.Rectangle_489'))
+            QRCode(this.payStateInfo.codeUrl)
               .width(300)
           } else {
             Text('支付成功')
@@ -247,7 +246,7 @@ export struct MemberCenter {
             .onClick(() => {
               if (!this.Selected) {
                 promptAction.showToast({
-                  message: '请同意自动续费服务协议和个人定于服务协议',
+                  message: '请同意自动续费服务协议和个人订阅服务协议',
                   duration: 1000,
                   alignment: Alignment.Center
                 });
@@ -353,13 +352,67 @@ export struct MemberCenter {
             Image(this.payment === 'wx' ? $r('app.media.Payment_wx_true') : $r('app.media.Payment_wx_false'))
               .width(32)
               .onClick(() => {
-                this.payment = 'wx'
+                if (this.payState && this.payment !== 'wx') {
+                  if (this.Selected) {
+                    this.payment = 'wx'
+                    let param: pay_Params = {
+                      goodsId: this.goodsInfo?.goodsId as number,
+                      goodsSpecsId: this.goodsInfo?.id as number,
+                      goodsType: this.goodsInfo?.unit as string,
+                      payType: this.payment === 'wx' ? "WECHAT" : 'ALIPAY',
+                      token: (AppStorage.get('userLoginInfo') as UserLoginInfo).token
+                    }
+                    console.log('token', JSON.stringify(param))
+                    _pay(param).then((res) => {
+                      console.warn(JSON.stringify(res))
+                      if (res.statusCode === 200) {
+                        this.payStateInfo = res.data
+                        this.payState = true
+                      }
+                    })
+                  } else {
+                    promptAction.showToast({
+                      message: '请同意自动续费服务协议和个人订阅服务协议',
+                      duration: 1000,
+                      alignment: Alignment.Center
+                    });
+                  }
+                } else {
+                  this.payment = 'wx'
+                }
               })
               .margin({ right: 10 })
             Image(this.payment === 'zfb' ? $r('app.media.Payment_zfb_true') : $r('app.media.Payment_zfb_false'))
               .width(32)
               .onClick(() => {
-                this.payment = 'zfb'
+                if (this.payState && this.payment !== 'zfb') {
+                  if (this.Selected) {
+                    this.payment = 'zfb'
+                    let param: pay_Params = {
+                      goodsId: this.goodsInfo?.goodsId as number,
+                      goodsSpecsId: this.goodsInfo?.id as number,
+                      goodsType: this.goodsInfo?.unit as string,
+                      payType: this.payment === 'wx' ? "WECHAT" : 'ALIPAY',
+                      token: (AppStorage.get('userLoginInfo') as UserLoginInfo).token
+                    }
+                    console.log('token', JSON.stringify(param))
+                    _pay(param).then((res) => {
+                      console.warn(JSON.stringify(res))
+                      if (res.statusCode === 200) {
+                        this.payStateInfo = res.data
+                        this.payState = true
+                      }
+                    })
+                  } else {
+                    promptAction.showToast({
+                      message: '请同意自动续费服务协议和个人订阅服务协议',
+                      duration: 1000,
+                      alignment: Alignment.Center
+                    });
+                  }
+                } else {
+                  this.payment = 'zfb'
+                }
               })
           }
           .width('100%')
