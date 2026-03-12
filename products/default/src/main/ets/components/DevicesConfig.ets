@@ -1,13 +1,25 @@
-import { ConnectDevice, _getModelInfo, DeviceInfo, KeyPressType, getModelInfo_Params, DeviceArrayType,
-  keyConfigExclusion } from 'mouse'
+import {
+  ConnectDevice,
+  _getModelInfo,
+  DeviceInfo,
+  KeyPressType,
+  getModelInfo_Params,
+  DeviceArrayType,
+  keyConfigExclusion
+} from 'mouse'
 import { ConfigPage1 } from './ConfigPage1'
-import { ConfigPage2 } from './ConfigPage2'
+import { ConfigPage2, KeymethodConfig } from './ConfigPage2'
 import { ConfigPage3 } from './ConfigPage3'
 import { resetCustomerKey_Params } from '../model/UserModel'
 import { _resetCustomerKey } from '../viewmodel/UserViewModel'
 
 import {
-  getModelInfoModel, imagesModel, imagesDataModel, Languages
+  getModelInfoModel,
+  imagesModel,
+  imagesDataModel,
+  Languages,
+  keyInfosModel,
+  keyInfos_childsModel
 } from 'config' //获取设备按键信息
 import { DeviceArrayType_Ble } from 'bluetooth'
 import { pointer } from '@kit.InputKit'
@@ -45,7 +57,8 @@ export struct DevicesConfig {
         this.mouseconfig = null
       }
     } else {
-      if (ConnectDevice.Communication && deviceIndex >= 0 && deviceIndex < ConnectDevice.Communication.length && ConnectDevice.Communication[deviceIndex]) {
+      if (ConnectDevice.Communication && deviceIndex >= 0 && deviceIndex < ConnectDevice.Communication.length &&
+      ConnectDevice.Communication[deviceIndex]) {
         this.mouseconfig = ConnectDevice.Communication[deviceIndex].mouseconfig as DeviceInfo
       } else {
         console.error('2.4G设备索引无效或设备不存在:', deviceIndex, ConnectDevice.Communication?.length)
@@ -87,13 +100,13 @@ export struct DevicesConfig {
           })
           .margin({ bottom: 20 })
           .onHover((flag) => {
-          if (flag) {
-            this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
-          } else {
-            console.info("restoreDefault");
-            this.cursorCustom.restoreDefault();
-          }
-        })
+            if (flag) {
+              this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+            } else {
+              console.info("restoreDefault");
+              this.cursorCustom.restoreDefault();
+            }
+          })
           .onClick(() => {
             this.handleKeyReset()
           })
@@ -263,36 +276,125 @@ export struct DevicesConfig {
     const params: getModelInfo_Params = {
       languageCode: '',
       productCode: this.device_isBle ?
-      this.devices[AppStorage.get('device_show_currIndex') as number].BlueTooth_devices.deviceInfo.productType.toString() :
-      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.deviceInfo.productType.toString(),
+        this.devices[AppStorage.get('device_show_currIndex') as number].BlueTooth_devices.deviceInfo.productType.toString() :
+        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.deviceInfo.productType.toString(),
       sno: this.device_isBle ?
-      this.devices[AppStorage.get('device_show_currIndex') as number].BlueTooth_devices.deviceInfo.sn :
-      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.deviceInfo.sn
+        this.devices[AppStorage.get('device_show_currIndex') as number].BlueTooth_devices.deviceInfo.sn :
+        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].Communication.deviceInfo.sn
     }
 
     _getModelInfo(params).then((res) => {
       console.log('获取用户按键模式详情数据', JSON.stringify(res.data))
       if (res.status === 200) {
-         keyConfigExclusion(res.data as getModelInfoModel).then((getModelInfo)=>{
-           // 更新数据
-           if (this.device_isBle) {
-             this.devices[AppStorage.get('device_show_currIndex') as number].getModelInfo = getModelInfo
-           } else {
-             ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo = getModelInfo
-           }
-           AppStorage.setOrCreate('getModelInfo', getModelInfo)
-           if (this.device_isBle) {
-             this.devices[AppStorage.get('device_show_currIndex') as number].KeymethodConfig = []
-           } else {
-             // 重置 KeymethodConfig，让 ConfigPage2 重新初始化
-             ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].KeymethodConfig = []
-           }
-           console.log('数据重置完成，ConfigPage2 将自动重新初始化')
+        keyConfigExclusion(res.data as getModelInfoModel).then((getModelInfo) => {
+          // 更新数据
+          if (this.device_isBle) {
+            this.devices[AppStorage.get('device_show_currIndex') as number].getModelInfo = getModelInfo
+          } else {
+            ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].getModelInfo = getModelInfo
+          }
+          AppStorage.setOrCreate('getModelInfo', getModelInfo)
+          this.getModelInfo = getModelInfo
+          console.log('数据重置完成，ConfigPage2 将自动重新初始化')
         })
-
+        this.initKeymethodConfig()
       }
     }).catch(() => {
       console.error('获取模型信息失败:',)
     })
+  }
+
+  /**
+   * 初始化 KeymethodConfig
+   */
+  private initKeymethodConfig(): void {
+
+    if (!this.getModelInfo?.keyInfos || this.getModelInfo.keyInfos.length === 0) {
+      this.isShowConfig = false
+      return
+    }
+
+    // 创建默认配置
+    const defaultConfig: KeymethodConfig[] = [
+      { key: KeyPressType.VOICE_CLICK, currIndex: 0 },
+      { key: KeyPressType.VOICE_LONG_PRESS_DOWN, currIndex: 0 },
+      { key: KeyPressType.SEARCH_CLICK, currIndex: 0 },
+      { key: KeyPressType.SEARCH_LONG_PRESS_DOWN, currIndex: 0 },
+      { key: KeyPressType.TRANSLATE_CLICK, currIndex: 0 },
+      { key: KeyPressType.TRANSLATE_LONG_PRESS_DOWN, currIndex: 0 },
+      { key: KeyPressType.AI_CLICK, currIndex: 0 },
+      { key: KeyPressType.AI_LONG_PRESS_DOWN, currIndex: 0 },
+      { key: KeyPressType.CUSTOM_CLICK, currIndex: 0 },
+      { key: KeyPressType.CUSTOM_LONG_PRESS_DOWN, currIndex: 0 }
+    ]
+
+    // 从 getModelInfo 中读取实际的配置
+    this.getModelInfo.keyInfos.forEach((item: keyInfosModel, index1: number) => {
+      item.childs.forEach((child: keyInfos_childsModel, index2: number) => {
+        const childs = child.childs || []
+        for (let i = 0; i < childs.length; i++) {
+          if (childs[i].first === 1) {
+            this.updateKeymethodConfigByOperation(item.key, child.operation, i, defaultConfig)
+            break
+          }
+        }
+      })
+    })
+    if (this.device_isBle) {
+      this.devices[AppStorage.get('device_show_currIndex') as number].KeymethodConfig =
+        [...defaultConfig]
+    } else {
+      ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].KeymethodConfig =
+        [...defaultConfig]
+    }
+  }
+
+  /**
+   * 根据操作类型更新配置
+   */
+  private updateKeymethodConfigByOperation(key: string, operation: string, index: number,
+    config: KeymethodConfig[]): void {
+    switch (key) {
+      case 'voice_key':
+        if (operation === 'sk') {
+          config[0].currIndex = index
+        }
+        if (operation === 'lk') {
+          config[1].currIndex = index
+        }
+        break
+      case 'search_key':
+        if (operation === 'sk') {
+          config[2].currIndex = index
+        }
+        if (operation === 'lk') {
+          config[3].currIndex = index
+        }
+        break
+      case 'translate_key':
+        if (operation === 'sk') {
+          config[4].currIndex = index
+        }
+        if (operation === 'lk') {
+          config[5].currIndex = index
+        }
+        break
+      case 'AI_key':
+        if (operation === 'sk') {
+          config[6].currIndex = index
+        }
+        if (operation === 'lk') {
+          config[7].currIndex = index
+        }
+        break
+      case 'M_key':
+        if (operation === 'sk') {
+          config[8].currIndex = index
+        }
+        if (operation === 'lk') {
+          config[9].currIndex = index
+        }
+        break
+    }
   }
 }
