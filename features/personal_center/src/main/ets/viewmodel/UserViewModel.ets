@@ -3,6 +3,8 @@ import { register_Response } from 'common';
 import {
   goods_Params,
   goods_Response,
+  orderList_Params,
+  orderList_Response,
   pay_Params,
   pay_Response,
   queryOrderStatus_Params,
@@ -44,5 +46,15 @@ export function _pay(params: pay_Params) {
  */
 export function _queryOrderStatus(params: queryOrderStatus_Params) {
   return http.get<pay_Response, queryOrderStatus_Params>('/api/queryOrderStatus', params);
+}
+
+
+/**
+ * 查询订单状态
+ * @param params
+ * @returns
+ */
+export function _orderList(params: orderList_Params) {
+  return http.get<orderList_Response[], orderList_Params>('/api/orderList', params);
 }
 
