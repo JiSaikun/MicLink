@@ -121,6 +121,7 @@ export struct RechargeRecord {
           DatePicker({
             start: new Date('2010'),
             end: this.day,
+            mode: DatePickerMode.YEAR_AND_MONTH,
             selected: $$this.selectedDate
           })
             .onDateChange((data) => {
@@ -180,7 +181,7 @@ export struct RechargeRecord {
   filterOrdersByMonth(): void {
     const selectedYear = this.selectedDate.getFullYear();
     const selectedMonth = this.selectedDate.getMonth();
-    
+
     this.filteredOrderList = this.orderList.filter((item) => {
       const orderDate = item.createDate instanceof Date ? item.createDate : new Date(item.createDate);
       if (!(orderDate instanceof Date) || isNaN(orderDate.getTime())) {
@@ -188,7 +189,7 @@ export struct RechargeRecord {
       }
       return orderDate.getFullYear() === selectedYear && orderDate.getMonth() === selectedMonth;
     });
-    
+
     // 计算支出
     this.calculateExpenditure();
   }
@@ -197,16 +198,16 @@ export struct RechargeRecord {
   calculateExpenditure(): void {
     const selectedYear = this.selectedDate.getFullYear();
     const selectedMonth = this.selectedDate.getMonth();
-    
+
     let annualTotal = 0;
     let monthlyTotal = 0;
-    
+
     this.orderList.forEach((item) => {
       // 只计算状态为SUCCESS的订单
       if (item.status !== 'SUCCESS') {
         return;
       }
-      
+
       // 解析goodsSnapchat获取priceShow
       try {
         const goodsInfo = this.getGoodsSnapchat(item.goodsSnapchat);
@@ -214,14 +215,14 @@ export struct RechargeRecord {
           // 去掉"￥"符号并转换为数字
           const priceStr = goodsInfo.priceShow.replace('￥', '');
           const price = parseFloat(priceStr);
-          
+
           if (!isNaN(price)) {
             // 计算年支出
             const orderDate = item.createDate instanceof Date ? item.createDate : new Date(item.createDate);
             if (orderDate instanceof Date && !isNaN(orderDate.getTime())) {
               if (orderDate.getFullYear() === selectedYear) {
                 annualTotal += price;
-                
+
                 // 计算月支出
                 if (orderDate.getMonth() === selectedMonth) {
                   monthlyTotal += price;
@@ -234,7 +235,7 @@ export struct RechargeRecord {
         console.error('解析订单数据失败:', error);
       }
     });
-    
+
     this.annualExpenditure = annualTotal;
     this.monthlyExpenditure = monthlyTotal;
   }
