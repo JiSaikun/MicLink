@@ -137,33 +137,33 @@ export struct Settings {
         .fontColor(ThemeConfig.SecondaryTextColor)
 
       Flex() {
-        Column() {
-          Text(Languages.resolution[this.languages])
-            .fontSize(ThemeConfig.TextSize_14)
-            .fontWeight(ThemeConfig.TextWeight_400)
-            .margin({ bottom: 12 })
-            .fontColor(ThemeConfig.TextBodyColor)
-
-          Select(this.resolution)
-            .value(this.resolution[this.init_resolution()].value)
-            .onSelect((index: number) => {
-              const selectedScale = this.resolutionValues[index]
-              AppStorage.setOrCreate('resolutionScale', selectedScale)
-              this.applyResolution(selectedScale)
-            })
-            .selected(this.init_resolution())
-            .width('100%')
-            .font({ size: ThemeConfig.TextSize_12, weight: 400 })
-            .fontColor(ThemeConfig.TextBodyColor)
-            .borderRadius(4)
-            .border({ width: 1, color: 'f2f2f2' })
-            .backgroundColor(Color.White)
-        }
-        .padding({ right: 150 })
-        .flexShrink(1)
-        .flexGrow(1)
-        .width(1)
-        .alignItems(HorizontalAlign.Start)
+        // Column() {
+        //   Text(Languages.resolution[this.languages])
+        //     .fontSize(ThemeConfig.TextSize_14)
+        //     .fontWeight(ThemeConfig.TextWeight_400)
+        //     .margin({ bottom: 12 })
+        //     .fontColor(ThemeConfig.TextBodyColor)
+        //
+        //   Select(this.resolution)
+        //     .value(this.resolution[this.init_resolution()].value)
+        //     .onSelect((index: number) => {
+        //       const selectedScale = this.resolutionValues[index]
+        //       AppStorage.setOrCreate('resolutionScale', selectedScale)
+        //       this.applyResolution(selectedScale)
+        //     })
+        //     .selected(this.init_resolution())
+        //     .width('100%')
+        //     .font({ size: ThemeConfig.TextSize_12, weight: 400 })
+        //     .fontColor(ThemeConfig.TextBodyColor)
+        //     .borderRadius(4)
+        //     .border({ width: 1, color: 'f2f2f2' })
+        //     .backgroundColor(Color.White)
+        // }
+        // .padding({ right: 150 })
+        // .flexShrink(1)
+        // .flexGrow(1)
+        // .width(1)
+        // .alignItems(HorizontalAlign.Start)
 
         Column() {
           Text(Languages.languages[this.languages])
@@ -187,10 +187,10 @@ export struct Settings {
             .backgroundColor(Color.White)
         }
         .alignItems(HorizontalAlign.Start)
-        .width(1)
+        .width("50%")
         .padding({ right: 150 })
-        .flexShrink(1)
-        .flexGrow(1)
+        // .flexShrink(1)
+        // .flexGrow(1)
       }
       .width('100%')
 
