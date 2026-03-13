@@ -26,7 +26,7 @@ export function _updateName(params: updateName_Params) {
  * @param params
  * @returns
  */
-export function _goods(params: goods_Params = { type: "MOUSE" }) {
+export function _goods(params: goods_Params) {
   return http.get<goods_Response[], goods_Params>('/api/goods', params);
 }
 

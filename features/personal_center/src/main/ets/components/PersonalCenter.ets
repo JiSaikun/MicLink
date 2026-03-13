@@ -22,6 +22,10 @@ export struct PersonalCenter {
   @State curr_Index: number = 0
   @State isShow_Rename_pop: boolean = false
   @State scaleValue: number = 1.0
+  scroller_: Scroller = new Scroller()
+  scrollerToEnd = () => {
+    this.scroller_.scrollTo({ xOffset: 0, yOffset: 10000, animation: true })
+  }
 
   aboutToAppear(): void {
     this.updateTabBarList()
@@ -80,17 +84,17 @@ export struct PersonalCenter {
           }.padding({ left: 24, right: 24 })
 
 
-          Scroll() {
+          Scroll(this.scroller_) {
             Flex({ direction: FlexDirection.Column, space: { main: LengthMetrics.px(24) } }) {
               Row() {
-                Stack(){
+                Stack() {
                   Image(this.userLoginInfo?.avatar ? this.userLoginInfo.avatar : $r('app.media.avatar'))
                     .width(80)
                     .height(80)
                     .borderRadius(100)
                     .objectFit(ImageFit.Fill)
 
-                  Stack(){
+                  Stack() {
                     Row()
                       .width(24)
                       .height(24)
@@ -264,7 +268,7 @@ export struct PersonalCenter {
                 Settings()
               }
               if (this.curr_Index === 1) {
-                MemberCenter()
+                MemberCenter({scroller_:this.scrollerToEnd})
               }
               if (this.curr_Index === 2) {
                 RechargeRecord()

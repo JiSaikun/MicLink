@@ -8,7 +8,7 @@ import { _goods, _pay, _queryOrderStatus } from "../viewmodel/UserViewModel"
 export struct MemberCenter {
   @StorageLink('languages') languages: string = 'ZH_CN'
   @StorageLink("paletteTheme") paletteTheme: string = ThemeConfig.PaletteTheme
-  @State allPackageDetails: goods_Response | null = null
+  @State goods: goods_Response [] = []
   @Watch('changePackage') @State goodsInfo: goodsSpecsItem | null = null
   //value用来计数，初始化的值是1
   @State value: number = 1
@@ -17,6 +17,7 @@ export struct MemberCenter {
   @State payState: boolean = false
   @Watch('getPayState') @State payStateInfo: pay_Response | null = null
   @State interval: number | null = null
+  scroller_?: () => void
 
   getPayState() {
     if (this.payStateInfo) {
@@ -33,16 +34,27 @@ export struct MemberCenter {
   }
 
   aboutToAppear(): void {
-    _goods().then((res) => {
-      if (res.statusCode === 200) {
-        this.allPackageDetails = (res.data as goods_Response[])[0]
-      }
-    })
+    this.getGoosList()
+  }
+
+  async getGoosList() {
+    for (let item of ["MOUSE", "RECORD", "CHATGPT", "AIART"]) {
+      await _goods({ type: item }).then((res) => {
+        if (res.statusCode === 200) {
+          (res.data as goods_Response[]).forEach((item) => {
+            this.goods.push(item)
+          })
+        }
+      })
+    }
   }
 
   changePackage() {
     this.value = 1
     this.payState = false
+    if (this.scroller_) {
+      this.scroller_()
+    }
   }
 
   // 方法：为16进制颜色添加透明度
@@ -85,73 +97,76 @@ export struct MemberCenter {
 
   build() {
     Flex({ space: { main: LengthMetrics.px(24) }, direction: FlexDirection.Column }) {
-      // Text(Languages.displaySettings[this.languages])
-      Text(this.allPackageDetails?.name)
-        .fontSize(ThemeConfig.TextSize_14)
-        .fontWeight(ThemeConfig.TextWeight_400)
-        .fontColor(ThemeConfig.SecondaryTextColor)
-      Grid() {
-        ForEach(this.allPackageDetails?.goodsSpecs, (item: goodsSpecsItem) => {
-          GridItem() {
-            Column({ space: 20 }) {
-              Text(item.name)
-                .fontSize(ThemeConfig.TextSize_14)
-                .fontWeight(ThemeConfig.TextWeight_400)
-                .fontColor(ThemeConfig.TextBodyColor)
-              Flex({ alignItems: ItemAlign.End }) {
-                Text(item.priceShow)
-                  .fontSize(ThemeConfig.TextSize_24)
-                  .fontWeight(ThemeConfig.TextWeight_500)
-                  .fontColor(ThemeConfig.TextBodyColor)
-                  .margin({ right: 10 })
-
-                Text('人民币')
-                  .fontSize(ThemeConfig.TextSize_12)
-                  .fontWeight(ThemeConfig.TextWeight_400)
-                  .fontColor(ThemeConfig.SecondaryTextColor)
-
-                Blank()
-                Text(item.remark)
+      ForEach(this.goods, (goods_Response: goods_Response) => {
+        // Text(Languages.displaySettings[this.languages])
+        Text(goods_Response.name)
+          .fontSize(ThemeConfig.TextSize_14)
+          .fontWeight(ThemeConfig.TextWeight_400)
+          .fontColor(ThemeConfig.SecondaryTextColor)
+        Grid() {
+          ForEach(goods_Response.goodsSpecs, (item: goodsSpecsItem) => {
+            GridItem() {
+              Column({ space: 20 }) {
+                Text(item.name)
                   .fontSize(ThemeConfig.TextSize_14)
                   .fontWeight(ThemeConfig.TextWeight_400)
-                  .fontColor(this.paletteTheme)
-              }
+                  .fontColor(ThemeConfig.TextBodyColor)
+                Flex({ alignItems: ItemAlign.End }) {
+                  Text(item.priceShow)
+                    .fontSize(ThemeConfig.TextSize_24)
+                    .fontWeight(ThemeConfig.TextWeight_500)
+                    .fontColor(ThemeConfig.TextBodyColor)
+                    .margin({ right: 10 })
 
-              Flex() {
-                Text()
-                  .fontSize(ThemeConfig.TextSize_12)
+                  // Text('人民币')
+                  //   .fontSize(ThemeConfig.TextSize_12)
+                  //   .fontWeight(ThemeConfig.TextWeight_400)
+                  //   .fontColor(ThemeConfig.SecondaryTextColor)
+
+                  Blank()
+                  Text(item.remark)
+                    .fontSize(ThemeConfig.TextSize_14)
+                    .fontWeight(ThemeConfig.TextWeight_400)
+                    .fontColor(this.paletteTheme)
+
+                }
+
+                // Flex() {
+                //   Text()
+                //     .fontSize(ThemeConfig.TextSize_12)
+                //     .fontWeight(ThemeConfig.TextWeight_400)
+                //     .fontColor(ThemeConfig.SecondaryTextColor)
+                //     .flexGrow(1)
+                //     .flexShrink(1)
+                // }
+
+                Text('购买套餐')
+                  .width('100%')
+                  .borderRadius(4)
+                  .fontSize(ThemeConfig.TextSize_14)
                   .fontWeight(ThemeConfig.TextWeight_400)
-                  .fontColor(ThemeConfig.SecondaryTextColor)
-                  .flexGrow(1)
-                  .flexShrink(1)
+                  .fontColor(Color.White)
+                  .backgroundColor(this.paletteTheme)
+                  .textAlign(TextAlign.Center)
+                  .padding(9)
+                  .onClick(() => {
+                    this.goodsInfo = item
+                  })
               }
-
-              Text('购买套餐')
-                .width('100%')
-                .borderRadius(4)
-                .fontSize(ThemeConfig.TextSize_14)
-                .fontWeight(ThemeConfig.TextWeight_400)
-                .fontColor(Color.White)
-                .backgroundColor(this.paletteTheme)
-                .textAlign(TextAlign.Center)
-                .padding(9)
-                .onClick(() => {
-                  this.goodsInfo = item
-                })
+              .alignItems(HorizontalAlign.Start)
+              .width('100%')
             }
-            .alignItems(HorizontalAlign.Start)
-            .width('100%')
-          }
-          .border({ width: 1, color: item.remark === this.goodsInfo?.remark ? this.paletteTheme : '#EAEAEA' })
-          .borderRadius(8)
-          .padding(20)
-          .backgroundColor(item.remark === this.goodsInfo?.remark ? this.getPaletteThemeWithOpacity() : '#fff')
-        })
-      }
-      .columnsTemplate('1fr 1fr 1fr 1fr') // 每行3个等宽列
-      // .rowsTemplate('auto') // 行高自适应内容
-      .columnsGap(24) // 列间距
-      .rowsGap(24) // 行间距
+            .border({ width: 1, color: item.name === this.goodsInfo?.name ? this.paletteTheme : '#EAEAEA' })
+            .borderRadius(8)
+            .padding(20)
+            .backgroundColor(item.name === this.goodsInfo?.name ? this.getPaletteThemeWithOpacity() : '#fff')
+          })
+        }
+        .columnsTemplate('1fr 1fr 1fr 1fr') // 每行3个等宽列
+        // .rowsTemplate('auto') // 行高自适应内容
+        .columnsGap(24) // 列间距
+        .rowsGap(24) // 行间距
+      }, (goods_Response: goods_Response) => goods_Response.id.toString())
 
       // Text(Languages.toneCustomization[this.languages])
       //   .fontSize(ThemeConfig.TextSize_14)
@@ -233,47 +248,73 @@ export struct MemberCenter {
             QRCode(this.payStateInfo.codeUrl)
               .width(300)
           } else {
-            Text('支付成功')
-              .width(300)
-              .height(300)
-              .textAlign(TextAlign.Center)
-          }
-        } else {
-          Text('去支付')
+            Row() {
+              Text('支付成功')
+                .width('100%')
+                .borderRadius(4)
+                .fontSize(ThemeConfig.TextSize_14)
+                .fontWeight(ThemeConfig.TextWeight_400)
+                .fontColor(Color.White)
+                .backgroundColor(this.paletteTheme)
+                .textAlign(TextAlign.Center)
+                .padding(9)
+            }
+            .padding(9)
             .width(300)
             .height(300)
-            .textAlign(TextAlign.Center)
-            .onClick(() => {
-              if (!this.Selected) {
-                promptAction.showToast({
-                  message: '请同意自动续费服务协议和个人订阅服务协议',
-                  duration: 1000,
-                  alignment: Alignment.Center
-                });
-                return
+            .border({ width: 1, color: '#EAEAEA' })
+            .borderRadius(8)
+            .padding(20)
+          }
+        } else {
+          Row() {
+            Text('去支付')
+              .width('100%')
+              .borderRadius(4)
+              .fontSize(ThemeConfig.TextSize_14)
+              .fontWeight(ThemeConfig.TextWeight_400)
+              .fontColor(Color.White)
+              .backgroundColor(this.paletteTheme)
+              .textAlign(TextAlign.Center)
+              .padding(9)
+          }
+          .width(300)
+          .height(300)
+          .border({ width: 1, color: '#EAEAEA' })
+          .borderRadius(8)
+          .padding(20)
+          .onClick(() => {
+            if (!this.Selected) {
+              promptAction.showToast({
+                message: '请同意自动续费服务协议和个人订阅服务协议',
+                duration: 1000,
+                alignment: Alignment.Center
+              });
+              return
+            }
+            this.payStateInfo = null
+            let param: pay_Params = {
+              goodsId: this.goodsInfo?.goodsId as number,
+              goodsSpecsId: this.goodsInfo?.id as number,
+              goodsType: this.goodsInfo?.unit as string,
+              payType: this.payment === 'wx' ? "WECHAT" : 'ALIPAY',
+              token: (AppStorage.get('userLoginInfo') as UserLoginInfo).token
+            }
+            console.log('token', JSON.stringify(param))
+            _pay(param).then((res) => {
+              console.warn(JSON.stringify(res))
+              if (res.statusCode === 200) {
+                this.payStateInfo = res.data
+                this.payState = true
               }
-              this.payStateInfo = null
-              let param: pay_Params = {
-                goodsId: this.goodsInfo?.goodsId as number,
-                goodsSpecsId: this.goodsInfo?.id as number,
-                goodsType: this.goodsInfo?.unit as string,
-                payType: this.payment === 'wx' ? "WECHAT" : 'ALIPAY',
-                token: (AppStorage.get('userLoginInfo') as UserLoginInfo).token
-              }
-              console.log('token', JSON.stringify(param))
-              _pay(param).then((res) => {
-                console.warn(JSON.stringify(res))
-                if (res.statusCode === 200) {
-                  this.payStateInfo = res.data
-                  this.payState = true
-                }
-              })
             })
+          })
         }
         Flex({
           direction: FlexDirection.Column,
           space: { main: LengthMetrics.px(30) },
-          justifyContent: FlexAlign.Start
+          justifyContent: FlexAlign.Start,
+          alignItems:ItemAlign.Center
         }) {
           // Text('订单详情')
           Text(Languages.orderDetails[this.languages])
@@ -287,6 +328,11 @@ export struct MemberCenter {
               .fontWeight(ThemeConfig.TextWeight_400)
               .fontColor(ThemeConfig.TextBodyColor)
             Blank()
+            Text(this.goodsInfo?.goodsName)
+              .fontSize(ThemeConfig.TextSize_14)
+              .fontWeight(ThemeConfig.TextWeight_400)
+              .fontColor(ThemeConfig.SecondaryTextColor)
+              .margin({ right: 10 })
             Text(this.goodsInfo?.name)
               .fontSize(ThemeConfig.TextSize_14)
               .fontWeight(ThemeConfig.TextWeight_400)
