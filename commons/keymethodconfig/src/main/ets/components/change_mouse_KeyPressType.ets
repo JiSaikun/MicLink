@@ -15,8 +15,8 @@ class setInterval_curr {
 
 export function _change_mouse_KeyPressType() {
   let KeymethodConfig = AppStorage.get('device_isBle') ?
-  (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number].KeymethodConfig :
-  ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].KeymethodConfig
+    (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number].KeymethodConfig :
+    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].KeymethodConfig
   // console.error('77777777777777777777777777777', JSON.stringify(KeymethodConfig))
   let mouse_KeyPressType: KeyPressType = AppStorage.get('mouse_KeyPressType') as KeyPressType //鼠标按键事件监听
   let getModelInfo = AppStorage.get('device_isBle') ?
@@ -140,13 +140,8 @@ export function _change_mouse_KeyPressType() {
     // console.error(JSON.stringify(getModelInfo.keyInfos))
     lk_down((_keyInfos_childsModel as keyInfos_childsModel).childs[KeymethodConfig[7].currIndex].cmd)
   }
-  if (AppStorage.get('device_isBle')) {
-    setTimeout(() => {
-      AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DEFAULT)
-    }, 500)
-  }else {
-    AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DEFAULT)
-  }
+
+  AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DEFAULT)
 }
 
 function sk(cmd: string) {

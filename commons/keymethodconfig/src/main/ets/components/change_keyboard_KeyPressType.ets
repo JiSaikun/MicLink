@@ -15,8 +15,8 @@ class setInterval_curr {
 export function _change_keyboard_KeyPressType() {
 
   let KeymethodConfig = AppStorage.get('device_isBle') ?
-  (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number].KeymethodConfig :
-  ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].KeymethodConfig
+    (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number].KeymethodConfig :
+    ConnectDevice.Communication[AppStorage.get('device_currIndex') as number].KeymethodConfig
   // console.error('77777777777777777777777777777', JSON.stringify(KeymethodConfig))
   let mouse_KeyPressType: KeyPressType = AppStorage.get('mouse_KeyPressType') as KeyPressType //鼠标按键事件监听
   let getModelInfo = AppStorage.get('device_isBle') ?
@@ -312,13 +312,7 @@ export function _change_keyboard_KeyPressType() {
     _KeyMethodConfig.openChatGPT()
   }
 
-  if (AppStorage.get('device_isBle')) {
-    setTimeout(() => {
-      AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DEFAULT)
-    }, 500)
-  }else {
-    AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DEFAULT)
-  }
+  AppStorage.setOrCreate('mouse_KeyPressType', KeyPressType.DEFAULT)
 }
 
 function sk(cmd: string) {

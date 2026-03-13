@@ -154,6 +154,7 @@ export class BlueTooth_devices {
   private deviceValidationTimer: number | null = null
   private readonly DEVICE_VALIDATION_TIMEOUT: number = 10000 // 10秒超时，如果设备还没有SN就移除
   private audioWebSocketHandler: AudioWebSocketHandler_ble | null = null // 当前的音频WebSocket处理器
+  private hexDataFlax: string = ''
 
   constructor(device_address: string) {
     this.device_address = device_address;
@@ -175,6 +176,18 @@ export class BlueTooth_devices {
     if (value.length > 0) {
       const hexData = Array.from(value.slice(0, value.length)).map(b => b.toString(16).padStart(2, '0')).join(' ');
       console.log('接收到的数据展示:', hexData);
+      if (hexData === this.hexDataFlax) {
+        console.error('拦截数据：', hexData)
+        return
+      } else {
+        console.error('不拦截数据：', this.hexDataFlax)
+        console.error('不拦截数据：', hexData)
+        this.hexDataFlax = hexData
+        setTimeout(() => {
+          this.hexDataFlax === hexData
+          this.hexDataFlax = ''
+        }, 100)
+      }
       // 解析设备信息
       this.parseDeviceInfo(value.slice(0, value.length));
     } else {
@@ -343,12 +356,31 @@ export class BlueTooth_devices {
   }
 
   public parseDeviceInfo(data: Uint8Array): void {
-    // 使用实例变量而不是每次从AppStorage获取，确保数据一致性
-    const devices = this.devices;
-    if (!devices || !Array.isArray(devices) || this.device_currIndex < 0 || this.device_currIndex >= devices.length) {
-      console.error('设备数组或索引无效:',
-        JSON.stringify({ devices: !!devices, deviceIndex: this.device_currIndex, length: devices?.length }));
+    // 重新从AppStorage获取最新的设备列表，确保数据一致性
+    let devices = AppStorage.get('devices') as DeviceArrayType_Ble[] || [];
+    // 更新实例变量
+    this.devices = devices;
+    
+    if (!devices || !Array.isArray(devices) || devices.length === 0) {
+      console.error('设备数组无效或为空:',
+        JSON.stringify({ devices: !!devices, length: devices?.length }));
       return;
+    }
+    
+    // 确保设备索引有效
+    if (this.device_currIndex < 0 || this.device_currIndex >= devices.length) {
+      // 如果索引无效，尝试找到当前设备的正确索引
+      const currentDeviceIndex = devices.findIndex(device => 
+        device.BlueTooth_devices?.device_address === this.device_address
+      );
+      
+      if (currentDeviceIndex === -1) {
+        console.error('当前设备不在设备列表中:', this.device_address);
+        return;
+      }
+      
+      this.device_currIndex = currentDeviceIndex;
+      console.log('更新设备索引为:', this.device_currIndex);
     }
 
     {
@@ -1853,28 +1885,28 @@ export class BlueTooth_devices {
         console.error('更新设备连接状态失败:', err);
       }
     } else if (connectState === 0) {
-      console.info('检测到蓝牙连接断开，开始清理资源');
-
-      // 调用closeconnectDevice方法完全清理资源
-      try {
-        this.closeconnectDevice();
-      } catch (err) {
-        console.error('清理资源失败:', err);
-      }
-
-      // 更新设备连接状态
-      try {
-        if ((AppStorage.get('devices') as DeviceArrayType_Ble[]) &&
-          (AppStorage.get('devices') as DeviceArrayType_Ble[]).length > 0 && this.device_currIndex >= 0 &&
-          this.device_currIndex < (AppStorage.get('devices') as DeviceArrayType_Ble[]).length) {
-          if (this.devices[this.device_currIndex].mouseconfig) {
-            this.devices[this.device_currIndex].mouseconfig!.isConnected =
-              false;
-          }
-        }
-      } catch (err) {
-        console.error('更新设备断开状态失败:', err);
-      }
+      // console.info('检测到蓝牙连接断开，开始清理资源');
+      //
+      // // 调用closeconnectDevice方法完全清理资源
+      // try {
+      //   this.closeconnectDevice();
+      // } catch (err) {
+      //   console.error('清理资源失败:', err);
+      // }
+      //
+      // // 更新设备连接状态
+      // try {
+      //   if ((AppStorage.get('devices') as DeviceArrayType_Ble[]) &&
+      //     (AppStorage.get('devices') as DeviceArrayType_Ble[]).length > 0 && this.device_currIndex >= 0 &&
+      //     this.device_currIndex < (AppStorage.get('devices') as DeviceArrayType_Ble[]).length) {
+      //     if (this.devices[this.device_currIndex].mouseconfig) {
+      //       this.devices[this.device_currIndex].mouseconfig!.isConnected =
+      //         false;
+      //     }
+      //   }
+      // } catch (err) {
+      //   console.error('更新设备断开状态失败:', err);
+      // }
     }
   }
 
