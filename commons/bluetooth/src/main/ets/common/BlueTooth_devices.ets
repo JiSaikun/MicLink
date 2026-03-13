@@ -177,16 +177,16 @@ export class BlueTooth_devices {
       const hexData = Array.from(value.slice(0, value.length)).map(b => b.toString(16).padStart(2, '0')).join(' ');
       console.log('接收到的数据展示:', hexData);
       if (hexData === this.hexDataFlax) {
-        console.error('拦截数据：', hexData)
+        // console.error('拦截短时间内的重复数据：', hexData)
         return
       } else {
-        console.error('不拦截数据：', this.hexDataFlax)
-        console.error('不拦截数据：', hexData)
+        // console.warn('不拦截数据,上条数据：', this.hexDataFlax)
+        // console.warn('不拦截数据,此次数据：', hexData)
         this.hexDataFlax = hexData
         setTimeout(() => {
           this.hexDataFlax === hexData
           this.hexDataFlax = ''
-        }, 100)
+        }, 500)
       }
       // 解析设备信息
       this.parseDeviceInfo(value.slice(0, value.length));
