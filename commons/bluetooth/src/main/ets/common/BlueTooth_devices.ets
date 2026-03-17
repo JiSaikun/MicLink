@@ -155,12 +155,16 @@ export class BlueTooth_devices {
   private readonly DEVICE_VALIDATION_TIMEOUT: number = 10000 // 10秒超时，如果设备还没有SN就移除
   private audioWebSocketHandler: AudioWebSocketHandler_ble | null = null // 当前的音频WebSocket处理器
   private hexDataFlax: string = ''
+  private canChange_mouse_KeyPressType: boolean = true
 
   constructor(device_address: string) {
     this.device_address = device_address;
   }
 
   CharacteristicChange = (characteristicChangeReq: ble.BLECharacteristic) => {
+    if (!this.canChange_mouse_KeyPressType) {
+      return
+    }
     // 更新最后接收特征值变化的时间
     this.lastCharacteristicChangeTime = Date.now();
     this.resetCharacteristicTimeout();
@@ -196,6 +200,7 @@ export class BlueTooth_devices {
   }
 
   public async closeconnectDevice() {
+    this.canChange_mouse_KeyPressType = false
     try {
       // 禁用特征值通知
       await this.setCharacteristicChangeNotification(false);
@@ -206,6 +211,9 @@ export class BlueTooth_devices {
 
     // 关闭GATT客户端连接
     if (this.gattClient) {
+      // 移除所有监听器
+      this.gattClient.off('BLECharacteristicChange');
+      this.gattClient.off('BLEConnectionStateChange');
       this.gattClient.close();
       this.gattClient = null; // 清空引用，避免重复调用
     }
@@ -360,25 +368,25 @@ export class BlueTooth_devices {
     let devices = AppStorage.get('devices') as DeviceArrayType_Ble[] || [];
     // 更新实例变量
     this.devices = devices;
-    
+
     if (!devices || !Array.isArray(devices) || devices.length === 0) {
       console.error('设备数组无效或为空:',
         JSON.stringify({ devices: !!devices, length: devices?.length }));
       return;
     }
-    
+
     // 确保设备索引有效
     if (this.device_currIndex < 0 || this.device_currIndex >= devices.length) {
       // 如果索引无效，尝试找到当前设备的正确索引
-      const currentDeviceIndex = devices.findIndex(device => 
-        device.BlueTooth_devices?.device_address === this.device_address
+      const currentDeviceIndex = devices.findIndex(device =>
+      device.BlueTooth_devices?.device_address === this.device_address
       );
-      
+
       if (currentDeviceIndex === -1) {
         console.error('当前设备不在设备列表中:', this.device_address);
         return;
       }
-      
+
       this.device_currIndex = currentDeviceIndex;
       console.log('更新设备索引为:', this.device_currIndex);
     }

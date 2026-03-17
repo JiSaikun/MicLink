@@ -5,7 +5,7 @@ export { Topbar } from './src/main/ets/components/Topbar'
 
 export { Content } from './src/main/ets/components/Content'
 
-export { Reset } from './src/main/ets/components/Reset'
+export { Reset } from './src/main/ets/common/Reset'
 
 export { AiModel_data, bottom_data, Ai_Model } from './src/main/ets/model/LeftBar_DataModel'
 

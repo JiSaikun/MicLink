@@ -267,6 +267,9 @@ struct Index {
   }
 
   change_mouse_KeyPressType() {
+    if (this.mouse_KeyPressType === KeyPressType.DEFAULT) {
+      return
+    }
     if (this.login) {
       let PRODUCT_TYPE_: PRODUCT_TYPE = PRODUCT_TYPE.DEFAULT
       if (this.device_isBle) {
@@ -325,34 +328,36 @@ struct Index {
     try {
       inputDevice.on("change", (data: inputDevice.DeviceListener) => {
         Reset()
-        console.log(`Device event info: ${JSON.stringify(data)}`);
-        inputDevice.getKeyboardType(data.deviceId, (err: Error, type: inputDevice.KeyboardType) => {
-          console.log("The keyboard type is: " + type);
-          if (type == inputDevice.KeyboardType.ALPHABETIC_KEYBOARD && data.type == 'add') {
-            isPhysicalKeyboardExist = true;
-          } else if (type == inputDevice.KeyboardType.ALPHABETIC_KEYBOARD && data.type == 'remove') {
-            isPhysicalKeyboardExist = false;
-          }
-          for (let item of ConnectDevice.Communication) {
-            item.Communication.changPhysicalKeyboardExistState(isPhysicalKeyboardExist)
-          }
-        });
-        ConnectDevice.connectDevice().then(() => {
-          for (let item of ConnectDevice.Communication) {
-            item.Communication.changPhysicalKeyboardExistState(true)
-          }
-          if (this.canReset) {
-            hilog.warn(0x00,'热插拔','检索蓝牙设备');
-            const context: common.UIAbilityContext =
-              this.getUIContext().getHostContext() as common.UIAbilityContext;
-            connectDevice(context)
-          }
-          this.canReset = false
-          setTimeout(() => {
-            this.canReset = true
-          }, 500)
+          .then(()=>{
+            console.log(`Device event info: ${JSON.stringify(data)}`);
+            inputDevice.getKeyboardType(data.deviceId, (err: Error, type: inputDevice.KeyboardType) => {
+              console.log("The keyboard type is: " + type);
+              if (type == inputDevice.KeyboardType.ALPHABETIC_KEYBOARD && data.type == 'add') {
+                isPhysicalKeyboardExist = true;
+              } else if (type == inputDevice.KeyboardType.ALPHABETIC_KEYBOARD && data.type == 'remove') {
+                isPhysicalKeyboardExist = false;
+              }
+              for (let item of ConnectDevice.Communication) {
+                item.Communication.changPhysicalKeyboardExistState(isPhysicalKeyboardExist)
+              }
+            });
+            ConnectDevice.connectDevice().then(() => {
+              for (let item of ConnectDevice.Communication) {
+                item.Communication.changPhysicalKeyboardExistState(true)
+              }
+              if (this.canReset) {
+                hilog.warn(0x00,'热插拔','检索蓝牙设备');
+                const context: common.UIAbilityContext =
+                  this.getUIContext().getHostContext() as common.UIAbilityContext;
+                connectDevice(context)
+              }
+              this.canReset = false
+              setTimeout(() => {
+                this.canReset = true
+              }, 500)
 
-        })
+            })
+          })
       });
     } catch (error) {
       console.error(`Get device info failed, error: ${JSON.stringify(error, ['code', 'message'])}`);

@@ -1,7 +1,7 @@
 import { DeviceArrayType_Ble } from 'bluetooth'
 import { Communication, ConnectDevice } from 'mouse'
 
-export async function Reset(flax:boolean=true) {
+export async function Reset(flax: boolean = true) {
   // (AppStorage.get('pageInfo') as NavPathStack).clear()
   for (let item of ConnectDevice.Communication) {
     item.Communication.deviceInfo.sn = ''
@@ -38,14 +38,25 @@ export async function Reset(flax:boolean=true) {
     }) //获取用户按键模式详情
     AppStorage.setOrCreate("speech_Recognition_languages", 'ZH_CN') //语音识别语言
   }
-  if (flax&&AppStorage.get('devices') && (AppStorage.get('devices') as DeviceArrayType_Ble[]).length) {
+  if (flax && AppStorage.get('devices') && (AppStorage.get('devices') as DeviceArrayType_Ble[]).length) {
     // 获取当前的蓝牙设备列表并关闭所有连接
     const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || []
     console.info('Reset: 开始关闭蓝牙设备连接，当前设备数量:', currentDevices.length)
+    currentDevices.forEach((item, index) => {
+      try {
+        console.info('Reset: 关闭蓝牙设备连接:', item.name)
+        currentDevices[index].KeymethodConfig = []
+        currentDevices[index].BlueTooth_devices.closeconnectDevice()
+      } catch (error) {
+        console.error('Reset: 关闭蓝牙设备连接失败:', error)
+      }
+    })
     for (let device of currentDevices) {
       try {
         console.info('Reset: 关闭蓝牙设备连接:', device.name)
+        device.KeymethodConfig = []
         await device.BlueTooth_devices.closeconnectDevice()
+        device.BlueTooth_devices.dispose()
       } catch (error) {
         console.error('Reset: 关闭蓝牙设备连接失败:', error)
       }
