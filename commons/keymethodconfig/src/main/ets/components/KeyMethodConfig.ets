@@ -192,20 +192,17 @@ export class _KeyMethodConfig {
         (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
           0].BlueTooth_devices.send([0x62])
           .then(() => {
-            BlueTooth_devices.audioData = [];
-            (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-              0].BlueTooth_devices.audioDataState =
-              !(AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-                0].BlueTooth_devices.audioDataState
+            const currentDevice = (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number|| 0];
+            currentDevice.BlueTooth_devices.audioData = [];
+            currentDevice.BlueTooth_devices.audioDataState = !currentDevice.BlueTooth_devices.audioDataState
 
             //WebSocket  语音数据处理
             let inputMessage: inputMessageModel = {
               start: false,
               "clientId": "clientId1751968608" + new Date().toString(),
-              "ptt": (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number].isPunctuationRecognition ?
+              "ptt": currentDevice.isPunctuationRecognition ?
                 '1' : '0',
-              "serialNo": (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number||
-                0].BlueTooth_devices.deviceInfo.sn,
+              "serialNo": currentDevice.BlueTooth_devices.deviceInfo.sn,
               "phrases": "",
               "format": "pcm",
               "apiKey": (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_show_currIndex') as number].getModelInfo?.appkey as string,
@@ -217,9 +214,9 @@ export class _KeyMethodConfig {
               "deviceNo": "6c:b1:33:9f:b9:8b",
               content: ''
             }
-            console.log(`创建蓝牙WebSocket时，BlueTooth_devices.audioData长度: ${BlueTooth_devices.audioData.length}`);
+            console.log(`创建蓝牙WebSocket时，audioData长度: ${currentDevice.BlueTooth_devices.audioData.length}`);
             let audioToText: AudioWebSocketHandler_ble =
-              new AudioWebSocketHandler_ble(WebSocket_serverUrl.audioToText, BlueTooth_devices.audioData, state,
+              new AudioWebSocketHandler_ble(WebSocket_serverUrl.audioToText, currentDevice.BlueTooth_devices.audioData, state,
                 inputMessage) //语音转文字 websocket  //0：语音输入
             audioToText.connect()
           })
@@ -310,9 +307,10 @@ export class _KeyMethodConfig {
             //  * 语音数据处理
             //  */
             // // 保存本地PCM文件
-            // const context = AppStorage.get('context') as common.UIAbilityContext;
-            //   let a: AudioFileManager = new AudioFileManager(BlueTooth_devices.audioData, context)
-            //   console.log(BlueTooth_devices.audioData.length.toString(), '语音数据结束*****模拟')
+          // const context = AppStorage.get('context') as common.UIAbilityContext;
+          // const currentDevice = (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number|| 0];
+          // let a: AudioFileManager = new AudioFileManager(currentDevice.BlueTooth_devices.audioData, context)
+          // console.log(currentDevice.BlueTooth_devices.audioData.length.toString(), '语音数据结束*****模拟')
           })
       } else {
         ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x63])
@@ -408,7 +406,8 @@ export class _KeyMethodConfig {
     // }
     console.log('[语音调试] voiceInput_long 开始，state:', state, 'isAI_assistant:', isAI_assistant);
     if (AppStorage.get('device_isBle')) {
-      BlueTooth_devices.audioData = []
+      const currentDevice = (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number|| 0];
+      currentDevice.BlueTooth_devices.audioData = []
       console.log('[语音调试] 清空蓝牙音频数据');
     } else {
       Communication.audioData = []
@@ -442,8 +441,9 @@ export class _KeyMethodConfig {
         "deviceNo": "6c:b1:33:9f:b9:8b",
         content: ''
       }
+      const currentDevice = (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number|| 0];
       let audioToText: AudioWebSocketHandler_ble =
-        new AudioWebSocketHandler_ble(WebSocket_serverUrl.audioToText, BlueTooth_devices.audioData, state,
+        new AudioWebSocketHandler_ble(WebSocket_serverUrl.audioToText, currentDevice.BlueTooth_devices.audioData, state,
           inputMessage) //语音转文字 websocket
       audioToText.connect()
     } else {
@@ -1176,11 +1176,12 @@ export class _KeyMethodConfig {
               }
             ]
           });
-          (AppStorage.get('devices') as DeviceArrayType_Ble[])[0].BlueTooth_devices.send([0x62])
+          const currentDevice = (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number|| 0];
+          currentDevice.BlueTooth_devices.send([0x62])
             .then(() => {
-              BlueTooth_devices.audioData = [];
-              (AppStorage.get('devices') as DeviceArrayType_Ble[])[0].BlueTooth_devices.audioDataState =
-                !(AppStorage.get('devices') as DeviceArrayType_Ble[])[0].BlueTooth_devices.audioDataState
+              currentDevice.BlueTooth_devices.audioData = [];
+              currentDevice.BlueTooth_devices.audioDataState =
+                !currentDevice.BlueTooth_devices.audioDataState
               //WebSocket  语音数据处理
               let inputMessage: inputMessageModel = {
                 start: false,
@@ -1200,8 +1201,8 @@ export class _KeyMethodConfig {
                 content: ''
               }
               let audioToText: AudioWebSocketHandler_ble =
-                new AudioWebSocketHandler_ble(WebSocket_serverUrl.audioToText, BlueTooth_devices.audioData, 0,
-                  inputMessage, WebviewController) //语音转文字 websocket
+                new AudioWebSocketHandler_ble(WebSocket_serverUrl.audioToText, currentDevice.BlueTooth_devices.audioData, 0,
+                  inputMessage) //语音转文字 websocket
               audioToText.connect()
             })
         }
@@ -1286,7 +1287,8 @@ export class _KeyMethodConfig {
              */
             // 保存本地PCM文件
             const context = AppStorage.get('context') as common.UIAbilityContext;
-            new AudioFileManager(BlueTooth_devices.audioData, context, WebviewController, inputMessage)
+            const currentDevice = (AppStorage.get('devices') as DeviceArrayType_Ble[])[AppStorage.get('device_currIndex') as number|| 0];
+            new AudioFileManager(currentDevice.BlueTooth_devices.audioData, context, WebviewController, inputMessage)
           })
       } else {
         ConnectDevice.Communication[AppStorage.get('device_currIndex') as number||0].Communication.getDeviceInfo([0x63])

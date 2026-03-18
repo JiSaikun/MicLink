@@ -1,10 +1,11 @@
-import { AbilityConstant, ConfigurationConstant, UIAbility, Want, WantAgent, wantAgent,common } from '@kit.AbilityKit';
+import { AbilityConstant, ConfigurationConstant, UIAbility, Want, WantAgent, wantAgent, common } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { BusinessError, commonEventManager, emitter } from '@kit.BasicServicesKit';
 import { backgroundTaskManager } from '@kit.BackgroundTasksKit';
 import { AppUtil, holdStatusBar, loadStatusBar, setupNetworkStatusListener } from 'common';
 import { statusBarManager } from '@kit.DeskTopExtensionKit';
+import { DeviceArrayType_Ble } from 'bluetooth';
 
 // import fs from '@ohos.file.fs';
 
@@ -19,30 +20,30 @@ export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     global_context = this.context;
     //判断是否开机自启
-    if(want.parameters?.['ohos.aafwk.param.callerNativeName']=== '_foundation'){ // 开机自启
+    if (want.parameters?.['ohos.aafwk.param.callerNativeName'] === '_foundation') { // 开机自启
       isAuto = true;
     }
     //加载系统托盘
     loadStatusBar(this.context).then(() => {
-        //注册状态栏图标左键点击事件
-        statusBarManager.on("statusBarIconClick", onStatusBarIconClick);
-        setTimeout(()=>{
-          //维系系统托盘
-          holdStatusBar(this.context).then(() => {
-            // if(isAuto){ //若开机自启，则隐藏到托盘hideAbility，并且不loadContent，不显示主界面【代码在onWindowStageCreate】
-            //   this.context.hideAbility().then(() => {
-            //     hilog.info(0x0000, 'testTag', `hideAbility success`);
-            //   }).catch((err: BusinessError) => {
-            //     hilog.error(0x0000, 'testTag', `hideAbility fail, code is ${err.code}, message is ${err.message}`);
-            //   });
-            // }
-          });
-        }, 500);
+      //注册状态栏图标左键点击事件
+      statusBarManager.on("statusBarIconClick", onStatusBarIconClick);
+      setTimeout(() => {
+        //维系系统托盘
+        holdStatusBar(this.context).then(() => {
+          // if(isAuto){ //若开机自启，则隐藏到托盘hideAbility，并且不loadContent，不显示主界面【代码在onWindowStageCreate】
+          //   this.context.hideAbility().then(() => {
+          //     hilog.info(0x0000, 'testTag', `hideAbility success`);
+          //   }).catch((err: BusinessError) => {
+          //     hilog.error(0x0000, 'testTag', `hideAbility fail, code is ${err.code}, message is ${err.message}`);
+          //   });
+          // }
+        });
+      }, 500);
     });
     hilog.info(0x0000, 'testTag', '%{public}s', 'EntryAbility onCreate');
 
 
-    setupNetworkStatusListener()//监听网络变化
+    setupNetworkStatusListener() //监听网络变化
 
     this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
@@ -93,8 +94,8 @@ export default class EntryAbility extends UIAbility {
     }
 
 
-
   }
+
   /*
    * 在onCreate()中注册了状态栏图标左键点击事件后，onPrepareToTerminate()中调用hideAbility并且在该回调中
    * 返回true阻拦此次关闭，可实现关闭应用之后，点击托盘，再显示应用界面到前台的效果。
@@ -105,13 +106,16 @@ export default class EntryAbility extends UIAbility {
    */
   onPrepareToTerminate(): boolean {
     hilog.info(0x0000, 'testTag', '%{public}s', 'EntryAbility onPrepareToTerminate');
+
+    // 隐藏应用
     this.context.hideAbility().then(() => {
       hilog.info(0, 'testTag', 'entry hideAbility success');
     }).catch((err: BusinessError) => {
-      hilog.error(0 ,'testTag', `hideAbility fail, err: ${JSON.stringify(err)}`);
+      hilog.error(0, 'testTag', `hideAbility fail, err: ${JSON.stringify(err)}`);
     });
     return true;
   }
+
   onDestroy(): void {
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onDestroy');
   }
@@ -131,35 +135,50 @@ export default class EntryAbility extends UIAbility {
       events: ['com.miclink.myapplication.BackgroundAbility_onPrepareToTerminate_event'], // 订阅BackgroundAbility onPrepareToTerminate公共事件
     };
     // 创建订阅者回调
-    commonEventManager.createSubscriber(subscribeInfo, (err: BusinessError, data: commonEventManager.CommonEventSubscriber) => {
-      if (err) {
-        hilog.error(0 ,'testTag', `Failed to create subscriber. Code is ${err.code}, message is ${err.message}`);
-        return;
-      }
-      hilog.info(0, 'testTag', 'Succeeded in creating subscriber.');
-      subscriber = data;
-      // 订阅公共事件回调
-      if (subscriber !== null) {
-        commonEventManager.subscribe(subscriber, (err: BusinessError, data: commonEventManager.CommonEventData) => {
-          if (err) {
-            hilog.error(0 ,'testTag', `Failed to subscribe common event. Code is ${err.code}, message is ${err.message}`);
-            return;
-          }
-          statusBarManager.removeFromStatusBar(this.context); //移除托盘
-          setTimeout(()=>{
-            this.context.terminateSelf(); //订阅BackgroundAbility onPrepareToTerminate公共事件后，主动关闭EntryAbility
-          },200)
-        })
-      } else {
-        hilog.error(0 ,'testTag', `Need create subscriber`);
-      }
-    })
+    commonEventManager.createSubscriber(subscribeInfo,
+      (err: BusinessError, data: commonEventManager.CommonEventSubscriber) => {
+        if (err) {
+          hilog.error(0, 'testTag', `Failed to create subscriber. Code is ${err.code}, message is ${err.message}`);
+          return;
+        }
+        hilog.info(0, 'testTag', 'Succeeded in creating subscriber.');
+        subscriber = data;
+        // 订阅公共事件回调
+        if (subscriber !== null) {
+          commonEventManager.subscribe(subscriber, (err: BusinessError, data: commonEventManager.CommonEventData) => {
+            if (err) {
+              hilog.error(0, 'testTag',
+                `Failed to subscribe common event. Code is ${err.code}, message is ${err.message}`);
+              return;
+            }
+            // 清理蓝牙资源
+            const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || [];
+            currentDevices.forEach(async (device: DeviceArrayType_Ble) => {
+              try {
+                if (device && device.BlueTooth_devices) {
+                  hilog.info(0, 'testTag', `清理蓝牙设备资源: ${device.BlueTooth_devices.device_address}`);
+                  await device.BlueTooth_devices.closeconnectDevice();
+                }
+              } catch (error) {
+                hilog.error(0, 'testTag', `清理蓝牙设备资源失败: ${JSON.stringify(error)}`);
+              }
+            });
+
+            statusBarManager.removeFromStatusBar(this.context); //移除托盘
+            setTimeout(() => {
+              this.context.terminateSelf(); //订阅BackgroundAbility onPrepareToTerminate公共事件后，主动关闭EntryAbility
+            }, 200)
+          })
+        } else {
+          hilog.error(0, 'testTag', `Need create subscriber`);
+        }
+      })
     // Main window is created, set main page for this ability
     hilog.info(0x0000, 'testTag', '%{public}s', 'EntryAbility onWindowStageCreate');
 
     myWindowStage = windowStage;
     // if(!isAuto){ //非开机自启，才loadContent，显示主界面，否则不loadContent
-      isLoadContent = true;
+    isLoadContent = true;
     // }
     windowStage.loadContent('pages/Index', (err) => {
       if (err.code) {
@@ -205,6 +224,7 @@ function callback(error: BusinessError, data: void) {
     console.info("操作开始后台运行成功");
   }
 }
+
 export function myShowUiAbility() {
   // if( isAuto && !isLoadContent){ //若开机自启且没有loadContent，则点击托盘时loadContent
   //   myWindowStage?.loadContent('pages/Index', (err) => {
@@ -224,6 +244,7 @@ export function myShowUiAbility() {
     });
   }
 }
+
 export const onStatusBarIconClick = (eventData: emitter.EventData) => {
   console.log("testTag 走进回调")
   // 自定义图标点击业务

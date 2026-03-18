@@ -142,7 +142,7 @@ export class BlueTooth_devices {
   };
   private flax_yuyin: boolean = true //标记：防止鼠标上来直接开启了语音输入————先发送一次0x63命令
   private audioProcessor: SmartMouseAudioProcessor = new SmartMouseAudioProcessor();
-  static audioData: Int16Array[] = []
+  public audioData: Int16Array[] = []
   // 特征值变化超时检测
   private lastCharacteristicChangeTime: number = 0
   private characteristicTimeoutTimer: number | null = null
@@ -200,6 +200,7 @@ export class BlueTooth_devices {
   }
 
   public async closeconnectDevice() {
+    console.log(`开始关闭蓝牙设备连接: ${this.device_address}`);
     this.canChange_mouse_KeyPressType = false
     try {
       // 禁用特征值通知
@@ -216,14 +217,28 @@ export class BlueTooth_devices {
       this.gattClient.off('BLEConnectionStateChange');
       this.gattClient.close();
       this.gattClient = null; // 清空引用，避免重复调用
+      console.log('GATT客户端连接已关闭');
     }
 
     // 停止所有定时器
     this.stopCharacteristicTimeout();
     this.stopDeviceValidationTimeout(); // 停止设备验证超时检测
+    console.log('所有定时器已停止');
+
+    // 清理音频数据
+    this.audioData = [];
+    console.log('音频数据已清空');
+
+    // 清理音频WebSocket处理器
+    if (this.audioWebSocketHandler) {
+      this.audioWebSocketHandler.destroy();
+      this.audioWebSocketHandler = null;
+      console.log('音频WebSocket处理器已清理');
+    }
 
     // 重置通知标志位
     this.isSetCharacteristicChangeNotification = true;
+    console.log(`蓝牙设备连接关闭完成: ${this.device_address}`);
   }
 
   // 设置音频WebSocket处理器
@@ -1717,10 +1732,10 @@ export class BlueTooth_devices {
         // 处理PCM数据（播放或保存）
         console.log(`蓝牙解码得到PCM数据: ${pcmData.length}个样本`);
         console.log(`蓝牙PCM数据前10个样本: ${Array.from(pcmData.slice(0, 10)).join(', ')}`);
-        console.log(`蓝牙当前BlueTooth_devices.audioData长度: ${BlueTooth_devices.audioData.length}`);
+        console.log(`蓝牙当前audioData长度: ${this.audioData.length}`);
         // 这里可以添加播放或保存PCM数据的逻辑
-        BlueTooth_devices.audioData.push(pcmData);
-        console.log(`蓝牙添加后BlueTooth_devices.audioData长度: ${BlueTooth_devices.audioData.length}`);
+        this.audioData.push(pcmData);
+        console.log(`蓝牙添加后audioData长度: ${this.audioData.length}`);
       } else {
         console.error('蓝牙PCM解码失败，返回null');
       }
@@ -2255,75 +2270,81 @@ function deepCopyDevices(devices: DeviceArrayType_Ble[]): DeviceArrayType_Ble[] 
     return newDevice;
   });
 }
-
-//获取已配对的蓝牙连接列表
-function getPairedDevices() {
-  // 设置应用级状态为true，表示正在进行扫描和连接
+async function getPairedDevices() {
   AppStorage.setOrCreate(BLUETOOTH_SCANNING_KEY, true);
 
   try {
-    // 获取已配对设备的地址数组
     let pairedDevices: Array<string> = connection.getPairedDevices();
-    console.log('Paired devices:', pairedDevices); // 例如：['11:22:33:AA:BB:FF', '68:13:24:79:4C:8C']
-
-    // 获取当前设备列表
-    const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || [];
-
+    console.log('Paired devices:', pairedDevices);
+    
     for (let i = 0; i < pairedDevices.length; i++) {
       const item = pairedDevices[i];
-
-      // 检查设备是否已经在列表中
-      const deviceExists = currentDevices.some(device =>
-      device.BlueTooth_devices.device_address === item
-      );
-
-      if (deviceExists) {
-        console.log(`设备 ${item} 已存在于列表中，跳过重复连接`);
-        continue;
-      }
-
-      // 延迟连接，避免同时连接太多设备
-      setTimeout(() => {
-        try {
-          // 获取对端蓝牙设备的名称
-          let remoteDeviceName: string = connection.getRemoteDeviceName(item, true);
-          console.log('获取对端蓝牙设备的名称:', remoteDeviceName);
-
-          let device = new BlueTooth_devices(item);
-
-          /**
-           * 连接设备
-           */
-          device.connectDevice(device);
-
-        } catch (deviceErr) {
-          console.error('处理设备连接失败:', item, deviceErr);
-        } finally {
-          // 所有设备处理完成后，设置标志位为false
-          if (i === pairedDevices.length - 1) {
-            setTimeout(() => {
-              AppStorage.setOrCreate(BLUETOOTH_SCANNING_KEY, false);
-              console.log('蓝牙扫描和连接操作已完成');
-            }, (i + 1) * 200); // 等待最后一个设备的延迟连接完成
-          }
-        }
-      }, i * 200); // 每个设备间隔200ms
+      await processDevice(item, i, pairedDevices.length);
     }
 
-    // 如果没有设备需要处理，直接设置应用级状态为false
     if (pairedDevices.length === 0) {
       AppStorage.setOrCreate(BLUETOOTH_SCANNING_KEY, false);
-      console.log('没有符合条件的蓝牙设备需要处理');
     }
-
   } catch (err) {
-    console.error('Error getting paired devices. Code: ' + (err as BusinessError).code + ', Message: ' +
-    (err as BusinessError).message);
-    // 发生错误时，设置应用级状态为false
+    console.error('Error getting paired devices. Code: ' + (err as BusinessError).code + ', Message: ' + (err as BusinessError).message);
     AppStorage.setOrCreate(BLUETOOTH_SCANNING_KEY, false);
   }
 }
 
+async function processDevice(deviceAddress: string, index: number, total: number) {
+  try {
+    const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || [];
+    const existingIndex = currentDevices.findIndex(device =>
+      device.BlueTooth_devices.device_address === deviceAddress
+    );
+
+    if (existingIndex !== -1) {
+      // 设备已存在，先关闭并移除旧设备
+      const oldDevice = currentDevices[existingIndex];
+      console.log(`设备 ${deviceAddress} 已存在，关闭旧连接并移除`);
+      
+      // 等待旧设备完全关闭
+      await oldDevice.BlueTooth_devices.closeconnectDevice();
+      
+      // 从数组中移除
+      currentDevices.splice(existingIndex, 1);
+      AppStorage.setOrCreate('devices', [...currentDevices]); // 触发 UI 更新
+      console.log(`旧设备 ${deviceAddress} 已移除`);
+      
+      // 延迟创建新设备，确保旧设备完全关闭
+      await new Promise<void>(resolve => setTimeout(resolve, 200));
+      await createAndConnectDevice(deviceAddress, index, total);
+    } else {
+      // 设备不存在，直接创建
+      await new Promise<void>(resolve => setTimeout(resolve, index * 200));
+      await createAndConnectDevice(deviceAddress, index, total);
+    }
+  } catch (err) {
+    console.error('处理设备失败:', err);
+    // 即使出错，也要继续处理下一个设备
+  }
+}
+
+// 辅助函数
+function createAndConnectDevice(deviceAddress: string, index: number, total: number) {
+  return new Promise<void>((resolve) => {
+    try {
+      let remoteDeviceName: string = connection.getRemoteDeviceName(deviceAddress, true);
+      console.log('获取对端蓝牙设备的名称:', remoteDeviceName);
+      let device = new BlueTooth_devices(deviceAddress);
+      device.connectDevice(device);
+    } catch (deviceErr) {
+      console.error('处理设备连接失败:', deviceAddress, deviceErr);
+    } finally {
+      if (index === total - 1) {
+        setTimeout(() => {
+          AppStorage.setOrCreate(BLUETOOTH_SCANNING_KEY, false);
+        }, (index + 1) * 200);
+      }
+      resolve();
+    }
+  });
+}
 export function connectDevice(context: common.UIAbilityContext) {
   // 使用UIExtensionAbility：将common.UIAbilityContext 替换为common.UIExtensionContext
   // const context: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
