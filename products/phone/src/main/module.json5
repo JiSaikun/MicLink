@@ -109,6 +109,7 @@
             ],
             "actions": [
               "action.system.home",
+              "wxentity.action.open"
               //              "ohos.want.action.viewData"//这是系统识别文件打开场景的固定值
             ],
             //            "uris": [
@@ -128,6 +129,10 @@
           "bluetoothInteraction"
         ]
       }
+    ],
+    "querySchemes": [
+      "weixin",
+      "wxopensdk"
     ],
     "extensionAbilities": [
       {

@@ -5,6 +5,7 @@ import { backgroundTaskManager } from '@kit.BackgroundTasksKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { Notification } from 'config';
 import { setupNetworkStatusListener } from 'common';
+import { WXApi, WXEventHandler } from 'api';
 
 // import fs from '@ohos.file.fs';
 
@@ -14,6 +15,7 @@ export default class PhoneAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     Notification.init()
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
+    this.handleWeChatCallIfNeed(want) //微信支付
     // if (want.uri) {
     //   const fileUri = want.uri; // 获取文件URI
     //   try {
@@ -26,6 +28,14 @@ export default class PhoneAbility extends UIAbility {
 
   }
 
+  onNewWant(want: Want, _launchParam: AbilityConstant.LaunchParam): void {
+    this.handleWeChatCallIfNeed(want)
+  }
+
+  private handleWeChatCallIfNeed(want: Want) {
+    WXApi.handleWant(want, WXEventHandler)
+  }
+
   onDestroy(): void {
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onDestroy');
   }
@@ -33,7 +43,7 @@ export default class PhoneAbility extends UIAbility {
   onWindowStageCreate(windowStage: window.WindowStage): void {
     // Main window is created, set main page for this ability
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onWindowStageCreate');
-    setupNetworkStatusListener()//监听网络变化
+    setupNetworkStatusListener() //监听网络变化
 
     windowStage.loadContent('pages/Index', (err) => {
       if (err.code) {

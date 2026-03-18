@@ -12,6 +12,7 @@ export { AudioRecorderManager } from './src/main/ets/api/AudioRecorderManager' /
 export { adapterManager, AdapterManager } from './src/main/ets/api/AdapterManager' //蓝牙状态管理
 
 export { DraggableResizableRect } from './src/main/ets/api/DraggableResizableRect' //绘制矩形——截图翻译
+export { WXApi,WXEventHandler,OnWXReq,OnWXResp } from './src/main/ets/wxpay/WXApiEventHandlerImpl' //微信支付
 
 export { OnlineAudioPlayer, AudioPlayerConfig, AudioPlayerEvents, PlaybackState
 } from './src/main/ets/api/AudioRenderer' //PCM音频播放

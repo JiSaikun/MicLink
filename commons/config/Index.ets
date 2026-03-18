@@ -16,4 +16,5 @@ export { getModelInfoModel,
 } from './src/main/ets/components/GetModelInfoModel'
 
 export { Languages } from './src/main/ets/components/Languages'
+export { AppConstants } from './src/main/ets/components/AppConstants'
 export { Notification} from './src/main/ets/common/Notification'
