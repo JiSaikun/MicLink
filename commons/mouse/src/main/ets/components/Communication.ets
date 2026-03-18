@@ -1,6 +1,6 @@
 import { usbManager } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
-import { SmartMouseAudioProcessor } from './SmartMouseAudioProcessor'
+import { SmartMouseAudioProcessor } from '../utils/SmartMouseAudioProcessor'
 import { getModelInfo_Params, productImg_Params } from '../model/MouseInfoModel'
 import { _getModelInfo, _productImg } from '../viewmodel/UserViewModel'
 import {
@@ -12,7 +12,7 @@ import {
   troubleshoot_sideFunctionInFunctions
 } from 'config'
 import { AudioWebSocketHandler } from 'api';
-import { keyConfigExclusion } from './keyConfigExclusion';
+import { keyConfigExclusion } from '../utils/keyConfigExclusion';
 import { Notification } from 'config';
 
 // 按键类型枚举

@@ -6,7 +6,7 @@ import { http } from '@kit.NetworkKit';
 import { SmartMouseAudioProcessor } from './SmartMouseAudioProcessor';
 import { webview } from '@kit.ArkWeb';
 import { WebSocket_serverUrl } from 'config';
-import { Communication } from './Communication';
+import { Communication } from '../components/Communication';
 import { inputMessageModel } from './AudioWebSocketHandler'
 
 // 上传响应接口
