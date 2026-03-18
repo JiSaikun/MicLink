@@ -42,6 +42,9 @@ export struct Captcha {
             return
           }
 
+          // 立即设置sendState为true，防止重复点击
+          this.sendState = true
+
           // 2. 确定codeType（原逻辑保留）
           let codeType: string = ''
           switch (this.longin_operation) {
@@ -79,6 +82,8 @@ export struct Captcha {
               duration: 2000,
               alignment: 4 // 鸿蒙 Alignment.Center 的枚举值为 4，避免直接引用可能的类型问题
             });
+            // 验证失败，恢复sendState为false
+            this.sendState = false
             return
           }
           // 4. 构造请求参数（使用判断后的accountType）
@@ -92,7 +97,6 @@ export struct Captcha {
           _getCode(params)
             .then(res => {
               // 5. 倒计时逻辑（原逻辑保留）
-              this.sendState = true
               this.timerId = setInterval(() => {
                 if (this.countdown === 1) {
                   clearInterval(this.timerId)
@@ -172,6 +176,9 @@ export struct Captcha_Phone {
             return
           }
 
+          // 立即设置sendState为true，防止重复点击
+          this.sendState = true
+
           // 2. 确定codeType（原逻辑保留）
           let codeType: string = ''
           switch (this.longin_operation) {
@@ -209,6 +216,8 @@ export struct Captcha_Phone {
               duration: 2000,
               alignment: 4 // 鸿蒙 Alignment.Center 的枚举值为 4，避免直接引用可能的类型问题
             });
+            // 验证失败，恢复sendState为false
+            this.sendState = false
             return
           }
           // 4. 构造请求参数（使用判断后的accountType）
@@ -222,7 +231,6 @@ export struct Captcha_Phone {
           _getCode(params)
             .then(res => {
               // 5. 倒计时逻辑（原逻辑保留）
-              this.sendState = true
               this.timerId = setInterval(() => {
                 if (this.countdown === 1) {
                   clearInterval(this.timerId)
