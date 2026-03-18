@@ -7,11 +7,47 @@ import { promptAction } from '@kit.ArkUI';
 @Component
 export struct Captcha {
   @Link captcha: string //验证码
-  @Link longin_operation: number //0:登录页 1：验证登录页 2：注册页 3：修改密码
+  @Link @Watch('onLonginOperationChange') longin_operation: number //0:登录页 1：验证登录页 2：注册页 3：修改密码
   @Link phone: string //邮箱或者手机号
   @State countdown: number = 60
   @State sendState: boolean = false
+  @State isRequesting: boolean = false // 控制网络请求的防抖
   private timerId: number = 0 // 用于存储定时器的ID
+  private lastOperation: number = -1
+
+  aboutToAppear() {
+    // 组件出现时重置状态
+    this.resetState()
+  }
+
+  aboutToDisappear() {
+    // 组件消失时清理定时器
+    this.clearTimer()
+  }
+
+  // 监听longin_operation变化
+  onLonginOperationChange() {
+    if (this.longin_operation !== this.lastOperation) {
+      this.lastOperation = this.longin_operation
+      this.resetState()
+    }
+  }
+
+  // 重置状态
+  private resetState() {
+    this.countdown = 60
+    this.sendState = false
+    this.isRequesting = false
+    this.clearTimer()
+  }
+
+  // 清理定时器
+  private clearTimer() {
+    if (this.timerId) {
+      clearInterval(this.timerId)
+      this.timerId = 0
+    }
+  }
 
   build() {
     Row() {
@@ -38,12 +74,18 @@ export struct Captcha {
         .height('100%')
         .textAlign(TextAlign.Center)
         .onClick(() => {
-          if (this.sendState) {
+          if (this.sendState || this.isRequesting) {
+            // 重复点击，显示提示
+            promptAction.showToast({
+              message: this.sendState ? Languages.verificationCountdown[AppStorage.get('languages') as string] : Languages.verificationRequesting[AppStorage.get('languages') as string],
+              duration: 1000,
+              alignment: 4
+            });
             return
           }
 
-          // 立即设置sendState为true，防止重复点击
-          this.sendState = true
+          // 立即设置isRequesting为true，防止重复点击
+          this.isRequesting = true
 
           // 2. 确定codeType（原逻辑保留）
           let codeType: string = ''
@@ -82,8 +124,8 @@ export struct Captcha {
               duration: 2000,
               alignment: 4 // 鸿蒙 Alignment.Center 的枚举值为 4，避免直接引用可能的类型问题
             });
-            // 验证失败，恢复sendState为false
-            this.sendState = false
+            // 验证失败，恢复isRequesting为false
+            this.isRequesting = false
             return
           }
           // 4. 构造请求参数（使用判断后的accountType）
@@ -96,6 +138,10 @@ export struct Captcha {
           // 5. 接口请求（原逻辑保留，仅参数替换为上面构造的params）
           _getCode(params)
             .then(res => {
+              // 网络请求成功，设置sendState为true开始倒计时
+              this.sendState = true
+              this.isRequesting = false
+              
               // 5. 倒计时逻辑（原逻辑保留）
               this.timerId = setInterval(() => {
                 if (this.countdown === 1) {
@@ -121,13 +167,8 @@ export struct Captcha {
               AppStorage.setOrCreate('_getCode', verificationCode)
             })
             .catch((err: AxiosError) => {
-              // 请求失败：重置状态+清除定时器
-              this.sendState = false
-              if (this.timerId) {
-                clearInterval(this.timerId)
-                this.timerId = 0
-              }
-              this.countdown = 60 // 重置倒计时，方便用户重新尝试
+              // 请求失败：重置isRequesting状态
+              this.isRequesting = false
               console.log('err', JSON.stringify(err))
             })
         })
@@ -140,11 +181,47 @@ export struct Captcha {
 @Component
 export struct Captcha_Phone {
   @Link captcha: string //验证码
-  @Link longin_operation: number //0:登录页 1：验证登录页 2：注册页 3：修改密码
+  @Link @Watch('onLonginOperationChange') longin_operation: number //0:登录页 1：验证登录页 2：注册页 3：修改密码
   @Link phone: string //邮箱或者手机号
   @State countdown: number = 60
   @State sendState: boolean = false
+  @State isRequesting: boolean = false // 控制网络请求的防抖
   private timerId: number = 0 // 用于存储定时器的ID
+  private lastOperation: number = -1
+
+  aboutToAppear() {
+    // 组件出现时重置状态
+    this.resetState()
+  }
+
+  // 监听longin_operation变化
+  onLonginOperationChange() {
+    if (this.longin_operation !== this.lastOperation) {
+      this.lastOperation = this.longin_operation
+      this.resetState()
+    }
+  }
+
+  // 重置状态
+  private resetState() {
+    this.countdown = 60
+    this.sendState = false
+    this.isRequesting = false
+    this.clearTimer()
+  }
+
+  // 清理定时器
+  private clearTimer() {
+    if (this.timerId) {
+      clearInterval(this.timerId)
+      this.timerId = 0
+    }
+  }
+
+  aboutToDisappear() {
+    // 组件消失时清理定时器
+    this.clearTimer()
+  }
 
   build() {
     Row() {
@@ -172,12 +249,18 @@ export struct Captcha_Phone {
         .backgroundColor('#EAEAEA')
         .textAlign(TextAlign.Center)
         .onClick(() => {
-          if (this.sendState) {
+          if (this.sendState || this.isRequesting) {
+            // 重复点击，显示提示
+            promptAction.showToast({
+              message: this.sendState ? Languages.verificationCountdown[AppStorage.get('languages') as string] : Languages.verificationRequesting[AppStorage.get('languages') as string],
+              duration: 1000,
+              alignment: 4
+            });
             return
           }
 
-          // 立即设置sendState为true，防止重复点击
-          this.sendState = true
+          // 立即设置isRequesting为true，防止重复点击
+          this.isRequesting = true
 
           // 2. 确定codeType（原逻辑保留）
           let codeType: string = ''
@@ -216,8 +299,8 @@ export struct Captcha_Phone {
               duration: 2000,
               alignment: 4 // 鸿蒙 Alignment.Center 的枚举值为 4，避免直接引用可能的类型问题
             });
-            // 验证失败，恢复sendState为false
-            this.sendState = false
+            // 验证失败，恢复isRequesting为false
+            this.isRequesting = false
             return
           }
           // 4. 构造请求参数（使用判断后的accountType）
@@ -230,6 +313,10 @@ export struct Captcha_Phone {
           // 5. 接口请求（原逻辑保留，仅参数替换为上面构造的params）
           _getCode(params)
             .then(res => {
+              // 网络请求成功，设置sendState为true开始倒计时
+              this.sendState = true
+              this.isRequesting = false
+              
               // 5. 倒计时逻辑（原逻辑保留）
               this.timerId = setInterval(() => {
                 if (this.countdown === 1) {
@@ -255,13 +342,8 @@ export struct Captcha_Phone {
               AppStorage.setOrCreate('_getCode', verificationCode)
             })
             .catch((err: AxiosError) => {
-              // 请求失败：重置状态+清除定时器
-              this.sendState = false
-              if (this.timerId) {
-                clearInterval(this.timerId)
-                this.timerId = 0
-              }
-              this.countdown = 60 // 重置倒计时，方便用户重新尝试
+              // 请求失败：重置isRequesting状态
+              this.isRequesting = false
               console.log('err', JSON.stringify(err))
             })
         })
