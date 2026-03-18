@@ -2,8 +2,7 @@
   "modelVersion": "5.0.5",
   "description": "Please describe the basic information.",
   "dependencies": {
-    "@ohos/axios": "^2.2.6",
-    "@tencent/wechat_open_sdk": "^1.0.16"
+    "@ohos/axios": "^2.2.6"
   },
   "devDependencies": {
     "@ohos/hypium": "1.0.21",
