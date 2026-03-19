@@ -445,11 +445,11 @@ function lk_down(cmd: string) {
     case "DEL_OPT":
       //删除
       console.warn('删除+')
-      if (setInterval_curr.setInterval_curr === 0) {
-        setInterval_curr.setInterval_curr = setInterval(() => {
-          _KeyMethodConfig.delete()
-        }, 100)
-      }
+      // 先清除可能存在的旧定时器，防止多个定时器同时运行
+      clearInterval(setInterval_curr.setInterval_curr)
+      setInterval_curr.setInterval_curr = setInterval(() => {
+        _KeyMethodConfig.delete()
+      }, 100)
       break
     case "Action_GPT":
       _KeyMethodConfig.openChatGPT()
