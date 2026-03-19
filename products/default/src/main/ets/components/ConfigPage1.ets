@@ -547,166 +547,166 @@ export struct ConfigPage1 {
           .flexShrink(1)
       }
 
-      //======================================================截图识别/翻译
-      // Text('截图识别/翻译')
-      Text(Languages.screenshot_ocr_translation[this.languages])
-        .fontSize(14)
-        .lineHeight(14)
-        .fontWeight(400)
-        .fontColor('#a4aab2')
-        .margin({ bottom: 5, top: 10 })
-      Row() {
-        // Text('启动功能')
-        Text(Languages.enable_function[this.languages])
-          .fontSize($r('app.float.default_text_font_size_14'))
-          .fontWeight(400)
-          .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-        Blank()
-        Row() {
-          Radio({
-            value: 'Radio4', group: 'radioGroup4',
-            indicatorType: RadioIndicatorType.DOT
-          })
-            .checked(this.isOCR_Translate_Toggle)
-            .height(14)
-            .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
-            .width(14)
-            .onChange((isChecked: boolean) => {
-              if (isChecked) {
-                console.log('*****************************打开截图识别/翻译****************************************')
-                this.isOCR_Translate_Toggle = true
-              }
-            })
-          Text(Languages.on_common[this.languages])
-            .fontSize($r('app.float.default_text_font_size_14'))
-            .fontWeight(400)
-            .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-        }
-        .onHover((flag) => {
-          if (flag) {
-            this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
-          } else {
-            console.info("restoreDefault");
-            this.cursorCustom.restoreDefault();
-          }
-        })
-        .onClick(() => {
-          this.isOCR_Translate_Toggle = true
-        })
-
-        Row() {
-          Radio({
-            value: 'Radio4', group: 'radioGroup4',
-            indicatorType: RadioIndicatorType.DOT
-          })
-            .checked(!this.isOCR_Translate_Toggle)
-            .height(14)
-            .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
-            .width(14)
-            .onChange((isChecked: boolean) => {
-              if (isChecked) {
-                console.log('*****************************关闭截图识别/翻译****************************************')
-                this.isOCR_Translate_Toggle = false
-              }
-            })
-          Text(Languages.off_common[this.languages])
-            .fontSize($r('app.float.default_text_font_size_14'))
-            .fontWeight(400)
-            .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-        }
-        .onHover((flag) => {
-          if (flag) {
-            this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
-          } else {
-            console.info("restoreDefault");
-            this.cursorCustom.restoreDefault();
-          }
-        })
-        .onClick(() => {
-          this.isOCR_Translate_Toggle = false
-        })
-      }
-      .width('100%')
-
-      // Text("翻译语言")
-      Text(Languages.translation_language[this.languages])
-        .margin({ top: 5 })
-        .fontSize($r('app.float.default_text_font_size_14'))
-        .fontWeight(400)
-        .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-      Flex({ alignItems: ItemAlign.Center, justifyContent: FlexAlign.SpaceBetween }) {
-        Select(this.convert_ttsLanguagesToOptions())
-          .onHover((flag) => {
-            if (flag) {
-              this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
-            } else {
-              console.info("restoreDefault");
-              this.cursorCustom.restoreDefault();
-            }
-          })
-          .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.screenshotOCR_from_languages)]))
-          .onSelect((index: number) => {
-            this.screenshotOCR_from_languages = this.getModelInfo.transLanguages[index].code
-          })
-          .selected(this.getDefaultSelectedIndex_from(this.screenshotOCR_from_languages))
-          .width(200)
-          .font({ size: 14, weight: 400 })
-          .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-          .borderRadius(4)
-          .border({ width: 1, color: $r('app.string.DEFAULT_BORDER_COLOR') })
-          .backgroundColor(Color.White)
-          .optionHeight(180)
-          .flexGrow(1)
-          .flexShrink(1)
-        // Text('至')
-        Text(Languages.to[this.languages])
-          .fontSize(12)
-          .fontWeight(400)
-          .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-          .margin({ left: 20, right: 20 })
-          .flexShrink(1)
-        Select(this.convert_ttsLanguagesToOptions())
-          .onHover((flag) => {
-            if (flag) {
-              this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
-            } else {
-              console.info("restoreDefault");
-              this.cursorCustom.restoreDefault();
-            }
-          })
-          .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.screenshotOCR_to_languages)]))
-          .onSelect((index: number) => {
-            this.screenshotOCR_to_languages = this.getModelInfo.transLanguages[index].code
-          })
-          .selected(this.getDefaultSelectedIndex_from(this.screenshotOCR_to_languages))
-          .width(200)
-          .font({ size: 14, weight: 400 })
-          .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-          .borderRadius(4)
-          .border({ width: 1, color: $r('app.string.DEFAULT_BORDER_COLOR') })
-          .backgroundColor(Color.White)
-          .optionHeight(180)
-          .flexGrow(1)
-          .flexShrink(1)
-      }
-
-      // Text("快捷键")
-      Text(Languages.shortcut_key[this.languages])
-        .margin({ top: 5 })
-        .fontSize($r('app.float.default_text_font_size_14'))
-        .fontWeight(400)
-        .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
-      TextInput({
-        placeholder: Languages.click_to_input_keys[this.languages],
-        text: this.screenshot_recognition_shortcut
-      })
-        .backgroundColor('#fff')
-        .placeholderColor('#bbbdbf')
-        .placeholderFont({ size: 14, weight: 400 })
-        .focusable(false)
-        .border({ width: 1, color: $r('app.string.DEFAULT_BORDER_COLOR') })
-        .borderRadius(5)
-        .onClick(() => this.shortcut = 3)
+      // //======================================================截图识别/翻译
+      // // Text('截图识别/翻译')
+      // Text(Languages.screenshot_ocr_translation[this.languages])
+      //   .fontSize(14)
+      //   .lineHeight(14)
+      //   .fontWeight(400)
+      //   .fontColor('#a4aab2')
+      //   .margin({ bottom: 5, top: 10 })
+      // Row() {
+      //   // Text('启动功能')
+      //   Text(Languages.enable_function[this.languages])
+      //     .fontSize($r('app.float.default_text_font_size_14'))
+      //     .fontWeight(400)
+      //     .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
+      //   Blank()
+      //   Row() {
+      //     Radio({
+      //       value: 'Radio4', group: 'radioGroup4',
+      //       indicatorType: RadioIndicatorType.DOT
+      //     })
+      //       .checked(this.isOCR_Translate_Toggle)
+      //       .height(14)
+      //       .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
+      //       .width(14)
+      //       .onChange((isChecked: boolean) => {
+      //         if (isChecked) {
+      //           console.log('*****************************打开截图识别/翻译****************************************')
+      //           this.isOCR_Translate_Toggle = true
+      //         }
+      //       })
+      //     Text(Languages.on_common[this.languages])
+      //       .fontSize($r('app.float.default_text_font_size_14'))
+      //       .fontWeight(400)
+      //       .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
+      //   }
+      //   .onHover((flag) => {
+      //     if (flag) {
+      //       this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+      //     } else {
+      //       console.info("restoreDefault");
+      //       this.cursorCustom.restoreDefault();
+      //     }
+      //   })
+      //   .onClick(() => {
+      //     this.isOCR_Translate_Toggle = true
+      //   })
+      //
+      //   Row() {
+      //     Radio({
+      //       value: 'Radio4', group: 'radioGroup4',
+      //       indicatorType: RadioIndicatorType.DOT
+      //     })
+      //       .checked(!this.isOCR_Translate_Toggle)
+      //       .height(14)
+      //       .radioStyle({ checkedBackgroundColor: ThemeConfig.PaletteTheme })
+      //       .width(14)
+      //       .onChange((isChecked: boolean) => {
+      //         if (isChecked) {
+      //           console.log('*****************************关闭截图识别/翻译****************************************')
+      //           this.isOCR_Translate_Toggle = false
+      //         }
+      //       })
+      //     Text(Languages.off_common[this.languages])
+      //       .fontSize($r('app.float.default_text_font_size_14'))
+      //       .fontWeight(400)
+      //       .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
+      //   }
+      //   .onHover((flag) => {
+      //     if (flag) {
+      //       this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+      //     } else {
+      //       console.info("restoreDefault");
+      //       this.cursorCustom.restoreDefault();
+      //     }
+      //   })
+      //   .onClick(() => {
+      //     this.isOCR_Translate_Toggle = false
+      //   })
+      // }
+      // .width('100%')
+      //
+      // // Text("翻译语言")
+      // Text(Languages.translation_language[this.languages])
+      //   .margin({ top: 5 })
+      //   .fontSize($r('app.float.default_text_font_size_14'))
+      //   .fontWeight(400)
+      //   .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
+      // Flex({ alignItems: ItemAlign.Center, justifyContent: FlexAlign.SpaceBetween }) {
+      //   Select(this.convert_ttsLanguagesToOptions())
+      //     .onHover((flag) => {
+      //       if (flag) {
+      //         this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+      //       } else {
+      //         console.info("restoreDefault");
+      //         this.cursorCustom.restoreDefault();
+      //       }
+      //     })
+      //     .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.screenshotOCR_from_languages)]))
+      //     .onSelect((index: number) => {
+      //       this.screenshotOCR_from_languages = this.getModelInfo.transLanguages[index].code
+      //     })
+      //     .selected(this.getDefaultSelectedIndex_from(this.screenshotOCR_from_languages))
+      //     .width(200)
+      //     .font({ size: 14, weight: 400 })
+      //     .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
+      //     .borderRadius(4)
+      //     .border({ width: 1, color: $r('app.string.DEFAULT_BORDER_COLOR') })
+      //     .backgroundColor(Color.White)
+      //     .optionHeight(180)
+      //     .flexGrow(1)
+      //     .flexShrink(1)
+      //   // Text('至')
+      //   Text(Languages.to[this.languages])
+      //     .fontSize(12)
+      //     .fontWeight(400)
+      //     .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
+      //     .margin({ left: 20, right: 20 })
+      //     .flexShrink(1)
+      //   Select(this.convert_ttsLanguagesToOptions())
+      //     .onHover((flag) => {
+      //       if (flag) {
+      //         this.cursorCustom.setCursor(pointer.PointerStyle.HAND_POINTING);
+      //       } else {
+      //         console.info("restoreDefault");
+      //         this.cursorCustom.restoreDefault();
+      //       }
+      //     })
+      //     .value(this.getDefaultSelectedIndex_fromText(this.getModelInfo.transLanguages[this.getDefaultSelectedIndex_from(this.screenshotOCR_to_languages)]))
+      //     .onSelect((index: number) => {
+      //       this.screenshotOCR_to_languages = this.getModelInfo.transLanguages[index].code
+      //     })
+      //     .selected(this.getDefaultSelectedIndex_from(this.screenshotOCR_to_languages))
+      //     .width(200)
+      //     .font({ size: 14, weight: 400 })
+      //     .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
+      //     .borderRadius(4)
+      //     .border({ width: 1, color: $r('app.string.DEFAULT_BORDER_COLOR') })
+      //     .backgroundColor(Color.White)
+      //     .optionHeight(180)
+      //     .flexGrow(1)
+      //     .flexShrink(1)
+      // }
+      //
+      // // Text("快捷键")
+      // Text(Languages.shortcut_key[this.languages])
+      //   .margin({ top: 5 })
+      //   .fontSize($r('app.float.default_text_font_size_14'))
+      //   .fontWeight(400)
+      //   .fontColor($r('app.string.DEFAULT_FONT_COLOR'))
+      // TextInput({
+      //   placeholder: Languages.click_to_input_keys[this.languages],
+      //   text: this.screenshot_recognition_shortcut
+      // })
+      //   .backgroundColor('#fff')
+      //   .placeholderColor('#bbbdbf')
+      //   .placeholderFont({ size: 14, weight: 400 })
+      //   .focusable(false)
+      //   .border({ width: 1, color: $r('app.string.DEFAULT_BORDER_COLOR') })
+      //   .borderRadius(5)
+      //   .onClick(() => this.shortcut = 3)
 
       //======================================================语音搜索设置
       // Text('语音搜索设置')
