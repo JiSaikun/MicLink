@@ -135,7 +135,8 @@ export struct PasswordModification_pop {
                     const params: getCode_Params = {
                       account: this.phone.trim(), // 传参时去除空格，保证数据准确性
                       accountType: accountType,
-                      codeType: codeType
+                      codeType: codeType,
+                      country: accountType === 'PHONE' ? '86' : ''
                     }
                     // 5. 接口请求（原逻辑保留，仅参数替换为上面构造的params）
                     _getCode(params)
