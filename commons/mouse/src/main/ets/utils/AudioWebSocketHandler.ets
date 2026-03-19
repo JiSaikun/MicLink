@@ -392,9 +392,9 @@ export class AudioWebSocketHandler {
 
       if (res.status === 200) {
         let audioToText_res: string = res.data.text;
-        if (!audioToText_res) {
-          return;
-        }
+        // if (!audioToText_res) {
+        //   return;
+        // }
         if (this.state) {
           if (res.data.type === 'LAST' || res.data.type === "FIN") {
             this.handleTranslation(audioToText_res, res.data.type);

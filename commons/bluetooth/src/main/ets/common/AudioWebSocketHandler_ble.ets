@@ -445,9 +445,9 @@ export class AudioWebSocketHandler_ble {
 
       if (res.status === 200) {
         let audioToText_res: string = res.data.text;
-        if (!audioToText_res) {
-          return;
-        }
+        // if (!audioToText_res) {
+        //   return;
+        // }
         if (this.state) {
           if (res.data.type === 'LAST' || res.data.type === "FIN") {
             // 语音翻译模式
@@ -536,7 +536,6 @@ export class AudioWebSocketHandler_ble {
       text: text,
       to: AppStorage.get('to_languages') ? AppStorage.get('to_languages') as string : 'EN_US'
     };
-
     _translate(params).then((res) => {
       console.log('翻译请求成功————翻译结果：' + res.data?.transText, type);
       if (res.data) {
