@@ -125,7 +125,7 @@
         // UIAbility组件的描述信息
         "minWindowHeight": 600,
         //窗口最小宽度
-        "minWindowWidth": 1000,
+        "minWindowWidth": 1100,
         //窗口最小高度
         "icon": "$media:layered_image",
         // UIAbility组件的图标
