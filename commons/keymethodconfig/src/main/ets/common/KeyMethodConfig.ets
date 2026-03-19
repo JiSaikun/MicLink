@@ -688,6 +688,17 @@ export class _KeyMethodConfig {
    *ChatGPT
    */
   static openChatGPT() {
+    const abilityContext = AppStorage.get('context') as common.UIAbilityContext; // 获取AbilityContext
+    const want: Want = {
+      bundleName: "com.miclink.myapplication",
+      abilityName: "EntryAbility"
+    };
+    // 1. 尝试唤醒主应用
+    abilityContext.startAbility(want).then(() => {
+      console.info('Succeeded in starting ability.');
+    }).catch((err: BusinessError) => {
+      console.error(`Failed to start ability. Code:${err.code}, message:${err.message}`);
+    });
     let currpageIsAI: boolean = AppStorage.get('currpageIsAI') as boolean
     switch (AppStorage.get('mouse_KeyPressType') as KeyPressType) {
       case KeyPressType.WORK_SUMMARY_CLICK: //工作总结键-单击
