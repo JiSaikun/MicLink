@@ -311,6 +311,18 @@ export struct CreateNewInstruction_pop {
       return false;
     }
 
+    // 检查指令词是否重复
+    for (let i = 0; i < this.table_data.length; i++) {
+      // 编辑模式下跳过当前正在编辑的指令
+      if (this.isParam && i === this.currIndexParam) {
+        continue;
+      }
+      if (this.table_data[i].voice === this.voice.trim()) {
+        promptAction.showToast({ message: Languages.instructionWordExists[this.languages], duration: 2000 });
+        return false;
+      }
+    }
+
     if (!this.execute || this.execute.trim() === '') {
       switch (this.category){
         case 0:

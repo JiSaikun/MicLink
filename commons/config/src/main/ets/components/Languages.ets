@@ -1767,6 +1767,30 @@ export class Languages {
     "TH_TH": "ไปเปิด",
     "JA_JP": "開く"
   }
+  static readonly instructionWordExists: LanguageNames = {
+    "DE_DE": "Der Befehlswort existiert bereits, bitte verwenden Sie ein anderes Befehlswort",
+    "KA_KA": "კომანდის სიტყვა უკვე არსებობს, გთხოვთ გამოიყენოთ სხვა ბრძანების სიტყვა",
+    "ZH_TW": "指令詞已存在，請使用其他指令詞",
+    "KO_KR": "명령어가 이미 존재합니다. 다른 명령어를 사용하세요",
+    "EN_US": "Instruction word already exists, please use another instruction word",
+    "AR_SA": "كلمة التعليمات موجودة بالفعل، يرجى استخدام كلمة تعليمات أخرى",
+    "ZH_CN": "指令词已存在，请使用其他指令词",
+    "ES_ES": "La palabra de instrucción ya existe, por favor use otra palabra de instrucción",
+    "ZH_TI": "བཀོད་སྒྲིག་ཚིག་འདུན་རྒྱུན་ཡོད་པས་གཞན་གང་གི་བཀོད་སྒྲིག་ཚིག་འདུན་ལ་བསྐྱར་རྒྱུགས་གནང་བས",
+    "IT_IT": "La parola istruzione esiste già, per favore usa un'altra parola istruzione",
+    "RU_RU": "Слово инструкции уже существует, пожалуйста, используйте другое слово инструкции",
+    "FIL_PH": "Ang instruction word ay umiiral na, mangyaring gumamit ng ibang instruction word",
+    "MAY_MAY": "Perkataan arahan sudah wujud, sila gunakan perkataan arahan lain",
+    "UYGUR": "كوماندا سۆزى ئالدىن بەلگىلىمەن، باشقا كوماندا سۆزىنى ئىشلىتىڭ",
+    "TR_TR": "Talimat kelimesi zaten var, lütfen başka bir talimat kelimesi kullanın",
+    "ID_ID": "Kata instruksi sudah ada, silakan gunakan kata instruksi lain",
+    "VI_VN": "Từ lệnh đã tồn tại, vui lòng sử dụng từ lệnh khác",
+    "MO_MO": "指令詞已存在，請使用其他指令詞",
+    "FR_FR": "Le mot d'instruction existe déjà, veuillez utiliser un autre mot d'instruction",
+    "MN_MN": " зааврын үг аль хэдийн байдаг болсон, өөр зааврын үг ашиглана уу",
+    "TH_TH": "คำสั่งมีอยู่แล้วโปรดใช้คำสั่งอื่น",
+    "JA_JP": "インストラクションワードは既に存在します。別のインストラクションワードを使用してください"
+  }
   static readonly login_registerAccount: LanguageNames = {
     "DE_DE": "Konto registrieren",
     "KA_KA": "ანგარიშის რეგისტრაცია",
