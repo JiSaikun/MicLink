@@ -131,17 +131,17 @@ export struct ConfigPage3 {
     const deviceIndex = AppStorage.get('device_show_currIndex') as number;
     if (this.device_isBle) {
       if (this.devices && deviceIndex >= 0 && deviceIndex < this.devices.length && this.devices[deviceIndex]) {
-        this.currLED = this.devices[deviceIndex].currLED || 0;
+        this.currLED = !!this.devices[deviceIndex].currLED;
       } else {
         console.error('蓝牙设备索引无效，无法获取currLED');
-        this.currLED = 0;
+        this.currLED = false;
       }
     } else {
       if (ConnectDevice.Communication && deviceIndex >= 0 && deviceIndex < ConnectDevice.Communication.length && ConnectDevice.Communication[deviceIndex]) {
-        this.currLED = ConnectDevice.Communication[deviceIndex].currLED || 0;
+        this.currLED = !!ConnectDevice.Communication[deviceIndex].currLED;
       } else {
         console.error('非蓝牙设备索引无效，无法获取currLED');
-        this.currLED = 0;
+        this.currLED = false;
       }
     }
   }
@@ -362,9 +362,10 @@ export struct ConfigPage3 {
     // Ensure DPI array is initialized with default values
     this.DPI = [{ value: '1000' }, { value: '1200' }, { value: '1600' }, { value: '2400' }, { value: '4000' }, { value: '4800' }, { value: '6000' }]
 
+    const deviceIndex = AppStorage.get('device_show_currIndex') as number || 0;
     const icType =
-      this.device_isBle ? this.devices[AppStorage.get('device_show_currIndex') as number||0].mouseconfig?.icType :
-        ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number||0].mouseconfig?.icType
+      this.device_isBle ? (this.devices[deviceIndex]?.mouseconfig?.icType) :
+        (ConnectDevice.Communication[deviceIndex]?.mouseconfig?.icType)
     switch (icType) {
       case MouseICType.MouseICTypeLS8650:
       case MouseICType.MouseICTypePAW3205:
