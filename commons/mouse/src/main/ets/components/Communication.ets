@@ -387,7 +387,7 @@ export class Communication {
   private audioProcessor: SmartMouseAudioProcessor = new SmartMouseAudioProcessor();
   public audioDataState: boolean = false //是否录入开启
   private flax_yuyin: boolean = true //标记：防止鼠标上来直接开启了语音输入————先发送一次0x63命令
-
+  private getModelInfoReq: boolean = true
   // 心跳重连机制相关属性 - 使用 number 类型代替 NodeJS.Timeout
   private heartbeatTimer: number | null = null;
   private lastReceivedTime: number = 0;
@@ -2077,47 +2077,49 @@ export class Communication {
           productCode: this.deviceInfo.productType.toString(),
           sno: this.deviceInfo.sn
         };
+        if (this.getModelInfoReq) {
+          this.getModelInfoReq = false
+          _getModelInfo(params).then((res) => {
+            console.log('获取用户按键模式详情数据', JSON.stringify(res.data));
+            if (res.status === 200) {
+              let getModelInfo: getModelInfoModel = res.data as getModelInfoModel;
 
-        _getModelInfo(params).then((res) => {
-          console.log('获取用户按键模式详情数据', JSON.stringify(res.data));
-          if (res.status === 200) {
-            let getModelInfo: getModelInfoModel = res.data as getModelInfoModel;
+              keyConfigExclusion(getModelInfo).then((res) => {
+                ConnectDevice.Communication[this.device_currIndex].getModelInfo = res
+                const newList: DeviceArrayType[] = JSON.parse(JSON.stringify(ConnectDevice.Communication));
+                AppStorage.setOrCreate('devicesList', newList);
 
-            keyConfigExclusion(getModelInfo).then((res) => {
-              ConnectDevice.Communication[this.device_currIndex].getModelInfo = res
-              const newList: DeviceArrayType[] = JSON.parse(JSON.stringify(ConnectDevice.Communication));
-              AppStorage.setOrCreate('devicesList', newList);
-
-              if (AppStorage.get('flax')) {
-                AppStorage.setOrCreate('flax', false)
-                setTimeout(() => {
-                  AppStorage.setOrCreate('flax', true)
-                }, 10)
-              }
-              /**
-               * 判断当前设备是否是键盘
-               */
-              if ((ConnectDevice.Communication[this.device_currIndex].getModelInfo as getModelInfoModel).functions.length !==
-                0) {
-                for (let item
-                  of (ConnectDevice.Communication[this.device_currIndex].getModelInfo as getModelInfoModel).functions) {
-                  if (item.code === 'keyboard') {
-                    ConnectDevice.Communication[this.device_currIndex].PRODUCT_TYPE = PRODUCT_TYPE.keyboard;
+                if (AppStorage.get('flax')) {
+                  AppStorage.setOrCreate('flax', false)
+                  setTimeout(() => {
+                    AppStorage.setOrCreate('flax', true)
+                  }, 10)
+                }
+                /**
+                 * 判断当前设备是否是键盘
+                 */
+                if ((ConnectDevice.Communication[this.device_currIndex].getModelInfo as getModelInfoModel).functions.length !==
+                  0) {
+                  for (let item
+                    of (ConnectDevice.Communication[this.device_currIndex].getModelInfo as getModelInfoModel).functions) {
+                    if (item.code === 'keyboard') {
+                      ConnectDevice.Communication[this.device_currIndex].PRODUCT_TYPE = PRODUCT_TYPE.keyboard;
+                    }
                   }
                 }
-              }
-              troubleshoot_sideFunctionInFunctions(getModelInfo, "SideFunction")
-                .then((res) => {
-                  if (res >= 0) {
-                    handle_sideFunctionInFunctions(getModelInfo.functions[res])
-                  }
-                })
-            })
+                troubleshoot_sideFunctionInFunctions(getModelInfo, "SideFunction")
+                  .then((res) => {
+                    if (res >= 0) {
+                      handle_sideFunctionInFunctions(getModelInfo.functions[res])
+                    }
+                  })
+              })
 
-          }
-        }).catch(() => {
-          console.log('获取设备模型信息请求失败');
-        });
+            }
+          }).catch(() => {
+            console.log('获取设备模型信息请求失败');
+          });
+        }
       } else {
         if (this.flax_yuyin) {
           this.getDeviceInfo([0x63]);
