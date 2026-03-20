@@ -128,10 +128,21 @@ export struct ConfigPage3 {
     return true
   }
   aboutToAppear(): void {
+    const deviceIndex = AppStorage.get('device_show_currIndex') as number;
     if (this.device_isBle) {
-      this.currLED = this.devices[AppStorage.get('device_show_currIndex') as number].currLED
-    }else {
-      this.currLED = ConnectDevice.Communication[AppStorage.get('device_show_currIndex') as number].currLED
+      if (this.devices && deviceIndex >= 0 && deviceIndex < this.devices.length && this.devices[deviceIndex]) {
+        this.currLED = this.devices[deviceIndex].currLED || 0;
+      } else {
+        console.error('蓝牙设备索引无效，无法获取currLED');
+        this.currLED = 0;
+      }
+    } else {
+      if (ConnectDevice.Communication && deviceIndex >= 0 && deviceIndex < ConnectDevice.Communication.length && ConnectDevice.Communication[deviceIndex]) {
+        this.currLED = ConnectDevice.Communication[deviceIndex].currLED || 0;
+      } else {
+        console.error('非蓝牙设备索引无效，无法获取currLED');
+        this.currLED = 0;
+      }
     }
   }
 
