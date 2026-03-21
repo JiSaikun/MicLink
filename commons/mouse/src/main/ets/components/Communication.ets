@@ -345,7 +345,7 @@ export class ConnectDevice {
   }
 
   // 静态方法用于断开所有设备连接
-  static disconnectAllDevices(): void {
+  static async disconnectAllDevices() {
     console.log('断开所有设备连接');
     ConnectDevice.Communication.forEach(device => {
       device.Communication.destroy();
@@ -401,7 +401,8 @@ export class Communication {
   private consecutiveFailures: number = 0;
   private readonly MAX_CONSECUTIVE_FAILURES: number = 10; // 连续失败10次后停止通信
   private audioWebSocketHandler: AudioWebSocketHandler | null = null // 当前的音频WebSocket处理器
-
+  private lastCommand: string = '' //上一次执行的指令
+  private lastCommandTime: number = 0 //上一次执行指令的时间戳
   // 设置音频WebSocket处理器
   public setAudioWebSocketHandler(handler: AudioWebSocketHandler): void {
     // 如果有旧的处理器，先销毁它
@@ -1101,7 +1102,17 @@ export class Communication {
         const command = data[3];
 
         console.log(`响应帧: 长度=${dataLength}, 命令=0x${command.toString(16)}`);
+        // 2秒内相同的指令只能执行1次
+        const currentCommand = command.toString(16);
+        const currentTime = Date.now();
 
+        if (currentCommand === this.lastCommand && (currentTime - this.lastCommandTime) < 500) {
+          console.log(`拦截0.5秒内重复指令: 0x${currentCommand}`);
+          return;
+        } else {
+          this.lastCommand = currentCommand;
+          this.lastCommandTime = currentTime;
+        }
         // 原有的设备信息解析逻辑保持不变
         if (command === 0x61) { // 设备信息响应
           // SN解析 - 直接使用十六进制表示，不转换为十进制

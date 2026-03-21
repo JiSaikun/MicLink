@@ -1,10 +1,25 @@
 import { DeviceArrayType_Ble } from 'bluetooth'
-import { Communication, ConnectDevice } from 'mouse'
+import { Communication, ConnectDevice, MouseICType } from 'mouse'
 
 export async function Reset(flax: boolean = true) {
   // (AppStorage.get('pageInfo') as NavPathStack).clear()
   for (let item of ConnectDevice.Communication) {
     item.Communication.deviceInfo.sn = ''
+    item.getModelInfo = null
+    item.Communication.deviceInfo = {
+      sn: '', //SN
+      micStatus: false, //麦克风状态
+      ledStatus: false, //LED状态
+      sampleRate: true, //采样率
+      icType: MouseICType.MouseICTypePAW3212, //鼠标光电类型
+      dpiLevel: 1, //DPI挡位
+      productType: 0, //产品型号
+      batteryLevel: 0, //电量
+      firmwareVersion: '', //固件版本
+      isConnected: false, //连接状态
+      reportRate: 125, //回报率
+      atmosphereLight: false//氛围灯
+    }
     item.getModelInfo = null
     item.KeymethodConfig = []
     item.DPI_currInfo = null
@@ -38,6 +53,8 @@ export async function Reset(flax: boolean = true) {
     }) //获取用户按键模式详情
     AppStorage.setOrCreate("speech_Recognition_languages", 'ZH_CN') //语音识别语言
   }
+  // 清空2.4G设备列表
+  await ConnectDevice.disconnectAllDevices()
   if (flax && AppStorage.get('devices') && (AppStorage.get('devices') as DeviceArrayType_Ble[]).length) {
     // 获取当前的蓝牙设备列表并关闭所有连接
     const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || []

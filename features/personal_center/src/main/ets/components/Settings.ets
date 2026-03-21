@@ -231,9 +231,6 @@ export struct Settings {
           }
         })
         .onClick(() => {
-          if (!this.isAutoStartup_first) {
-            return
-          }
           let want: Want = {
             bundleName: 'com.huawei.hmos.settings',
             abilityName: 'com.huawei.hmos.settings.MainAbility',
