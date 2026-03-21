@@ -403,6 +403,8 @@ export class Communication {
   private audioWebSocketHandler: AudioWebSocketHandler | null = null // 当前的音频WebSocket处理器
   private lastCommand: string = '' //上一次执行的指令
   private lastCommandTime: number = 0 //上一次执行指令的时间戳
+  private disposed: boolean = false
+
   // 设置音频WebSocket处理器
   public setAudioWebSocketHandler(handler: AudioWebSocketHandler): void {
     // 如果有旧的处理器，先销毁它
@@ -417,6 +419,9 @@ export class Communication {
   // 清理所有定时器和资源
   public dispose(): void {
     console.log('Communication对象正在清理资源...');
+
+    // 标记为已销毁
+    this.disposed = true;
 
     // 停止心跳检测
     this.stopHeartbeatCheck();
@@ -494,6 +499,10 @@ export class Communication {
     /**
      * 与鼠标建立连接
      */
+    if (this.disposed) {
+      console.error('connectDevice: 设备已销毁，无法连接');
+      return;
+    }
     if (this.devicePipe) {
       usbManager.closePipe(this.devicePipe)
       this.devicePipe = null
@@ -672,7 +681,16 @@ export class Communication {
   // 重新连接设备
   private async reconnectDevice(): Promise<void> {
     console.log('开始重新连接设备...');
-
+    if (this.disposed) {
+      console.error('reconnectDevice: 设备已销毁，无法重连');
+      return;
+    }
+    // 检查是否正在进行重连操作，避免重复重连
+    if (this.reconnectAttempts >= this.MAX_RECONNECT_ATTEMPTS) {
+      console.log('达到最大重连尝试次数，停止重连');
+      this.stopHeartbeatCheck();
+      return;
+    }
     // 停止心跳检测
     this.stopHeartbeatCheck();
 
