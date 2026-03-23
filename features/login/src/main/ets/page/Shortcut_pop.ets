@@ -2,6 +2,7 @@ import { KeyCode } from '@kit.InputKit'
 import { LengthMetrics } from '@kit.ArkUI'
 import { Languages } from 'config'
 import { ThemeConfig } from 'common'
+import { globalShortcutService } from 'utils'
 
 @Builder
 export function Shortcut_popBuilder() {
@@ -196,6 +197,8 @@ struct Shortcut_pop {
                       }
                       break
                   }
+                  // 刷新快捷键配置缓存
+                  globalShortcutService.refreshShortcutConfigs()
                   this.feedback = ''
                 }
                 this.shortcut = 1000
