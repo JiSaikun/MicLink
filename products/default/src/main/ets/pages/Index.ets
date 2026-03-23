@@ -120,7 +120,7 @@ struct Index {
       // console.log('应用重启')
       // let applicationContext = (this.getUIContext().getHostContext() as common.UIAbilityContext).getApplicationContext();
       // let want: Want = {
-      //   bundleName: 'com.miclink.myapplication',
+      //   bundleName: 'com.miclink.HOS.MicLink',
       //   abilityName: 'EntryAbility'
       // };
       // try {

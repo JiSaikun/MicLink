@@ -15,16 +15,17 @@ export default class EntryAbility extends UIAbility {
     let options: commonEventManager.CommonEventPublishData = {
       code: 1, // 公共事件的初始代码
       data: 'initial data', // 公共事件的初始数据
-      bundleName:"com.miclink.myapplication"//指定订阅者的包名。
+      bundleName: "com.miclink.HOS.MicLink"//指定订阅者的包名。
     };
-    // 发布com.miclink.myapplication.BackgroundAbility_onPrepareToTerminate_event 公共事件
-    commonEventManager.publish('com.miclink.myapplication.BackgroundAbility_onPrepareToTerminate_event', options, (err: BusinessError) => {
-      if (err) {
-        hilog.info(DOMAIN, 'testTag', `failed to publish common event, error: ${JSON.stringify(err)}`);
-      } else {
-        hilog.info(DOMAIN, 'testTag', 'success in publishing common event');
-      }
-    });
+    // 发布com.miclink.HOS.MicLink.BackgroundAbility_onPrepareToTerminate_event 公共事件
+    commonEventManager.publish('com.miclink.HOS.MicLink.BackgroundAbility_onPrepareToTerminate_event', options,
+      (err: BusinessError) => {
+        if (err) {
+          hilog.info(DOMAIN, 'testTag', `failed to publish common event, error: ${JSON.stringify(err)}`);
+        } else {
+          hilog.info(DOMAIN, 'testTag', 'success in publishing common event');
+        }
+      });
     return false;
   }
 

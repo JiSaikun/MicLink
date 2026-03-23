@@ -29,7 +29,7 @@ struct FloatingWindow {
     .onClick(() => {
       const abilityContext = AppStorage.get('context') as common.UIAbilityContext; // 获取AbilityContext
       const want: Want = {
-        bundleName: "com.miclink.myapplication",
+        bundleName: "com.miclink.HOS.MicLink",
         abilityName: "EntryAbility"
       };
 

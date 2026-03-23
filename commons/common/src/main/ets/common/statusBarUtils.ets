@@ -95,7 +95,7 @@ export const loadStatusBar = async (context: common.UIAbilityContext): Promise<v
 export const holdStatusBar = (context: common.UIAbilityContext | common.UIExtensionContext): Promise<void> => {
   return new Promise((resolve, reject) => {
     let want: Want = {
-      bundleName: 'com.miclink.myapplication', // 指定当前应用名
+      bundleName: 'com.miclink.HOS.MicLink', // 指定当前应用名
       abilityName: 'BackGroundAbility' // 指定应用的Ability
     };
     let options: StartOptions = {

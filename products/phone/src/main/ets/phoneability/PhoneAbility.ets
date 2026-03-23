@@ -74,7 +74,7 @@ export default class PhoneAbility extends UIAbility {
       // 点击通知后，将要执行的动作列表
       wants: [
         {
-          bundleName: "com.miclink.myapplication", // 目标应用包名（必填）
+          bundleName: "com.miclink.HOS.MicLink", // 目标应用包名（必填）
           abilityName: "PhoneAbility"// 目标Ability名称（必填）
         }
       ],

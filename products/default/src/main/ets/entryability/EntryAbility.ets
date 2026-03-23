@@ -6,6 +6,7 @@ import { backgroundTaskManager } from '@kit.BackgroundTasksKit';
 import { AppUtil, holdStatusBar, loadStatusBar, setupNetworkStatusListener } from 'common';
 import { statusBarManager } from '@kit.DeskTopExtensionKit';
 import { DeviceArrayType_Ble } from 'bluetooth';
+import { bundleManager } from '@kit.AbilityKit';
 
 // import fs from '@ohos.file.fs';
 
@@ -19,6 +20,10 @@ let isLoadContent: boolean = false;
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     global_context = this.context;
+    bundleManager.getBundleInfoForSelf(bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_SIGNATURE_INFO)
+      .then((RES) => {
+        console.log('软件信息获取:', JSON.stringify(RES.signatureInfo.appId))
+      })
     //判断是否开机自启
     if (want.parameters?.['ohos.aafwk.param.callerNativeName'] === '_foundation') { // 开机自启
       isAuto = true;
@@ -66,7 +71,7 @@ export default class EntryAbility extends UIAbility {
       // 点击通知后，将要执行的动作列表
       wants: [
         {
-          bundleName: "com.miclink.myapplication", // 目标应用包名（必填）
+          bundleName: "com.miclink.HOS.MicLink", // 目标应用包名（必填）
           abilityName: "EntryAbility"// 目标Ability名称（必填）
         }
       ],
@@ -132,7 +137,7 @@ export default class EntryAbility extends UIAbility {
     let subscriber: commonEventManager.CommonEventSubscriber | null = null;
     // 订阅者信息，其中的event字段需要替换为实际的事件名称。
     let subscribeInfo: commonEventManager.CommonEventSubscribeInfo = {
-      events: ['com.miclink.myapplication.BackgroundAbility_onPrepareToTerminate_event'], // 订阅BackgroundAbility onPrepareToTerminate公共事件
+      events: ['com.miclink.HOS.MicLink.BackgroundAbility_onPrepareToTerminate_event'], // 订阅BackgroundAbility onPrepareToTerminate公共事件
     };
     // 创建订阅者回调
     commonEventManager.createSubscriber(subscribeInfo,

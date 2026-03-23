@@ -1,6 +1,6 @@
 {
   "app": {
-    "bundleName": "com.miclink.myapplication",
+    "bundleName": "com.miclink.HOS.MicLink",
     "vendor": "example",
     "versionCode": 1000000,
     "versionName": "1.0.0",
