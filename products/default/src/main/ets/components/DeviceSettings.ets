@@ -127,7 +127,7 @@ export struct DeviceSettings {
           .width('100%')
 
           // .borderWidth(1)
-          if (this.Unconnected && this.sideFunctionList) {
+          if (this.Unconnected) {
             Grid() {
               ForEach(this.devicesList, (item: DeviceArrayType, index) => {
                 if (item.getModelInfo) {

@@ -161,6 +161,7 @@ export interface sideFunctionList {
 }
 
 export async function troubleshoot_sideFunctionInFunctions(value: getModelInfoModel, name: string): Promise<number> {
+  AppStorage.setOrCreate('Unconnected', true)
   return value.functions.findIndex(item => item.name === name);
 }
 
@@ -168,7 +169,6 @@ export function handle_sideFunctionInFunctions(sideFunction: functionsType) {
   if (sideFunction.name !== 'SideFunction') {
     return
   }
-  AppStorage.setOrCreate('Unconnected', true)
   let sideFunctionList = JSON.parse(sideFunction.code) as sideFunctionList
   let flax = AppStorage.get('sideFunctionList') as sideFunctionList
   if (flax) {
