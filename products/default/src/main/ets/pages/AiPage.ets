@@ -550,9 +550,8 @@ struct AiPage {
               extend: this.extend,
               width_length: this.width_length
             })
+              .zIndex(100)
             Stack() {
-              Topbar()
-                .zIndex(100)
               Flex({
                 direction: FlexDirection.Column,
                 alignItems: ItemAlign.Center,
@@ -617,7 +616,6 @@ struct AiPage {
               }
               .width('100%')
               .height('100%')
-              .padding({ top: 66 })
             }
             .align(Alignment.TopStart)
             .height('100%')
