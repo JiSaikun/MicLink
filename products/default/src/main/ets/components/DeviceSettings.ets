@@ -77,13 +77,35 @@ export struct DeviceSettings {
                   AppStorage.setOrCreate('isShow_bluetoothConnect_pop', true)
                   //检索与连接蓝牙，之前的连接列表清空    蓝牙检索状态:false
                   console.info('开始重新扫描蓝牙设备，清空现有连接');
+                  
+                  // 关闭所有 2.4G USB 连接
+                  console.info('关闭所有 2.4G USB 连接');
+                  const devicesList = AppStorage.get('devicesList') as DeviceArrayType[] || [];
+                  for (let item of devicesList) {
+                    if (item.connectionmethod === 1) { // USB 连接
+                      console.info('关闭 2.4G USB 设备连接:', item.name);
+                      if (item.Communication && typeof item.Communication.destroy === 'function') {
+                        try {
+                          item.Communication.destroy();
+                          console.info('2.4G USB 设备连接已关闭');
+                        } catch (err) {
+                          console.error('关闭 2.4G USB 设备连接失败:', err);
+                        }
+                      }
+                    }
+                  }
+                  // 清空 2.4G 设备列表
+                  AppStorage.setOrCreate('devicesList', []);
+                  AppStorage.setOrCreate('mouseconfig', null);
+                  
+                  // 关闭现有蓝牙连接
                   for (let item of this.devices) {
-                    console.info('关闭设备连接:', item.name);
+                    console.info('关闭蓝牙设备连接:', item.name);
                     item.BlueTooth_devices.closeconnectDevice()
                   }
                   AppStorage.setOrCreate('isBluetoothConnect_state', false)
                   // 延迟一点时间确保连接完全关闭
-                  setTimeout(() => {
+                  setTimeout((  ) => {
                     AppStorage.setOrCreate('devices', [])
                     console.info('设备列表已清空，开始重新扫描');
 
@@ -183,9 +205,9 @@ export struct DeviceSettings {
                         .margin({ bottom: 15, top: 15 })
 
                       Row() {
-                        Image($r('app.media.Cloud_true'))
-                          .visibility(item.connectionmethod === 0 ? Visibility.Visible : Visibility.None)
-                          .margin({ left: 10 }).width(24)
+                        // Image($r('app.media.Cloud_true'))
+                        //   .visibility(item.connectionmethod === 0 ? Visibility.Visible : Visibility.None)
+                        //   .margin({ left: 10 }).width(24)
                         Image($r('app.media.Cloud_false'))
                           .visibility(item.connectionmethod === 0 ? Visibility.None : Visibility.Visible)
                           .margin({ left: 10 }).width(24)
@@ -193,12 +215,12 @@ export struct DeviceSettings {
                           .visibility(item.connectionmethod === 1 ? Visibility.Visible : Visibility.None)
                           .margin({ left: 10 }).width(24)
                           .padding(4)
-                        Image($r('app.media.USB_false'))
-                          .visibility(item.connectionmethod === 1 ? Visibility.None : Visibility.Visible)
-                          .margin({ left: 10 }).width(24)
-                        Image($r('app.media.Bluetooth_true'))
-                          .visibility(item.connectionmethod === 2 ? Visibility.Visible : Visibility.None)
-                          .margin({ left: 10 }).width(24)
+                        // Image($r('app.media.USB_false'))
+                        //   .visibility(item.connectionmethod === 1 ? Visibility.None : Visibility.Visible)
+                        //   .margin({ left: 10 }).width(24)
+                        // Image($r('app.media.Bluetooth_true'))
+                        //   .visibility(item.connectionmethod === 2 ? Visibility.Visible : Visibility.None)
+                        //   .margin({ left: 10 }).width(24)
                         Image($r('app.media.Bluetooth_false'))
                           .visibility(item.connectionmethod === 2 ? Visibility.None : Visibility.Visible)
                           .margin({ left: 10 }).width(24)
@@ -291,24 +313,24 @@ export struct DeviceSettings {
                         .margin({ bottom: 15, top: 15 })
 
                       Row() {
-                        Image($r('app.media.Cloud_true'))
-                          .visibility(item.connectionmethod === 0 ? Visibility.Visible : Visibility.None)
-                          .margin({ left: 10 }).width(24)
+                        // Image($r('app.media.Cloud_true'))
+                        //   .visibility(item.connectionmethod === 0 ? Visibility.Visible : Visibility.None)
+                        //   .margin({ left: 10 }).width(24)
                         Image($r('app.media.Cloud_false'))
                           .visibility(item.connectionmethod === 0 ? Visibility.None : Visibility.Visible)
                           .margin({ left: 10 }).width(24)
-                        Image($r('app.media.USB_true'))
-                          .visibility(item.connectionmethod === 1 ? Visibility.Visible : Visibility.None)
-                          .margin({ left: 10 }).width(24)
+                        // Image($r('app.media.USB_true'))
+                        //   .visibility(item.connectionmethod === 1 ? Visibility.Visible : Visibility.None)
+                        //   .margin({ left: 10 }).width(24)
                         Image($r('app.media.USB_false'))
                           .visibility(item.connectionmethod === 1 ? Visibility.None : Visibility.Visible)
                           .margin({ left: 10 }).width(24)
                         Image($r('app.media.Bluetooth_true'))
                           .visibility(item.connectionmethod === 2 ? Visibility.Visible : Visibility.None)
                           .margin({ left: 10 }).width(24)
-                        Image($r('app.media.Bluetooth_false'))
-                          .visibility(item.connectionmethod === 2 ? Visibility.None : Visibility.Visible)
-                          .margin({ left: 10 }).width(24)
+                        // Image($r('app.media.Bluetooth_false'))
+                        //   .visibility(item.connectionmethod === 2 ? Visibility.None : Visibility.Visible)
+                        //   .margin({ left: 10 }).width(24)
                       }
                       .justifyContent(FlexAlign.End)
                       .width('100%')

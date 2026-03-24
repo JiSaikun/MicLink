@@ -2107,12 +2107,19 @@ export class BlueTooth_devices {
       }
 
       let bufferCCC = this.buildCommandFrame(command);
+      
+      // 验证数据有效性
+      if (!bufferCCC || bufferCCC.length === 0) {
+        console.error('构建的命令帧为空，无法发送');
+        return;
+      }
+      
       const hexString = Array.from(bufferCCC).map(b => b.toString(16).padStart(2, '0')).join(' ');
       console.log(`发送命令 0x${command[0].toString(16)}:`, hexString, '\t发送数据长度', bufferCCC.length);
 
       // 确保数据长度合理，避免蓝牙栈崩溃
       if (bufferCCC.length > 512) {
-        console.error('数据长度超过蓝牙限制，截断为512字节');
+        console.error('数据长度超过蓝牙限制，截断为 512 字节');
         bufferCCC = bufferCCC.slice(0, 512);
       }
 
@@ -2135,48 +2142,56 @@ export class BlueTooth_devices {
         ble.GattWriteType.WRITE_NO_RESPONSE
       ).then(() => {
         console.info('写入特征值成功');
-        let bufferCCC = this.buildCommandFrame(command, 33);
-        const hexString = Array.from(bufferCCC).map(b => b.toString(16).padStart(2, '0')).join(' ');
-        console.log(`发送命令 0x${command[0].toString(16)}:`, hexString, '\t发送数据长度', bufferCCC.length);
+        // 修复变量阴影问题：使用不同的变量名
+        let secondFrameBuffer = this.buildCommandFrame(command, 33);
+        
+        // 验证第二帧数据有效性
+        if (!secondFrameBuffer || secondFrameBuffer.length === 0) {
+          console.error('第二帧命令数据为空，跳过发送');
+          return;
+        }
+        
+        const secondHexString = Array.from(secondFrameBuffer).map(b => b.toString(16).padStart(2, '0')).join(' ');
+        console.log(`发送第二帧命令 0x${command[0].toString(16)}:`, secondHexString, '\t发送数据长度', secondFrameBuffer.length);
 
         // 确保设备索引有效
         if (this.device_currIndex >= 0 && this.device_currIndex < this.devices.length) {
           if (this.devices[this.device_currIndex].PRODUCT_TYPE !== PRODUCT_TYPE.keyboard) {
             // 确保数据长度合理
-            if (bufferCCC.length > 512) {
-              console.error('数据长度超过蓝牙限制，截断为512字节');
-              bufferCCC = bufferCCC.slice(0, 512);
+            if (secondFrameBuffer.length > 512) {
+              console.error('数据长度超过蓝牙限制，截断为 512 字节');
+              secondFrameBuffer = secondFrameBuffer.slice(0, 512);
             }
 
             // 创建 ArrayBuffer
-            let arrayBuffer = new ArrayBuffer(bufferCCC.length);
-            let dataView = new Uint8Array(arrayBuffer);
-            dataView.set(bufferCCC);
+            let secondArrayBuffer = new ArrayBuffer(secondFrameBuffer.length);
+            let secondDataView = new Uint8Array(secondArrayBuffer);
+            secondDataView.set(secondFrameBuffer);
 
-            let characteristic: ble.BLECharacteristic = {
+            let secondCharacteristic: ble.BLECharacteristic = {
               serviceUuid: this.CUSTOM_SERVICE_UUID,
               characteristicUuid: this.WRITE_CHAR_UUID,
-              characteristicValue: arrayBuffer,
+              characteristicValue: secondArrayBuffer,
               descriptors: this.WRITE_DESCRIPTORS || []
             };
 
             // 根据特征值属性选择合适的写入类型
             // WRITE_CHAR_UUID 的属性是 writeNoResponse: true，所以使用 WRITE_NO_RESPONSE
             (this.gattClient as ble.GattClientDevice).writeCharacteristicValue(
-              characteristic,
+              secondCharacteristic,
               ble.GattWriteType.WRITE_NO_RESPONSE
             ).then(() => {
-              console.info('写入特征值成功');
+              console.info('第二帧写入特征值成功');
             }).catch((err: BusinessError) => {
-              console.error(`写入特征值失败: errCode: ${err.code}, errMessage: ${err.message}`);
+              console.error(`第二帧写入特征值失败：errCode: ${err.code}, errMessage: ${err.message}`);
               // 如果 WRITE_NO_RESPONSE 失败，尝试使用 WRITE
               (this.gattClient as ble.GattClientDevice).writeCharacteristicValue(
-                characteristic,
+                secondCharacteristic,
                 ble.GattWriteType.WRITE
               ).then(() => {
-                console.info('使用 WRITE 方式写入成功');
+                console.info('第二帧使用 WRITE 方式写入成功');
               }).catch((err2: BusinessError) => {
-                console.error(`WRITE 方式也失败: errCode: ${err2.code}, errMessage: ${err2.message}`);
+                console.error(`第二帧 WRITE 方式也失败：errCode: ${err2.code}, errMessage: ${err2.message}`);
               });
             });
           }

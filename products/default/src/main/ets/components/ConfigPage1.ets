@@ -830,19 +830,37 @@ export struct ConfigPage1 {
     .width('100%')
   }
   private getDefaultSelectedIndex_speech_Recognition_languages(from_languages: string=AppStorage.get('speech_Recognition_languages') as string): number {
+    // 添加保护逻辑，防止 getModelInfo 或 languages 为空
+    if (!this.getModelInfo || !this.getModelInfo.languages || this.getModelInfo.languages.length === 0) {
+      console.warn('getDefaultSelectedIndex_speech_Recognition_languages: getModelInfo 或 languages 为空');
+      return 0;
+    }
+    
     const index = this.getModelInfo.languages.findIndex((item) => {
       return item.code === from_languages;
     });
-    return index !== -1 ? index : 0; // 找到返回索引，否则返回0
+    return index !== -1 ? index : 0; // 找到返回索引，否则返回 0
   }
   private getDefaultSelectedIndex_from(from_languages: string): number {
+    // 添加保护逻辑，防止 getModelInfo 或 transLanguages 为空
+    if (!this.getModelInfo || !this.getModelInfo.transLanguages || this.getModelInfo.transLanguages.length === 0) {
+      console.warn('getDefaultSelectedIndex_from: getModelInfo 或 transLanguages 为空');
+      return 0;
+    }
+    
     const index = this.getModelInfo.transLanguages.findIndex((item) => {
       return item.code === from_languages;
     });
-    return index !== -1 ? index : 0; // 找到返回索引，否则返回0
+    return index !== -1 ? index : 0; // 找到返回索引，否则返回 0
   }
 
   private getDefaultSelectedIndex_fromText(item: languagesModel): string {
+    // 添加空值检查，防止 item 为 undefined
+    if (!item) {
+      console.warn('getDefaultSelectedIndex_fromText: item 为 undefined');
+      return '';
+    }
+    
     switch (AppStorage.get('languages') as string) {
       case "FIL_PH":
         return item.nameFil_ph;

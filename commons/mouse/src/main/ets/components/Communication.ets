@@ -399,8 +399,10 @@ export class Communication {
   private reconnectAttempts: number = 0;
   private readonly MAX_RECONNECT_ATTEMPTS: number = 5;
   private consecutiveFailures: number = 0;
-  private readonly MAX_CONSECUTIVE_FAILURES: number = 10; // 连续失败10次后停止通信
-  private audioWebSocketHandler: AudioWebSocketHandler | null = null // 当前的音频WebSocket处理器
+  private readonly MAX_CONSECUTIVE_FAILURES: number = 10; // 连续失败 10 次后停止通信
+  private isGetDeviceInfoRunning: boolean = false; // 防止 getDeviceInfo 递归调用
+  private isReconnecting: boolean = false; // 防止重连后再次获取设备信息
+  private audioWebSocketHandler: AudioWebSocketHandler | null = null // 当前的音频 WebSocket 处理器
   private lastCommand: string = '' //上一次执行的指令
   private lastCommandTime: number = 0 //上一次执行指令的时间戳
   private disposed: boolean = false
@@ -499,7 +501,8 @@ export class Communication {
     /**
      * 与鼠标建立连接
      */
-    if (this.disposed) {
+    // 检查对象是否有效，防止 GC 后的访问
+    if (!this || this.disposed) {
       console.error('connectDevice: 设备已销毁，无法连接');
       return;
     }
@@ -509,10 +512,20 @@ export class Communication {
     }
 
     try {
-      // USB设备连接可能耗时，添加超时保护
-      const usbConnectTimeout = 5000; // 5秒超时，USB连接需要更长时间
+      // USB 设备连接可能耗时，添加超时保护
+      // 使用更安全的超时方式，避免 NAPI 作用域问题
+      let timeoutTimer: number | null = null;
+      const usbConnectTimeout = 5000; // 5 秒超时
+
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('USB设备连接超时')), usbConnectTimeout);
+        // 使用全局的 setTimeout，避免在 NAPI 作用域中创建
+        timeoutTimer = setTimeout(() => {
+          if (timeoutTimer) {
+            clearTimeout(timeoutTimer);
+            timeoutTimer = null;
+          }
+          reject(new Error('USB 设备连接超时'));
+        }, usbConnectTimeout);
       });
 
       const connectPromise = Promise.resolve().then(() => {
@@ -520,6 +533,19 @@ export class Communication {
       });
 
       this.devicePipe = await Promise.race([connectPromise, timeoutPromise]);
+
+      // 连接成功后清除超时定时器
+      if (timeoutTimer) {
+        clearTimeout(timeoutTimer);
+        timeoutTimer = null;
+      }
+
+      // 检查对象是否仍然有效，防止GC后的访问
+      if (!this || this.disposed) {
+        console.error('connectDevice: 设备已销毁，无法继续连接');
+        return;
+      }
+
       console.log('设备连接成功', JSON.stringify(this.devicePipe));
       hilog.info(0x0000, 'USB', 'Device connected successfully');
 
@@ -552,7 +578,14 @@ export class Communication {
 
       // 连接成功后启动心跳检测
       this.startHeartbeatCheck();
-      await this.getDeviceInfo()
+
+      // 只在初始化连接时获取设备信息，重连时不需要
+      if (!this.isReconnecting) {
+        await this.getDeviceInfo()
+      } else {
+        // 重连完成后重置标志
+        this.isReconnecting = false;
+      }
     } catch (error) {
       console.error('设备连接失败:', error);
       await this.handleConnectionError();
@@ -568,6 +601,12 @@ export class Communication {
 
   // 启动心跳检测
   private startHeartbeatCheck(): void {
+    // 检查对象是否有效，防止GC后的访问
+    if (!this || this.disposed) {
+      console.log('对象已销毁，跳过心跳检测启动');
+      return;
+    }
+
     if (this.isHeartbeatRunning) {
       console.log('心跳检测已经在运行中');
       return;
@@ -585,14 +624,14 @@ export class Communication {
     this.heartbeatTimer = setInterval((): void => {
       try {
         // 检查对象是否仍然有效（防止GC后的访问）
-        if (!this || !this.checkHeartbeat) {
+        if (!this || !this.checkHeartbeat || this.disposed) {
           return;
         }
         this.checkHeartbeat();
       } catch (error) {
         console.error('心跳检测回调异常:', error);
         // 如果出现异常，停止心跳检测
-        if (this && this.stopHeartbeatCheck) {
+        if (this && this.stopHeartbeatCheck && !this.disposed) {
           this.stopHeartbeatCheck();
         }
       }
@@ -603,6 +642,12 @@ export class Communication {
 
   // 停止心跳检测
   private stopHeartbeatCheck(): void {
+    // 检查对象是否有效，防止GC后的访问
+    if (!this || this.disposed) {
+      console.log('对象已销毁，跳过心跳检测停止');
+      return;
+    }
+
     this.isHeartbeatRunning = false;
 
     if (this.heartbeatTimer !== null) {
@@ -614,6 +659,12 @@ export class Communication {
 
   // 检查心跳
   private async checkHeartbeat(): Promise<void> {
+    // 检查对象是否有效，防止GC后的访问
+    if (!this || this.disposed) {
+      console.log('对象已销毁，跳过心跳检查');
+      return;
+    }
+
     // 如果设备未连接，不进行检查
     if (!this.devicePipe || !this.isPhysicalKeyboardExist) {
       console.log('设备未连接，跳过心跳检查');
@@ -645,6 +696,12 @@ export class Communication {
 
   // 发送心跳测试包
   private sendHeartbeatTest(): void {
+    // 检查对象是否有效，防止GC后的访问
+    if (!this || this.disposed) {
+      console.log('对象已销毁，跳过心跳包发送');
+      return;
+    }
+
     if (!this.sendState && this.devicePipe) {
       console.log('发送心跳包: 0x61命令（获取设备基本信息）');
       // 记录心跳包发送时间
@@ -657,12 +714,24 @@ export class Communication {
 
   // 更新接收时间戳
   private updateLastReceivedTime(): void {
+    // 检查对象是否有效，防止GC后的访问
+    if (!this || this.disposed) {
+      console.log('对象已销毁，跳过更新接收时间戳');
+      return;
+    }
+
     this.lastReceivedTime = Date.now();
     console.log(`更新最后接收时间: ${new Date(this.lastReceivedTime).toISOString()}`);
   }
 
   // 处理连接错误
   private async handleConnectionError(): Promise<void> {
+    // 检查对象是否有效，防止GC后的访问
+    if (!this || this.disposed) {
+      console.log('对象已销毁，跳过连接错误处理');
+      return;
+    }
+
     this.reconnectAttempts++;
 
     if (this.reconnectAttempts <= this.MAX_RECONNECT_ATTEMPTS) {
@@ -670,7 +739,10 @@ export class Communication {
       const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000); // 指数退避，最大30秒
 
       setTimeout(async (): Promise<void> => {
-        await this.reconnectDevice();
+        // 检查对象是否仍然有效
+        if (this && !this.disposed) {
+          await this.reconnectDevice();
+        }
       }, delay);
     } else {
       console.log('达到最大重连尝试次数，停止重连');
@@ -680,19 +752,47 @@ export class Communication {
 
   // 重新连接设备
   private async reconnectDevice(): Promise<void> {
+    // 检查对象是否有效，防止 GC 后的访问
+    if (!this || this.disposed) {
+      console.log('对象已销毁，跳过设备重连');
+      return;
+    }
+
     console.log('开始重新连接设备...');
-    if (this.disposed) {
+
+    // 设置重连标志，防止重连后再次获取设备信息
+    this.isReconnecting = true;
+
+    // 再次检查对象是否有效
+    if (!this || this.disposed) {
       console.error('reconnectDevice: 设备已销毁，无法重连');
       return;
     }
+
     // 检查是否正在进行重连操作，避免重复重连
     if (this.reconnectAttempts >= this.MAX_RECONNECT_ATTEMPTS) {
       console.log('达到最大重连尝试次数，停止重连');
-      this.stopHeartbeatCheck();
+      // 检查对象是否仍然有效
+      if (this && !this.disposed) {
+        this.stopHeartbeatCheck();
+      }
       return;
     }
+
+    // 检查对象是否仍然有效
+    if (!this || this.disposed) {
+      console.error('reconnectDevice: 设备已销毁，无法重连');
+      return;
+    }
+
     // 停止心跳检测
     this.stopHeartbeatCheck();
+
+    // 检查对象是否仍然有效
+    if (!this || this.disposed) {
+      console.error('reconnectDevice: 设备已销毁，无法继续');
+      return;
+    }
 
     // 关闭现有连接
     if (this.devicePipe) {
@@ -705,6 +805,12 @@ export class Communication {
       this.devicePipe = null;
     }
 
+    // 检查对象是否仍然有效
+    if (!this || this.disposed) {
+      console.error('reconnectDevice: 设备已销毁，无法继续');
+      return;
+    }
+
     // USB重连时停止语音输入，防止语音状态悬空
     if (this.audioDataState) {
       console.log('[2.4G调试] USB重连时停止语音输入');
@@ -712,8 +818,31 @@ export class Communication {
       Communication.audioData = []; // 清空音频数据
     }
 
+    // 检查对象是否仍然有效
+    if (!this || this.disposed) {
+      console.error('reconnectDevice: 设备已销毁，无法继续');
+      return;
+    }
+
     // 等待一小段时间再重连
-    await new Promise<void>((resolve: () => void) => setTimeout(resolve, 1000));
+    // 使用更安全的延迟方式，避免 NAPI 作用域问题
+    try {
+      await new Promise<void>((resolve) => {
+        const timer = setTimeout(() => {
+          clearTimeout(timer);
+          resolve();
+        }, 1000);
+      });
+    } catch (error) {
+      console.error('等待重连时出错:', error);
+      return;
+    }
+
+    // 再次检查对象是否有效，防止GC后的访问
+    if (!this || this.disposed) {
+      console.log('对象已销毁，跳过重新连接');
+      return;
+    }
 
     try {
       // 重新连接
@@ -721,41 +850,61 @@ export class Communication {
       console.log('设备重新连接完成');
     } catch (error) {
       console.error('设备重新连接失败:', error);
-      await this.handleConnectionError();
+      // 检查对象是否仍然有效
+      if (this && !this.disposed) {
+        await this.handleConnectionError();
+      }
     }
   }
 
   // 使用批量传输获取设备信息
   public async getDeviceInfo(command: number[] = [0x61]): Promise<void> {
-    if (!this.devicePipe) {
-      console.log('设备未连接------------------------');
-      await this.reconnectDevice();
+    // 检查对象是否有效，防止 GC 后的访问
+    if (!this || this.disposed) {
+      console.log('对象已销毁，跳过获取设备信息');
       return;
     }
 
-    this.isPhysicalKeyboardExist = false;
+    // 防止递归调用：如果已经在执行中，则跳过
+    if (this.isGetDeviceInfoRunning) {
+      console.warn('getDeviceInfo 已经在执行中，跳过本次调用');
+      return;
+    }
 
-    if (this.sendState && command[0] !== 0x61) {
-      console.log('有消息正在发送------------------------');
-      if (command !== this.sendDataList[0]) {
+    this.isGetDeviceInfoRunning = true;
+
+    try {
+      if (!this.devicePipe) {
+        console.log('设备未连接------------------------');
+        await this.reconnectDevice();
+        return;
+      }
+
+      this.isPhysicalKeyboardExist = false;
+
+      if (this.sendState && command[0] !== 0x61) {
+        console.log('有消息正在发送------------------------');
+        if (command !== this.sendDataList[0]) {
+          this.sendDataList = this.sendDataList.filter(item => item[0] !== command[0]);
+          this.sendDataList.push(command);
+        }
+        setTimeout((): void => {
+          // 检查对象是否仍然有效
+          if (this && !this.disposed && !this.isGetDeviceInfoRunning) {
+            this.getDeviceInfo(command)
+          }
+        }, 50);
+        return;
+      }
+
+      if (this.sendDataList.length && command !== this.sendDataList[0]) {
+        console.log('前面消息命令还没发送完：排队------------------------');
         this.sendDataList = this.sendDataList.filter(item => item[0] !== command[0]);
         this.sendDataList.push(command);
+        command = this.sendDataList[0];
       }
-      setTimeout((): void => {
-        this.getDeviceInfo(command)
-      }, 50);
-      return;
-    }
 
-    if (this.sendDataList.length && command !== this.sendDataList[0]) {
-      console.log('前面消息命令还没发送完：排队------------------------');
-      this.sendDataList = this.sendDataList.filter(item => item[0] !== command[0]);
-      this.sendDataList.push(command);
-      command = this.sendDataList[0];
-    }
-
-    console.log('开始获取设备信息');
-    try {
+      console.log('开始获取设备信息');
       if (this.outputEndpoint && this.outputInterface && this.inputEndpoint && this.inputInterface) {
         console.log('找到合适的端点，开始通信', JSON.stringify(this.outputEndpoint), '+',
           JSON.stringify(this.outputInterface));
@@ -772,14 +921,20 @@ export class Communication {
           await this.reconnectDevice();
           console.log(`****************************************************************设备连接完成：重新发送断掉的命令:0x`,
             command[0].toString(16));
-          this.getDeviceInfo(command);
+          // 检查对象是否仍然有效
+          if (this && !this.disposed && !this.isGetDeviceInfoRunning) {
+            this.getDeviceInfo(command);
+          }
           return;
         }
 
         this.sendDataList.splice(0, 1);
         if (this.sendDataList.length) {
           setTimeout((): void => {
-            this.getDeviceInfo(this.sendDataList[0]);
+            // 检查对象是否仍然有效
+            if (this && !this.disposed && !this.isGetDeviceInfoRunning) {
+              this.getDeviceInfo(this.sendDataList[0]);
+            }
           }, 1000);
           return;
         }
@@ -809,12 +964,21 @@ export class Communication {
     } catch (error) {
       console.error('获取设备信息失败:', error);
       await this.handleConnectionError();
+    } finally {
+      // 重置执行标志
+      this.isGetDeviceInfoRunning = false;
     }
   }
 
   // 发送命令到输出端点
   private async sendCommand(iface: usbManager.USBInterface, endpoint: usbManager.USBEndpoint, command: number[],
     length: number = 33): Promise<number> {
+    // 检查对象是否有效，防止GC后的访问
+    if (!this || this.disposed) {
+      console.log('对象已销毁，跳过发送命令');
+      return -1;
+    }
+
     this.sendState = true;
     hilog.warn(0x00, 'send',
       '*******************************************************************************向鼠标发送消息');
@@ -854,8 +1018,21 @@ export class Communication {
         } else {
           console.log(`发送命令 0x${command[0].toString(16)}: ${cmdData.length}字节`);
         }
+        // 检查对象是否仍然有效
+        if (!this || this.disposed) {
+          console.log('对象已销毁，跳过等待发送命令的日志');
+          this.sendState = false;
+          return -1;
+        }
         console.log('`````````````````````````````````````````````````````````````等待发送的命令:',
           this.sendDataList.length);
+
+        // 检查对象是否仍然有效
+        if (!this || this.disposed) {
+          console.log('对象已销毁，跳过USB发送操作');
+          this.sendState = false;
+          return -1;
+        }
 
         // 增加超时时间，避免USB设备响应慢时频繁超时，并添加额外超时保护
         const usbTimeout = 2000; // 2秒额外超时保护
@@ -865,6 +1042,13 @@ export class Communication {
 
         let result = -1;
         let result_21 = -1;
+
+        // 检查对象是否仍然有效
+        if (!this || this.disposed || !this.devicePipe) {
+          console.log('对象已销毁或设备管道不存在，跳过33字节命令发送');
+          this.sendState = false;
+          return -1;
+        }
 
         try {
           const sendPromise = usbManager.bulkTransfer(this.devicePipe, endpoint, cmdData, 5000);
@@ -879,6 +1063,13 @@ export class Communication {
           return -1;
         }
 
+        // 检查对象是否仍然有效
+        if (!this || this.disposed || !this.devicePipe) {
+          console.log('对象已销毁或设备管道不存在，跳过21字节命令发送');
+          this.sendState = false;
+          return -1;
+        }
+
         try {
           const sendPromise21 = usbManager.bulkTransfer(this.devicePipe, endpoint, cmdData_21, 500);
           result_21 = await Promise.race([sendPromise21, timeoutPromise]);
@@ -889,6 +1080,12 @@ export class Communication {
           this.sendState = false;
           this.consecutiveFailures++;
           console.log(`连续通信失败次数: ${this.consecutiveFailures}/${this.MAX_CONSECUTIVE_FAILURES}`);
+          return -1;
+        }
+
+        // 检查对象是否仍然有效
+        if (!this || this.disposed) {
+          console.log('对象已销毁，跳过返回操作');
           return -1;
         }
 
@@ -916,6 +1113,12 @@ export class Communication {
 
   // 从输入端点读取响应数据
   private async readResponse(iface: usbManager.USBInterface, endpoint: usbManager.USBEndpoint): Promise<number> {
+    // 检查对象是否有效，防止GC后的访问
+    if (!this || this.disposed) {
+      console.log('对象已销毁，跳过读取响应数据');
+      return -1;
+    }
+
     hilog.warn(0x00, 'send',
       '*******************************************************************************接收鼠标发送的消息');
 
@@ -955,6 +1158,14 @@ export class Communication {
           console.log('[USB调试] 开始USB批量传输读取 (buffer长度: 64, 超时: 1000ms)');
           const readPromise = usbManager.bulkTransfer(this.devicePipe, endpoint, buffer, 1000);
           result = await Promise.race([readPromise, timeoutPromise]);
+
+          // 检查对象是否仍然有效，防止GC后的访问
+          if (!this || this.disposed) {
+            console.log('对象已销毁，跳过读取操作');
+            this.readState = false;
+            return -1;
+          }
+
           console.log('[USB调试] USB读取完成，结果长度:', result);
 
           if (result > 0) {
@@ -1007,6 +1218,12 @@ export class Communication {
 
   // 开始持续读取数据
   private startContinuousReading(): void {
+    // 检查对象是否有效，防止GC后的访问
+    if (!this || this.disposed) {
+      console.log('对象已销毁，跳过持续读取数据');
+      return;
+    }
+
     if (!this.devicePipe || !this.inputInterface || !this.inputEndpoint) {
       console.log('无法开始持续读取：缺少必要的接口或端点');
       return;
@@ -1020,7 +1237,7 @@ export class Communication {
     // 使用异步循环持续读取数据
     (async (): Promise<void> => {
       let c = 0;
-      while (this.isPhysicalKeyboardExist && this.devicePipe) {
+      while (this && !this.disposed && this.isPhysicalKeyboardExist && this.devicePipe) {
         try {
           c++;
           console.log('循环读取鼠标数据-----', c, '---------------------');
@@ -1034,13 +1251,19 @@ export class Communication {
               this.inputEndpoint as usbManager.USBEndpoint);
             if (a === -1) {
               console.log('连续两次读取失败，重新连接设备');
-              await this.reconnectDevice();
+              if (this && !this.disposed) {
+                await this.reconnectDevice();
+                // 重连后继续循环，不再调用 getDeviceInfo
+                continue;
+              }
               return;
             }
           }
         } catch (error) {
           console.error('读取数据失败:', error);
-          await this.reconnectDevice();
+          if (this && !this.disposed) {
+            await this.reconnectDevice();
+          }
           break;
         }
       }
@@ -1049,6 +1272,12 @@ export class Communication {
 
   // 设备拔出变化
   public changPhysicalKeyboardExistState(state: boolean): void {
+    // 检查对象是否有效，防止GC后的访问
+    if (!this || this.disposed) {
+      console.log('对象已销毁，跳过设备状态变化处理');
+      return;
+    }
+
     if (!state) {
       // 设备拔出时停止心跳检测
       this.stopHeartbeatCheck();
@@ -1065,6 +1294,12 @@ export class Communication {
 
   // 添加销毁方法，在不再需要时清理资源
   public destroy(): void {
+    // 检查对象是否有效，防止GC后的访问
+    if (!this || this.disposed) {
+      console.log('对象已销毁，跳过销毁操作');
+      return;
+    }
+
     console.log(`销毁设备通信实例: ${this.device_currIndex}`);
     this.stopHeartbeatCheck();
     if (this.devicePipe) {
@@ -1075,6 +1310,12 @@ export class Communication {
 
   // 解析设备信息
   private parseDeviceInfo(data: Uint8Array): void {
+    // 检查对象是否有效，防止GC后的访问
+    if (!this || this.disposed) {
+      console.log('对象已销毁，跳过解析设备信息');
+      return;
+    }
+
     if (data.length < 21) {
       console.log('数据长度不足，期望至少21字节，实际:', data.length);
       return;
@@ -1103,7 +1344,9 @@ export class Communication {
           });
 
           const processPromise = Promise.resolve().then(() => {
-            this.processAudioData(data);
+            if (this && !this.disposed) {
+              this.processAudioData(data);
+            }
           });
 
           Promise.race([processPromise, timeoutPromise]).catch(() => {
@@ -1131,6 +1374,9 @@ export class Communication {
           this.lastCommand = currentCommand;
           this.lastCommandTime = currentTime;
         }
+        if (command === 0x00) {
+          return
+        }
         // 原有的设备信息解析逻辑保持不变
         if (command === 0x61) { // 设备信息响应
           // SN解析 - 直接使用十六进制表示，不转换为十进制
@@ -1144,7 +1390,6 @@ export class Communication {
           }
 
           this.deviceInfo.sn = snPrefix + snSuffix;
-          console.log('SN:', this.deviceInfo.sn);
 
           // 2. 状态字节（协议：byte14）
           const statusByte = data[14];
@@ -2100,7 +2345,7 @@ export class Communication {
       }
     } else {
       if (!ConnectDevice.Communication[this.device_currIndex].getModelInfo) {
-        console.warn(this.deviceInfo.productType.toString());
+        console.warn('2.4G:', this.deviceInfo.productType.toString(), '\n2.4G:', this.deviceInfo.sn);
         const params: getModelInfo_Params = {
           languageCode: '',
           productCode: this.deviceInfo.productType.toString(),

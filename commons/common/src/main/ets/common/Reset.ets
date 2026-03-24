@@ -3,10 +3,9 @@ import { Communication, ConnectDevice, MouseICType } from 'mouse'
 
 export async function Reset(flax: boolean = true) {
   // (AppStorage.get('pageInfo') as NavPathStack).clear()
-  for (let item of ConnectDevice.Communication) {
-    item.Communication.deviceInfo.sn = ''
-    item.getModelInfo = null
-    item.Communication.deviceInfo = {
+  ConnectDevice.Communication.forEach((item, index) => {
+    ConnectDevice.Communication[index].getModelInfo = null
+    ConnectDevice.Communication[index].Communication.deviceInfo = {
       sn: '', //SN
       micStatus: false, //麦克风状态
       ledStatus: false, //LED状态
@@ -20,39 +19,37 @@ export async function Reset(flax: boolean = true) {
       reportRate: 125, //回报率
       atmosphereLight: false//氛围灯
     }
-    item.getModelInfo = null
-    item.KeymethodConfig = []
-    item.DPI_currInfo = null
-    AppStorage.setOrCreate("KeymethodConfig", null) //按键设置方法执行记录
-    AppStorage.setOrCreate("devicesList", []) //按键设置方法执行记录
-    AppStorage.setOrCreate("mouseconfig", null) //鼠标实时数据
-    AppStorage.setOrCreate("getModelInfo", {
-      id: 0,
-      productId: 0,
-      productModelId: 0,
-      type: '',
-      name: null,
-      memberId: null,
-      sno: '',
-      first: '',
-      lastUpdatedDate: 0,
-      keyInfos: [],
-      appkey: '',
-      languages: [],
-      transLanguages: [],
-      ttsLanguages: [],
-      regionregion: '',
-      cmds: [],
-      xfocr: null,
-      images: [],
-      functions: [],
-      lives: '',
-      chatIeUrl: '',
-      chatChromeUrl: '',
-      pLevel: ''
-    }) //获取用户按键模式详情
-    AppStorage.setOrCreate("speech_Recognition_languages", 'ZH_CN') //语音识别语言
-  }
+    ConnectDevice.Communication[index].DPI_currInfo = null
+  })
+  AppStorage.setOrCreate("KeymethodConfig", null) //按键设置方法执行记录
+  AppStorage.setOrCreate("devicesList", [])
+  AppStorage.setOrCreate("mouseconfig", null) //鼠标实时数据
+  AppStorage.setOrCreate("getModelInfo", {
+    id: 0,
+    productId: 0,
+    productModelId: 0,
+    type: '',
+    name: null,
+    memberId: null,
+    sno: '',
+    first: '',
+    lastUpdatedDate: 0,
+    keyInfos: [],
+    appkey: '',
+    languages: [],
+    transLanguages: [],
+    ttsLanguages: [],
+    regionregion: '',
+    cmds: [],
+    xfocr: null,
+    images: [],
+    functions: [],
+    lives: '',
+    chatIeUrl: '',
+    chatChromeUrl: '',
+    pLevel: ''
+  }) //获取用户按键模式详情
+  AppStorage.setOrCreate("speech_Recognition_languages", 'ZH_CN') //语音识别语言
   // 清空2.4G设备列表
   await ConnectDevice.disconnectAllDevices()
   if (flax && AppStorage.get('devices') && (AppStorage.get('devices') as DeviceArrayType_Ble[]).length) {

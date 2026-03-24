@@ -350,12 +350,11 @@ struct Index {
                 const context: common.UIAbilityContext =
                   this.getUIContext().getHostContext() as common.UIAbilityContext;
                 connectDevice(context)
+                this.canReset = false
+                setTimeout(() => {
+                  this.canReset = true
+                }, 1000)
               }
-              this.canReset = false
-              setTimeout(() => {
-                this.canReset = true
-              }, 500)
-
             })
           })
       });
