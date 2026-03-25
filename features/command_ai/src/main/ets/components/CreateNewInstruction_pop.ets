@@ -138,6 +138,7 @@ export struct CreateNewInstruction_pop {
     try {
       const documentSelectOptions = new picker.DocumentSelectOptions();
       documentSelectOptions.maxSelectNumber = 1;
+      documentSelectOptions.fileSuffixFilters=['排除所有图片格式|.txt,.pptx,.docx,.pdf,.xlsx,.xls,.csv,.md,.rst,.rtf,.odt,.ods,.odp,.wps,.et,.dps,.py,.js,.ts,.java,.c,.cpp,.h,.hpp,.cs,.go,.rs,.php,.rb,.swift,.kt,.scala,.sh,.bat,.ps1,.sql,.html,.css,.scss,.less,.xml,.json,.yaml,.yml,.toml,.ini,.cfg,.conf,.log,.zip,.rar,.7z,.tar,.gz,.bz2,.xz,.mp3,.wav,.ogg,.flac,.aac,.m4a,.wma,.mp4,.avi,.mkv,.mov,.wmv,.flv,.webm,.exe,.msi,.app,.dmg,.deb,.rpm']
 
       const context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext;
       const documentViewPicker = new picker.DocumentViewPicker(context);
