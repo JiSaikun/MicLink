@@ -112,20 +112,22 @@ export struct Tab_profile {
       .height(41)
 
       Blank()
-      Flex() {
-        Text(Languages.view[this.languages])
+      Flex({justifyContent:FlexAlign.Center,alignItems:ItemAlign.Center}) {
+        Marquee({start:true,loop:100,src:Languages.view[this.languages],step:2})
+        // Text(Languages.view[this.languages])
           .fontSize(CommonConfig.fontSize_12)
           .fontColor('#8C6000')
           .fontWeight(CommonConfig.fontWeight_400)
-          .padding({
-            left: 8,
-            right: 8,
-            top: 6,
-            bottom: 6
-          })
+          // .padding({
+          //   left: 8,
+          //   right: 8,
+          //   top: 6,
+          //   bottom: 6
+          // })
           .flexGrow(1)
           .flexShrink(1)
           .width('100%')
+          .align(Alignment.Center)
       }
       .width(40)
       .height(24)
