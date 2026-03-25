@@ -50,6 +50,43 @@ export function reqPermissionsFromUser(permissions: Array<Permissions>, context:
   if (isScanningAndConnecting) {
     console.log('蓝牙扫描和连接正在进行中，拒绝新的扫描请求');
     return;
+  }else {
+    if (AppStorage.get('devices') && (AppStorage.get('devices') as DeviceArrayType_Ble[]).length) {
+      // 获取当前的蓝牙设备列表并关闭所有连接
+      const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || []
+      console.info('Reset: 开始关闭蓝牙设备连接，当前设备数量:', currentDevices.length)
+      currentDevices.forEach((item, index) => {
+        try {
+          console.info('Reset: 关闭蓝牙设备连接:', item.name)
+          currentDevices[index].KeymethodConfig = []
+          currentDevices[index].BlueTooth_devices.closeconnectDevice()
+        } catch (error) {
+          console.error('Reset: 关闭蓝牙设备连接失败:', error)
+        }
+      })
+      for (let device of currentDevices) {
+        try {
+          console.info('Reset: 关闭蓝牙设备连接:', device.name)
+          device.KeymethodConfig = []
+          device.BlueTooth_devices.closeconnectDevice()
+          device.BlueTooth_devices.dispose()
+        } catch (error) {
+          console.error('Reset: 关闭蓝牙设备连接失败:', error)
+        }
+      }
+      // 清空蓝牙设备列表，创建全新的空数组确保引用改变
+      const emptyDevices: DeviceArrayType_Ble[] = []
+      AppStorage.setOrCreate("devices", emptyDevices)
+      console.info('Reset: 蓝牙设备列表已清空')
+
+      // 强制触发设备列表更新，确保UI同步
+      setTimeout(() => {
+        // 再次确认清空，使用新的空数组实例
+        const newEmptyDevices: DeviceArrayType_Ble[] = []
+        AppStorage.setOrCreate('devices', newEmptyDevices)
+        console.info('Reset: 二次确认蓝牙设备列表清空')
+      }, 50)
+    }
   }
   let atManager: abilityAccessCtrl.AtManager = abilityAccessCtrl.createAtManager();
   // requestPermissionsFromUser会判断权限的授权状态来决定是否唤起弹窗。
@@ -67,13 +104,13 @@ export function reqPermissionsFromUser(permissions: Array<Permissions>, context:
         // 当用户拒绝授权时，系统应提示用户必须授予相应权限才能使用当前页面的功能，并指导用户前往系统设置开启所需权限。
         // 使用 console.warn 替代已弃用的 showToast
         console.warn('请打开蓝牙设备获取权限')
-        // atManager.requestPermissionOnSetting(context, ['ohos.permission.ACCESS_BLUETOOTH'])
-        //   .then((data: Array<abilityAccessCtrl.GrantStatus>) => {
-        //     console.info(`requestPermissionOnSetting success, result: ${data}`);
-        //   })
-        //   .catch((err: BusinessError) => {
-        //     console.error(`requestPermissionOnSetting fail, code: ${err.code}, message: ${err.message}`);
-        //   });
+        atManager.requestPermissionOnSetting(context, ['ohos.permission.ACCESS_BLUETOOTH'])
+          .then((data: Array<abilityAccessCtrl.GrantStatus>) => {
+            console.info(`requestPermissionOnSetting success, result: ${data}`);
+          })
+          .catch((err: BusinessError) => {
+            console.error(`requestPermissionOnSetting fail, code: ${err.code}, message: ${err.message}`);
+          });
         return;
       }
     }
@@ -336,7 +373,7 @@ export class BlueTooth_devices {
         // 检查设备是否已经获取到SN
         if (!this.deviceInfo.sn || this.deviceInfo.sn === '') {
           console.warn(`蓝牙设备 ${this.device_address} 验证超时，未获取到设备信息，移除设备`);
-          this.removeDeviceFromList();
+          // this.removeDeviceFromList();
         } else {
           console.info(`蓝牙设备 ${this.device_address} 验证通过，已获取到设备信息: ${this.deviceInfo.sn}`);
         }
@@ -2107,13 +2144,13 @@ export class BlueTooth_devices {
       }
 
       let bufferCCC = this.buildCommandFrame(command);
-      
+
       // 验证数据有效性
       if (!bufferCCC || bufferCCC.length === 0) {
         console.error('构建的命令帧为空，无法发送');
         return;
       }
-      
+
       const hexString = Array.from(bufferCCC).map(b => b.toString(16).padStart(2, '0')).join(' ');
       console.log(`发送命令 0x${command[0].toString(16)}:`, hexString, '\t发送数据长度', bufferCCC.length);
 
@@ -2152,7 +2189,6 @@ export class BlueTooth_devices {
         // }
         //
         // const secondHexString = Array.from(secondFrameBuffer).map(b => b.toString(16).padStart(2, '0')).join(' ');
-        // console.log(`发送第二帧命令 0x${command[0].toString(16)}:`, secondHexString, '\t发送数据长度', secondFrameBuffer.length);
         //
         // // 确保设备索引有效
         // if (this.device_currIndex >= 0 && this.device_currIndex < this.devices.length) {
@@ -2213,7 +2249,7 @@ export class BlueTooth_devices {
 
     } catch (err) {
       console.error('发送命令异常: errCode: ' + (err as BusinessError)?.code + ', errMessage: ' +
-      (err as BusinessError)?.message);
+        (err as BusinessError)?.message);
     }
   }
 
@@ -2308,13 +2344,14 @@ function deepCopyDevices(devices: DeviceArrayType_Ble[]): DeviceArrayType_Ble[] 
     return newDevice;
   });
 }
+
 async function getPairedDevices() {
   AppStorage.setOrCreate(BLUETOOTH_SCANNING_KEY, true);
 
   try {
     let pairedDevices: Array<string> = connection.getPairedDevices();
     console.log('Paired devices:', pairedDevices);
-    
+
     for (let i = 0; i < pairedDevices.length; i++) {
       const item = pairedDevices[i];
       await processDevice(item, i, pairedDevices.length);
@@ -2324,7 +2361,8 @@ async function getPairedDevices() {
       AppStorage.setOrCreate(BLUETOOTH_SCANNING_KEY, false);
     }
   } catch (err) {
-    console.error('Error getting paired devices. Code: ' + (err as BusinessError).code + ', Message: ' + (err as BusinessError).message);
+    console.error('Error getting paired devices. Code: ' + (err as BusinessError).code + ', Message: ' +
+    (err as BusinessError).message);
     AppStorage.setOrCreate(BLUETOOTH_SCANNING_KEY, false);
   }
 }
@@ -2333,22 +2371,22 @@ async function processDevice(deviceAddress: string, index: number, total: number
   try {
     const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || [];
     const existingIndex = currentDevices.findIndex(device =>
-      device.BlueTooth_devices.device_address === deviceAddress
+    device.BlueTooth_devices.device_address === deviceAddress
     );
 
     if (existingIndex !== -1) {
       // 设备已存在，先关闭并移除旧设备
       const oldDevice = currentDevices[existingIndex];
       console.log(`设备 ${deviceAddress} 已存在，关闭旧连接并移除`);
-      
+
       // 等待旧设备完全关闭
       await oldDevice.BlueTooth_devices.closeconnectDevice();
-      
+
       // 从数组中移除
       currentDevices.splice(existingIndex, 1);
       AppStorage.setOrCreate('devices', [...currentDevices]); // 触发 UI 更新
       console.log(`旧设备 ${deviceAddress} 已移除`);
-      
+
       // 延迟创建新设备，确保旧设备完全关闭
       await new Promise<void>(resolve => setTimeout(resolve, 200));
       await createAndConnectDevice(deviceAddress, index, total);
@@ -2383,6 +2421,7 @@ function createAndConnectDevice(deviceAddress: string, index: number, total: num
     }
   });
 }
+
 export function connectDevice(context: common.UIAbilityContext) {
   // 使用UIExtensionAbility：将common.UIAbilityContext 替换为common.UIExtensionContext
   // const context: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;

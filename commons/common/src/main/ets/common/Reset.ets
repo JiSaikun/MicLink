@@ -52,42 +52,42 @@ export async function Reset(flax: boolean = true) {
   AppStorage.setOrCreate("speech_Recognition_languages", 'ZH_CN') //语音识别语言
   // 清空2.4G设备列表
   await ConnectDevice.disconnectAllDevices()
-  if (flax && AppStorage.get('devices') && (AppStorage.get('devices') as DeviceArrayType_Ble[]).length) {
-    // 获取当前的蓝牙设备列表并关闭所有连接
-    const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || []
-    console.info('Reset: 开始关闭蓝牙设备连接，当前设备数量:', currentDevices.length)
-    currentDevices.forEach((item, index) => {
-      try {
-        console.info('Reset: 关闭蓝牙设备连接:', item.name)
-        currentDevices[index].KeymethodConfig = []
-        currentDevices[index].BlueTooth_devices.closeconnectDevice()
-      } catch (error) {
-        console.error('Reset: 关闭蓝牙设备连接失败:', error)
-      }
-    })
-    for (let device of currentDevices) {
-      try {
-        console.info('Reset: 关闭蓝牙设备连接:', device.name)
-        device.KeymethodConfig = []
-        await device.BlueTooth_devices.closeconnectDevice()
-        device.BlueTooth_devices.dispose()
-      } catch (error) {
-        console.error('Reset: 关闭蓝牙设备连接失败:', error)
-      }
-    }
-    // 清空蓝牙设备列表，创建全新的空数组确保引用改变
-    const emptyDevices: DeviceArrayType_Ble[] = []
-    AppStorage.setOrCreate("devices", emptyDevices)
-    console.info('Reset: 蓝牙设备列表已清空')
-
-    // 强制触发设备列表更新，确保UI同步
-    setTimeout(() => {
-      // 再次确认清空，使用新的空数组实例
-      const newEmptyDevices: DeviceArrayType_Ble[] = []
-      AppStorage.setOrCreate('devices', newEmptyDevices)
-      console.info('Reset: 二次确认蓝牙设备列表清空')
-    }, 50)
-  }
+  // if (flax && AppStorage.get('devices') && (AppStorage.get('devices') as DeviceArrayType_Ble[]).length) {
+  //   // 获取当前的蓝牙设备列表并关闭所有连接
+  //   const currentDevices = AppStorage.get('devices') as DeviceArrayType_Ble[] || []
+  //   console.info('Reset: 开始关闭蓝牙设备连接，当前设备数量:', currentDevices.length)
+  //   currentDevices.forEach((item, index) => {
+  //     try {
+  //       console.info('Reset: 关闭蓝牙设备连接:', item.name)
+  //       currentDevices[index].KeymethodConfig = []
+  //       currentDevices[index].BlueTooth_devices.closeconnectDevice()
+  //     } catch (error) {
+  //       console.error('Reset: 关闭蓝牙设备连接失败:', error)
+  //     }
+  //   })
+  //   for (let device of currentDevices) {
+  //     try {
+  //       console.info('Reset: 关闭蓝牙设备连接:', device.name)
+  //       device.KeymethodConfig = []
+  //       await device.BlueTooth_devices.closeconnectDevice()
+  //       device.BlueTooth_devices.dispose()
+  //     } catch (error) {
+  //       console.error('Reset: 关闭蓝牙设备连接失败:', error)
+  //     }
+  //   }
+  //   // 清空蓝牙设备列表，创建全新的空数组确保引用改变
+  //   const emptyDevices: DeviceArrayType_Ble[] = []
+  //   AppStorage.setOrCreate("devices", emptyDevices)
+  //   console.info('Reset: 蓝牙设备列表已清空')
+  //
+  //   // 强制触发设备列表更新，确保UI同步
+  //   setTimeout(() => {
+  //     // 再次确认清空，使用新的空数组实例
+  //     const newEmptyDevices: DeviceArrayType_Ble[] = []
+  //     AppStorage.setOrCreate('devices', newEmptyDevices)
+  //     console.info('Reset: 二次确认蓝牙设备列表清空')
+  //   }, 50)
+  // }
   AppStorage.setOrCreate('Unconnected', false)
   setTimeout(() => {
     if (!AppStorage.get('Unconnected')) {
