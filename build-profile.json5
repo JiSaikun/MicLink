@@ -5,13 +5,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "storeFile": "E:/jisaikun/Projects/miclink.p12",
-          "storePassword": "0000001B8F2EFBD88CC95DF9C72EC749C70178A16EE318E8115D32DBFCC20E9E2C6FB796B51065E77BC3D3",
+          "storeFile": "E:/hmProfile/miclink.p12",
+          "storePassword": "0000001B848CFF902E3D0DEC8B85D10868B1200A0C9ACBC7CCDFD16E923E3921C291924B753151F8067709",
           "keyAlias": "MicLink",
-          "keyPassword": "0000001B3E2738016C2129A806F92722EFF477080A6B171DC593BE8D7FC57F0000927CEFE0D12FAC494E02",
+          "keyPassword": "0000001BF3E5C0A086A135208E995DDBBC3927E6F1125378D3BA484F005C23E00529BC5FD40D06A599CEC8",
           "signAlg": "SHA256withECDSA",
-          "profile": "E:/hmProfile/MicLinkDebug.p7b",
-          "certpath": "E:/hmProfile/MicLink.cer"
+          "profile": "E:/hmProfile/调试证书/MicLinkDebug.p7b",
+          "certpath": "E:/hmProfile/调试证书/MicLink.cer"
         }
       }
     ],

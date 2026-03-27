@@ -142,7 +142,7 @@ struct InterfaceLanguage {
   build() {
     NavDestination() {
       Flex({ direction: FlexDirection.Column }) {
-        TopTitle({ title: Languages.member[this.languages] })
+        TopTitle({ title: Languages.languages[this.languages] })
           .margin({ bottom: 12 })
         List() {
           ForEach(this.languageCodes, (langCode: string, index: number) => {
