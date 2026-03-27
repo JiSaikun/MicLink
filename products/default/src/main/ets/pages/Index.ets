@@ -2,7 +2,6 @@ import {
   LeftBar,
   Topbar,
   Content,
-  Reset,
   observeSystemLanguageChanges,
   AiModel_data,
   bottom_data,
@@ -308,6 +307,8 @@ struct Index {
   }
 
   @State canReset: boolean = true
+  private hotplugDebounceTimer: number = 0
+  private readonly HOTPLUG_DEBOUNCE_MS: number = 450
 
   aboutToAppear(): void {
     ThemeConfig.PaletteTheme = this.paletteTheme
@@ -327,36 +328,40 @@ struct Index {
     let isPhysicalKeyboardExist = true;
     try {
       inputDevice.on("change", (data: inputDevice.DeviceListener) => {
-        Reset()
-          .then(()=>{
-            console.log(`Device event info: ${JSON.stringify(data)}`);
-            inputDevice.getKeyboardType(data.deviceId, (err: Error, type: inputDevice.KeyboardType) => {
-              console.log("The keyboard type is: " + type);
-              if (type == inputDevice.KeyboardType.ALPHABETIC_KEYBOARD && data.type == 'add') {
-                isPhysicalKeyboardExist = true;
-              } else if (type == inputDevice.KeyboardType.ALPHABETIC_KEYBOARD && data.type == 'remove') {
-                isPhysicalKeyboardExist = false;
-              }
-              for (let item of ConnectDevice.Communication) {
-                item.Communication.changPhysicalKeyboardExistState(isPhysicalKeyboardExist)
-              }
-            });
-            ConnectDevice.connectDevice().then(() => {
+        if (this.hotplugDebounceTimer !== 0) {
+          clearTimeout(this.hotplugDebounceTimer)
+        }
+        this.hotplugDebounceTimer = setTimeout((): void => {
+          this.hotplugDebounceTimer = 0
+          // 仅当 MicLink 接收器(0x248A) USB 枚举变化时才重连 USB，避免蓝牙 HID 事件拆掉仍插着的 2.4G。
+          console.log(`Device event info: ${JSON.stringify(data)}`);
+          inputDevice.getKeyboardType(data.deviceId, (err: Error, type: inputDevice.KeyboardType) => {
+            console.log("The keyboard type is: " + type);
+            if (type == inputDevice.KeyboardType.ALPHABETIC_KEYBOARD && data.type == 'add') {
+              isPhysicalKeyboardExist = true;
+            } else if (type == inputDevice.KeyboardType.ALPHABETIC_KEYBOARD && data.type == 'remove') {
+              isPhysicalKeyboardExist = false;
+            }
+            for (let item of ConnectDevice.Communication) {
+              item.Communication.changPhysicalKeyboardExistState(isPhysicalKeyboardExist)
+            }
+            ConnectDevice.rescanUsbIfMiclinkEnumerationChanged().then(() => {
               for (let item of ConnectDevice.Communication) {
                 item.Communication.changPhysicalKeyboardExistState(true)
               }
               if (this.canReset) {
-                hilog.warn(0x00,'热插拔','检索蓝牙设备');
+                hilog.warn(0x00, '热插拔', '检索蓝牙设备');
                 const context: common.UIAbilityContext =
                   this.getUIContext().getHostContext() as common.UIAbilityContext;
                 connectDevice(context)
                 this.canReset = false
                 setTimeout(() => {
                   this.canReset = true
-                }, 1000)
+                }, 2200)
               }
             })
-          })
+          });
+        }, this.HOTPLUG_DEBOUNCE_MS)
       });
     } catch (error) {
       console.error(`Get device info failed, error: ${JSON.stringify(error, ['code', 'message'])}`);

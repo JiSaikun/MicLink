@@ -235,6 +235,31 @@ export interface DPI_currInfoModel {
 export class ConnectDevice {
   static Communication: DeviceArrayType[] = []
   static targetDevice: Readonly<usbManager.USBDevice>[] = []
+  /** 与上一次成功枚举对齐；用于热插拔时区分「仅蓝牙 HID 变化」与「MicLink 接收器变化」，避免误拆 2.4G。 */
+  private static lastMiclinkUsbSignature: string | null = null
+
+  static computeMiclinkUsbSignature(): string {
+    const devices = usbManager.getDevices();
+    if (!devices || devices.length === 0) {
+      return '';
+    }
+    const miclink = devices.filter((device: usbManager.USBDevice) => device.vendorId === 0x248A);
+    return miclink.map((d: usbManager.USBDevice) => `${d.name}|${d.vendorId}|${d.productId}`).sort().join('##');
+  }
+
+  /**
+   * 输入设备热插拔回调会频繁触发；若每次都 disconnectAllDevices，会与「接收器常插 + 另一台蓝牙」并存冲突。
+   * 仅在 0x248A 枚举集合相对上次发生变化时才执行完整 USB 重连。
+   */
+  static async rescanUsbIfMiclinkEnumerationChanged(): Promise<void> {
+    const sig: string = ConnectDevice.computeMiclinkUsbSignature();
+    if (ConnectDevice.lastMiclinkUsbSignature !== null && sig === ConnectDevice.lastMiclinkUsbSignature) {
+      console.info('[USB] MicLink(0x248A) 枚举未变化，保留当前 2.4G 连接');
+      return;
+    }
+    console.info('[USB] MicLink(0x248A) 枚举已变化，重新 connectDevice');
+    await ConnectDevice.connectDevice();
+  }
 
   static async connectDevice() {
     // 必须先释放原实例：此前仅 Communication = [] 会丢弃引用却不 closePipe/停读循环，
@@ -343,6 +368,8 @@ export class ConnectDevice {
       setTimeout((): void => {
         ConnectDevice.connectDevice()
       }, 5000);
+    } finally {
+      ConnectDevice.lastMiclinkUsbSignature = ConnectDevice.computeMiclinkUsbSignature();
     }
   }
 
@@ -354,6 +381,7 @@ export class ConnectDevice {
     });
     ConnectDevice.Communication = [];
     ConnectDevice.targetDevice = [];
+    ConnectDevice.lastMiclinkUsbSignature = ConnectDevice.computeMiclinkUsbSignature();
   }
 }
 

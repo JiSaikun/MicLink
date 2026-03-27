@@ -1924,6 +1924,8 @@ export class BlueTooth_devices {
     // 连接状态: 0=断开, 1=连接中, 2=已连接, 3=断开中
     if (connectState === 2) {
       console.info('蓝牙设备连接成功，准备获取服务');
+      // 不在此处断开 USB：同一台电脑可同时使用「一台 MicLink 的 2.4G 接收器 + 另一台蓝牙设备」。
+      AppStorage.setOrCreate('device_isBle', true);
       // 连接成功时启动特征值变化超时检测
       this.startCharacteristicTimeout();
       // 连接成功时，延迟一小段时间再获取服务，确保连接完全稳定

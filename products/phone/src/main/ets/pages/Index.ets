@@ -6,7 +6,6 @@ import { Tab_device } from '../components/Tab_device'
 import { Tab_library } from '../components/Tab_library'
 import { Tab_profile } from '../components/Tab_profile'
 import { inputDevice } from '@kit.InputKit'
-import { Reset } from 'common'
 import { common } from '@kit.AbilityKit'
 import { CommonConfig, Languages } from 'components_phone'
 import { Tab_ai } from '../components/Tab_ai'
@@ -147,33 +146,37 @@ struct Index {
     AppStorage.setOrCreate('currpageIsAI', true);
 
     let isPhysicalKeyboardExist = true;
+    let hotplugTimer: number = 0;
     try {
       inputDevice.on("change", (data: inputDevice.DeviceListener) => {
-        Reset()
-        console.log(`Device event info: ${JSON.stringify(data)}`);
-        inputDevice.getKeyboardType(data.deviceId, (err: Error, type: inputDevice.KeyboardType) => {
-          console.log("The keyboard type is: " + type);
-          if (type == inputDevice.KeyboardType.ALPHABETIC_KEYBOARD && data.type == 'add') {
-            isPhysicalKeyboardExist = true;
-            ConnectDevice.connectDevice().then(() => {
-              for (let item of ConnectDevice.Communication) {
-                item.Communication.changPhysicalKeyboardExistState(isPhysicalKeyboardExist)
-              }
-              const context: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
-              connectDevice(context)
-            })
-          } else if (type == inputDevice.KeyboardType.ALPHABETIC_KEYBOARD && data.type == 'remove') {
-            isPhysicalKeyboardExist = false;
+        if (hotplugTimer !== 0) {
+          clearTimeout(hotplugTimer)
+        }
+        hotplugTimer = setTimeout((): void => {
+          hotplugTimer = 0
+          console.log(`Device event info: ${JSON.stringify(data)}`);
+          inputDevice.getKeyboardType(data.deviceId, (err: Error, type: inputDevice.KeyboardType) => {
+            console.log("The keyboard type is: " + type);
+            if (type == inputDevice.KeyboardType.ALPHABETIC_KEYBOARD && data.type == 'add') {
+              isPhysicalKeyboardExist = true;
+            } else if (type == inputDevice.KeyboardType.ALPHABETIC_KEYBOARD && data.type == 'remove') {
+              isPhysicalKeyboardExist = false;
+            }
             for (let item of ConnectDevice.Communication) {
               item.Communication.changPhysicalKeyboardExistState(isPhysicalKeyboardExist)
             }
-            ConnectDevice.connectDevice().then(() => {
+            ConnectDevice.rescanUsbIfMiclinkEnumerationChanged().then(() => {
               for (let item of ConnectDevice.Communication) {
                 item.Communication.changPhysicalKeyboardExistState(true)
               }
+              if (type == inputDevice.KeyboardType.ALPHABETIC_KEYBOARD && data.type == 'add') {
+                const context: common.UIAbilityContext =
+                  this.getUIContext().getHostContext() as common.UIAbilityContext;
+                connectDevice(context)
+              }
             })
-          }
-        });
+          });
+        }, 450)
       });
     } catch (error) {
       console.error(`Get device info failed, error: ${JSON.stringify(error, ['code', 'message'])}`);
