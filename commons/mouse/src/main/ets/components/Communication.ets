@@ -237,7 +237,9 @@ export class ConnectDevice {
   static targetDevice: Readonly<usbManager.USBDevice>[] = []
 
   static async connectDevice() {
-    ConnectDevice.Communication = []
+    // 必须先释放原实例：此前仅 Communication = [] 会丢弃引用却不 closePipe/停读循环，
+    // 热插拔或重复扫描时旧 bulk 读仍占用管道，新实例收不到 0x1b 语音数据。
+    await ConnectDevice.disconnectAllDevices()
     console.log('========================扫描并连接设备');
     try {
       const devices = usbManager.getDevices();
@@ -460,6 +462,19 @@ export class Communication {
     console.log('Communication对象资源清理完成');
   }
 
+  /** 2.4G USB 建立连接后：清空静态语音缓冲、避免热插拔后沿用旧 PCM；校正当前 USB 设备下标。 */
+  private resetUsbVoiceCaptureState(): void {
+    Communication.audioData = [];
+    const usbCount = ConnectDevice.Communication.length;
+    if (usbCount > 0) {
+      const curr = AppStorage.get('device_currIndex') as number | undefined;
+      const idx = (curr !== undefined ? curr : 0);
+      if (idx < 0 || idx >= usbCount) {
+        AppStorage.setOrCreate('device_currIndex', 0);
+      }
+    }
+  }
+
   // 构建命令帧的通用方法
   private buildCommandFrame(cmd: number[], length: number): Uint8Array {
     const frame = new Uint8Array(length);
@@ -579,13 +594,14 @@ export class Communication {
       // 连接成功后启动心跳检测
       this.startHeartbeatCheck();
 
-      // 只在初始化连接时获取设备信息，重连时不需要
-      if (!this.isReconnecting) {
-        await this.getDeviceInfo()
-      } else {
-        // 重连完成后重置标志
+      this.resetUsbVoiceCaptureState();
+
+      // 重连也必须走 getDeviceInfo：其中会 startContinuousReading，
+      // 否则管道重建后 bulk 读取循环已退出，语音等数据再也进不来。
+      if (this.isReconnecting) {
         this.isReconnecting = false;
       }
+      await this.getDeviceInfo()
     } catch (error) {
       console.error('设备连接失败:', error);
       await this.handleConnectionError();
